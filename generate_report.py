@@ -17,8 +17,10 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 # Internal TAZ column names
 COL_INVOICE = "Номер счета"
+COL_INVOICER = "Invoicer"
 COL_STATUS = "Status"
 COL_CUSTOMER = "Customer"
+EXCLUDED_INVOICERS = {"ФЭ"}
 COL_COMMENT = "Комментарии"
 COL_PURCHASE = "Закупка, итого"
 COL_SALE = "Продажная, итого"
@@ -209,6 +211,9 @@ def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df = df[df[COL_STATUS].notna()]
     df = df[~((df[COL_STATUS] == "1 NOT PAID") & (df[COL_COMMENT] == "SAMPLE"))]
+    if COL_INVOICER in df.columns:
+        invoicer = df[COL_INVOICER].astype(str).str.strip()
+        df = df[~invoicer.isin(EXCLUDED_INVOICERS)]
     return df
 
 
