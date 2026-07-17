@@ -11,6 +11,8 @@ from typing import Any
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 # Internal TAZ column names
@@ -62,6 +64,111 @@ TOTAL_HEADERS = [
     "Оплачено клиентом",
     "К оплате клиентом",
 ]
+
+# --- Styling ---
+COLOR_NAVY = "1F3864"
+COLOR_BLUE = "2F5597"
+COLOR_LIGHT_BLUE = "D9E2F3"
+COLOR_GREEN = "548235"
+COLOR_LIGHT_GREEN = "E2EFDA"
+COLOR_ORANGE = "C55A11"
+COLOR_LIGHT_ORANGE = "FCE4D6"
+COLOR_YELLOW = "FFF2CC"
+COLOR_RED = "C00000"
+COLOR_LIGHT_RED = "F8CBAD"
+COLOR_WHITE = "FFFFFF"
+COLOR_ZEBRA = "F7F9FC"
+COLOR_SUBTOTAL = "FFF2CC"
+
+FONT_TITLE = Font(name="Calibri", size=16, bold=True, color=COLOR_NAVY)
+FONT_SUBTITLE = Font(name="Calibri", size=11, color="595959")
+FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
+FONT_HEADER = Font(name="Calibri", size=10, bold=True, color=COLOR_WHITE)
+FONT_BODY = Font(name="Calibri", size=10)
+FONT_BODY_BOLD = Font(name="Calibri", size=10, bold=True)
+FONT_KPI = Font(name="Calibri", size=14, bold=True, color=COLOR_NAVY)
+
+FILL_SECTION_WORK = PatternFill("solid", fgColor=COLOR_BLUE)
+FILL_SECTION_SHIPPED = PatternFill("solid", fgColor=COLOR_GREEN)
+FILL_HEADER = PatternFill("solid", fgColor=COLOR_NAVY)
+FILL_SUBTOTAL = PatternFill("solid", fgColor=COLOR_SUBTOTAL)
+FILL_TOTAL_ROW = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
+FILL_KPI = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
+FILL_ALERT = PatternFill("solid", fgColor=COLOR_LIGHT_ORANGE)
+
+THIN = Side(style="thin", color="B4C6E7")
+BORDER_THIN = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+BORDER_BOTTOM = Border(bottom=Side(style="medium", color=COLOR_NAVY))
+
+ALIGN_CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
+ALIGN_LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
+ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
+
+NUM_FMT = '#,##0.00'
+DATE_FMT = "DD.MM.YYYY"
+
+CURRENCY_COLUMNS = {
+    "Закупка, ед.",
+    "Закупка, итого",
+    "Продажная, ед.",
+    "Продажная, итого (без НДС)",
+    "Стоимость доставки ПЛАН, за весь счет! ",
+    "Стоимость доставки факт",
+    "Transaction fee",
+    "Пошлина, сбор(ФАКТ) USD",
+    "СВХ стоимость (ФАКТ)",
+    "Оплачено\n\nПервая группа платежей",
+    "Оплачено\n\nЗавершающий платеж",
+    "Остаток к оплате",
+}
+
+DATE_COLUMNS = {
+    "ЗАКАЗ ВЗЯТ В РАБОТУ",
+    "КРАЙНЯЯ ДАТА ПОСТАВКИ",
+    "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)",
+    "Дата оплаты\n\nПервая группа платежей",
+    "Дата оплаты\n\nЗавершающий платеж",
+}
+
+STATUS_FILLS = {
+    "1 NOT PAID": PatternFill("solid", fgColor="FFF2CC"),
+    "2 PAID": PatternFill("solid", fgColor="E2F0D9"),
+    "3 SHIPPED": PatternFill("solid", fgColor="C6E0B4"),
+    "4 FINISHED": PatternFill("solid", fgColor="BDD7EE"),
+    "6 TROUBLE": PatternFill("solid", fgColor="F8CBAD"),
+}
+
+COLUMN_WIDTHS = {
+    "№ счета": 14,
+    "Invoicer": 8,
+    "Менеджер продажи": 14,
+    "Менеджер закупки": 14,
+    "Status": 12,
+    "Комментарий": 24,
+    "Customer": 12,
+    "Chnl": 8,
+    "Номер группы": 10,
+    "ТИП ВС (Продажи)": 12,
+    "P/N": 16,
+    "ALT P/N": 14,
+    "DESCRIPTION": 28,
+    "QTY": 8,
+    "UOM": 6,
+    "Category": 12,
+    "ЗАКАЗ ВЗЯТ В РАБОТУ": 12,
+    "Дней на поставку": 10,
+    "Lead time": 10,
+    "Destination": 12,
+    "КРАЙНЯЯ ДАТА ПОСТАВКИ": 12,
+    "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)": 12,
+    "Поставщик": 16,
+    "Root supplier": 18,
+    "PO #": 14,
+    "Закупка, итого": 14,
+    "Продажная, итого (без НДС)": 16,
+    "Остаток к оплате": 14,
+    "Тип оплаты": 18,
+}
 
 
 def parse_numeric(value: Any) -> float:
@@ -166,11 +273,12 @@ def prepare_output_frame(df: pd.DataFrame) -> pd.DataFrame:
 
 def build_subtotal_row(totals: dict[str, float], columns: list[str]) -> dict[str, Any]:
     row: dict[str, Any] = {col: None for col in columns}
-    row["Status"] = "1 NOT PAID"
-    row["Комментарий"] = "SAMPLE"
-    row["Chnl"] = "TBA"
-    row["Номер группы"] = "TBA"
-    row["UNIQUE\nUNIT\nCODE"] = "-"
+    row["Status"] = "ИТОГО"
+    row["Комментарий"] = "Сводка по разделу"
+    row["Chnl"] = ""
+    row["Номер группы"] = ""
+    if "UNIQUE\nUNIT\nCODE" in row:
+        row["UNIQUE\nUNIT\nCODE"] = "-"
     value_map = {
         "Закупка, итого": totals["Закупка"],
         "Продажная, итого (без НДС)": totals["Продажа"],
@@ -185,32 +293,183 @@ def build_subtotal_row(totals: dict[str, float], columns: list[str]) -> dict[str
     return row
 
 
-def write_sheet(ws, df: pd.DataFrame, totals: dict[str, float]) -> None:
+def _style_cell(cell, font=None, fill=None, alignment=None, border=None, number_format=None) -> None:
+    if font is not None:
+        cell.font = font
+    if fill is not None:
+        cell.fill = fill
+    if alignment is not None:
+        cell.alignment = alignment
+    if border is not None:
+        cell.border = border
+    if number_format is not None:
+        cell.number_format = number_format
+
+
+def _apply_range_border(ws, min_row, max_row, min_col, max_col) -> None:
+    for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
+        for cell in row:
+            cell.border = BORDER_THIN
+
+
+def _set_column_widths(ws, columns: list[str]) -> None:
+    for idx, name in enumerate(columns, start=1):
+        letter = get_column_letter(idx)
+        ws.column_dimensions[letter].width = COLUMN_WIDTHS.get(name, 12)
+
+
+def _format_detail_sheet(ws, columns: list[str], data_rows: int) -> None:
+    last_col = len(columns)
+    col_index = {name: idx for idx, name in enumerate(columns, start=1)}
+
+    # Header row
+    for col in range(1, last_col + 1):
+        cell = ws.cell(1, col)
+        _style_cell(cell, font=FONT_HEADER, fill=FILL_HEADER, alignment=ALIGN_CENTER, border=BORDER_THIN)
+
+    # Subtotal row
+    for col in range(1, last_col + 1):
+        cell = ws.cell(2, col)
+        _style_cell(cell, font=FONT_BODY_BOLD, fill=FILL_SUBTOTAL, alignment=ALIGN_LEFT, border=BORDER_THIN)
+        header = columns[col - 1]
+        if header in CURRENCY_COLUMNS and isinstance(cell.value, (int, float)):
+            cell.number_format = NUM_FMT
+
+    # Data rows
+    for row_idx in range(3, data_rows + 2):
+        zebra = PatternFill("solid", fgColor=COLOR_ZEBRA) if row_idx % 2 == 1 else None
+        status = ws.cell(row_idx, col_index.get("Status", 0)).value if "Status" in col_index else None
+        status_fill = STATUS_FILLS.get(str(status))
+
+        for col in range(1, last_col + 1):
+            cell = ws.cell(row_idx, col)
+            header = columns[col - 1]
+            fill = status_fill if header == "Status" and status_fill else zebra
+            align = ALIGN_RIGHT if header in CURRENCY_COLUMNS or header == "QTY" else ALIGN_LEFT
+            number_format = None
+            if header in CURRENCY_COLUMNS:
+                number_format = NUM_FMT
+            elif header in DATE_COLUMNS and isinstance(cell.value, (datetime, date)):
+                number_format = DATE_FMT
+            _style_cell(
+                cell,
+                font=FONT_BODY,
+                fill=fill,
+                alignment=align,
+                border=BORDER_THIN,
+                number_format=number_format,
+            )
+
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A1:{get_column_letter(last_col)}{data_rows + 1}"
+    ws.row_dimensions[1].height = 36
+    ws.row_dimensions[2].height = 22
+    _set_column_widths(ws, columns)
+
+
+def write_detail_sheet(ws, df: pd.DataFrame, totals: dict[str, float]) -> None:
     columns = list(df.columns)
     subtotal = build_subtotal_row(totals, columns)
     ws.append(columns)
     ws.append([subtotal.get(col) for col in columns])
     for row in dataframe_to_rows(df, index=False, header=False):
         ws.append(row)
+    _format_detail_sheet(ws, columns, len(df))
 
 
 def write_total_sheet(
     ws,
+    client: str,
+    report_date: date,
     in_work_totals: dict[str, float],
     shipped_totals: dict[str, float],
     shipped_over_30: float,
+    in_work_count: int,
+    shipped_count: int,
 ) -> None:
-    ws.append([None, *TOTAL_HEADERS])
-    ws.append(["В работе", *[in_work_totals[h] for h in TOTAL_HEADERS]])
-    ws.append([None, "Итого"])
-    ws.append([None, *[in_work_totals[h] for h in TOTAL_HEADERS]])
-    ws.append([])
-    ws.append([])
-    ws.append([])
-    ws.append([None, *TOTAL_HEADERS])
-    ws.append(["Отгружено", *[shipped_totals[h] for h in TOTAL_HEADERS]])
-    ws.append([None, None, None, None, None, None, None, "Из них отгружено более 30 дней назад"])
-    ws.append([None, None, None, None, None, None, None, shipped_over_30])
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 22
+    for col in range(2, 9):
+        ws.column_dimensions[get_column_letter(col)].width = 16
+
+    # Title block
+    ws.merge_cells("A1:H1")
+    title = ws["A1"]
+    title.value = f"Отчёт по заказам — {client}"
+    _style_cell(title, font=FONT_TITLE, alignment=Alignment(horizontal="left", vertical="center"))
+
+    ws.merge_cells("A2:H2")
+    subtitle = ws["A2"]
+    subtitle.value = (
+        f"Дата отчёта: {report_date.strftime('%d.%m.%Y')}   |   "
+        f"В работе: {in_work_count} поз.   |   Отгружено: {shipped_count} поз."
+    )
+    _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
+
+    # KPI cards
+    kpi_row = 4
+    kpis = [
+        ("Продажа (в работе)", in_work_totals["Продажа"], COLOR_LIGHT_BLUE),
+        ("К оплате (в работе)", in_work_totals["К оплате клиентом"], COLOR_LIGHT_ORANGE),
+        ("Продажа (отгружено)", shipped_totals["Продажа"], COLOR_LIGHT_GREEN),
+        ("К оплате (отгружено)", shipped_totals["К оплате клиентом"], COLOR_LIGHT_ORANGE),
+    ]
+    for i, (label, value, color) in enumerate(kpis):
+        col = 1 + i * 2
+        label_cell = ws.cell(kpi_row, col)
+        value_cell = ws.cell(kpi_row + 1, col)
+        ws.merge_cells(start_row=kpi_row, start_column=col, end_row=kpi_row, end_column=col + 1)
+        ws.merge_cells(start_row=kpi_row + 1, start_column=col, end_row=kpi_row + 1, end_column=col + 1)
+        label_cell.value = label
+        value_cell.value = value
+        fill = PatternFill("solid", fgColor=color)
+        _style_cell(label_cell, font=FONT_BODY_BOLD, fill=fill, alignment=ALIGN_CENTER, border=BORDER_THIN)
+        _style_cell(value_cell, font=FONT_KPI, fill=fill, alignment=ALIGN_CENTER, border=BORDER_THIN, number_format=NUM_FMT)
+
+    def write_block(start_row: int, title: str, totals: dict[str, float], section_fill: PatternFill) -> int:
+        ws.merge_cells(start_row=start_row, start_column=1, end_row=start_row, end_column=8)
+        section_cell = ws.cell(start_row, 1)
+        section_cell.value = title
+        _style_cell(section_cell, font=FONT_SECTION, fill=section_fill, alignment=ALIGN_LEFT)
+
+        header_row = start_row + 1
+        ws.cell(header_row, 1).value = "Раздел"
+        for idx, header in enumerate(TOTAL_HEADERS, start=2):
+            cell = ws.cell(header_row, idx)
+            cell.value = header
+            _style_cell(cell, font=FONT_HEADER, fill=FILL_HEADER, alignment=ALIGN_CENTER, border=BORDER_THIN)
+        _style_cell(ws.cell(header_row, 1), font=FONT_HEADER, fill=FILL_HEADER, alignment=ALIGN_CENTER, border=BORDER_THIN)
+
+        data_row = header_row + 1
+        ws.cell(data_row, 1).value = title
+        for idx, header in enumerate(TOTAL_HEADERS, start=2):
+            cell = ws.cell(data_row, idx)
+            cell.value = totals[header]
+            fill = FILL_ALERT if header == "К оплате клиентом" else None
+            _style_cell(
+                cell,
+                font=FONT_BODY_BOLD,
+                fill=fill,
+                alignment=ALIGN_RIGHT,
+                border=BORDER_THIN,
+                number_format=NUM_FMT,
+            )
+        _style_cell(ws.cell(data_row, 1), font=FONT_BODY_BOLD, alignment=ALIGN_LEFT, border=BORDER_THIN)
+        _apply_range_border(ws, header_row, data_row, 1, 8)
+        return data_row + 2
+
+    row = write_block(8, "В работе", in_work_totals, FILL_SECTION_WORK)
+    row = write_block(row, "Отгружено", shipped_totals, FILL_SECTION_SHIPPED)
+
+    note_row = row
+    ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=7)
+    note = ws.cell(note_row, 1)
+    note.value = "Из них отгружено более 30 дней назад (остаток к оплате)"
+    _style_cell(note, font=FONT_BODY_BOLD, fill=FILL_ALERT, alignment=ALIGN_RIGHT, border=BORDER_THIN)
+
+    alert_cell = ws.cell(note_row, 8)
+    alert_cell.value = shipped_over_30
+    _style_cell(alert_cell, font=FONT_KPI, fill=FILL_ALERT, alignment=ALIGN_RIGHT, border=BORDER_THIN, number_format=NUM_FMT)
 
 
 def generate_report(
@@ -223,23 +482,37 @@ def generate_report(
     df = load_taz(input_path)
     client_df = filter_client(df, client)
 
-    in_work_df = prepare_output_frame(filter_in_work(client_df))
-    shipped_df = prepare_output_frame(filter_shipped(client_df))
+    in_work_raw = filter_in_work(client_df)
+    shipped_raw = filter_shipped(client_df)
+    in_work_df = prepare_output_frame(in_work_raw)
+    shipped_df = prepare_output_frame(shipped_raw)
 
-    in_work_totals = aggregate(filter_in_work(client_df))
-    shipped_totals = aggregate(filter_shipped(client_df))
-    shipped_over_30 = shipped_balance_over_30_days(filter_shipped(client_df), report_date)
+    in_work_totals = aggregate(in_work_raw)
+    shipped_totals = aggregate(shipped_raw)
+    shipped_over_30 = shipped_balance_over_30_days(shipped_raw, report_date)
 
     wb = Workbook()
     total_ws = wb.active
     total_ws.title = "Total"
-    write_total_sheet(total_ws, in_work_totals, shipped_totals, shipped_over_30)
+    total_ws.sheet_properties.tabColor = COLOR_NAVY
+    write_total_sheet(
+        total_ws,
+        client,
+        report_date,
+        in_work_totals,
+        shipped_totals,
+        shipped_over_30,
+        len(in_work_df),
+        len(shipped_df),
+    )
 
     shipped_ws = wb.create_sheet("Отгружено")
-    write_sheet(shipped_ws, shipped_df, shipped_totals)
+    shipped_ws.sheet_properties.tabColor = COLOR_GREEN
+    write_detail_sheet(shipped_ws, shipped_df, shipped_totals)
 
     in_work_ws = wb.create_sheet("В работе")
-    write_sheet(in_work_ws, in_work_df, in_work_totals)
+    in_work_ws.sheet_properties.tabColor = COLOR_ORANGE
+    write_detail_sheet(in_work_ws, in_work_df, in_work_totals)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_path)
