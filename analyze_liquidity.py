@@ -737,11 +737,10 @@ def fmt_price(v: Optional[float]) -> str:
     return f"${v:,.2f}"
 
 
-def build_row(ati: dict, market: MarketAgg) -> dict:
+def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
     omin, omed, omax, ocnt = price_summary(market.order_prices)
     rmin, rmed, rmax, rcnt = price_summary(market.request_prices + market.exp_prices)
-    # ориентир только из sell (ТАЗ) / offered (ТУЗ) / sell EA (EXP)
     ref_price = omed if omed is not None else rmed
     has_demand = (market.order_events + market.request_events + market.exp_events) > 0
     has_sell_offered = ref_price is not None
@@ -752,8 +751,15 @@ def build_row(ati: dict, market: MarketAgg) -> dict:
     else:
         price_flag = "НЕТ sell/offered — цена не оценена"
 
-    cond = ati["condition"]
-    extra = condition_note(cond)
+    conds = sorted(stock["conditions"])
+    cond_display = ", ".join(c if c else "(пусто)" for c in conds) if conds else "(пусто)"
+    # note by primary/first condition codes
+    notes_cond = []
+    for c in conds:
+        notes_cond.append(condition_note(c))
+    extra = "; ".join(dict.fromkeys(notes_cond))  # unique preserve order
+
+    rationale = rationale + f" На складе: {stock['qty']:g} шт. ({stock['lines']} строк АТИ)."
     rationale = rationale + f" Состояние склада: {extra}."
     if has_demand and not has_sell_offered:
         rationale += (
@@ -762,23 +768,30 @@ def build_row(ati: dict, market: MarketAgg) -> dict:
             "денежную оценку позиции выполнить нельзя."
         )
 
+    desc = stock["description"] or (
+        next(iter(market.descriptions), "") if market.descriptions else ""
+    )
+    ac = ", ".join(sorted(x for x in stock["ac_typs"] if x)) or ""
+
     return {
         "liquidity_grade": grade,
         "liquidity_score": score,
-        "partno": ati["partno"],
-        "serialno": ati["serialno"],
-        "description": ati["description"] or (next(iter(market.descriptions), "") if market.descriptions else ""),
-        "ac_typ": ati["ac_typ"],
-        "ata": ati["ata"],
-        "condition": cond if cond else "(пусто)",
-        "qty": ati["qty"],
+        "partno": stock["partno"],
+        "pn": stock["pn"],
+        "description": desc,
+        "ac_typ": ac,
+        "condition": cond_display,
+        "qty": stock["qty"],
+        "lines": stock["lines"],
         "taz_orders": market.order_events,
         "taz_clients_n": len(market.order_clients),
         "taz_clients": ", ".join(market.sample_clients_order[:6]),
         "taz_qty": market.order_qty,
         "tuz_requests": market.request_events,
         "tuz_clients_n": len(market.request_clients),
-        "tuz_clients": ", ".join([c for c in market.sample_clients_request if c in market.request_clients][:6]),
+        "tuz_clients": ", ".join(
+            [c for c in market.sample_clients_request if c in market.request_clients][:6]
+        ),
         "exp_requests": market.exp_events,
         "exp_clients_n": len(market.exp_clients),
         "req_clients_all_n": len(market.request_clients | market.exp_clients),
@@ -796,8 +809,38 @@ def build_row(ati: dict, market: MarketAgg) -> dict:
         "price_req_n": rcnt,
         "match_via": ", ".join(sorted(market.matched_via)) if market.matched_via else "нет",
         "rationale": rationale,
-        "section": condition_section(cond),
+        "section": stock["section"],
     }
+
+
+def aggregate_ati_stock(ati_rows: list[dict]) -> list[dict]:
+    """Одна строка на P/N внутри раздела Condition; qty = сумма штук."""
+    groups: dict[tuple, dict] = {}
+    for r in ati_rows:
+        sec = condition_section(r["condition"])
+        key = (r["pn"], sec)
+        if key not in groups:
+            groups[key] = {
+                "pn": r["pn"],
+                "partno": r["partno"],
+                "qty": 0.0,
+                "lines": 0,
+                "conditions": set(),
+                "description": r.get("description") or "",
+                "ac_typs": set(),
+                "section": sec,
+            }
+        g = groups[key]
+        q = r["qty"] if r.get("qty") and r["qty"] > 0 else 1.0
+        g["qty"] += q
+        g["lines"] += 1
+        g["conditions"].add((r.get("condition") or "").strip().upper())
+        if r.get("description") and not g["description"]:
+            g["description"] = r["description"]
+        if r.get("ac_typ"):
+            g["ac_typs"].add(r["ac_typ"].strip())
+        # keep a readable partno (first seen)
+    return list(groups.values())
 
 
 HEADERS = [
@@ -805,12 +848,10 @@ HEADERS = [
     ("Ликвидность", 12),
     ("Балл", 8),
     ("P/N", 18),
-    ("S/N", 16),
-    ("Description", 28),
-    ("A/C", 10),
-    ("ATA", 8),
-    ("Condition", 10),
-    ("Qty склад", 9),
+    ("Description", 32),
+    ("A/C", 12),
+    ("Condition", 12),
+    ("Кол-во на складе", 12),
     ("Заказов ТАЗ", 11),
     ("Клиентов ТАЗ", 11),
     ("Клиенты (заказы)", 28),
@@ -889,10 +930,8 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["liquidity_grade"],
             r["liquidity_score"],
             r["partno"],
-            r["serialno"],
             r["description"],
             r["ac_typ"],
-            r["ata"],
             r["condition"],
             r["qty"],
             r["taz_orders"],
@@ -915,20 +954,23 @@ def write_rows(ws, rows: list[dict], header_color: str):
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {6, 13, 19, 26}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 17, 24}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
             if col == 2:
                 cell.fill = GRADE_FILL.get(r["liquidity_grade"], GRADE_FILL["D"])
                 cell.font = GRADE_FONT
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 19:
+            if col == 8:
+                cell.font = Font(bold=True, name="Calibri", size=11)
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            if col == 17:
                 if r["has_demand"] and not r["has_sell_offered"]:
                     cell.fill = PRICE_MISSING_FILL
                     cell.font = Font(bold=True, color="721C24", name="Calibri")
                 elif r["has_sell_offered"]:
                     cell.fill = PRICE_OK_FILL
-            if col in {20, 21, 23} and isinstance(val, (int, float)):
+            if col in {18, 19, 21} and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
         ws.row_dimensions[i + 1].height = 48
     if rows:
@@ -945,8 +987,10 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
     with_price = sum(1 for r in scored if r["has_sell_offered"])
 
     summary = [
-        ("Позиций на складе АТИ (строк)", len(ati_rows)),
-        ("Уникальных P/N на складе", len({r["pn"] for r in ati_rows})),
+        ("Строк в исходном АТИ", len(ati_rows)),
+        ("Позиций в отчёте (P/N после агрегации)", len(scored)),
+        ("Уникальных P/N на складе", len({r["pn"] for r in scored})),
+        ("Суммарное кол-во на складе, шт.", sum(r["qty"] for r in scored)),
         ("Раздел 1 — Condition пусто", sum(1 for r in scored if r["section"] == 1)),
         ("Раздел 2 — Condition US/NA", sum(1 for r in scored if r["section"] == 2)),
         ("Раздел 3 — прочие Condition", sum(1 for r in scored if r["section"] == 3)),
@@ -969,26 +1013,27 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         if "НЕТ sell/offered" in k:
             cell.fill = PRICE_MISSING_FILL
 
-    ws["A21"] = "Методика оценки"
-    ws["A21"].font = Font(bold=True, size=13)
+    ws["A23"] = "Методика оценки"
+    ws["A23"].font = Font(bold=True, size=13)
     method = [
         "A — высокая: подтверждённые заказы и/или устойчивый спрос у нескольких клиентов.",
         "B — средняя: есть заказы или заметные повторные запросы.",
         "C — низкая: единичные/редкие запросы без сильной истории продаж.",
         "D — нет спроса: P/N не найден в ТАЗ/ТУЗ/EXPENDABLES (с учётом нормализации и ALT).",
         "Балл учитывает число заказов/запросов, число уникальных клиентов, объёмы; заказы ТАЗ весят больше запросов.",
+        "Одинаковые P/N на складе сведены в одну строку внутри раздела Condition; «Кол-во на складе» = сумма штук.",
         "Цена ориентир ТОЛЬКО из: ТАЗ «Продажная, ед.» / ТУЗ «Offered per unit $» / EXP «Sell Price EA».",
         "Закупка, Supplier Price, Root Price, Market Price EA в ориентир НЕ входят.",
         "Колонка «Флаг цены sell/offered»: если спрос есть, а этих цен нет — позиция помечена, денежная оценка невозможна.",
         "US/NA выделены отдельно: спрос на P/N ≠ лёгкая продажа в текущем состоянии.",
     ]
-    for i, t in enumerate(method, 22):
+    for i, t in enumerate(method, 24):
         ws.cell(i, 1, t)
         ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
 
-    ws["A33"] = "Замечания по качеству данных (авто)"
-    ws["A33"].font = Font(bold=True, size=13)
-    for i, t in enumerate(notes, 34):
+    ws["A36"] = "Замечания по качеству данных (авто)"
+    ws["A36"].font = Font(bold=True, size=13)
+    for i, t in enumerate(notes, 37):
         ws.cell(i, 1, f"• {t}")
         ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
 
@@ -1020,9 +1065,12 @@ def main():
         ati_pn_counts[r["pn"]] += 1
     dup_pn = sum(1 for v in ati_pn_counts.values() if v > 1)
     empty_cond = sum(1 for r in ati if not r["condition"])
+    stock = aggregate_ati_stock(ati)
     notes = [
-        f"В АТИ {dup_pn} P/N встречаются более одного раза (разные S/N) — оценка рынка дана на уровне P/N, строки склада сохранены отдельно.",
-        f"Пустой Condition в АТИ: {empty_cond} строк.",
+        f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте они сведены в одну строку на P/N внутри раздела Condition, кол-во = сумма штук.",
+        f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
+        f"Пустой Condition в АТИ: {empty_cond} исходных строк.",
+        "Колонки ATA и S/N убраны из отчёта.",
         "В ТУЗ обнаружены сдвиги/дубли заголовков и повторные строки одного запроса с разными статусами — выполнен дедуп по (лист, P/N, клиент, №запроса/дата, qty).",
         "В EXPENDABLES несколько вкладок и sample-строки — sample/DEFAULT отфильтрованы, дубли цен/предложений сжаты.",
         "Сопоставление P/N: верхний регистр, удаление пробелов, унификация тире; дополнительно soft-ключ без разделителей и ALT P/N.",
@@ -1032,17 +1080,69 @@ def main():
     ]
 
     scored = []
-    for row in ati:
-        market = resolve_market(row["pn"], by_pn, soft_to_pns, alt_to_pns)
-        scored.append(build_row(row, market))
+    for item in stock:
+        market = resolve_market(item["pn"], by_pn, soft_to_pns, alt_to_pns)
+        scored.append(build_row_from_stock(item, market))
 
     def sort_key(r):
-        return (GRADE_ORDER[r["liquidity_grade"]], -r["liquidity_score"], r["partno"], r["serialno"])
+        return (GRADE_ORDER[r["liquidity_grade"]], -r["liquidity_score"], -r["qty"], r["partno"])
 
     sec1 = sorted([r for r in scored if r["section"] == 1], key=sort_key)
     sec2 = sorted([r for r in scored if r["section"] == 2], key=sort_key)
     sec3 = sorted([r for r in scored if r["section"] == 3], key=sort_key)
-    top = sorted([r for r in scored if r["liquidity_grade"] in {"A", "B"}], key=sort_key)[:80]
+
+    # ТОП: одна строка на P/N (если P/N в нескольких разделах — берём лучший балл, qty суммируем)
+    top_by_pn: dict[str, dict] = {}
+    for r in scored:
+        if r["liquidity_grade"] not in {"A", "B"}:
+            continue
+        pn = r["pn"]
+        if pn not in top_by_pn:
+            top_by_pn[pn] = dict(r)
+        else:
+            cur = top_by_pn[pn]
+            cur["qty"] += r["qty"]
+            cur["lines"] = cur.get("lines", 0) + r.get("lines", 0)
+            # merge conditions display
+            conds = {x.strip() for x in cur["condition"].split(",") if x.strip()}
+            conds |= {x.strip() for x in r["condition"].split(",") if x.strip()}
+            cur["condition"] = ", ".join(sorted(conds))
+            if GRADE_ORDER[r["liquidity_grade"]] < GRADE_ORDER[cur["liquidity_grade"]] or (
+                r["liquidity_grade"] == cur["liquidity_grade"] and r["liquidity_score"] > cur["liquidity_score"]
+            ):
+                for k in (
+                    "liquidity_grade",
+                    "liquidity_score",
+                    "taz_orders",
+                    "taz_clients_n",
+                    "taz_clients",
+                    "taz_qty",
+                    "tuz_requests",
+                    "tuz_clients_n",
+                    "exp_requests",
+                    "exp_clients_n",
+                    "price_flag",
+                    "has_sell_offered",
+                    "has_demand",
+                    "price_ref_usd",
+                    "price_taz_median",
+                    "price_taz_min",
+                    "price_taz_max",
+                    "price_taz_n",
+                    "price_req_median",
+                    "price_req_min",
+                    "price_req_max",
+                    "price_req_n",
+                    "match_via",
+                    "rationale",
+                    "description",
+                    "ac_typ",
+                ):
+                    cur[k] = r[k]
+                cur["rationale"] = (
+                    f"{r['rationale']} (в ТОП qty суммирован по всем состояниям склада: {cur['qty']:g} шт.)"
+                )
+    top = sorted(top_by_pn.values(), key=sort_key)[:80]
 
     print("Writing Excel...")
     wb = openpyxl.Workbook()
