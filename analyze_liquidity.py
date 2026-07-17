@@ -360,9 +360,8 @@ def load_taz(path: Path) -> list[Event]:
                 client = ""
             invoice = str(r[0]).strip() if r[0] is not None else ""
             qty = parse_qty(r[13])
-            price = parse_money(r[32])  # продажная ед.
-            if price is None:
-                price = parse_money(r[30])  # закупка как fallback
+            # Только продажная цена клиенту — без fallback на закупку
+            price = parse_money(r[32])  # Продажная, ед.
             cond = str(r[24]).strip() if r[24] is not None else ""
             alt = norm_pn(r[11])
             desc = str(r[12]).strip() if r[12] is not None else ""
@@ -418,7 +417,7 @@ TUZ_ALIASES = {
     "cond": ["cond", "condition"],
     "date": ["request date"],
     "req": ["request №", "request no", "request #"],
-    "price": ["offered", "supplier price", "root price"],
+    "price": ["offered\nper unit", "offered per unit", "offered"],
     "invoice": ["invoice to customer"],
 }
 
@@ -489,14 +488,18 @@ def load_tuz(path: Path) -> list[Event]:
             alt = norm_pn(get("alt"))
             desc = str(get("desc") or "").strip()
             qty = parse_qty(get("qty"))
-            # price: try offered then supplier
-            price = parse_money(get("price"))
-            if price is None:
-                # try known offsets near end
-                for idx in (24, 26, 27, 15, 13, 18):
+            # Только Offered per unit $ — без supplier/root
+            price = None
+            price_idx = mapping.get("price")
+            if price_idx is not None and price_idx < len(r):
+                price = parse_money(r[price_idx])
+            else:
+                # classic ≈24; с Sales/Purch ID ≈27
+                for idx in (24, 27):
                     if idx < len(r):
-                        price = parse_money(r[idx])
-                        if price is not None:
+                        cand = parse_money(r[idx])
+                        if cand is not None:
+                            price = cand
                             break
             cond = str(get("cond") or "").strip()
             if cond.lower() in {"cond", "condition"}:
@@ -556,9 +559,8 @@ def load_exp(path: Path) -> list[Event]:
             alt = norm_pn(r[5]) if len(r) > 5 else ""
             desc = str(r[7]).strip() if r[7] is not None else ""
             qty = parse_qty(r[8])
-            market = parse_money(r[9]) if len(r) > 9 else None
-            sell = parse_money(r[24]) if len(r) > 24 else None
-            price = sell if sell is not None else market
+            # Только Sell Price EA — без fallback на Market Price EA / Purchase
+            price = parse_money(r[24]) if len(r) > 24 else None
             cond = str(r[14]).strip() if len(r) > 14 and r[14] is not None else ""
             date = r[1] if len(r) > 1 else None
             key = (sheet, pn, client, str(date), round(qty, 4), round(price or 0, 2))
@@ -739,14 +741,26 @@ def build_row(ati: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
     omin, omed, omax, ocnt = price_summary(market.order_prices)
     rmin, rmed, rmax, rcnt = price_summary(market.request_prices + market.exp_prices)
-    # prefer order median as market sell ref
+    # ориентир только из sell (ТАЗ) / offered (ТУЗ) / sell EA (EXP)
     ref_price = omed if omed is not None else rmed
+    has_demand = (market.order_events + market.request_events + market.exp_events) > 0
+    has_sell_offered = ref_price is not None
+    if not has_demand:
+        price_flag = "н/п (нет спроса)"
+    elif has_sell_offered:
+        price_flag = "есть sell/offered"
+    else:
+        price_flag = "НЕТ sell/offered — цена не оценена"
+
     cond = ati["condition"]
     extra = condition_note(cond)
-    if grade != "D":
-        rationale = rationale + f" Состояние склада: {extra}."
-    else:
-        rationale = rationale + f" Состояние склада: {extra}."
+    rationale = rationale + f" Состояние склада: {extra}."
+    if has_demand and not has_sell_offered:
+        rationale += (
+            " ВНИМАНИЕ: по рынку есть спрос/заказы, но нет продажной цены ТАЗ "
+            "(Продажная, ед.) и нет Offered per unit $ / Sell Price EA — "
+            "денежную оценку позиции выполнить нельзя."
+        )
 
     return {
         "liquidity_grade": grade,
@@ -768,6 +782,9 @@ def build_row(ati: dict, market: MarketAgg) -> dict:
         "exp_requests": market.exp_events,
         "exp_clients_n": len(market.exp_clients),
         "req_clients_all_n": len(market.request_clients | market.exp_clients),
+        "price_flag": price_flag,
+        "has_sell_offered": has_sell_offered,
+        "has_demand": has_demand,
         "price_ref_usd": ref_price,
         "price_taz_median": omed,
         "price_taz_min": omin,
@@ -802,6 +819,7 @@ HEADERS = [
     ("Клиентов ТУЗ", 11),
     ("Запросов EXP", 11),
     ("Клиентов EXP", 11),
+    ("Флаг цены sell/offered", 18),
     ("Цена ориентир USD", 14),
     ("Цена ТАЗ медиана", 13),
     ("Цена ТАЗ min-max", 16),
@@ -849,6 +867,10 @@ THIN = Border(
 )
 
 
+PRICE_MISSING_FILL = PatternFill("solid", fgColor="F8D7DA")
+PRICE_OK_FILL = PatternFill("solid", fgColor="D4EDDA")
+
+
 def write_rows(ws, rows: list[dict], header_color: str):
     style_header(ws, header_color)
     for i, r in enumerate(rows, 1):
@@ -881,6 +903,7 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["tuz_clients_n"],
             r["exp_requests"],
             r["exp_clients_n"],
+            r["price_flag"],
             r["price_ref_usd"],
             r["price_taz_median"],
             price_mm_taz,
@@ -892,14 +915,20 @@ def write_rows(ws, rows: list[dict], header_color: str):
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {6, 13, 25}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {6, 13, 19, 26}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
             if col == 2:
                 cell.fill = GRADE_FILL.get(r["liquidity_grade"], GRADE_FILL["D"])
                 cell.font = GRADE_FONT
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col in {19, 20, 22} and isinstance(val, (int, float)):
+            if col == 19:
+                if r["has_demand"] and not r["has_sell_offered"]:
+                    cell.fill = PRICE_MISSING_FILL
+                    cell.font = Font(bold=True, color="721C24", name="Calibri")
+                elif r["has_sell_offered"]:
+                    cell.fill = PRICE_OK_FILL
+            if col in {20, 21, 23} and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
         ws.row_dimensions[i + 1].height = 48
     if rows:
@@ -912,9 +941,12 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
     ws["A2"] = f"Дата отчёта: {datetime.now():%Y-%m-%d %H:%M} | Источники: ТАЗ ORDERS, ТУЗ (группы запросов), EXPENDABLES, АТИ"
     ws.merge_cells("A2:F2")
 
+    no_price = sum(1 for r in scored if r["has_demand"] and not r["has_sell_offered"])
+    with_price = sum(1 for r in scored if r["has_sell_offered"])
+
     summary = [
         ("Позиций на складе АТИ (строк)", len(ati_rows)),
-        ("Уникальных P/N на складе", len({r['pn'] for r in ati_rows})),
+        ("Уникальных P/N на складе", len({r["pn"] for r in ati_rows})),
         ("Раздел 1 — Condition пусто", sum(1 for r in scored if r["section"] == 1)),
         ("Раздел 2 — Condition US/NA", sum(1 for r in scored if r["section"] == 2)),
         ("Раздел 3 — прочие Condition", sum(1 for r in scored if r["section"] == 3)),
@@ -922,6 +954,8 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         ("Ликвидность B (средняя)", sum(1 for r in scored if r["liquidity_grade"] == "B")),
         ("Ликвидность C (низкая)", sum(1 for r in scored if r["liquidity_grade"] == "C")),
         ("Ликвидность D (нет спроса)", sum(1 for r in scored if r["liquidity_grade"] == "D")),
+        ("Есть sell/offered цена", with_price),
+        ("Спрос есть, но НЕТ sell/offered (цена не оценена)", no_price),
         ("Событий ТАЗ (заказы, после дедупа)", taz_n),
         ("Событий ТУЗ (запросы, после дедупа)", tuz_n),
         ("Событий EXPENDABLES (после дедупа)", exp_n),
@@ -930,31 +964,35 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
     ws["A4"].font = Font(bold=True, size=13)
     for i, (k, v) in enumerate(summary, 5):
         ws.cell(i, 1, k).font = Font(name="Calibri", size=11)
-        ws.cell(i, 2, v).font = Font(bold=True, name="Calibri", size=11)
+        cell = ws.cell(i, 2, v)
+        cell.font = Font(bold=True, name="Calibri", size=11)
+        if "НЕТ sell/offered" in k:
+            cell.fill = PRICE_MISSING_FILL
 
-    ws["A18"] = "Методика оценки"
-    ws["A18"].font = Font(bold=True, size=13)
+    ws["A21"] = "Методика оценки"
+    ws["A21"].font = Font(bold=True, size=13)
     method = [
         "A — высокая: подтверждённые заказы и/или устойчивый спрос у нескольких клиентов.",
         "B — средняя: есть заказы или заметные повторные запросы.",
         "C — низкая: единичные/редкие запросы без сильной истории продаж.",
         "D — нет спроса: P/N не найден в ТАЗ/ТУЗ/EXPENDABLES (с учётом нормализации и ALT).",
         "Балл учитывает число заказов/запросов, число уникальных клиентов, объёмы; заказы ТАЗ весят больше запросов.",
-        "Цена ориентир: медиана продажной цены ТАЗ; если заказов нет — медиана цен из запросов/EXP.",
-        "Склад без цены в АТИ — рыночная цена берётся только из истории спроса/продаж.",
+        "Цена ориентир ТОЛЬКО из: ТАЗ «Продажная, ед.» / ТУЗ «Offered per unit $» / EXP «Sell Price EA».",
+        "Закупка, Supplier Price, Root Price, Market Price EA в ориентир НЕ входят.",
+        "Колонка «Флаг цены sell/offered»: если спрос есть, а этих цен нет — позиция помечена, денежная оценка невозможна.",
         "US/NA выделены отдельно: спрос на P/N ≠ лёгкая продажа в текущем состоянии.",
     ]
-    for i, t in enumerate(method, 19):
+    for i, t in enumerate(method, 22):
         ws.cell(i, 1, t)
         ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
 
-    ws["A28"] = "Замечания по качеству данных (авто)"
-    ws["A28"].font = Font(bold=True, size=13)
-    for i, t in enumerate(notes, 29):
+    ws["A33"] = "Замечания по качеству данных (авто)"
+    ws["A33"].font = Font(bold=True, size=13)
+    for i, t in enumerate(notes, 34):
         ws.cell(i, 1, f"• {t}")
         ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
 
-    ws.column_dimensions["A"].width = 55
+    ws.column_dimensions["A"].width = 62
     ws.column_dimensions["B"].width = 18
 
 
@@ -988,8 +1026,9 @@ def main():
         "В ТУЗ обнаружены сдвиги/дубли заголовков и повторные строки одного запроса с разными статусами — выполнен дедуп по (лист, P/N, клиент, №запроса/дата, qty).",
         "В EXPENDABLES несколько вкладок и sample-строки — sample/DEFAULT отфильтрованы, дубли цен/предложений сжаты.",
         "Сопоставление P/N: верхний регистр, удаление пробелов, унификация тире; дополнительно soft-ключ без разделителей и ALT P/N.",
-        "Цена в файле АТИ отсутствует — в отчёте рыночные ориентиры из ТАЗ/запросов.",
+        "Цена в файле АТИ отсутствует — в отчёте рыночные ориентиры только из sell/offered.",
         "Контрагенты вида «Закупка на склад» / internal не считаются рыночными клиентами (заказы при этом учитываются).",
+        "Позиции со спросом, но без «Продажная, ед.» / «Offered per unit $» / «Sell Price EA» помечены флагом «НЕТ sell/offered».",
     ]
 
     scored = []
@@ -1032,9 +1071,18 @@ def main():
         c.fill = GRADE_FILL[g]
         c.font = GRADE_FONT
         wsl.cell(i, 2, name)
-    wsl["A8"] = "Разделы сформированы по Condition склада АТИ: 1=пусто, 2=US и NA, 3=все остальные (N/NE/SV/OH/R/...)."
+    wsl["A8"] = "Флаг цены sell/offered"
+    wsl["A8"].font = Font(bold=True, size=13)
+    c = wsl.cell(9, 1, "есть")
+    c.fill = PRICE_OK_FILL
+    wsl.cell(9, 2, "есть Продажная ед. / Offered / Sell Price EA")
+    c = wsl.cell(10, 1, "НЕТ")
+    c.fill = PRICE_MISSING_FILL
+    wsl.cell(10, 2, "спрос есть, но sell/offered цены нет — денежная оценка невозможна")
+    wsl["A12"] = "Разделы по Condition склада АТИ: 1=пусто, 2=US и NA, 3=прочие (N/NE/SV/OH/R/...)."
+    wsl["A13"] = "В цену ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
     wsl.column_dimensions["A"].width = 12
-    wsl.column_dimensions["B"].width = 20
+    wsl.column_dimensions["B"].width = 70
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT_COPY.parent.mkdir(parents=True, exist_ok=True)
@@ -1049,6 +1097,7 @@ def main():
         f"B={sum(1 for r in scored if r['liquidity_grade']=='B')}",
         f"C={sum(1 for r in scored if r['liquidity_grade']=='C')}",
         f"D={sum(1 for r in scored if r['liquidity_grade']=='D')}",
+        f"no_sell_offered={sum(1 for r in scored if r['has_demand'] and not r['has_sell_offered'])}",
     )
 
 
