@@ -1021,8 +1021,10 @@ def price_data_flag(market: MarketAgg) -> str:
     """Флаг источника ценовых/рыночных данных."""
     if market.order_events > 0:
         return "есть заказы"
-    if market.request_events > 0:
+    if market.request_prices:
         return "есть предложения"
+    if market.request_events > 0:
+        return "есть запросы, но нет предложений"
     return "нет данных"
 
 
@@ -1114,7 +1116,7 @@ HEADERS = [
     ("Кол-во", 9),
     ("Ориентировочная цена USD", 14),
     ("Уверенность", 12),
-    ("Флаг цены", 14),
+    ("Флаг цены", 28),
     ("Спрос (заказы/запросы)", 48),
     ("Обоснование оценки", 80),
 ]
@@ -1172,6 +1174,7 @@ def write_rows(ws, rows: list[dict], header_color: str):
     flag_fill = {
         "есть заказы": PatternFill("solid", fgColor="1F7A4D"),
         "есть предложения": PatternFill("solid", fgColor="2F6FED"),
+        "есть запросы, но нет предложений": PatternFill("solid", fgColor="C47F00"),
         "нет данных": PatternFill("solid", fgColor="8A8A8A"),
     }
     for i, r in enumerate(rows, 1):
@@ -1415,16 +1418,17 @@ def main():
     wsl["A14"].font = Font(bold=True, size=13)
     for i, (name, color, desc) in enumerate([
         ("есть заказы", "1F7A4D", "в ТАЗ есть заказы по P/N"),
-        ("есть предложения", "2F6FED", "заказов нет, но есть запросы/предложения ТУЗ/EXP"),
+        ("есть предложения", "2F6FED", "заказов нет, но в ТУЗ/EXP есть Offered/Sell Price"),
+        ("есть запросы, но нет предложений", "C47F00", "запросы ТУЗ/EXP есть, но Offered/Sell ни разу не заполняли"),
         ("нет данных", "8A8A8A", "нет заказов и запросов по P/N"),
     ], 15):
         c = wsl.cell(i, 1, name)
         c.fill = PatternFill("solid", fgColor=color)
         c.font = Font(bold=True, color="FFFFFF", name="Calibri")
         wsl.cell(i, 2, desc)
-    wsl["A19"] = "Ликвидность и балл скрыты: сортировка по ним сохранена в ранге. Детали — в обосновании."
-    wsl["A20"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
-    wsl.column_dimensions["A"].width = 12
+    wsl["A20"] = "Ликвидность и балл скрыты: сортировка по ним сохранена в ранге. Детали — в обосновании."
+    wsl["A21"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
+    wsl.column_dimensions["A"].width = 36
     wsl.column_dimensions["B"].width = 70
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
