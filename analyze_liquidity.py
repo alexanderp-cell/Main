@@ -184,6 +184,28 @@ def client_key(client: str) -> str:
     return (client or "").strip().lower()
 
 
+def parse_date(value: Any) -> Optional[date]:
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    s = str(value).strip()
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s.replace("Z", "").split(".")[0]).date()
+    except Exception:
+        pass
+    for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s[:10], fmt).date()
+        except Exception:
+            continue
+    return None
+
+
 @dataclass
 class Event:
     source: str  # TAZ / TUZ / EXP
@@ -202,24 +224,23 @@ class Event:
 
 @dataclass
 class MarketAgg:
-    # Уникальные заказы: номер заказа (счёта). 1 заказ = P/N + номер заказа
     order_keys: set = field(default_factory=set)
     order_qty: float = 0.0
     order_clients: set = field(default_factory=set)
-    # Уникальные запросы ТУЗ+EXP: (клиент, день). 1 запрос = P/N + клиент + день
     request_keys: set = field(default_factory=set)
     request_qty: float = 0.0
     request_clients: set = field(default_factory=set)
-    order_prices: list = field(default_factory=list)
-    request_prices: list = field(default_factory=list)
+    order_price_points: list = field(default_factory=list)
+    request_price_points: list = field(default_factory=list)
     descriptions: set = field(default_factory=set)
     conditions_seen: set = field(default_factory=set)
     matched_via: set = field(default_factory=set)
     sample_clients_order: list = field(default_factory=list)
     sample_clients_request: list = field(default_factory=list)
-    # для прозрачности источников
     request_keys_tuz: set = field(default_factory=set)
     request_keys_exp: set = field(default_factory=set)
+    order_dates: list = field(default_factory=list)
+    request_dates: list = field(default_factory=list)
 
     @property
     def order_events(self) -> int:
@@ -229,35 +250,47 @@ class MarketAgg:
     def request_events(self) -> int:
         return len(self.request_keys)
 
+    @property
+    def order_prices(self) -> list:
+        return [p for _, p in self.order_price_points]
+
+    @property
+    def request_prices(self) -> list:
+        return [p for _, p in self.request_price_points]
+
     def merge_event(self, e: Event):
         if e.description:
             self.descriptions.add(str(e.description).strip()[:120])
         if e.condition:
             self.conditions_seen.add(str(e.condition).strip().upper())
 
+        d = parse_date(e.date)
+
         if e.kind == "order":
             ono = (e.request_no or "").strip()
             if not ono:
-                # без номера заказа — не склеиваем всё в одну кучу
                 ono = f"NO_INV|{client_key(e.client)}|{day_key(e.date)}|{round(e.qty or 0, 4)}"
             if ono not in self.order_keys:
                 self.order_keys.add(ono)
             self.order_qty += e.qty or 0
+            if d is not None:
+                self.order_dates.append(d)
             if is_market_client(e.client):
                 self.order_clients.add(e.client)
                 if len(self.sample_clients_order) < 8 and e.client not in self.sample_clients_order:
                     self.sample_clients_order.append(e.client)
             if e.price is not None and e.price > 0:
-                self.order_prices.append(e.price)
+                self.order_price_points.append((d, float(e.price)))
             return
 
-        # request from TUZ or EXP — общее правило уникальности
         ck = client_key(e.client)
         dk = day_key(e.date)
         rkey = (ck, dk)
         if rkey not in self.request_keys:
             self.request_keys.add(rkey)
         self.request_qty += e.qty or 0
+        if d is not None:
+            self.request_dates.append(d)
         if e.source == "EXP":
             self.request_keys_exp.add(rkey)
         else:
@@ -267,11 +300,10 @@ class MarketAgg:
             if len(self.sample_clients_request) < 8 and e.client not in self.sample_clients_request:
                 self.sample_clients_request.append(e.client)
         if e.price is not None and e.price > 0:
-            self.request_prices.append(e.price)
+            self.request_price_points.append((d, float(e.price)))
 
     def merge_agg(self, src: "MarketAgg"):
         new_orders = src.order_keys - self.order_keys
-        # qty only for newly added order keys — approximate: add proportional avg
         if new_orders and src.order_keys:
             avg_q = src.order_qty / max(len(src.order_keys), 1)
             self.order_qty += avg_q * len(new_orders)
@@ -287,8 +319,10 @@ class MarketAgg:
         self.request_keys_tuz |= src.request_keys_tuz
         self.request_keys_exp |= src.request_keys_exp
 
-        self.order_prices.extend(src.order_prices)
-        self.request_prices.extend(src.request_prices)
+        self.order_price_points.extend(src.order_price_points)
+        self.request_price_points.extend(src.request_price_points)
+        self.order_dates.extend(src.order_dates)
+        self.request_dates.extend(src.request_dates)
         self.descriptions |= src.descriptions
         self.conditions_seen |= src.conditions_seen
         for c in src.sample_clients_order:
@@ -303,6 +337,119 @@ def price_summary(prices: list[float]) -> tuple[Optional[float], Optional[float]
     if not prices:
         return None, None, None, 0
     return min(prices), median(prices), max(prices), len(prices)
+
+
+# Порог "недавно" для уверенности в цене
+RECENT_DAYS = 180  # 6 месяцев
+AS_OF_DATE = date(2026, 7, 21)
+
+
+def _days_ago(d: Optional[date], as_of: date = AS_OF_DATE) -> Optional[int]:
+    if d is None:
+        return None
+    return (as_of - d).days
+
+
+def compute_indicative_price(market: MarketAgg) -> tuple[Optional[float], str, str]:
+    """Возвращает (цена, уверенность, текст деталей для обоснования)."""
+    as_of = AS_OF_DATE
+    order_pts = [(d, p) for d, p in market.order_price_points if p and p > 0]
+    req_pts = [(d, p) for d, p in market.request_price_points if p and p > 0]
+
+    recent_orders = [(d, p) for d, p in order_pts if d and _days_ago(d, as_of) is not None and _days_ago(d, as_of) <= RECENT_DAYS]
+    older_orders = [(d, p) for d, p in order_pts if (d, p) not in recent_orders]
+    recent_reqs = [(d, p) for d, p in req_pts if d and _days_ago(d, as_of) is not None and _days_ago(d, as_of) <= RECENT_DAYS]
+    older_reqs = [(d, p) for d, p in req_pts if (d, p) not in recent_reqs]
+
+    def med(pts):
+        return median([p for _, p in pts]) if pts else None
+
+    source = None
+    ref = None
+    detail_parts = []
+
+    if recent_orders:
+        ref = med(recent_orders)
+        source = "медиана продажных цен ТАЗ за последние 6 мес."
+        prices = [p for _, p in recent_orders]
+        detail_parts.append(
+            f"Ориентир ${ref:,.2f}: {source} (n={len(recent_orders)}, "
+            f"min ${min(prices):,.2f}, max ${max(prices):,.2f})."
+        )
+    elif order_pts:
+        ref = med(order_pts)
+        source = "медиана продажных цен ТАЗ (все даты)"
+        prices = [p for _, p in order_pts]
+        last_d = max((d for d, _ in order_pts if d), default=None)
+        detail_parts.append(
+            f"Ориентир ${ref:,.2f}: {source} (n={len(order_pts)}, "
+            f"min ${min(prices):,.2f}, max ${max(prices):,.2f}"
+            + (f", последний заказ {last_d.isoformat()}" if last_d else "")
+            + ")."
+        )
+    elif recent_reqs:
+        ref = med(recent_reqs)
+        source = "медиана Offered/Sell Price запросов ТУЗ+EXP за последние 6 мес."
+        prices = [p for _, p in recent_reqs]
+        detail_parts.append(
+            f"Ориентир ${ref:,.2f}: {source} (n={len(recent_reqs)}, "
+            f"min ${min(prices):,.2f}, max ${max(prices):,.2f})."
+        )
+    elif req_pts:
+        ref = med(req_pts)
+        source = "медиана Offered/Sell Price запросов ТУЗ+EXP (все даты)"
+        prices = [p for _, p in req_pts]
+        last_d = max((d for d, _ in req_pts if d), default=None)
+        detail_parts.append(
+            f"Ориентир ${ref:,.2f}: {source} (n={len(req_pts)}, "
+            f"min ${min(prices):,.2f}, max ${max(prices):,.2f}"
+            + (f", последнее предложение {last_d.isoformat()}" if last_d else "")
+            + ")."
+        )
+    else:
+        detail_parts.append(
+            "Ориентировочная цена не рассчитана: нет «Продажная, ед.» в ТАЗ и нет Offered/Sell Price в ТУЗ/EXP."
+        )
+        return None, "н/п", " ".join(detail_parts)
+
+    # Уверенность
+    last_order = max((d for d in market.order_dates if d), default=None)
+    last_req = max((d for d in market.request_dates if d), default=None)
+    last_order_price = max((d for d, _ in order_pts if d), default=None)
+    last_req_price = max((d for d, _ in req_pts if d), default=None)
+
+    if recent_orders:
+        conf = "высокая"
+        conf_why = (
+            f"уверенность высокая: есть заказ(и) ТАЗ с продажной ценой за последние {RECENT_DAYS} дн."
+            + (f" (последний {last_order_price.isoformat()})" if last_order_price else "")
+        )
+    elif order_pts:
+        # есть заказы, но не свежие
+        days = _days_ago(last_order_price or last_order, as_of)
+        conf = "средняя"
+        conf_why = (
+            "уверенность средняя: продажная цена из ТАЗ есть, но заказ не свежий"
+            + (f" ({days} дн. назад)" if days is not None else "")
+        )
+    elif recent_reqs:
+        conf = "средняя"
+        conf_why = (
+            f"уверенность средняя: заказов ТАЗ нет, но есть свежие Offered/Sell в ТУЗ/EXP "
+            f"(≤{RECENT_DAYS} дн.)"
+            + (f", последнее {last_req_price.isoformat()}" if last_req_price else "")
+        )
+    else:
+        conf = "низкая"
+        days = _days_ago(last_req_price or last_req, as_of)
+        conf_why = (
+            "уверенность низкая: заказов ТАЗ нет, предложения ТУЗ/EXP давние"
+            + (f" (последнее {days} дн. назад)" if days is not None else " или без даты")
+        )
+
+    detail_parts.append(conf_why + ".")
+    return ref, conf, " ".join(detail_parts)
+
 
 
 def liquidity_score(m: MarketAgg) -> tuple[float, str, str]:
@@ -785,17 +932,9 @@ def fmt_price(v: Optional[float]) -> str:
 
 def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
-    omin, omed, omax, ocnt = price_summary(market.order_prices)
-    rmin, rmed, rmax, rcnt = price_summary(market.request_prices)
-    ref_price = omed if omed is not None else rmed
+    ref_price, price_conf, price_detail = compute_indicative_price(market)
     has_demand = (market.order_events + market.request_events) > 0
     has_sell_offered = ref_price is not None
-    if not has_demand:
-        price_flag = "н/п (нет спроса)"
-    elif has_sell_offered:
-        price_flag = "есть sell/offered"
-    else:
-        price_flag = "НЕТ sell/offered — цена не оценена"
 
     conds = sorted(stock["conditions"])
     cond_display = ", ".join(c if c else "(пусто)" for c in conds) if conds else "(пусто)"
@@ -804,11 +943,10 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
 
     rationale = rationale + f" На складе: {stock['qty']:g} шт. ({stock['lines']} строк АТИ)."
     rationale = rationale + f" Состояние склада: {extra}."
+    rationale = rationale + " " + price_detail
     if has_demand and not has_sell_offered:
         rationale += (
-            " ВНИМАНИЕ: по рынку есть спрос/заказы, но нет продажной цены ТАЗ "
-            "(Продажная, ед.) и нет Offered per unit $ / Sell Price EA — "
-            "денежную оценку позиции выполнить нельзя."
+            " ВНИМАНИЕ: спрос/заказы есть, но sell/offered цены нет — денежная оценка невозможна."
         )
 
     desc = stock["description"] or (
@@ -834,18 +972,10 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "req_clients": ", ".join(market.sample_clients_request[:6]),
         "req_tuz_part": len(market.request_keys_tuz),
         "req_exp_part": len(market.request_keys_exp),
-        "price_flag": price_flag,
+        "price_ref_usd": ref_price,
+        "price_confidence": price_conf,
         "has_sell_offered": has_sell_offered,
         "has_demand": has_demand,
-        "price_ref_usd": ref_price,
-        "price_taz_median": omed,
-        "price_taz_min": omin,
-        "price_taz_max": omax,
-        "price_taz_n": ocnt,
-        "price_req_median": rmed,
-        "price_req_min": rmin,
-        "price_req_max": rmax,
-        "price_req_n": rcnt,
         "match_via": ", ".join(sorted(market.matched_via)) if market.matched_via else "нет",
         "rationale": rationale,
         "section": stock["section"],
@@ -897,14 +1027,10 @@ HEADERS = [
     ("Запросов ТУЗ+EXP", 14),
     ("Клиентов запросов", 12),
     ("Клиенты (запросы)", 26),
-    ("Флаг цены sell/offered", 18),
     ("Цена ориентир USD", 14),
-    ("Цена ТАЗ медиана", 13),
-    ("Цена ТАЗ min-max", 16),
-    ("Цена запросов медиана", 14),
-    ("Цена запросов min-max", 16),
-    ("Сопоставление", 18),
-    ("Обоснование оценки", 70),
+    ("Уверенность в цене", 14),
+    ("Сопоставление", 16),
+    ("Обоснование оценки", 80),
 ]
 
 
@@ -951,17 +1077,13 @@ PRICE_OK_FILL = PatternFill("solid", fgColor="D4EDDA")
 
 def write_rows(ws, rows: list[dict], header_color: str):
     style_header(ws, header_color)
+    conf_fill = {
+        "высокая": PatternFill("solid", fgColor="1F7A4D"),
+        "средняя": PatternFill("solid", fgColor="2F6FED"),
+        "низкая": PatternFill("solid", fgColor="C47F00"),
+        "н/п": PatternFill("solid", fgColor="8A8A8A"),
+    }
     for i, r in enumerate(rows, 1):
-        price_mm_taz = (
-            f"{fmt_price(r['price_taz_min'])} – {fmt_price(r['price_taz_max'])}"
-            if r["price_taz_n"]
-            else "—"
-        )
-        price_mm_req = (
-            f"{fmt_price(r['price_req_min'])} – {fmt_price(r['price_req_max'])}"
-            if r["price_req_n"]
-            else "—"
-        )
         values = [
             i,
             r["liquidity_grade"],
@@ -977,19 +1099,15 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["requests"],
             r["req_clients_n"],
             r["req_clients"],
-            r["price_flag"],
             r["price_ref_usd"],
-            r["price_taz_median"],
-            price_mm_taz,
-            r["price_req_median"],
-            price_mm_req,
+            r["price_confidence"],
             r["match_via"],
             r["rationale"],
         ]
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 14, 22}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 14, 18}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
             if col == 2:
@@ -999,15 +1117,13 @@ def write_rows(ws, rows: list[dict], header_color: str):
             if col == 8:
                 cell.font = Font(bold=True, name="Calibri", size=11)
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 15:
-                if r["has_demand"] and not r["has_sell_offered"]:
-                    cell.fill = PRICE_MISSING_FILL
-                    cell.font = Font(bold=True, color="721C24", name="Calibri")
-                elif r["has_sell_offered"]:
-                    cell.fill = PRICE_OK_FILL
-            if col in {16, 17, 19} and isinstance(val, (int, float)):
+            if col == 15 and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
-        ws.row_dimensions[i + 1].height = 48
+            if col == 16:
+                cell.fill = conf_fill.get(r["price_confidence"], conf_fill["н/п"])
+                cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[i + 1].height = 52
     if rows:
         ws.auto_filter.ref = f"A1:{get_column_letter(len(HEADERS))}{len(rows)+1}"
 
@@ -1017,9 +1133,6 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
     ws["A1"].font = Font(bold=True, size=16, color="1A1A1A", name="Calibri")
     ws["A2"] = f"Дата отчёта: {datetime.now():%Y-%m-%d %H:%M} | Источники: ТАЗ ORDERS, ТУЗ (группы запросов), EXPENDABLES, АТИ"
     ws.merge_cells("A2:F2")
-
-    no_price = sum(1 for r in scored if r["has_demand"] and not r["has_sell_offered"])
-    with_price = sum(1 for r in scored if r["has_sell_offered"])
 
     summary = [
         ("Строк в исходном АТИ", len(ati_rows)),
@@ -1033,11 +1146,13 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         ("Ликвидность B (средняя)", sum(1 for r in scored if r["liquidity_grade"] == "B")),
         ("Ликвидность C (низкая)", sum(1 for r in scored if r["liquidity_grade"] == "C")),
         ("Ликвидность D (нет спроса)", sum(1 for r in scored if r["liquidity_grade"] == "D")),
-        ("Есть sell/offered цена", with_price),
-        ("Спрос есть, но НЕТ sell/offered (цена не оценена)", no_price),
-        ("Событий ТАЗ (заказы, после дедупа)", taz_n),
-        ("Событий ТУЗ (запросы, после дедупа)", tuz_n),
-        ("Событий EXPENDABLES (после дедупа)", exp_n),
+        ("Цена: уверенность высокая", sum(1 for r in scored if r["price_confidence"] == "высокая")),
+        ("Цена: уверенность средняя", sum(1 for r in scored if r["price_confidence"] == "средняя")),
+        ("Цена: уверенность низкая", sum(1 for r in scored if r["price_confidence"] == "низкая")),
+        ("Цена: н/п (нет sell/offered)", sum(1 for r in scored if r["price_confidence"] == "н/п")),
+        ("Событий ТАЗ (уник. P/N+№заказа)", taz_n),
+        ("Событий ТУЗ (сырые строки)", tuz_n),
+        ("Событий EXPENDABLES (сырые строки)", exp_n),
     ]
     ws["A4"] = "Сводка"
     ws["A4"].font = Font(bold=True, size=13)
@@ -1045,8 +1160,8 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         ws.cell(i, 1, k).font = Font(name="Calibri", size=11)
         cell = ws.cell(i, 2, v)
         cell.font = Font(bold=True, name="Calibri", size=11)
-        if "НЕТ sell/offered" in k:
-            cell.fill = PRICE_MISSING_FILL
+        if "н/п" in k or "низкая" in k:
+            pass
 
     ws["A23"] = "Методика оценки"
     ws["A23"].font = Font(bold=True, size=13)
@@ -1059,9 +1174,9 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         "Одинаковые P/N на складе сведены в одну строку внутри раздела Condition; «Кол-во на складе» = сумма штук.",
         "Заказы ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
         "Запросы ТУЗ+EXP: 1 запрос = P/N + клиент + календарный день (источники объединены).",
-        "Цена ориентир ТОЛЬКО из: ТАЗ «Продажная, ед.» / ТУЗ «Offered per unit $» / EXP «Sell Price EA».",
-        "Закупка, Supplier Price, Root Price, Market Price EA в ориентир НЕ входят.",
-        "Колонка «Флаг цены sell/offered»: если спрос есть, а этих цен нет — позиция помечена, денежная оценка невозможна.",
+        "Одна ориентировочная цена: приоритет свежая медиана ТАЗ (≤6 мес.) → любая ТАЗ → свежие Offered/Sell ТУЗ+EXP → любые запросы.",
+        "Уверенность: высокая — свежий заказ ТАЗ с sell; средняя — старый ТАЗ или свежие запросы; низкая — только давние запросы; н/п — цены нет.",
+        "Детали расчёта цены — в столбце «Обоснование оценки». В ориентир НЕ входят Закупка/Supplier/Root/Market Price EA.",
         "US/NA выделены отдельно: спрос на P/N ≠ лёгкая продажа в текущем состоянии.",
     ]
     for i, t in enumerate(method, 24):
@@ -1159,18 +1274,10 @@ def main():
                     "requests",
                     "req_clients_n",
                     "req_clients",
-                    "price_flag",
                     "has_sell_offered",
                     "has_demand",
                     "price_ref_usd",
-                    "price_taz_median",
-                    "price_taz_min",
-                    "price_taz_max",
-                    "price_taz_n",
-                    "price_req_median",
-                    "price_req_min",
-                    "price_req_max",
-                    "price_req_n",
+                    "price_confidence",
                     "match_via",
                     "rationale",
                     "description",
@@ -1209,16 +1316,20 @@ def main():
         c.fill = GRADE_FILL[g]
         c.font = GRADE_FONT
         wsl.cell(i, 2, name)
-    wsl["A8"] = "Флаг цены sell/offered"
+    wsl["A8"] = "Уверенность в цене"
     wsl["A8"].font = Font(bold=True, size=13)
-    c = wsl.cell(9, 1, "есть")
-    c.fill = PRICE_OK_FILL
-    wsl.cell(9, 2, "есть Продажная ед. / Offered / Sell Price EA")
-    c = wsl.cell(10, 1, "НЕТ")
-    c.fill = PRICE_MISSING_FILL
-    wsl.cell(10, 2, "спрос есть, но sell/offered цены нет — денежная оценка невозможна")
-    wsl["A12"] = "Разделы по Condition склада АТИ: 1=пусто, 2=US и NA, 3=прочие (N/NE/SV/OH/R/...)."
-    wsl["A13"] = "В цену ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
+    for i, (name, color, desc) in enumerate([
+        ("высокая", "1F7A4D", "есть заказ ТАЗ с продажной ценой за последние 6 мес."),
+        ("средняя", "2F6FED", "есть ТАЗ (не свежий) или свежие Offered/Sell в ТУЗ/EXP"),
+        ("низкая", "C47F00", "заказов ТАЗ нет, предложения ТУЗ/EXP давние"),
+        ("н/п", "8A8A8A", "нет sell/offered цены — ориентир не рассчитан"),
+    ], 9):
+        c = wsl.cell(i, 1, name)
+        c.fill = PatternFill("solid", fgColor=color)
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri")
+        wsl.cell(i, 2, desc)
+    wsl["A14"] = "Разделы по Condition: 1=пусто, 2=US/NA, 3=прочие. Детали цены — в обосновании."
+    wsl["A15"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
     wsl.column_dimensions["A"].width = 12
     wsl.column_dimensions["B"].width = 70
 
@@ -1235,7 +1346,11 @@ def main():
         f"B={sum(1 for r in scored if r['liquidity_grade']=='B')}",
         f"C={sum(1 for r in scored if r['liquidity_grade']=='C')}",
         f"D={sum(1 for r in scored if r['liquidity_grade']=='D')}",
-        f"no_sell_offered={sum(1 for r in scored if r['has_demand'] and not r['has_sell_offered'])}",
+        f"price_conf high/med/low/na="
+        f"{sum(1 for r in scored if r['price_confidence']=='высокая')}/"
+        f"{sum(1 for r in scored if r['price_confidence']=='средняя')}/"
+        f"{sum(1 for r in scored if r['price_confidence']=='низкая')}/"
+        f"{sum(1 for r in scored if r['price_confidence']=='н/п')}",
     )
 
 
