@@ -1015,6 +1015,35 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     }
 
 
+def aggregate_ati_stock(ati_rows: list[dict]) -> list[dict]:
+    """Одна строка на P/N внутри раздела Condition; qty = сумма штук."""
+    groups: dict[tuple, dict] = {}
+    for r in ati_rows:
+        sec = condition_section(r["condition"])
+        key = (r["pn"], sec)
+        if key not in groups:
+            groups[key] = {
+                "pn": r["pn"],
+                "partno": r["partno"],
+                "qty": 0.0,
+                "lines": 0,
+                "conditions": set(),
+                "description": r.get("description") or "",
+                "ac_typs": set(),
+                "section": sec,
+            }
+        g = groups[key]
+        q = r["qty"] if r.get("qty") and r["qty"] > 0 else 1.0
+        g["qty"] += q
+        g["lines"] += 1
+        g["conditions"].add((r.get("condition") or "").strip().upper())
+        if r.get("description") and not g["description"]:
+            g["description"] = r["description"]
+        if r.get("ac_typ"):
+            g["ac_typs"].add(r["ac_typ"].strip())
+    return list(groups.values())
+
+
 HEADERS = [
     ("Ранг", 6),
     ("Тип ВС", 12),
