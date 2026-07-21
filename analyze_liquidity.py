@@ -288,7 +288,7 @@ class MarketAgg:
         rkey = (ck, dk)
         if rkey not in self.request_keys:
             self.request_keys.add(rkey)
-        self.request_qty += e.qty or 0
+            self.request_qty += e.qty or 0
         if d is not None:
             self.request_dates.append(d)
         if e.source == "EXP":
@@ -517,12 +517,17 @@ def liquidity_score(m: MarketAgg) -> tuple[float, str, str]:
 
 
 def find_header_map(rows: list[tuple], aliases: dict[str, list[str]], scan: int = 5) -> tuple[int, dict[str, int]]:
-    """Ищет строку заголовков и маппинг колонок."""
+    """Ищет строку заголовков и маппинг колонок.
+
+    Если в превью несколько строк-заголовков (классика и сдвинутая с Sales/Purch ID),
+    выбираем наиболее полную / сдвинутую — она обычно соответствует реальным данным.
+    """
     def clean(h):
         if h is None:
             return ""
         return re.sub(r"\s+", " ", str(h).replace("\n", " ")).strip().lower()
 
+    best_idx, best_map, best_score = 0, {}, -1
     for idx in range(min(scan, len(rows))):
         row = rows[idx]
         if not row:
@@ -539,10 +544,18 @@ def find_header_map(rows: list[tuple], aliases: dict[str, list[str]], scan: int 
                         break
                 if key in mapping:
                     break
-        # need at least pn
-        if "pn" in mapping:
-            return idx, mapping
-    return 0, {}
+        if "pn" not in mapping:
+            continue
+        score = len(mapping)
+        if any(c == "sales id" or c.startswith("sales id") for c in cleaned):
+            score += 10  # сдвинутый layout
+        if "price" in mapping:
+            score += 5
+        if "client" in mapping:
+            score += 2
+        if score > best_score:
+            best_idx, best_map, best_score = idx, mapping, score
+    return best_idx, best_map
 
 
 def iter_sheet_rows(path: Path, sheet: str) -> Iterable[tuple]:
@@ -635,6 +648,89 @@ TUZ_ALIASES = {
 }
 
 
+def _tuz_layouts(primary: dict[str, int]) -> list[dict[str, int]]:
+    """Набор возможных раскладок колонок ТУЗ (данные бывают и классика, и со сдвигом Sales/Purch ID)."""
+    classic_24 = {
+        "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
+        "cond": 18, "price": 24, "invoice": 27,
+    }
+    classic_27 = {
+        "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
+        "cond": 21, "price": 27, "invoice": 30,
+    }
+    shifted = {
+        "date": 3, "req": 4, "client": 6, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
+        "cond": 21, "price": 27, "invoice": 30,
+    }
+    # Questions v2 style (P/N starts at col 8)
+    qv2 = {
+        "date": 3, "req": 4, "client": 6, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
+        "cond": 20, "price": 26, "invoice": 29,
+    }
+    layouts = []
+    if primary:
+        layouts.append(dict(primary))
+    for lay in (classic_27, classic_24, shifted, qv2):
+        if lay not in layouts:
+            layouts.append(lay)
+    return layouts
+
+
+def _extract_tuz_row(r: tuple, layouts: list[dict[str, int]]) -> Optional[dict]:
+    """Пробует раскладки; возвращает поля строки или None."""
+    for mapping in layouts:
+        def get(key, default=None, _m=mapping):
+            idx = _m.get(key)
+            if idx is None or idx >= len(r):
+                return default
+            return r[idx]
+
+        pn_raw = get("pn")
+        pn = norm_pn(pn_raw)
+        if is_sample_pn(pn):
+            continue
+        if isinstance(pn_raw, str) and " " in pn_raw.strip() and len(pn_raw) > 40:
+            continue
+
+        client = norm_client(get("client"))
+        if client.upper() in SAMPLE_CLIENT:
+            continue
+        # client не должен выглядеть как P/N при валидном PN
+        if client and not re.search(r"[A-Za-zА-Яа-я]{2,}", client) and re.search(r"\d", client):
+            # похоже на номер, а не клиента — пробуем другую раскладку
+            continue
+
+        alt = norm_pn(get("alt"))
+        desc = str(get("desc") or "").strip()
+        qty = parse_qty(get("qty"))
+        # Только явная колонка Offered — без fallback на Cert/Remarks
+        price = parse_money(get("price"))
+        cond = str(get("cond") or "").strip()
+        if cond.lower() in {"cond", "condition"}:
+            cond = ""
+        date = get("date")
+        # date should be date-like; if not, try nearby
+        if parse_date(date) is None:
+            for idx in (1, 3, mapping.get("date")):
+                if idx is not None and idx < len(r) and parse_date(r[idx]) is not None:
+                    date = r[idx]
+                    break
+        req = str(get("req") or "").strip()
+        invoice = str(get("invoice") or "").strip()
+        return {
+            "pn": pn,
+            "alt": alt if alt and alt != pn else "",
+            "client": client,
+            "desc": desc,
+            "qty": qty,
+            "price": price,
+            "cond": cond,
+            "date": date,
+            "req": req or invoice,
+        }
+    return None
+
+
 def load_tuz(path: Path) -> list[Event]:
     events: list[Event] = []
     seen = set()
@@ -643,7 +739,6 @@ def load_tuz(path: Path) -> list[Event]:
         if sheet not in wb.sheetnames:
             continue
         ws = wb[sheet]
-        # read first rows to detect header
         preview = []
         all_rows = []
         for i, row in enumerate(ws.iter_rows(values_only=True)):
@@ -651,78 +746,44 @@ def load_tuz(path: Path) -> list[Event]:
             if i < 5:
                 preview.append(row)
         hdr_idx, mapping = find_header_map(preview, TUZ_ALIASES, scan=5)
-        # fallback classic layout
         if not mapping:
             mapping = {
-                "date": 1,
-                "req": 2,
-                "client": 4,
-                "pn": 6,
-                "alt": 7,
-                "desc": 8,
-                "qty": 9,
-                "cond": 18,
-                "price": 24,
-                "invoice": 27,
+                "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
+                "cond": 21, "price": 27, "invoice": 30,
             }
             hdr_idx = 0
         else:
-            # ensure classics if missing
             mapping.setdefault("client", 4)
             mapping.setdefault("alt", mapping["pn"] + 1)
             mapping.setdefault("desc", mapping["pn"] + 2)
             mapping.setdefault("qty", mapping["pn"] + 3)
+            mapping.setdefault("price", 27)
 
-        for r in all_rows[hdr_idx + 1 :]:
+        layouts = _tuz_layouts(mapping)
+        # пропускаем строки-заголовки в начале
+        start = 0
+        for i, row in enumerate(all_rows[:6]):
+            if row and any(str(c).strip().lower() in {"p/n", "part number"} for c in row[:15] if c):
+                start = i + 1
+        start = max(start, hdr_idx + 1)
+
+        for r in all_rows[start:]:
             if not r:
                 continue
-            def get(key, default=None):
-                idx = mapping.get(key)
-                if idx is None or idx >= len(r):
-                    return default
-                return r[idx]
-
-            pn_raw = get("pn")
-            pn = norm_pn(pn_raw)
-            if is_sample_pn(pn):
-                continue
-            # guard: description wrongly in PN col
-            if isinstance(pn_raw, str) and " " in pn_raw.strip() and len(pn_raw) > 40:
+            parsed = _extract_tuz_row(r, layouts)
+            if not parsed:
                 continue
 
-            client = norm_client(get("client"))
-            if client.upper() in SAMPLE_CLIENT:
-                continue
-            # if client looks like a part number and classic shift — try recover
-            if client and is_sample_pn(norm_pn(client)) is False and re.fullmatch(r"[A-Z0-9\-./]+", norm_pn(client)) and not re.search(r"[А-Яа-яA-Za-z]{3,}", client.replace(" ", "")):
-                # likely shifted; skip unsafe rows rather than corrupt stats
-                pass
-
-            alt = norm_pn(get("alt"))
-            desc = str(get("desc") or "").strip()
-            qty = parse_qty(get("qty"))
-            # Только Offered per unit $ — без supplier/root
-            price = None
-            price_idx = mapping.get("price")
-            if price_idx is not None and price_idx < len(r):
-                price = parse_money(r[price_idx])
-            else:
-                # classic ≈24; с Sales/Purch ID ≈27
-                for idx in (24, 27):
-                    if idx < len(r):
-                        cand = parse_money(r[idx])
-                        if cand is not None:
-                            price = cand
-                            break
-            cond = str(get("cond") or "").strip()
-            if cond.lower() in {"cond", "condition"}:
-                cond = ""
-            date = get("date")
-            req = str(get("req") or "").strip()
-            invoice = str(get("invoice") or "").strip()
-
-            # dedupe: same request/pn/client/status-noise
-            dedupe_key = (sheet, pn, client, req or str(date), round(qty, 4))
+            dedupe_key = (
+                sheet,
+                parsed["pn"],
+                parsed["client"],
+                parsed["req"] or str(parsed["date"]),
+                round(parsed["qty"], 4),
+                round(parsed["price"] or 0, 2),
+                parsed["desc"][:40],
+                parsed["cond"],
+            )
             if dedupe_key in seen:
                 continue
             seen.add(dedupe_key)
@@ -731,16 +792,16 @@ def load_tuz(path: Path) -> list[Event]:
                 Event(
                     source="TUZ",
                     kind="request",
-                    pn=pn,
-                    alt=alt if alt and alt != pn else "",
-                    client=client,
-                    qty=qty,
-                    price=price,
-                    condition=cond,
-                    date=date,
-                    request_no=req or invoice,
+                    pn=parsed["pn"],
+                    alt=parsed["alt"],
+                    client=parsed["client"],
+                    qty=parsed["qty"],
+                    price=parsed["price"],
+                    condition=parsed["cond"],
+                    date=parsed["date"],
+                    request_no=parsed["req"],
                     sheet=sheet,
-                    description=desc,
+                    description=parsed["desc"],
                 )
             )
     wb.close()
@@ -1251,6 +1312,7 @@ def main():
         f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
         "Правило запросов: 1 запрос = P/N + клиент + календарный день (ТУЗ и EXP вместе).",
         "Правило заказов ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
+        "Исправлено чтение ТУЗ: учтён сдвиг колонок (Sales/Purch ID) и сохранение всех Offered по квотам одного RFQ.",
         "Колонки ATA и S/N убраны; запросы ТУЗ и EXP объединены в один столбец.",
         "Сопоставление P/N: регистр, пробелы, тире; soft-ключ и ALT P/N.",
         "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
