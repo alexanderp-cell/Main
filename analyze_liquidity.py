@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import re
 import warnings
+from datetime import datetime, date
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from statistics import median
 from typing import Any, Iterable, Optional
@@ -157,6 +157,33 @@ def parse_qty(value: Any) -> float:
     return parse_money(m.group(0)) or 0.0
 
 
+def day_key(value: Any) -> str:
+    """Календарный день для уникальности запроса."""
+    if value is None or value == "":
+        return "NO_DATE"
+    if isinstance(value, datetime):
+        return value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    s = str(value).strip()
+    if not s:
+        return "NO_DATE"
+    try:
+        return datetime.fromisoformat(s.replace("Z", "").split(".")[0]).date().isoformat()
+    except Exception:
+        pass
+    for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s[:10], fmt).date().isoformat()
+        except Exception:
+            continue
+    return s[:10] if len(s) >= 8 else "NO_DATE"
+
+
+def client_key(client: str) -> str:
+    return (client or "").strip().lower()
+
+
 @dataclass
 class Event:
     source: str  # TAZ / TUZ / EXP
@@ -175,31 +202,46 @@ class Event:
 
 @dataclass
 class MarketAgg:
-    order_events: int = 0
+    # Уникальные заказы: номер заказа (счёта). 1 заказ = P/N + номер заказа
+    order_keys: set = field(default_factory=set)
     order_qty: float = 0.0
     order_clients: set = field(default_factory=set)
-    request_events: int = 0
+    # Уникальные запросы ТУЗ+EXP: (клиент, день). 1 запрос = P/N + клиент + день
+    request_keys: set = field(default_factory=set)
     request_qty: float = 0.0
     request_clients: set = field(default_factory=set)
-    exp_events: int = 0
-    exp_qty: float = 0.0
-    exp_clients: set = field(default_factory=set)
     order_prices: list = field(default_factory=list)
     request_prices: list = field(default_factory=list)
-    exp_prices: list = field(default_factory=list)
     descriptions: set = field(default_factory=set)
     conditions_seen: set = field(default_factory=set)
-    matched_via: set = field(default_factory=set)  # exact / soft / alt
+    matched_via: set = field(default_factory=set)
     sample_clients_order: list = field(default_factory=list)
     sample_clients_request: list = field(default_factory=list)
+    # для прозрачности источников
+    request_keys_tuz: set = field(default_factory=set)
+    request_keys_exp: set = field(default_factory=set)
+
+    @property
+    def order_events(self) -> int:
+        return len(self.order_keys)
+
+    @property
+    def request_events(self) -> int:
+        return len(self.request_keys)
 
     def merge_event(self, e: Event):
         if e.description:
             self.descriptions.add(str(e.description).strip()[:120])
         if e.condition:
             self.conditions_seen.add(str(e.condition).strip().upper())
+
         if e.kind == "order":
-            self.order_events += 1
+            ono = (e.request_no or "").strip()
+            if not ono:
+                # без номера заказа — не склеиваем всё в одну кучу
+                ono = f"NO_INV|{client_key(e.client)}|{day_key(e.date)}|{round(e.qty or 0, 4)}"
+            if ono not in self.order_keys:
+                self.order_keys.add(ono)
             self.order_qty += e.qty or 0
             if is_market_client(e.client):
                 self.order_clients.add(e.client)
@@ -207,24 +249,54 @@ class MarketAgg:
                     self.sample_clients_order.append(e.client)
             if e.price is not None and e.price > 0:
                 self.order_prices.append(e.price)
-        elif e.source == "EXP":
-            self.exp_events += 1
-            self.exp_qty += e.qty or 0
-            if is_market_client(e.client):
-                self.exp_clients.add(e.client)
-                if len(self.sample_clients_request) < 8 and e.client not in self.sample_clients_request:
-                    self.sample_clients_request.append(e.client)
-            if e.price is not None and e.price > 0:
-                self.exp_prices.append(e.price)
+            return
+
+        # request from TUZ or EXP — общее правило уникальности
+        ck = client_key(e.client)
+        dk = day_key(e.date)
+        rkey = (ck, dk)
+        if rkey not in self.request_keys:
+            self.request_keys.add(rkey)
+        self.request_qty += e.qty or 0
+        if e.source == "EXP":
+            self.request_keys_exp.add(rkey)
         else:
-            self.request_events += 1
-            self.request_qty += e.qty or 0
-            if is_market_client(e.client):
-                self.request_clients.add(e.client)
-                if len(self.sample_clients_request) < 8 and e.client not in self.sample_clients_request:
-                    self.sample_clients_request.append(e.client)
-            if e.price is not None and e.price > 0:
-                self.request_prices.append(e.price)
+            self.request_keys_tuz.add(rkey)
+        if is_market_client(e.client):
+            self.request_clients.add(e.client)
+            if len(self.sample_clients_request) < 8 and e.client not in self.sample_clients_request:
+                self.sample_clients_request.append(e.client)
+        if e.price is not None and e.price > 0:
+            self.request_prices.append(e.price)
+
+    def merge_agg(self, src: "MarketAgg"):
+        new_orders = src.order_keys - self.order_keys
+        # qty only for newly added order keys — approximate: add proportional avg
+        if new_orders and src.order_keys:
+            avg_q = src.order_qty / max(len(src.order_keys), 1)
+            self.order_qty += avg_q * len(new_orders)
+        self.order_keys |= src.order_keys
+        self.order_clients |= src.order_clients
+
+        new_reqs = src.request_keys - self.request_keys
+        if new_reqs and src.request_keys:
+            avg_q = src.request_qty / max(len(src.request_keys), 1)
+            self.request_qty += avg_q * len(new_reqs)
+        self.request_keys |= src.request_keys
+        self.request_clients |= src.request_clients
+        self.request_keys_tuz |= src.request_keys_tuz
+        self.request_keys_exp |= src.request_keys_exp
+
+        self.order_prices.extend(src.order_prices)
+        self.request_prices.extend(src.request_prices)
+        self.descriptions |= src.descriptions
+        self.conditions_seen |= src.conditions_seen
+        for c in src.sample_clients_order:
+            if c not in self.sample_clients_order and len(self.sample_clients_order) < 8:
+                self.sample_clients_order.append(c)
+        for c in src.sample_clients_request:
+            if c not in self.sample_clients_request and len(self.sample_clients_request) < 8:
+                self.sample_clients_request.append(c)
 
 
 def price_summary(prices: list[float]) -> tuple[Optional[float], Optional[float], Optional[float], int]:
@@ -236,63 +308,57 @@ def price_summary(prices: list[float]) -> tuple[Optional[float], Optional[float]
 def liquidity_score(m: MarketAgg) -> tuple[float, str, str]:
     """Возвращает (score, grade A-D, rationale)."""
     n_ord_cli = len(m.order_clients)
-    n_req_cli = len(m.request_clients | m.exp_clients)
-    n_all_cli = len(m.order_clients | m.request_clients | m.exp_clients)
+    n_req_cli = len(m.request_clients)
+    n_all_cli = len(m.order_clients | m.request_clients)
+    n_req = m.request_events
+    n_ord = m.order_events
 
     score = (
-        m.order_events * 12.0
+        n_ord * 12.0
         + n_ord_cli * 10.0
         + min(m.order_qty, 40) * 0.4
-        + m.request_events * 3.0
-        + len(m.request_clients) * 5.0
-        + m.exp_events * 2.0
-        + len(m.exp_clients) * 3.0
-        + min(m.request_qty + m.exp_qty, 80) * 0.15
+        + n_req * 3.0
+        + n_req_cli * 5.0
+        + min(m.request_qty, 80) * 0.15
     )
 
-    # лёгкий буст за повторный спрос у нескольких клиентов
     if n_all_cli >= 3:
         score += 8
     if n_all_cli >= 5:
         score += 10
 
-    if m.order_events >= 3 and n_ord_cli >= 2:
+    if n_ord >= 3 and n_ord_cli >= 2:
         grade = "A"
-    elif m.order_events >= 1 and (m.request_events + m.exp_events >= 1 or n_ord_cli >= 1):
-        grade = "A" if (m.order_events >= 2 or n_all_cli >= 3) else "B"
-    elif m.request_events + m.exp_events >= 5 and n_req_cli >= 2:
+    elif n_ord >= 1 and (n_req >= 1 or n_ord_cli >= 1):
+        grade = "A" if (n_ord >= 2 or n_all_cli >= 3) else "B"
+    elif n_req >= 5 and n_req_cli >= 2:
         grade = "B"
-    elif m.request_events + m.exp_events >= 2 or n_req_cli >= 2:
+    elif n_req >= 2 or n_req_cli >= 2:
         grade = "C"
-    elif m.request_events + m.exp_events >= 1 or m.order_events >= 1:
+    elif n_req >= 1 or n_ord >= 1:
         grade = "C"
     else:
         grade = "D"
         score = 0.0
 
-    # refine borderline by score
     if grade != "D":
         if score >= 55 and grade in {"B", "C"}:
             grade = "A"
-        elif score >= 25 and grade == "C" and (m.order_events >= 1 or n_req_cli >= 2):
+        elif score >= 25 and grade == "C" and (n_ord >= 1 or n_req_cli >= 2):
             grade = "B"
 
     parts = []
-    if m.order_events:
+    if n_ord:
         parts.append(
-            f"заказов ТАЗ: {m.order_events} (клиентов: {n_ord_cli}"
+            f"заказов ТАЗ: {n_ord} (уник. №заказа+P/N; клиентов: {n_ord_cli}"
             + (f" — {', '.join(m.sample_clients_order[:5])}" if m.sample_clients_order else "")
             + f", qty≈{m.order_qty:g})"
         )
-    if m.request_events:
+    if n_req:
         parts.append(
-            f"запросов ТУЗ: {m.request_events} (клиентов: {len(m.request_clients)}"
+            f"запросов ТУЗ+EXP: {n_req} (уник. P/N+клиент+день; клиентов: {n_req_cli}"
             + (f" — {', '.join(m.sample_clients_request[:5])}" if m.sample_clients_request else "")
             + f", qty≈{m.request_qty:g})"
-        )
-    if m.exp_events:
-        parts.append(
-            f"запросов EXP: {m.exp_events} (клиентов: {len(m.exp_clients)}, qty≈{m.exp_qty:g})"
         )
     if not parts:
         parts.append("совпадений по рынку не найдено")
@@ -366,7 +432,7 @@ def load_taz(path: Path) -> list[Event]:
             alt = norm_pn(r[11])
             desc = str(r[12]).strip() if r[12] is not None else ""
             date = r[16]
-            key = ("TAZ", sheet, invoice, pn, client, round(qty, 4), round(price or 0, 2))
+            key = ("TAZ", pn, invoice)  # 1 заказ = P/N + номер заказа
             if key in seen:
                 continue
             seen.add(key)
@@ -672,27 +738,7 @@ def resolve_market(
         src = by_pn.get(mp)
         if not src:
             continue
-        # merge fields
-        result.order_events += src.order_events
-        result.order_qty += src.order_qty
-        result.order_clients |= src.order_clients
-        result.request_events += src.request_events
-        result.request_qty += src.request_qty
-        result.request_clients |= src.request_clients
-        result.exp_events += src.exp_events
-        result.exp_qty += src.exp_qty
-        result.exp_clients |= src.exp_clients
-        result.order_prices.extend(src.order_prices)
-        result.request_prices.extend(src.request_prices)
-        result.exp_prices.extend(src.exp_prices)
-        result.descriptions |= src.descriptions
-        result.conditions_seen |= src.conditions_seen
-        for c in src.sample_clients_order:
-            if c not in result.sample_clients_order and len(result.sample_clients_order) < 8:
-                result.sample_clients_order.append(c)
-        for c in src.sample_clients_request:
-            if c not in result.sample_clients_request and len(result.sample_clients_request) < 8:
-                result.sample_clients_request.append(c)
+        result.merge_agg(src)
 
     if not result.matched_via and matched_pns:
         result.matched_via.add("точное P/N")
@@ -740,9 +786,9 @@ def fmt_price(v: Optional[float]) -> str:
 def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
     omin, omed, omax, ocnt = price_summary(market.order_prices)
-    rmin, rmed, rmax, rcnt = price_summary(market.request_prices + market.exp_prices)
+    rmin, rmed, rmax, rcnt = price_summary(market.request_prices)
     ref_price = omed if omed is not None else rmed
-    has_demand = (market.order_events + market.request_events + market.exp_events) > 0
+    has_demand = (market.order_events + market.request_events) > 0
     has_sell_offered = ref_price is not None
     if not has_demand:
         price_flag = "н/п (нет спроса)"
@@ -753,11 +799,8 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
 
     conds = sorted(stock["conditions"])
     cond_display = ", ".join(c if c else "(пусто)" for c in conds) if conds else "(пусто)"
-    # note by primary/first condition codes
-    notes_cond = []
-    for c in conds:
-        notes_cond.append(condition_note(c))
-    extra = "; ".join(dict.fromkeys(notes_cond))  # unique preserve order
+    notes_cond = [condition_note(c) for c in conds]
+    extra = "; ".join(dict.fromkeys(notes_cond))
 
     rationale = rationale + f" На складе: {stock['qty']:g} шт. ({stock['lines']} строк АТИ)."
     rationale = rationale + f" Состояние склада: {extra}."
@@ -786,15 +829,11 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "taz_orders": market.order_events,
         "taz_clients_n": len(market.order_clients),
         "taz_clients": ", ".join(market.sample_clients_order[:6]),
-        "taz_qty": market.order_qty,
-        "tuz_requests": market.request_events,
-        "tuz_clients_n": len(market.request_clients),
-        "tuz_clients": ", ".join(
-            [c for c in market.sample_clients_request if c in market.request_clients][:6]
-        ),
-        "exp_requests": market.exp_events,
-        "exp_clients_n": len(market.exp_clients),
-        "req_clients_all_n": len(market.request_clients | market.exp_clients),
+        "requests": market.request_events,
+        "req_clients_n": len(market.request_clients),
+        "req_clients": ", ".join(market.sample_clients_request[:6]),
+        "req_tuz_part": len(market.request_keys_tuz),
+        "req_exp_part": len(market.request_keys_exp),
         "price_flag": price_flag,
         "has_sell_offered": has_sell_offered,
         "has_demand": has_demand,
@@ -854,12 +893,10 @@ HEADERS = [
     ("Кол-во на складе", 12),
     ("Заказов ТАЗ", 11),
     ("Клиентов ТАЗ", 11),
-    ("Клиенты (заказы)", 28),
-    ("Qty заказов", 10),
-    ("Запросов ТУЗ", 11),
-    ("Клиентов ТУЗ", 11),
-    ("Запросов EXP", 11),
-    ("Клиентов EXP", 11),
+    ("Клиенты (заказы)", 26),
+    ("Запросов ТУЗ+EXP", 14),
+    ("Клиентов запросов", 12),
+    ("Клиенты (запросы)", 26),
     ("Флаг цены sell/offered", 18),
     ("Цена ориентир USD", 14),
     ("Цена ТАЗ медиана", 13),
@@ -937,11 +974,9 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["taz_orders"],
             r["taz_clients_n"],
             r["taz_clients"],
-            r["taz_qty"],
-            r["tuz_requests"],
-            r["tuz_clients_n"],
-            r["exp_requests"],
-            r["exp_clients_n"],
+            r["requests"],
+            r["req_clients_n"],
+            r["req_clients"],
             r["price_flag"],
             r["price_ref_usd"],
             r["price_taz_median"],
@@ -954,7 +989,7 @@ def write_rows(ws, rows: list[dict], header_color: str):
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 17, 24}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 14, 22}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
             if col == 2:
@@ -964,13 +999,13 @@ def write_rows(ws, rows: list[dict], header_color: str):
             if col == 8:
                 cell.font = Font(bold=True, name="Calibri", size=11)
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 17:
+            if col == 15:
                 if r["has_demand"] and not r["has_sell_offered"]:
                     cell.fill = PRICE_MISSING_FILL
                     cell.font = Font(bold=True, color="721C24", name="Calibri")
                 elif r["has_sell_offered"]:
                     cell.fill = PRICE_OK_FILL
-            if col in {18, 19, 21} and isinstance(val, (int, float)):
+            if col in {16, 17, 19} and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
         ws.row_dimensions[i + 1].height = 48
     if rows:
@@ -1022,6 +1057,8 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         "D — нет спроса: P/N не найден в ТАЗ/ТУЗ/EXPENDABLES (с учётом нормализации и ALT).",
         "Балл учитывает число заказов/запросов, число уникальных клиентов, объёмы; заказы ТАЗ весят больше запросов.",
         "Одинаковые P/N на складе сведены в одну строку внутри раздела Condition; «Кол-во на складе» = сумма штук.",
+        "Заказы ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
+        "Запросы ТУЗ+EXP: 1 запрос = P/N + клиент + календарный день (источники объединены).",
         "Цена ориентир ТОЛЬКО из: ТАЗ «Продажная, ед.» / ТУЗ «Offered per unit $» / EXP «Sell Price EA».",
         "Закупка, Supplier Price, Root Price, Market Price EA в ориентир НЕ входят.",
         "Колонка «Флаг цены sell/offered»: если спрос есть, а этих цен нет — позиция помечена, денежная оценка невозможна.",
@@ -1044,13 +1081,18 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
 def main():
     print("Loading TAZ...")
     taz = load_taz(DATA / "TAZ_17.07.2026.xlsx")
-    print(f"  TAZ events: {len(taz)}")
+    print(f"  TAZ unique orders (P/N+№заказа preload): {len(taz)}")
     print("Loading TUZ...")
     tuz = load_tuz(DATA / "TUZ_17.07.2026.xlsx")
-    print(f"  TUZ events: {len(tuz)}")
+    print(f"  TUZ raw rows kept: {len(tuz)}")
     print("Loading EXPENDABLES...")
-    exp = load_exp(DATA / "EXPENDABLES.xlsx")
-    print(f"  EXP events: {len(exp)}")
+    exp_path = DATA / "EXPENDABLES.xlsx"
+    if exp_path.exists():
+        exp = load_exp(exp_path)
+        print(f"  EXP raw rows kept: {len(exp)}")
+    else:
+        exp = []
+        print("  WARNING: EXPENDABLES.xlsx not found — requests counted from TUZ only")
     print("Loading ATI...")
     ati = load_ati(DATA / "ATI.xlsx")
     print(f"  ATI rows: {len(ati)}")
@@ -1067,17 +1109,17 @@ def main():
     empty_cond = sum(1 for r in ati if not r["condition"])
     stock = aggregate_ati_stock(ati)
     notes = [
-        f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте они сведены в одну строку на P/N внутри раздела Condition, кол-во = сумма штук.",
+        f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте одна строка на P/N внутри раздела Condition, кол-во = сумма штук.",
         f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
-        f"Пустой Condition в АТИ: {empty_cond} исходных строк.",
-        "Колонки ATA и S/N убраны из отчёта.",
-        "В ТУЗ обнаружены сдвиги/дубли заголовков и повторные строки одного запроса с разными статусами — выполнен дедуп по (лист, P/N, клиент, №запроса/дата, qty).",
-        "В EXPENDABLES несколько вкладок и sample-строки — sample/DEFAULT отфильтрованы, дубли цен/предложений сжаты.",
-        "Сопоставление P/N: верхний регистр, удаление пробелов, унификация тире; дополнительно soft-ключ без разделителей и ALT P/N.",
-        "Цена в файле АТИ отсутствует — в отчёте рыночные ориентиры только из sell/offered.",
-        "Контрагенты вида «Закупка на склад» / internal не считаются рыночными клиентами (заказы при этом учитываются).",
-        "Позиции со спросом, но без «Продажная, ед.» / «Offered per unit $» / «Sell Price EA» помечены флагом «НЕТ sell/offered».",
+        "Правило запросов: 1 запрос = P/N + клиент + календарный день (ТУЗ и EXP вместе).",
+        "Правило заказов ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
+        "Колонки ATA и S/N убраны; запросы ТУЗ и EXP объединены в один столбец.",
+        "Сопоставление P/N: регистр, пробелы, тире; soft-ключ и ALT P/N.",
+        "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
+        "«Закупка на склад» не считается рыночным клиентом.",
     ]
+    if not exp:
+        notes.insert(0, "ВНИМАНИЕ: файл EXPENDABLES отсутствует в среде — столбец запросов пока без EXP.")
 
     scored = []
     for item in stock:
@@ -1091,7 +1133,6 @@ def main():
     sec2 = sorted([r for r in scored if r["section"] == 2], key=sort_key)
     sec3 = sorted([r for r in scored if r["section"] == 3], key=sort_key)
 
-    # ТОП: одна строка на P/N (если P/N в нескольких разделах — берём лучший балл, qty суммируем)
     top_by_pn: dict[str, dict] = {}
     for r in scored:
         if r["liquidity_grade"] not in {"A", "B"}:
@@ -1103,7 +1144,6 @@ def main():
             cur = top_by_pn[pn]
             cur["qty"] += r["qty"]
             cur["lines"] = cur.get("lines", 0) + r.get("lines", 0)
-            # merge conditions display
             conds = {x.strip() for x in cur["condition"].split(",") if x.strip()}
             conds |= {x.strip() for x in r["condition"].split(",") if x.strip()}
             cur["condition"] = ", ".join(sorted(conds))
@@ -1116,11 +1156,9 @@ def main():
                     "taz_orders",
                     "taz_clients_n",
                     "taz_clients",
-                    "taz_qty",
-                    "tuz_requests",
-                    "tuz_clients_n",
-                    "exp_requests",
-                    "exp_clients_n",
+                    "requests",
+                    "req_clients_n",
+                    "req_clients",
                     "price_flag",
                     "has_sell_offered",
                     "has_demand",
