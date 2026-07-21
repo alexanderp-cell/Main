@@ -930,11 +930,48 @@ def fmt_price(v: Optional[float]) -> str:
     return f"${v:,.2f}"
 
 
+def demand_summary(market: MarketAgg) -> str:
+    """Краткое резюме заказов/запросов в одной ячейке."""
+    parts = []
+    if market.order_events:
+        cli = ", ".join(market.sample_clients_order[:4])
+        parts.append(
+            f"Заказы ТАЗ: {market.order_events}"
+            + (f" · клиенты: {cli}" if cli else "")
+            + (f" ({len(market.order_clients)} уник.)" if len(market.order_clients) > 1 else "")
+        )
+    else:
+        parts.append("Заказов ТАЗ: нет")
+
+    if market.request_events:
+        cli = ", ".join(market.sample_clients_request[:4])
+        parts.append(
+            f"Запросы ТУЗ+EXP: {market.request_events}"
+            + (f" · клиенты: {cli}" if cli else "")
+            + (f" ({len(market.request_clients)} уник.)" if len(market.request_clients) > 1 else "")
+        )
+    else:
+        parts.append("Запросов: нет")
+
+    return " | ".join(parts)
+
+
+def price_data_flag(market: MarketAgg) -> str:
+    """Флаг источника ценовых/рыночных данных."""
+    if market.order_events > 0:
+        return "есть заказы"
+    if market.request_events > 0:
+        return "есть предложения"
+    return "нет данных"
+
+
 def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
     ref_price, price_conf, price_detail = compute_indicative_price(market)
     has_demand = (market.order_events + market.request_events) > 0
     has_sell_offered = ref_price is not None
+    flag = price_data_flag(market)
+    summary = demand_summary(market)
 
     conds = sorted(stock["conditions"])
     cond_display = ", ".join(c if c else "(пусто)" for c in conds) if conds else "(пусто)"
@@ -965,15 +1002,11 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "qty": stock["qty"],
         "lines": stock["lines"],
         "taz_orders": market.order_events,
-        "taz_clients_n": len(market.order_clients),
-        "taz_clients": ", ".join(market.sample_clients_order[:6]),
         "requests": market.request_events,
-        "req_clients_n": len(market.request_clients),
-        "req_clients": ", ".join(market.sample_clients_request[:6]),
-        "req_tuz_part": len(market.request_keys_tuz),
-        "req_exp_part": len(market.request_keys_exp),
+        "demand_summary": summary,
         "price_ref_usd": ref_price,
         "price_confidence": price_conf,
+        "price_flag": flag,
         "has_sell_offered": has_sell_offered,
         "has_demand": has_demand,
         "match_via": ", ".join(sorted(market.matched_via)) if market.matched_via else "нет",
@@ -982,54 +1015,17 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     }
 
 
-def aggregate_ati_stock(ati_rows: list[dict]) -> list[dict]:
-    """Одна строка на P/N внутри раздела Condition; qty = сумма штук."""
-    groups: dict[tuple, dict] = {}
-    for r in ati_rows:
-        sec = condition_section(r["condition"])
-        key = (r["pn"], sec)
-        if key not in groups:
-            groups[key] = {
-                "pn": r["pn"],
-                "partno": r["partno"],
-                "qty": 0.0,
-                "lines": 0,
-                "conditions": set(),
-                "description": r.get("description") or "",
-                "ac_typs": set(),
-                "section": sec,
-            }
-        g = groups[key]
-        q = r["qty"] if r.get("qty") and r["qty"] > 0 else 1.0
-        g["qty"] += q
-        g["lines"] += 1
-        g["conditions"].add((r.get("condition") or "").strip().upper())
-        if r.get("description") and not g["description"]:
-            g["description"] = r["description"]
-        if r.get("ac_typ"):
-            g["ac_typs"].add(r["ac_typ"].strip())
-        # keep a readable partno (first seen)
-    return list(groups.values())
-
-
 HEADERS = [
     ("Ранг", 6),
-    ("Ликвидность", 12),
-    ("Балл", 8),
+    ("Тип ВС", 12),
     ("P/N", 18),
-    ("Description", 32),
-    ("A/C", 12),
-    ("Condition", 12),
-    ("Кол-во на складе", 12),
-    ("Заказов ТАЗ", 11),
-    ("Клиентов ТАЗ", 11),
-    ("Клиенты (заказы)", 26),
-    ("Запросов ТУЗ+EXP", 14),
-    ("Клиентов запросов", 12),
-    ("Клиенты (запросы)", 26),
-    ("Цена ориентир USD", 14),
-    ("Уверенность в цене", 14),
-    ("Сопоставление", 16),
+    ("Описание", 34),
+    ("Состояние", 12),
+    ("Кол-во", 9),
+    ("Ориентировочная цена USD", 14),
+    ("Уверенность", 12),
+    ("Флаг цены", 14),
+    ("Спрос (заказы/запросы)", 48),
     ("Обоснование оценки", 80),
 ]
 
@@ -1083,47 +1079,45 @@ def write_rows(ws, rows: list[dict], header_color: str):
         "низкая": PatternFill("solid", fgColor="C47F00"),
         "н/п": PatternFill("solid", fgColor="8A8A8A"),
     }
+    flag_fill = {
+        "есть заказы": PatternFill("solid", fgColor="1F7A4D"),
+        "есть предложения": PatternFill("solid", fgColor="2F6FED"),
+        "нет данных": PatternFill("solid", fgColor="8A8A8A"),
+    }
     for i, r in enumerate(rows, 1):
         values = [
             i,
-            r["liquidity_grade"],
-            r["liquidity_score"],
+            r["ac_typ"],
             r["partno"],
             r["description"],
-            r["ac_typ"],
             r["condition"],
             r["qty"],
-            r["taz_orders"],
-            r["taz_clients_n"],
-            r["taz_clients"],
-            r["requests"],
-            r["req_clients_n"],
-            r["req_clients"],
             r["price_ref_usd"],
             r["price_confidence"],
-            r["match_via"],
+            r["price_flag"],
+            r["demand_summary"],
             r["rationale"],
         ]
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {5, 11, 14, 18}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {4, 10, 11}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
-            if col == 2:
-                cell.fill = GRADE_FILL.get(r["liquidity_grade"], GRADE_FILL["D"])
-                cell.font = GRADE_FONT
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 8:
+            if col == 6:
                 cell.font = Font(bold=True, name="Calibri", size=11)
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 15 and isinstance(val, (int, float)):
+            if col == 7 and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
-            if col == 16:
+            if col == 8:
                 cell.fill = conf_fill.get(r["price_confidence"], conf_fill["н/п"])
                 cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-        ws.row_dimensions[i + 1].height = 52
+            if col == 9:
+                cell.fill = flag_fill.get(r["price_flag"], flag_fill["нет данных"])
+                cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[i + 1].height = 56
     if rows:
         ws.auto_filter.ref = f"A1:{get_column_letter(len(HEADERS))}{len(rows)+1}"
 
@@ -1269,15 +1263,13 @@ def main():
                     "liquidity_grade",
                     "liquidity_score",
                     "taz_orders",
-                    "taz_clients_n",
-                    "taz_clients",
                     "requests",
-                    "req_clients_n",
-                    "req_clients",
+                    "demand_summary",
                     "has_sell_offered",
                     "has_demand",
                     "price_ref_usd",
                     "price_confidence",
+                    "price_flag",
                     "match_via",
                     "rationale",
                     "description",
@@ -1328,8 +1320,19 @@ def main():
         c.fill = PatternFill("solid", fgColor=color)
         c.font = Font(bold=True, color="FFFFFF", name="Calibri")
         wsl.cell(i, 2, desc)
-    wsl["A14"] = "Разделы по Condition: 1=пусто, 2=US/NA, 3=прочие. Детали цены — в обосновании."
-    wsl["A15"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
+    wsl["A14"] = "Флаг цены"
+    wsl["A14"].font = Font(bold=True, size=13)
+    for i, (name, color, desc) in enumerate([
+        ("есть заказы", "1F7A4D", "в ТАЗ есть заказы по P/N"),
+        ("есть предложения", "2F6FED", "заказов нет, но есть запросы/предложения ТУЗ/EXP"),
+        ("нет данных", "8A8A8A", "нет заказов и запросов по P/N"),
+    ], 15):
+        c = wsl.cell(i, 1, name)
+        c.fill = PatternFill("solid", fgColor=color)
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri")
+        wsl.cell(i, 2, desc)
+    wsl["A19"] = "Ликвидность и балл скрыты: сортировка по ним сохранена в ранге. Детали — в обосновании."
+    wsl["A20"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
     wsl.column_dimensions["A"].width = 12
     wsl.column_dimensions["B"].width = 70
 
