@@ -30,6 +30,7 @@
 Исходные файлы ОБРАЗЕЦ.xlsx и ОСТАТКИ.xlsx НЕ изменяются.
 """
 
+import datetime
 import re
 import sys
 import warnings
@@ -62,10 +63,13 @@ CYR_TO_LAT = {
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 
 # Служебные слова/обозначения, которые не являются частью партийного номера.
+# Список сознательно консервативен: сюда входят слова из ТЗ и реально
+# встречающиеся в данных обозначения складов. Короткие двойники, которые
+# часто являются частью настоящих партномеров (например, "PC" в "PC-1067"),
+# намеренно НЕ включены.
 NOISE_WORDS = [
-    "PART NUMBER", "P/N", "PN", "ALT PN", "ALT", "QTY", "PCS", "PC", "EACH",
-    "EA", "STOCK", "STK", "MOSCOW", "MOW", "MSK", "SIRIUS", "SIR", "VKO",
-    "SVO", "DME", "LED", "FAI", "FEI", "NEW", "USED", "SERVICEABLE",
+    "PART NUMBER", "P/N", "PN", "ALT PN", "ALT", "QTY", "PCS", "EA",
+    "STOCK", "STK", "MOSCOW", "MOW", "SIRIUS", "SIR", "VKO", "FAI", "FEI",
 ]
 # Регэксп для служебных слов как отдельных токенов (без учёта регистра).
 NOISE_RE = re.compile(
@@ -88,9 +92,19 @@ def strip_cyrillic(text):
 
 
 def cell_str(value):
-    """Приводит значение ячейки к строке без крайних пробелов."""
+    """Приводит значение ячейки к строке без крайних пробелов.
+
+    Даты форматируются как ГГГГ-ММ-ДД: Excel часто превращает партийные номера
+    вида "8296-01-01" в даты, и их нужно вернуть в исходный текстовый вид
+    (а не "8296-01-01 00:00:00").
+    """
     if value is None:
         return ""
+    if isinstance(value, datetime.date):
+        text = "%04d-%02d-%02d" % (value.year, value.month, value.day)
+        if isinstance(value, datetime.datetime) and (value.hour or value.minute or value.second):
+            text += " %02d:%02d:%02d" % (value.hour, value.minute, value.second)
+        return text
     return str(value).strip()
 
 
@@ -143,19 +157,28 @@ def clean_main_pn(raw):
     return text
 
 
-def clean_alt_pn(raw):
-    """Чистит альтернативные Part Numbers (может быть несколько -> через запятую)."""
+def clean_alt_pn(raw, main_pn=""):
+    """Чистит альтернативные Part Numbers (может быть несколько -> через запятую).
+
+    Токены, повторяющие основной Part Number, не являются альтернативами
+    и отбрасываются.
+    """
     text = cell_str(raw)
     if not text:
         return ""
     # Ячейки с кириллицей в столбце Alt PN — это комментарии, а не номера.
     if CYRILLIC_RE.search(text):
         return ""
+    main_key = main_pn.strip().upper()
     parts = re.split(r"[\n,;]+", text)
     result = []
     for part in parts:
         token = clean_token(part)
-        if is_valid_pn(token) and token not in result:
+        if not is_valid_pn(token):
+            continue
+        if token.upper() == main_key:  # повтор основного номера — не альтернатива
+            continue
+        if token not in result:
             result.append(token)
     return ", ".join(result)
 
@@ -175,12 +198,14 @@ def clean_quantity(raw):
     text = cell_str(raw)
     if not text:
         return ""
-    text = strip_cyrillic(text).strip()
-    if re.fullmatch(r"-?\d+", text):
-        return int(text)
-    m = re.fullmatch(r"-?\d+[.,]\d+", text)
-    if m:
-        return float(text.replace(",", "."))
+    # \xa0 — неразрывный пробел, часто используется как разделитель тысяч.
+    text = strip_cyrillic(text).replace("\xa0", " ").strip()
+    # Целое число, возможно с пробелами-разделителями тысяч ("1 500" -> 1500).
+    compact = text.replace(" ", "")
+    if re.fullmatch(r"-?\d+", compact):
+        return int(compact)
+    if re.fullmatch(r"-?\d+[.,]\d+", compact):
+        return float(compact.replace(",", "."))
     return text
 
 
@@ -252,7 +277,7 @@ def main():
             continue
 
         pn = clean_main_pn(pn_cell.value)
-        alt = clean_alt_pn(stock_ws.cell(row, COL_ALT).value)
+        alt = clean_alt_pn(stock_ws.cell(row, COL_ALT).value, pn)
         desc = clean_text_value(stock_ws.cell(row, COL_DESC).value)
         qty = clean_quantity(stock_ws.cell(row, COL_QTY).value)
         cond = clean_text_value(stock_ws.cell(row, COL_COND).value)
