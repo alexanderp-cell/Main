@@ -34,6 +34,7 @@ import datetime
 import re
 import sys
 import warnings
+from collections import Counter, OrderedDict
 from copy import copy
 
 import openpyxl
@@ -226,6 +227,79 @@ def normalize_ac(raw):
     return text
 
 
+def _uniq_join(values):
+    """Объединяет непустые значения в порядке появления, без повторов, через запятую."""
+    out = []
+    for v in values:
+        v = (v or "").strip()
+        if v and v not in out:
+            out.append(v)
+    return ", ".join(out)
+
+
+def consolidate_records(records):
+    """Объединяет строки с одинаковым основным Part Number в одну.
+
+    - Quantity суммируется.
+    - Alt PN / Condition / AC Type объединяются как уникальные значения через запятую
+      (одинаковые значения не дублируются; пустые игнорируются).
+    - DESCRIPTION берётся самое частое непустое (при равенстве — первое встреченное).
+    Строки без Part Number не объединяются (у них нет ключа) и сохраняются как есть.
+    """
+    groups = OrderedDict()
+    no_key = []
+    for rec in records:
+        key = rec["pn"].strip().upper()
+        if not key:
+            no_key.append(rec)
+            continue
+        groups.setdefault(key, []).append(rec)
+
+    result = []
+    for recs in groups.values():
+        if len(recs) == 1:
+            result.append(recs[0])
+            continue
+
+        # Количество: сумма числовых значений.
+        numeric = [r["qty"] for r in recs if isinstance(r["qty"], (int, float))]
+        total = sum(numeric)
+        if numeric and all(isinstance(q, int) for q in numeric):
+            total = int(total)
+        # На случай нечисловых значений (в текущих данных не встречается) —
+        # добавим их текстом рядом с суммой, чтобы ничего не потерять.
+        non_numeric = [str(r["qty"]).strip() for r in recs
+                       if not isinstance(r["qty"], (int, float)) and str(r["qty"]).strip()]
+        qty = total if not non_numeric else _uniq_join([str(total)] + non_numeric)
+
+        # Alt PN: все уникальные альтернативные номера группы (без основного).
+        main_key = recs[0]["pn"].strip().upper()
+        alt_tokens = []
+        for r in recs:
+            for tok in re.split(r"[\n,;]+", str(r["alt"])):
+                tok = tok.strip()
+                if tok and tok.upper() != main_key and tok not in alt_tokens:
+                    alt_tokens.append(tok)
+        alt = ", ".join(alt_tokens)
+
+        # Описание: самое частое непустое значение.
+        descs = [r["desc"].strip() for r in recs if r["desc"].strip()]
+        desc = Counter(descs).most_common(1)[0][0] if descs else ""
+
+        merged = {
+            "pn": recs[0]["pn"],
+            "alt": alt,
+            "desc": desc,
+            "qty": qty,
+            "cond": _uniq_join(r["cond"] for r in recs),
+            "ac": _uniq_join(r["ac"] for r in recs),
+        }
+        result.append(merged)
+
+    result.extend(no_key)
+    return result
+
+
 def build_sample_order(sample_ws):
     """Строит порядок типов ВС по первому появлению в образце (нормализованный ключ)."""
     order = {}
@@ -287,11 +361,16 @@ def main():
                         "cond": cond, "ac": ac})
         stats["kept"] += 1
 
-    # --- Сортировка ---
-    max_order = len(sample_order)
+    # --- Объединение строк с одинаковым Part Number ---
+    rows_before_merge = len(records)
+    records = consolidate_records(records)
+    rows_after_merge = len(records)
 
+    # --- Сортировка ---
     def sort_key(rec):
-        key = rec["ac"].upper()
+        # У объединённых позиций тип ВС может содержать несколько значений —
+        # для сортировки используем первый (основной) тип.
+        key = rec["ac"].split(",")[0].strip().upper()
         if key in UNKNOWN_AC or not key:
             group = (2, "")               # неопределимые — в самый конец
         elif key in sample_order:
@@ -330,10 +409,12 @@ def main():
     out_wb.save(OUTPUT_FILE)
 
     print("Готово: %s" % OUTPUT_FILE)
-    print("  строк в источнике (непустых): %d" % stats["total"])
-    print("  отброшено по цвету заливки:   %d" % stats["dropped_color"])
-    print("  отброшено по цвету шрифта:    %d" % stats["dropped_font"])
-    print("  записано в результат:         %d" % stats["kept"])
+    print("  строк в источнике (непустых):      %d" % stats["total"])
+    print("  отброшено по цвету заливки:        %d" % stats["dropped_color"])
+    print("  отброшено по цвету шрифта:         %d" % stats["dropped_font"])
+    print("  строк после фильтрации:            %d" % rows_before_merge)
+    print("  объединено дубликатов PN:          %d" % (rows_before_merge - rows_after_merge))
+    print("  записано в результат (строк):       %d" % rows_after_merge)
 
 
 if __name__ == "__main__":
