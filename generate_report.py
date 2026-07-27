@@ -295,7 +295,7 @@ def parse_date(value: Any) -> date | None:
     return None
 
 
-def load_taz(path: Path) -> pd.DataFrame:
+def load_taz(path: Path, excluded_invoicers: set[str] | None = None) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [col.strip() if isinstance(col, str) else col for col in df.columns]
     invoice_col = get_invoice_col(df)
@@ -303,9 +303,10 @@ def load_taz(path: Path) -> pd.DataFrame:
         df = df.rename(columns={invoice_col: COL_INVOICE})
     df = df[df[COL_STATUS].notna()]
     df = df[~((df[COL_STATUS] == "1 NOT PAID") & (df[COL_COMMENT] == "SAMPLE"))]
-    if COL_INVOICER in df.columns:
+    excluded = EXCLUDED_INVOICERS if excluded_invoicers is None else excluded_invoicers
+    if COL_INVOICER in df.columns and excluded:
         invoicer = df[COL_INVOICER].astype(str).str.strip()
-        df = df[~invoicer.isin(EXCLUDED_INVOICERS)]
+        df = df[~invoicer.isin(excluded)]
     return df
 
 
@@ -949,9 +950,10 @@ def generate_report(
     previous_report: Path | None = None,
     previous_date: date | None = None,
     week_days: int = 7,
+    excluded_invoicers: set[str] | None = None,
 ) -> Path:
     report_date = report_date or date.today()
-    df = load_taz(input_path)
+    df = load_taz(input_path, excluded_invoicers=excluded_invoicers)
     client_df = filter_client(df, client)
 
     in_work_raw = filter_in_work(client_df)
@@ -978,11 +980,14 @@ def generate_report(
         len(shipped_df),
     )
 
-    if previous_input or previous_report:
+    include_weekly = previous_input or previous_report or previous_date is not None
+    if include_weekly:
         if previous_input:
-            previous_df = filter_client(load_taz(previous_input), client)
-        else:
+            previous_df = filter_client(load_taz(previous_input, excluded_invoicers=excluded_invoicers), client)
+        elif previous_report:
             previous_df = filter_client(load_report_snapshot_as_previous(previous_report), client)
+        else:
+            previous_df = client_df.iloc[0:0].copy()
         week_end = report_date
         week_start = previous_date or (report_date - timedelta(days=week_days))
         summary = build_weekly_summary(client_df, previous_df, week_start, week_end)
@@ -1050,8 +1055,14 @@ def main() -> None:
         default=7,
         help="Length of summary period in days if --previous-date is not set (default: 7)",
     )
+    parser.add_argument(
+        "--include-fe",
+        action="store_true",
+        help="Include Invoicer=ФЭ rows (needed for clients like Белавиа)",
+    )
     args = parser.parse_args()
 
+    excluded = set() if args.include_fe else set(EXCLUDED_INVOICERS)
     output = args.output or Path("reports") / default_output_name(args.client, args.date)
     result = generate_report(
         args.input,
@@ -1062,13 +1073,17 @@ def main() -> None:
         previous_report=args.previous_report,
         previous_date=args.previous_date,
         week_days=args.week_days,
+        excluded_invoicers=excluded,
     )
     print(f"Report saved: {result}")
     print(f"Client: {args.client}")
-    print(f"В работе rows: {len(filter_in_work(filter_client(load_taz(args.input), args.client)))}")
-    print(f"Отгружено rows: {len(filter_shipped(filter_client(load_taz(args.input), args.client)))}")
-    if args.previous_input or args.previous_report:
+    loaded = filter_client(load_taz(args.input, excluded_invoicers=excluded), args.client)
+    print(f"В работе rows: {len(filter_in_work(loaded))}")
+    print(f"Отгружено rows: {len(filter_shipped(loaded))}")
+    if args.previous_input or args.previous_report or args.previous_date:
         print("Weekly summary sheet: included")
+    if args.include_fe:
+        print("Invoicer ФЭ: included")
 
 
 if __name__ == "__main__":
