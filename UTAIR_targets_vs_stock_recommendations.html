@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>UTair таргеты × склад</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Fraunces:wght@700&display=swap" rel="stylesheet"/>
+<style>
+:root{--ink:#1a2332;--teal:#0b6e6b;--muted:#6b7a8f;--line:rgba(26,35,50,.1);--paper:#f3f6f8}
+body{margin:0;font-family:Manrope,sans-serif;background:radial-gradient(900px 400px at 0% 0%,rgba(11,110,107,.12),transparent),var(--paper);color:var(--ink)}
+.wrap{max-width:1100px;margin:0 auto;padding:36px 18px 64px}
+h1{font-family:Fraunces,Georgia,serif;font-size:clamp(1.8rem,4vw,2.6rem);color:#084e4c;margin:0 0 8px}
+.lead{color:var(--muted);max-width:42rem;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi .k{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.kpi .v{font-family:Fraunces,Georgia,serif;font-size:1.35rem;margin-top:4px;color:var(--teal)}
+.panel{background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:16px;padding:16px;margin:18px 0;overflow:auto}
+h2{font-family:Fraunces,Georgia,serif;font-size:1.3rem;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+tr.P0 td:first-child{background:#f5b7b1}tr.P1 td:first-child{background:#f5cba7}
+tr.P2 td:first-child{background:#fcf3cf}tr.P3 td:first-child{background:#d5f5e3}
+.note{font-size:.9rem;color:#3d4a5c;border-left:3px solid var(--teal);padding:10px 12px;background:rgba(255,255,255,.65);margin-top:14px}
+</style></head><body><div class="wrap">
+<h1>UTair × таргеты Метеора</h1>
+<p class="lead">Куда бить в первую очередь по ценам, и что уже есть на складе FASTAIR (остатки 27.07.2026).</p>
+<div class="grid">
+<div class="kpi"><div class="k">С таргетом</div><div class="v">23 / 25</div></div>
+<div class="kpi"><div class="k">P0</div><div class="v">CR3524 · 3036376 · 2614478</div></div>
+<div class="kpi"><div class="k">На складе из top25</div><div class="v">3036376+WE = 12 шт</div></div>
+</div>
+<div class="panel"><h2>Приоритет улучшения предложений</h2>
+<table><thead><tr><th>Prio</th><th>P/N</th><th>Описание</th><th>RFQ</th><th>Год.</th><th>Наш</th><th>Таргет</th><th>Разрыв</th><th>Склад</th><th>Действие</th></tr></thead>
+<tbody><tr class='P0'><td><b>P0</b></td><td>3036376</td><td>FILTER ELEMENT</td><td>3</td><td>21</td><td>$2,147</td><td>$213</td><td>908%</td><td>12</td><td>×10 к таргету, ЕСТЬ НА СКЛАДЕ (3036376+WE=12). Офферить со склада; таргет на alt 7578659AM — проверить взаимозаменяемость.</td></tr>
+<tr class='P0'><td><b>P0</b></td><td>2614478</td><td>SCREW, MACHINE</td><td>8</td><td>835</td><td>$228</td><td>$102</td><td>123%</td><td>0</td><td>×2.2, годовой объём ~835 шт / ~$86k по таргету — главный объёмный рычаг.</td></tr>
+<tr class='P0'><td><b>P0</b></td><td>CR3524-6-03</td><td>RIVET</td><td>3</td><td>964</td><td>$149</td><td>$8</td><td>1814%</td><td>0</td><td>×18 к таргету, расход ~964/год. Пересобрать закупку (не BOS). Много отмен у клиента.</td></tr>
+<tr class='P1'><td><b>P1</b></td><td>810483-2</td><td>SEAL - CAP</td><td>5</td><td>17</td><td>$5,324</td><td>$1,008</td><td>428%</td><td>0</td><td>×5.3, RFQ=5. Искать портал/OEM вместо BOS.</td></tr>
+<tr class='P1'><td><b>P1</b></td><td>90G97</td><td>SWITCH</td><td>4</td><td>3</td><td>$11,000</td><td>$3,150</td><td>249%</td><td>0</td><td>×3.5; уточнить condition (T–OH).</td></tr>
+<tr class='P1'><td><b>P1</b></td><td>67839</td><td>CARTRIDGE VALVE ASSY</td><td>3</td><td>25.4</td><td>$4,803</td><td>$1,867</td><td>157%</td><td>0</td><td>×2.6; клиент смотрит alt 67839WE.</td></tr>
+<tr class='P1'><td><b>P1</b></td><td>2100002-01-104</td><td>RESTRAINT ASSY</td><td>3</td><td>23</td><td>$7,005</td><td>$3,741</td><td>87%</td><td>0</td><td>×1.9, годовая закупка ~$86k — второй по $ объёму.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>141A6075-3</td><td>ARM ASSY</td><td>3</td><td>6</td><td>$13,867</td><td>$7,213</td><td>92%</td><td>0</td><td>×1.9, годовой ~$43k.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>1C7003-3ABE</td><td>CUSHION</td><td>3</td><td>3</td><td>$13,433</td><td>$6,075</td><td>121%</td><td>0</td><td>×2.2, мел D/DAP — сверить Incoterms.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>1A296-0217HS</td><td>COVER-BACK CUSHION</td><td>4</td><td>18</td><td>$1,565</td><td>$845</td><td>85%</td><td>0</td><td>×1.85, расход 18/год.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>113A9309-1</td><td>BUSHING-PIVOT BOLT</td><td>3</td><td>6</td><td>$4,130</td><td>$2,215</td><td>86%</td><td>0</td><td>×1.9.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>141A6076-1</td><td>PIN</td><td>4</td><td>1</td><td>$2,035</td><td>$724</td><td>181%</td><td>0</td><td>×2.8, расход 1/год — ниже по объёму.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>65C33095-5</td><td>GASKET</td><td>4</td><td>139</td><td>$295</td><td>$183</td><td>61%</td><td>0</td><td>×1.6 при расходе 139/год.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>65-90305-24</td><td>FILTER MAINTENANCE KIT</td><td>4</td><td>29.8</td><td>$462</td><td>$285</td><td>62%</td><td>0</td><td>×1.6, расход ~30/год.</td></tr>
+<tr class='P2'><td><b>P2</b></td><td>1024366-311BHV</td><td>BUMPER-ENDBAY</td><td>3</td><td>19</td><td>$670</td><td>$368</td><td>82%</td><td>0</td><td>×1.8.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>31460-5</td><td>HYDRAULIC TIMER</td><td>5</td><td>1.6</td><td>$8,560</td><td>$6,255</td><td>37%</td><td>0</td><td>разрыв умеренный (~37%); расход 1.6/год.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>RAA2196-4</td><td>SWITCH</td><td>3</td><td>2</td><td>$27,933</td><td>$24,700</td><td>13%</td><td>0</td><td>уже близко (+13%).</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>2100002-01-129</td><td>RESTRAINT SYSTEM - SYS</td><td>3</td><td>0.2</td><td>$8,267</td><td>$6,533</td><td>27%</td><td>0</td><td>расход 0.2.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>65-90305-88</td><td>KIT - CFM56-7 FUEL PUMP FILTER</td><td>4</td><td>18</td><td>$420</td><td>$328</td><td>28%</td><td>0</td><td>+28%.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>7577741</td><td>FILTER</td><td>4</td><td>136</td><td>$48</td><td>$33</td><td>46%</td><td>0</td><td>+46%, расход 136.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>BACC30BL8</td><td>COLLAR</td><td>4</td><td>512</td><td>$20</td><td>$16</td><td>26%</td><td>0</td><td>близко (+26%), расход 512.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>BACN10JR3CFD</td><td>NUTPLATE</td><td>3</td><td>4439</td><td>$5</td><td>$4</td><td>27%</td><td>0</td><td>близко (+27%), расход 4439 — важна стабильная цена.</td></tr>
+<tr class='P3'><td><b>P3</b></td><td>310A2042-3</td><td>PIN</td><td>3</td><td>0</td><td>$7,583</td><td>$5,360</td><td>41%</td><td>0</td><td>не в НЗ, расход 0.</td></tr>
+</tbody></table>
+<div class="note"><b>Важно:</b> таргеты в основном EXW, наши цены — DDP. Зазор 20–40% нормален. ×2–×18 — проблема закупки/оффера.</div>
+</div>
+<div class="panel"><h2>Склад ∩ известные Utair P/N</h2>
+<table><thead><tr><th>P/N</th><th>Описание</th><th>RFQ</th><th>Qty склад</th><th>Деталь</th></tr></thead>
+<tbody><tr><td>3036376</td><td>FILTER ELEMENT</td><td>3</td><td><b>12</b></td><td>3036376×4; 3036376WE×8</td></tr>
+<tr><td>778000</td><td>FILTER</td><td>3</td><td><b>2</b></td><td>778000×2</td></tr>
+<tr><td>6839</td><td>BULB</td><td></td><td><b>504</b></td><td>6839×504</td></tr>
+<tr><td>ST3367-010WE</td><td>PACKING</td><td></td><td><b>263</b></td><td>ST3367-010×213; ST3367-010WE×50</td></tr>
+<tr><td>NAS1611-111</td><td>PACKING</td><td></td><td><b>82</b></td><td>NAS1611-111×82</td></tr>
+<tr><td>MS9696-08</td><td>BOLT</td><td></td><td><b>43</b></td><td>MS9696-08×43</td></tr>
+<tr><td>EV949000</td><td>FILTER</td><td></td><td><b>25</b></td><td>EV949000×25</td></tr>
+<tr><td>AS3209-140</td><td>PACKING</td><td></td><td><b>21</b></td><td>AS3209-140×21</td></tr>
+<tr><td>27-17-90011</td><td>CUSHION, HEAD</td><td></td><td><b>10</b></td><td>27-17-90011×10</td></tr>
+<tr><td>BACB30YP6K8</td><td>BOLT</td><td></td><td><b>10</b></td><td>BACB30YP6K8×10</td></tr>
+<tr><td>BACB30LH3-4</td><td>nan</td><td></td><td><b>2</b></td><td>BACB30LH3-4×2</td></tr>
+<tr><td>170-14458-990</td><td>nan</td><td></td><td><b>1</b></td><td>170-14458-990×1</td></tr>
+<tr><td>A7098A</td><td>SPRING</td><td></td><td><b>1</b></td><td>A7098A×1</td></tr>
+</tbody></table>
+<p style="color:var(--muted);font-size:.85rem;margin:10px 0 0">Полный EXP в сессии недоступен — сверка по ~111 P/N из топов. Залейте EXP снова для полного матча по всем запросам.</p>
+</div>
+</div></body></html>
