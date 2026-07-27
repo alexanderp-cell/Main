@@ -13,11 +13,15 @@ pip install -r requirements.txt
 ```bash
 python3 generate_report.py \
   --input /path/to/TAZ.xlsx \
+  --previous-report /path/to/previous_report.xlsx \
+  --previous-date 17.07.2026 \
   --client Utair \
-  --date 17.07.2026
+  --date 27.07.2026
 ```
 
-По умолчанию отчёт сохраняется в `reports/Utair статус 17.07.2026.xlsx`.
+По умолчанию отчёт сохраняется в `reports/Utair статус 27.07.2026.xlsx`.
+
+Лист **Сводка за неделю** добавляется, если указан `--previous-input` (предыдущий ТАЗ) или `--previous-report` (предыдущий отчёт). Оплаты проверяются по колонкам AS, AT, AU и AV.
 
 ### Параметры
 
@@ -27,6 +31,9 @@ python3 generate_report.py \
 | `--output`, `-o` | Путь к выходному файлу (необязательно) |
 | `--client`, `-c` | Имя клиента в колонке `Customer` (по умолчанию: `Utair`) |
 | `--date`, `-d` | Дата отчёта в формате `ДД.ММ.ГГГГ` (для имени файла и расчёта «более 30 дней») |
+| `--previous-input` | Предыдущий файл ТАЗ для недельной сводки |
+| `--previous-report` | Предыдущий отчёт `.xlsx`, если нет предыдущего ТАЗ |
+| `--previous-date` | Начало периода сводки (по умолчанию: дата отчёта минус 7 дней) |
 
 ## Структура отчёта
 
