@@ -227,6 +227,18 @@ def normalize_ac(raw):
     return text
 
 
+def canon_condition(cond):
+    """Каноническое состояние для группировки/вывода.
+
+    NE, NEW и New обозначают одно и то же ("новое") -> приводим к "NEW".
+    Остальные состояния сохраняются (в верхнем регистре).
+    """
+    u = (cond or "").strip().upper()
+    if u in ("NE", "NEW"):
+        return "NEW"
+    return u
+
+
 def _uniq_join(values):
     """Объединяет непустые значения в порядке появления, без повторов, через запятую."""
     out = []
@@ -238,47 +250,53 @@ def _uniq_join(values):
 
 
 def consolidate_records(records):
-    """Объединяет строки с одинаковым основным Part Number в одну.
+    """Объединяет строки с одинаковыми Part Number И состоянием в одну.
 
-    - Quantity суммируется.
-    - Alt PN / Condition / AC Type объединяются как уникальные значения через запятую
-      (одинаковые значения не дублируются; пустые игнорируются).
-    - DESCRIPTION берётся самое частое непустое (при равенстве — первое встреченное).
-    Строки без Part Number не объединяются (у них нет ключа) и сохраняются как есть.
+    Ключ группировки — пара (основной Part Number, каноническое состояние).
+    Позиции с одинаковым партномером, но разными состояниями (например NEW и OH)
+    остаются отдельными строками. NE и NEW считаются одним состоянием.
+
+    В рамках группы:
+    - Quantity суммируется;
+    - Alt PN / AC Type объединяются как уникальные значения через запятую;
+    - DESCRIPTION берётся самое частое непустое (при равенстве — первое встреченное);
+    - Condition приводится к каноническому виду (NE/New -> NEW).
+    Строки без Part Number не объединяются и сохраняются как есть (состояние
+    тоже приводится к каноническому виду).
     """
     groups = OrderedDict()
     no_key = []
     for rec in records:
-        key = rec["pn"].strip().upper()
-        if not key:
+        pn_key = rec["pn"].strip().upper()
+        if not pn_key:
+            rec = dict(rec, cond=canon_condition(rec["cond"]))
             no_key.append(rec)
             continue
-        groups.setdefault(key, []).append(rec)
+        groups.setdefault((pn_key, canon_condition(rec["cond"])), []).append(rec)
 
     result = []
-    for recs in groups.values():
-        if len(recs) == 1:
-            result.append(recs[0])
-            continue
-
+    for (pn_key, cond_key), recs in groups.items():
         # Количество: сумма числовых значений.
         numeric = [r["qty"] for r in recs if isinstance(r["qty"], (int, float))]
         total = sum(numeric)
         if numeric and all(isinstance(q, int) for q in numeric):
             total = int(total)
-        # На случай нечисловых значений (в текущих данных не встречается) —
-        # добавим их текстом рядом с суммой, чтобы ничего не потерять.
+        # Нечисловые значения (например "3.6 FT" — метраж) сохраняем текстом.
         non_numeric = [str(r["qty"]).strip() for r in recs
                        if not isinstance(r["qty"], (int, float)) and str(r["qty"]).strip()]
-        qty = total if not non_numeric else _uniq_join([str(total)] + non_numeric)
+        if numeric and non_numeric:
+            qty = _uniq_join([str(total)] + non_numeric)
+        elif numeric:
+            qty = total
+        else:
+            qty = _uniq_join(non_numeric)
 
         # Alt PN: все уникальные альтернативные номера группы (без основного).
-        main_key = recs[0]["pn"].strip().upper()
         alt_tokens = []
         for r in recs:
             for tok in re.split(r"[\n,;]+", str(r["alt"])):
                 tok = tok.strip()
-                if tok and tok.upper() != main_key and tok not in alt_tokens:
+                if tok and tok.upper() != pn_key and tok not in alt_tokens:
                     alt_tokens.append(tok)
         alt = ", ".join(alt_tokens)
 
@@ -286,15 +304,14 @@ def consolidate_records(records):
         descs = [r["desc"].strip() for r in recs if r["desc"].strip()]
         desc = Counter(descs).most_common(1)[0][0] if descs else ""
 
-        merged = {
+        result.append({
             "pn": recs[0]["pn"],
             "alt": alt,
             "desc": desc,
             "qty": qty,
-            "cond": _uniq_join(r["cond"] for r in recs),
+            "cond": cond_key,
             "ac": _uniq_join(r["ac"] for r in recs),
-        }
-        result.append(merged)
+        })
 
     result.extend(no_key)
     return result
@@ -377,7 +394,7 @@ def main():
             group = (0, sample_order[key])  # порядок как в образце
         else:
             group = (1, key)              # определимые, но не из образца — после образца
-        return (group[0], group[1], rec["pn"].upper())
+        return (group[0], group[1], rec["pn"].upper(), rec["cond"].upper())
 
     records.sort(key=sort_key)
 
