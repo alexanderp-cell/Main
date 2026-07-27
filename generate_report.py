@@ -209,6 +209,7 @@ def parse_date(value: Any) -> date | None:
 
 def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
+    df.columns = [col.strip() if isinstance(col, str) else col for col in df.columns]
     df = df[df[COL_STATUS].notna()]
     df = df[~((df[COL_STATUS] == "1 NOT PAID") & (df[COL_COMMENT] == "SAMPLE"))]
     if COL_INVOICER in df.columns:
@@ -266,13 +267,16 @@ def prepare_output_frame(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(columns=list(COLUMN_RENAME.values()))
     out = df.rename(columns=COLUMN_RENAME)
-    sort_cols = []
+    sort_by: list[str] = []
     if "ЗАКАЗ ВЗЯТ В РАБОТУ" in out.columns:
-        sort_cols.append("ЗАКАЗ ВЗЯТ В РАБОТУ")
+        out["_sort_order_date"] = pd.to_datetime(out["ЗАКАЗ ВЗЯТ В РАБОТУ"], errors="coerce")
+        sort_by.append("_sort_order_date")
     if "№ счета" in out.columns:
-        sort_cols.append("№ счета")
-    if sort_cols:
-        out = out.sort_values(sort_cols, na_position="last")
+        out["_sort_invoice"] = out["№ счета"].astype(str)
+        sort_by.append("_sort_invoice")
+    if sort_by:
+        out = out.sort_values(sort_by, na_position="last")
+        out = out.drop(columns=sort_by)
     return out.reset_index(drop=True)
 
 
