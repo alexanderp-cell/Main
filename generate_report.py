@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import argparse
 import re
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -30,8 +31,12 @@ COL_TRANSPORT = (
 )
 COL_FEE = "Transaction fee"
 COL_PAY1 = "Оплачено клиентом, USD (cntr+shift+V)\nПервая группа платежей"
+COL_PAY1_DATE = "Дата оплаты Клиентом\n\nПервая группа платежей"
 COL_PAY2 = "Оплачено клиентом, USD (cntr+shift+V)\nЗавершающий платеж"
+COL_PAY2_DATE = "Дата оплаты Клиентом\n\nЗавершающий платеж"
 COL_BALANCE = "Остаток к оплате клиентом, USD"
+COL_PN = "p/n"
+COL_DESC = "DESCRIPTION"
 COL_DELIVERY_ACTUAL = "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)"
 COL_ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
 
@@ -172,6 +177,38 @@ COLUMN_WIDTHS = {
     "Тип оплаты": 18,
 }
 
+WEEKLY_HEADERS = ["№ счета", "P/N", "DESCRIPTION", "Status", "Дата", "Сумма, USD", "Примечание"]
+WEEKLY_PAID_HEADERS = [
+    "№ счета",
+    "P/N",
+    "DESCRIPTION",
+    "Status",
+    "Сумма, USD",
+    "Оплата AS",
+    "Дата AT",
+    "Оплата AU",
+    "Остаток AV",
+    "Проверка",
+]
+
+
+@dataclass
+class WeeklySection:
+    title: str
+    count: int
+    total: float
+    rows: list[dict[str, Any]]
+    headers: list[str]
+
+
+@dataclass
+class WeeklySummary:
+    week_start: date
+    week_end: date
+    new_orders: WeeklySection
+    shipped_orders: WeeklySection
+    paid_orders: WeeklySection
+
 
 def parse_numeric(value: Any) -> float:
     if value is None or (isinstance(value, float) and pd.isna(value)):
@@ -210,12 +247,306 @@ def parse_date(value: Any) -> date | None:
 def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [col.strip() if isinstance(col, str) else col for col in df.columns]
+    invoice_col = get_invoice_col(df)
+    if invoice_col != COL_INVOICE:
+        df = df.rename(columns={invoice_col: COL_INVOICE})
     df = df[df[COL_STATUS].notna()]
     df = df[~((df[COL_STATUS] == "1 NOT PAID") & (df[COL_COMMENT] == "SAMPLE"))]
     if COL_INVOICER in df.columns:
         invoicer = df[COL_INVOICER].astype(str).str.strip()
         df = df[~invoicer.isin(EXCLUDED_INVOICERS)]
     return df
+
+
+def get_invoice_col(df: pd.DataFrame) -> str:
+    for col in (COL_INVOICE, "счет", "№ счета"):
+        if col in df.columns:
+            return col
+    raise KeyError(f"Invoice column not found. Columns: {list(df.columns)[:10]}")
+
+
+def normalize_invoice(value: Any) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    text = str(value).strip()
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    return text
+
+
+def add_row_key(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    out["_key"] = (
+        out[COL_INVOICE].map(normalize_invoice)
+        + "|"
+        + out[COL_PN].astype(str).str.strip()
+        + "|"
+        + out[COL_DESC].astype(str).str.strip().str.slice(0, 60)
+    )
+    return out
+
+
+def report_snapshot(df: pd.DataFrame) -> pd.DataFrame:
+    parts = [filter_in_work(df), filter_shipped(df)]
+    if not parts:
+        return pd.DataFrame()
+    snapshot = pd.concat(parts, ignore_index=True)
+    snapshot = add_row_key(snapshot)
+    return snapshot.drop_duplicates(subset="_key")
+
+
+def report_snapshot_keys(df: pd.DataFrame) -> set[str]:
+    snap = report_snapshot(df)
+    if snap.empty:
+        return set()
+    return set(snap["_key"])
+
+
+def date_in_range(value: Any, start: date, end: date) -> bool:
+    parsed = parse_date(value)
+    return parsed is not None and start <= parsed <= end
+
+
+def row_sale(row: pd.Series) -> float:
+    return parse_numeric(row.get(COL_SALE))
+
+
+def row_total_paid(row: pd.Series) -> float:
+    return parse_numeric(row.get(COL_PAY1)) + parse_numeric(row.get(COL_PAY2))
+
+
+def verify_payment(row: pd.Series) -> tuple[bool, str]:
+    balance = parse_numeric(row.get(COL_BALANCE))
+    pay_as = parse_numeric(row.get(COL_PAY1))
+    pay_au = parse_numeric(row.get(COL_PAY2))
+    date_at = parse_date(row.get(COL_PAY2_DATE))
+
+    if balance != 0:
+        return False, "остаток AV ≠ 0"
+    if pay_as <= 0 and pay_au <= 0:
+        return False, "нет оплат AS/AU"
+    if pay_au > 0 and date_at is None:
+        return False, "есть AU, нет даты AT"
+    return True, "OK"
+
+
+def build_weekly_summary(
+    current_df: pd.DataFrame,
+    previous_df: pd.DataFrame,
+    week_start: date,
+    week_end: date,
+) -> WeeklySummary:
+    current = add_row_key(current_df)
+    previous = add_row_key(previous_df)
+    prev_snap_keys = report_snapshot_keys(previous_df)
+    curr_snap_keys = report_snapshot_keys(current_df)
+    prev_by_key = previous.set_index("_key", drop=False)
+
+    new_rows: list[dict[str, Any]] = []
+    for _, row in current.iterrows():
+        order_date = parse_date(row.get(COL_ORDER_DATE))
+        if order_date is None or not (week_start <= order_date <= week_end):
+            continue
+        if row[COL_STATUS] not in STATUSES_IN_WORK:
+            continue
+        new_rows.append(
+            {
+                "№ счета": row[COL_INVOICE],
+                "P/N": row[COL_PN],
+                "DESCRIPTION": row[COL_DESC],
+                "Status": row[COL_STATUS],
+                "Дата": order_date,
+                "Сумма, USD": row_sale(row),
+                "Примечание": row.get(COL_COMMENT, ""),
+            }
+        )
+
+    shipped_rows: list[dict[str, Any]] = []
+    for _, row in current.iterrows():
+        if row[COL_STATUS] not in STATUSES_SHIPPED:
+            continue
+        delivery_date = parse_date(row.get(COL_DELIVERY_ACTUAL))
+        delivery_in_week = delivery_date is not None and week_start <= delivery_date <= week_end
+
+        prev_status = None
+        if row["_key"] in prev_by_key.index:
+            prev_row = prev_by_key.loc[row["_key"]]
+            if isinstance(prev_row, pd.DataFrame):
+                prev_row = prev_row.iloc[0]
+            prev_status = prev_row[COL_STATUS]
+
+        status_became_shipped = (
+            prev_status is not None
+            and prev_status not in STATUSES_SHIPPED
+            and row[COL_STATUS] in STATUSES_SHIPPED
+        )
+        if not (status_became_shipped or delivery_in_week):
+            continue
+        note = "статус → отгружено" if status_became_shipped else "дата отгрузки в периоде"
+        if status_became_shipped and delivery_in_week:
+            note = "статус и дата отгрузки в периоде"
+        shipped_rows.append(
+            {
+                "№ счета": row[COL_INVOICE],
+                "P/N": row[COL_PN],
+                "DESCRIPTION": row[COL_DESC],
+                "Status": row[COL_STATUS],
+                "Дата": delivery_date or parse_date(row.get(COL_ORDER_DATE)),
+                "Сумма, USD": row_sale(row),
+                "Примечание": note,
+            }
+        )
+
+    paid_rows: list[dict[str, Any]] = []
+    disappeared_keys = prev_snap_keys - curr_snap_keys
+    current_by_key = current.set_index("_key", drop=False)
+    curr_in_work_keys = set(add_row_key(filter_in_work(current_df))["_key"])
+
+    for key in sorted(disappeared_keys):
+        if key in curr_in_work_keys:
+            continue
+        if key in current_by_key.index:
+            row = current_by_key.loc[key]
+            if isinstance(row, pd.DataFrame):
+                row = row.iloc[0]
+        else:
+            prev_match = previous[previous["_key"] == key]
+            if prev_match.empty:
+                continue
+            row = prev_match.iloc[0]
+
+        verified, note = verify_payment(row)
+        if parse_numeric(row.get(COL_BALANCE)) != 0:
+            continue
+        paid_rows.append(
+            {
+                "№ счета": row[COL_INVOICE],
+                "P/N": row[COL_PN],
+                "DESCRIPTION": row[COL_DESC],
+                "Status": row[COL_STATUS],
+                "Сумма, USD": row_sale(row),
+                "Оплата AS": parse_numeric(row.get(COL_PAY1)),
+                "Дата AT": parse_date(row.get(COL_PAY2_DATE)),
+                "Оплата AU": parse_numeric(row.get(COL_PAY2)),
+                "Остаток AV": parse_numeric(row.get(COL_BALANCE)),
+                "Проверка": note if verified else f"Проверить: {note}",
+            }
+        )
+
+    return WeeklySummary(
+        week_start=week_start,
+        week_end=week_end,
+        new_orders=WeeklySection(
+            title="Новые заказы",
+            count=len(new_rows),
+            total=sum(r["Сумма, USD"] for r in new_rows),
+            rows=new_rows,
+            headers=WEEKLY_HEADERS,
+        ),
+        shipped_orders=WeeklySection(
+            title="Отгруженные заказы",
+            count=len(shipped_rows),
+            total=sum(r["Сумма, USD"] for r in shipped_rows),
+            rows=shipped_rows,
+            headers=WEEKLY_HEADERS,
+        ),
+        paid_orders=WeeklySection(
+            title="Оплаченные клиентом",
+            count=len(paid_rows),
+            total=sum(r["Сумма, USD"] for r in paid_rows),
+            rows=paid_rows,
+            headers=WEEKLY_PAID_HEADERS,
+        ),
+    )
+
+
+def write_weekly_summary_sheet(ws, client: str, summary: WeeklySummary) -> None:
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 14
+    ws.column_dimensions["B"].width = 16
+    ws.column_dimensions["C"].width = 28
+    ws.column_dimensions["D"].width = 12
+    ws.column_dimensions["E"].width = 12
+    ws.column_dimensions["F"].width = 14
+    ws.column_dimensions["G"].width = 24
+    for col in ("H", "I", "J"):
+        ws.column_dimensions[col].width = 14
+
+    ws.merge_cells("A1:J1")
+    title = ws["A1"]
+    title.value = f"Сводка за неделю — {client}"
+    _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
+
+    ws.merge_cells("A2:J2")
+    subtitle = ws["A2"]
+    subtitle.value = (
+        f"Период: {summary.week_start.strftime('%d.%m.%Y')} — "
+        f"{summary.week_end.strftime('%d.%m.%Y')}"
+    )
+    _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
+
+    row = 4
+    for section in (summary.new_orders, summary.shipped_orders, summary.paid_orders):
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=10)
+        section_cell = ws.cell(row, 1)
+        section_cell.value = section.title
+        fill = FILL_SECTION_WORK if section.title == "Новые заказы" else (
+            FILL_SECTION_SHIPPED if section.title == "Отгруженные заказы" else PatternFill("solid", fgColor=COLOR_LIGHT_ORANGE)
+        )
+        _style_cell(section_cell, font=FONT_SECTION, fill=fill, alignment=ALIGN_LEFT)
+        row += 1
+
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+        totals = ws.cell(row, 1)
+        totals.value = f"Количество: {section.count}   |   Сумма: {section.total:,.2f} USD"
+        _style_cell(totals, font=FONT_BODY_BOLD, fill=FILL_KPI, alignment=ALIGN_LEFT, border=BORDER_THIN)
+        row += 1
+
+        headers = section.headers
+        for col_idx, header in enumerate(headers, start=1):
+            cell = ws.cell(row, col_idx)
+            cell.value = header
+            _style_cell(cell, font=FONT_HEADER, fill=FILL_HEADER, alignment=ALIGN_CENTER, border=BORDER_THIN)
+        row += 1
+
+        if not section.rows:
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=len(headers))
+            empty = ws.cell(row, 1)
+            empty.value = "Нет данных за период"
+            _style_cell(empty, font=FONT_BODY, alignment=ALIGN_LEFT, border=BORDER_THIN)
+            row += 2
+            continue
+
+        for item in section.rows:
+            for col_idx, header in enumerate(headers, start=1):
+                cell = ws.cell(row, col_idx)
+                value = item.get(header)
+                cell.value = value
+                number_format = None
+                if header in {"Сумма, USD", "Оплата AS", "Оплата AU", "Остаток AV"}:
+                    number_format = NUM_FMT
+                    align = ALIGN_RIGHT
+                elif header == "Дата" or header == "Дата AT":
+                    number_format = DATE_FMT if value else None
+                    align = ALIGN_CENTER
+                else:
+                    align = ALIGN_LEFT
+                fill = None
+                if header == "Проверка" and str(value) != "OK":
+                    fill = FILL_ALERT
+                _style_cell(cell, font=FONT_BODY, fill=fill, alignment=align, border=BORDER_THIN, number_format=number_format)
+            row += 1
+        row += 2
+
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=10)
+    note = ws.cell(row, 1)
+    note.value = (
+        "Оплаченные позиции: исчезли из отчёта и проверены по колонкам "
+        "AS (первая оплата), AT (дата завершающего платежа), AU (завершающий платёж), AV (остаток)."
+    )
+    _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
 
 def filter_client(df: pd.DataFrame, client: str) -> pd.DataFrame:
@@ -481,11 +812,43 @@ def write_total_sheet(
     _style_cell(alert_cell, font=FONT_KPI, fill=FILL_ALERT, alignment=ALIGN_RIGHT, border=BORDER_THIN, number_format=NUM_FMT)
 
 
+def load_report_snapshot_as_previous(path: Path) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for sheet in ("В работе", "Отгружено"):
+        df = pd.read_excel(path, sheet_name=sheet)
+        status_col = "Status" if "Status" in df.columns else COL_STATUS
+        df = df[df[status_col] != "ИТОГО"]
+        rename_map: dict[str, str] = {status_col: COL_STATUS}
+        for src, dst in (
+            ("№ счета", COL_INVOICE),
+            ("счет", COL_INVOICE),
+            ("P/N", COL_PN),
+            ("Комментарий", COL_COMMENT),
+            ("Продажная, итого (без НДС)", COL_SALE),
+            ("Остаток к оплате", COL_BALANCE),
+            ("ЗАКАЗ ВЗЯТ В РАБОТУ", COL_ORDER_DATE),
+            ("ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)", COL_DELIVERY_ACTUAL),
+        ):
+            if src in df.columns:
+                rename_map[src] = dst
+        frames.append(df.rename(columns=rename_map))
+    if not frames:
+        return pd.DataFrame()
+    merged = pd.concat(frames, ignore_index=True)
+    if COL_INVOICE not in merged.columns:
+        raise KeyError(f"Previous report {path} does not contain invoice column")
+    return merged
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
     client: str = "Utair",
     report_date: date | None = None,
+    previous_input: Path | None = None,
+    previous_report: Path | None = None,
+    previous_date: date | None = None,
+    week_days: int = 7,
 ) -> Path:
     report_date = report_date or date.today()
     df = load_taz(input_path)
@@ -514,6 +877,18 @@ def generate_report(
         len(in_work_df),
         len(shipped_df),
     )
+
+    if previous_input or previous_report:
+        if previous_input:
+            previous_df = filter_client(load_taz(previous_input), client)
+        else:
+            previous_df = filter_client(load_report_snapshot_as_previous(previous_report), client)
+        week_end = report_date
+        week_start = previous_date or (report_date - timedelta(days=week_days))
+        summary = build_weekly_summary(client_df, previous_df, week_start, week_end)
+        weekly_ws = wb.create_sheet("Сводка за неделю")
+        weekly_ws.sheet_properties.tabColor = "7030A0"
+        write_weekly_summary_sheet(weekly_ws, client, summary)
 
     shipped_ws = wb.create_sheet("Отгружено")
     shipped_ws.sheet_properties.tabColor = COLOR_GREEN
@@ -554,14 +929,46 @@ def main() -> None:
         default=date.today(),
         help="Report date for filename and >30 days calc (default: today)",
     )
+    parser.add_argument(
+        "--previous-input",
+        type=Path,
+        help="Previous TAZ export for weekly summary comparison",
+    )
+    parser.add_argument(
+        "--previous-report",
+        type=Path,
+        help="Previous generated report .xlsx (fallback if previous TAZ is unavailable)",
+    )
+    parser.add_argument(
+        "--previous-date",
+        type=parse_report_date,
+        help="Start date of weekly summary period (default: report date minus 7 days)",
+    )
+    parser.add_argument(
+        "--week-days",
+        type=int,
+        default=7,
+        help="Length of summary period in days if --previous-date is not set (default: 7)",
+    )
     args = parser.parse_args()
 
     output = args.output or Path("reports") / default_output_name(args.client, args.date)
-    result = generate_report(args.input, output, client=args.client, report_date=args.date)
+    result = generate_report(
+        args.input,
+        output,
+        client=args.client,
+        report_date=args.date,
+        previous_input=args.previous_input,
+        previous_report=args.previous_report,
+        previous_date=args.previous_date,
+        week_days=args.week_days,
+    )
     print(f"Report saved: {result}")
     print(f"Client: {args.client}")
     print(f"В работе rows: {len(filter_in_work(filter_client(load_taz(args.input), args.client)))}")
     print(f"Отгружено rows: {len(filter_shipped(filter_client(load_taz(args.input), args.client)))}")
+    if args.previous_input or args.previous_report:
+        print("Weekly summary sheet: included")
 
 
 if __name__ == "__main__":
