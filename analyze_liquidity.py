@@ -70,7 +70,18 @@ def is_market_client(client: str) -> bool:
 def norm_pn(value: Any) -> str:
     if value is None:
         return ""
-    s = str(value).strip().upper()
+    # Excel часто отдаёт чисто числовой P/N как float 12345.0
+    if isinstance(value, float):
+        if value != value:  # NaN
+            return ""
+        if value == int(value) and abs(value) < 1e15:
+            s = str(int(value))
+        else:
+            s = str(value).strip().upper()
+    elif isinstance(value, int):
+        s = str(value)
+    else:
+        s = str(value).strip().upper()
     if not s:
         return ""
     # unicode dashes / spaces / zero-width
@@ -85,6 +96,9 @@ def norm_pn(value: Any) -> str:
         .replace("\r", "")
     )
     s = re.sub(r"\s+", "", s)
+    # 12345.0 / 12345.000 из строк
+    if re.fullmatch(r"\d+\.0+", s):
+        s = s.split(".", 1)[0]
     # drop trailing punctuation noise
     s = s.strip(".,;:|/\\")
     return s
@@ -123,6 +137,9 @@ def parse_money(value: Any) -> Optional[float]:
     s = str(value).strip()
     if not s or s in {"-", "—", "n/a", "N/A"}:
         return None
+    # В ТУЗ Offered часто «min\nmax» в одной ячейке — берём первую строку, не склеиваем
+    if "\n" in s or "\r" in s:
+        s = s.splitlines()[0].strip()
     s = s.replace("\u00a0", " ").replace("\u202f", " ")
     s = re.sub(r"[^\d,.\-]", "", s)
     if not s or s in {".", ",", "-", "-.", ".-"}:
@@ -141,9 +158,13 @@ def parse_money(value: Any) -> Optional[float]:
         else:
             s = s.replace(",", "")
     try:
-        return float(s)
+        v = float(s)
     except ValueError:
         return None
+    # защита от мусора/склеек: единичная авиазапчасть > $5M почти наверняка ошибка парсинга
+    if v > 5_000_000:
+        return None
+    return v
 
 
 def parse_qty(value: Any) -> float:
@@ -184,6 +205,30 @@ def client_key(client: str) -> str:
     return (client or "").strip().lower()
 
 
+def normalize_invoice(value: Any) -> str:
+    """Нормализация №счёта: 14082512254.0 → 14082512254."""
+    if value is None or value == "":
+        return ""
+    if isinstance(value, float):
+        if value != value:
+            return ""
+        if value == int(value):
+            return str(int(value))
+        return str(value).strip()
+    if isinstance(value, int):
+        return str(value)
+    s = str(value).strip()
+    if re.fullmatch(r"\d+\.0+", s):
+        return s.split(".", 1)[0]
+    return s
+
+
+def clean_header_cell(h: Any) -> str:
+    if h is None:
+        return ""
+    return re.sub(r"\s+", " ", str(h).replace("\n", " ")).strip().lower()
+
+
 def parse_date(value: Any) -> Optional[date]:
     if value is None or value == "":
         return None
@@ -220,6 +265,7 @@ class Event:
     request_no: str = ""
     sheet: str = ""
     description: str = ""
+    file: str = ""
 
 
 @dataclass
@@ -267,11 +313,13 @@ class MarketAgg:
         d = parse_date(e.date)
 
         if e.kind == "order":
-            ono = (e.request_no or "").strip()
+            ono = normalize_invoice(e.request_no)
             if not ono:
                 ono = f"NO_INV|{client_key(e.client)}|{day_key(e.date)}|{round(e.qty or 0, 4)}"
-            if ono not in self.order_keys:
-                self.order_keys.add(ono)
+            # кросс-файловый дубль того же заказа — не считаем повторно
+            if ono in self.order_keys:
+                return
+            self.order_keys.add(ono)
             self.order_qty += e.qty or 0
             if d is not None:
                 self.order_dates.append(d)
@@ -286,9 +334,19 @@ class MarketAgg:
         ck = client_key(e.client)
         dk = day_key(e.date)
         rkey = (ck, dk)
-        if rkey not in self.request_keys:
+        is_new = rkey not in self.request_keys
+        if is_new:
             self.request_keys.add(rkey)
             self.request_qty += e.qty or 0
+        else:
+            # тот же клиент+день из другого файла/листа — только новая цена, без +1 к запросам
+            if e.price is not None and e.price > 0:
+                pt = (d, round(float(e.price), 4))
+                existing = {(xd, round(float(xp), 4)) for xd, xp in self.request_price_points}
+                if pt not in existing:
+                    self.request_price_points.append((d, float(e.price)))
+            return
+
         if d is not None:
             self.request_dates.append(d)
         if e.source == "EXP":
@@ -566,73 +624,142 @@ def iter_sheet_rows(path: Path, sheet: str) -> Iterable[tuple]:
     wb.close()
 
 
+def _header_map_from_row(row: tuple, aliases: dict[str, list[str]]) -> dict[str, int]:
+    cleaned = [clean_header_cell(c) for c in row]
+    mapping: dict[str, int] = {}
+    for key, names in aliases.items():
+        # 1) точное совпадение
+        for name in names:
+            for i, cell in enumerate(cleaned):
+                if cell == name:
+                    mapping[key] = i
+                    break
+            if key in mapping:
+                break
+        if key in mapping:
+            continue
+        # 2) вхождение; для pn не берём alt-*
+        for name in names:
+            for i, cell in enumerate(cleaned):
+                if not cell or name not in cell:
+                    continue
+                if key == "pn" and "alt" in cell:
+                    continue
+                if key == "sell" and "total" in cell:
+                    continue
+                if key == "date" and cell in {"rfq", "email thread"}:
+                    continue
+                mapping[key] = i
+                break
+            if key in mapping:
+                break
+    return mapping
+
+
+TAZ_ALIASES = {
+    "invoice": ["номер счета", "номер счёта"],
+    "invoice_fe": ["номер счета фэ", "номер счёта фэ"],
+    "invoice_lr": ["номер счета лр", "номер счёта лр"],
+    "customer": ["customer"],
+    "pn": ["p/n", "part number", "partnumber"],
+    "alt": ["alt p/n", "alt. p/n"],
+    "desc": ["description"],
+    "qty": ["qty in po", "qtyinpo"],
+    "date": ["заказ взят в работу", "заказ клиента взят"],
+    "cond": ["condition"],
+    "sell": ["продажная, ед"],
+}
+
+
 def load_taz(path: Path) -> list[Event]:
+    """Загрузка ORDERS из ТАЗ с автоопределением колонок (разные годы/шаблоны)."""
     events: list[Event] = []
     seen = set()
-    for sheet in ["ORDERS"]:
-        rows = list(iter_sheet_rows(path, sheet))
-        if not rows:
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    if "ORDERS" not in wb.sheetnames:
+        wb.close()
+        return events
+    ws = wb["ORDERS"]
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    if not rows:
+        return events
+
+    mapping = _header_map_from_row(rows[0], TAZ_ALIASES)
+    # архивный шаблон: p/n во 2-й колонке, счета ФЭ/ЛР
+    if "pn" not in mapping:
+        for idx in range(min(3, len(rows))):
+            mapping = _header_map_from_row(rows[idx], TAZ_ALIASES)
+            if "pn" in mapping:
+                break
+    if "pn" not in mapping:
+        print(f"  WARNING: no P/N column in {path.name} ORDERS — skipped")
+        return events
+
+    start = 1
+    for i, row in enumerate(rows[:5]):
+        if row and any(clean_header_cell(c) in {"p/n", "part number", "pn"} for c in row[:15] if c):
+            start = i + 1
+
+    def cell(r, key, default=None):
+        idx = mapping.get(key)
+        if idx is None or idx >= len(r):
+            return default
+        return r[idx]
+
+    for r in rows[start:]:
+        if not r:
             continue
-        # fixed known layout for ORDERS
-        # skip header + sample
-        for r in rows[1:]:
-            if not r or len(r) < 33:
-                continue
-            pn = norm_pn(r[10])
-            if is_sample_pn(pn):
-                continue
-            client = norm_client(r[6])
-            if client.upper() in SAMPLE_CLIENT:
-                client = ""
-            invoice = str(r[0]).strip() if r[0] is not None else ""
-            qty = parse_qty(r[13])
-            # Только продажная цена клиенту — без fallback на закупку
-            price = parse_money(r[32])  # Продажная, ед.
-            cond = str(r[24]).strip() if r[24] is not None else ""
-            alt = norm_pn(r[11])
-            desc = str(r[12]).strip() if r[12] is not None else ""
-            date = r[16]
-            key = ("TAZ", pn, invoice)  # 1 заказ = P/N + номер заказа
-            if key in seen:
-                continue
-            seen.add(key)
-            # skip empty-looking rows
-            if not client and not invoice and qty == 0:
-                continue
-            events.append(
-                Event(
-                    source="TAZ",
-                    kind="order",
-                    pn=pn,
-                    alt=alt if alt != pn else "",
-                    client=client,
-                    qty=qty,
-                    price=price,
-                    condition=cond,
-                    date=date,
-                    request_no=invoice,
-                    sheet=sheet,
-                    description=desc,
-                )
+        pn = norm_pn(cell(r, "pn"))
+        if is_sample_pn(pn):
+            continue
+        client = norm_client(cell(r, "customer"))
+        if client.upper() in SAMPLE_CLIENT:
+            client = ""
+        invoice = normalize_invoice(cell(r, "invoice"))
+        if not invoice:
+            invoice = normalize_invoice(cell(r, "invoice_fe")) or normalize_invoice(cell(r, "invoice_lr"))
+        qty = parse_qty(cell(r, "qty"))
+        price = parse_money(cell(r, "sell"))
+        cond = str(cell(r, "cond") or "").strip()
+        alt = norm_pn(cell(r, "alt"))
+        desc = str(cell(r, "desc") or "").strip()
+        date = cell(r, "date")
+        key = ("TAZ", pn, invoice or f"NO_INV|{client_key(client)}|{day_key(date)}|{round(qty, 4)}")
+        if key in seen:
+            continue
+        seen.add(key)
+        if not client and not invoice and qty == 0:
+            continue
+        events.append(
+            Event(
+                source="TAZ",
+                kind="order",
+                pn=pn,
+                alt=alt if alt and alt != pn else "",
+                client=client,
+                qty=qty,
+                price=price,
+                condition=cond,
+                date=date,
+                request_no=invoice,
+                sheet="ORDERS",
+                description=desc,
+                file=path.name,
             )
+        )
     return events
 
 
-TUZ_SHEETS = [
-    "AFL Group",
-    "Группа A",
-    "Группа B",
-    "Группа C",
-    "Группа 3 (old)",
-    "Группа 2 (old)",
-    "Группа 5 (old)",
-    "Questions v2 AFL",
-    "Questions v2",
-    "MRO",
-    "TROUBLES",
-    "ASSETS",
-    "АФЛ проценка шоп",
-]
+TUZ_SKIP_SHEETS = {
+    "suppliers list",
+    "dropdown",
+    "customer list",
+    "transport rates and terms",
+    "questions old",
+    "yak 2025",
+}
+
 
 TUZ_ALIASES = {
     "pn": ["p/n", "part number", "partnumber"],
@@ -735,9 +862,14 @@ def load_tuz(path: Path) -> list[Event]:
     events: list[Event] = []
     seen = set()
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    for sheet in TUZ_SHEETS:
-        if sheet not in wb.sheetnames:
+    # берём все листы с колонкой P/N, кроме служебных
+    candidate_sheets = []
+    for sheet in wb.sheetnames:
+        if sheet.strip().lower() in TUZ_SKIP_SHEETS:
             continue
+        candidate_sheets.append(sheet)
+
+    for sheet in candidate_sheets:
         ws = wb[sheet]
         preview = []
         all_rows = []
@@ -746,21 +878,15 @@ def load_tuz(path: Path) -> list[Event]:
             if i < 5:
                 preview.append(row)
         hdr_idx, mapping = find_header_map(preview, TUZ_ALIASES, scan=5)
-        if not mapping:
-            mapping = {
-                "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
-                "cond": 21, "price": 27, "invoice": 30,
-            }
-            hdr_idx = 0
-        else:
-            mapping.setdefault("client", 4)
-            mapping.setdefault("alt", mapping["pn"] + 1)
-            mapping.setdefault("desc", mapping["pn"] + 2)
-            mapping.setdefault("qty", mapping["pn"] + 3)
-            mapping.setdefault("price", 27)
+        if "pn" not in mapping:
+            continue
+        mapping.setdefault("client", 4)
+        mapping.setdefault("alt", mapping["pn"] + 1)
+        mapping.setdefault("desc", mapping["pn"] + 2)
+        mapping.setdefault("qty", mapping["pn"] + 3)
+        mapping.setdefault("price", 27)
 
         layouts = _tuz_layouts(mapping)
-        # пропускаем строки-заголовки в начале
         start = 0
         for i, row in enumerate(all_rows[:6]):
             if row and any(str(c).strip().lower() in {"p/n", "part number"} for c in row[:15] if c):
@@ -775,10 +901,10 @@ def load_tuz(path: Path) -> list[Event]:
                 continue
 
             dedupe_key = (
-                sheet,
                 parsed["pn"],
-                parsed["client"],
-                parsed["req"] or str(parsed["date"]),
+                client_key(parsed["client"]),
+                day_key(parsed["date"]),
+                parsed["req"] or "",
                 round(parsed["qty"], 4),
                 round(parsed["price"] or 0, 2),
                 parsed["desc"][:40],
@@ -802,6 +928,7 @@ def load_tuz(path: Path) -> list[Event]:
                     request_no=parsed["req"],
                     sheet=sheet,
                     description=parsed["desc"],
+                    file=path.name,
                 )
             )
     wb.close()
@@ -809,6 +936,36 @@ def load_tuz(path: Path) -> list[Event]:
 
 
 EXP_SHEETS = ["EXP NEW", "EXP UTAIR", "EXP GR#1", "EXP GR#2", "EXP GR#3", "EXP GR#4"]
+
+EXP_ALIASES = {
+    "date": ["date of rfq", "date of"],
+    "client": ["client"],
+    "alt": ["alt p/n", "alt pn"],
+    "pn": ["p/n", "part number"],
+    "desc": ["description"],
+    "qty": ["qty"],
+    "cond": ["cond"],
+    "sell": ["sell price ea"],
+}
+
+
+def _merge_csv_headers(rows: list[list[str]], max_hdr: int = 3) -> list[str]:
+    """Объединяет многострочный заголовок CSV (Sell Price во 2-й строке)."""
+    if not rows:
+        return []
+    width = max(len(r) for r in rows[:max_hdr])
+    merged = [""] * width
+    for r in rows[:max_hdr]:
+        for i in range(width):
+            cell = (r[i] if i < len(r) else "") or ""
+            cell = str(cell).replace("\n", " ").strip()
+            if not cell:
+                continue
+            if not merged[i]:
+                merged[i] = cell
+            elif cell.lower() not in merged[i].lower() and "sell" in cell.lower():
+                merged[i] = cell
+    return merged
 
 
 def load_exp(path: Path) -> list[Event]:
@@ -833,11 +990,10 @@ def load_exp(path: Path) -> list[Event]:
             alt = norm_pn(r[5]) if len(r) > 5 else ""
             desc = str(r[7]).strip() if r[7] is not None else ""
             qty = parse_qty(r[8])
-            # Только Sell Price EA — без fallback на Market Price EA / Purchase
             price = parse_money(r[24]) if len(r) > 24 else None
             cond = str(r[14]).strip() if len(r) > 14 and r[14] is not None else ""
             date = r[1] if len(r) > 1 else None
-            key = (sheet, pn, client, str(date), round(qty, 4), round(price or 0, 2))
+            key = (pn, client_key(client), day_key(date), round(qty, 4), round(price or 0, 2), desc[:40])
             if key in seen:
                 continue
             seen.add(key)
@@ -854,9 +1010,92 @@ def load_exp(path: Path) -> list[Event]:
                     date=date,
                     sheet=sheet,
                     description=desc,
+                    file=path.name,
                 )
             )
     wb.close()
+    return events
+
+
+def load_exp_csv(path: Path) -> list[Event]:
+    """Архивы EXPENDABLES в CSV с разной раскладкой колонок."""
+    import csv
+
+    events: list[Event] = []
+    seen = set()
+    raw_rows: list[list[str]] = []
+    for enc in ("utf-8-sig", "utf-8", "cp1251", "latin1"):
+        try:
+            with open(path, "r", encoding=enc, newline="") as f:
+                raw_rows = list(csv.reader(f))
+            break
+        except Exception:
+            continue
+    if not raw_rows:
+        return events
+
+    # ищем строку(и) заголовка
+    hdr_idx = 0
+    mapping: dict[str, int] = {}
+    for i in range(min(4, len(raw_rows))):
+        merged = _merge_csv_headers(raw_rows[i : i + 2], max_hdr=2)
+        mapping = _header_map_from_row(tuple(merged), EXP_ALIASES)
+        if "pn" in mapping and "client" in mapping:
+            hdr_idx = i
+            # если sell во второй строке — учитываем
+            if "sell" not in mapping and i + 1 < len(raw_rows):
+                mapping = _header_map_from_row(tuple(_merge_csv_headers(raw_rows[i : i + 2])), EXP_ALIASES)
+            break
+    if "pn" not in mapping:
+        print(f"  WARNING: no P/N in CSV {path.name}")
+        return events
+
+    # данные начинаются после 1–2 строк заголовка
+    start = hdr_idx + 1
+    if start < len(raw_rows) and any("sell" in clean_header_cell(c) for c in raw_rows[start]):
+        start += 1
+
+    def cell(r, key, default=None):
+        idx = mapping.get(key)
+        if idx is None or idx >= len(r):
+            return default
+        return r[idx]
+
+    for r in raw_rows[start:]:
+        if not r:
+            continue
+        pn = norm_pn(cell(r, "pn"))
+        if is_sample_pn(pn):
+            continue
+        client = norm_client(cell(r, "client"))
+        if client.upper() in SAMPLE_CLIENT:
+            continue
+        alt = norm_pn(cell(r, "alt"))
+        desc = str(cell(r, "desc") or "").strip()
+        qty = parse_qty(cell(r, "qty"))
+        price = parse_money(cell(r, "sell"))
+        cond = str(cell(r, "cond") or "").strip()
+        date = cell(r, "date")
+        key = (pn, client_key(client), day_key(date), round(qty, 4), round(price or 0, 2), desc[:40])
+        if key in seen:
+            continue
+        seen.add(key)
+        events.append(
+            Event(
+                source="EXP",
+                kind="request",
+                pn=pn,
+                alt=alt if alt and alt != pn else "",
+                client=client,
+                qty=qty,
+                price=price,
+                condition=cond,
+                date=date,
+                sheet="csv",
+                description=desc,
+                file=path.name,
+            )
+        )
     return events
 
 
@@ -913,6 +1152,21 @@ def resolve_market(
     if pn in by_pn:
         matched_pns.add(pn)
         result.matched_via.add("точное P/N")
+
+    # ведущие нули у чисто числовых P/N (00033038 ↔ 33038)
+    if pn.isdigit():
+        stripped = pn.lstrip("0") or "0"
+        if stripped != pn and stripped in by_pn:
+            matched_pns.add(stripped)
+            result.matched_via.add("ведущие нули")
+        # склад без нулей, рынок с нулями — редкий случай: soft-ключ уже совпадёт по цифрам
+        # (soft_pn_key не меняет набор цифр, но ведущие нули сохраняются в soft → не совпадут).
+        # Дополнительно пробуем soft без ведущих нулей:
+        soft_stripped = stripped
+        for mp in soft_to_pns.get(soft_stripped, set()):
+            if mp.isdigit():
+                matched_pns.add(mp)
+                result.matched_via.add("ведущие нули")
 
     # alt references: market events where our PN was listed as ALT of another, or vice versa
     if pn in alt_to_pns:
@@ -1053,6 +1307,9 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         next(iter(market.descriptions), "") if market.descriptions else ""
     )
     ac = ", ".join(sorted(x for x in stock["ac_typs"] if x)) or ""
+    potential_rev = None
+    if ref_price is not None and stock["qty"]:
+        potential_rev = round(float(ref_price) * float(stock["qty"]), 2)
 
     return {
         "liquidity_grade": grade,
@@ -1068,6 +1325,7 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "requests": market.request_events,
         "demand_summary": summary,
         "price_ref_usd": ref_price,
+        "potential_revenue_usd": potential_rev,
         "price_confidence": price_conf,
         "price_flag": flag,
         "has_sell_offered": has_sell_offered,
@@ -1113,8 +1371,9 @@ HEADERS = [
     ("P/N", 18),
     ("Описание", 34),
     ("Состояние", 12),
-    ("Кол-во", 9),
+    ("Кол-во на складе Utair", 12),
     ("Ориентировочная цена USD", 14),
+    ("Потенц. выручка USD", 14),
     ("Уверенность", 12),
     ("Флаг цены", 28),
     ("Спрос (заказы/запросы)", 48),
@@ -1186,6 +1445,7 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["condition"],
             r["qty"],
             r["price_ref_usd"],
+            r.get("potential_revenue_usd"),
             r["price_confidence"],
             r["price_flag"],
             r["demand_summary"],
@@ -1194,19 +1454,19 @@ def write_rows(ws, rows: list[dict], header_color: str):
         for col, val in enumerate(values, 1):
             cell = ws.cell(i + 1, col, val)
             cell.border = THIN
-            cell.alignment = Alignment(vertical="center", wrap_text=(col in {4, 10, 11}))
+            cell.alignment = Alignment(vertical="center", wrap_text=(col in {4, 11, 12}))
             if i % 2 == 0:
                 cell.fill = ZEBRA
             if col == 6:
                 cell.font = Font(bold=True, name="Calibri", size=11)
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 7 and isinstance(val, (int, float)):
+            if col in {7, 8} and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
-            if col == 8:
+            if col == 9:
                 cell.fill = conf_fill.get(r["price_confidence"], conf_fill["н/п"])
                 cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-            if col == 9:
+            if col == 10:
                 cell.fill = flag_fill.get(r["price_flag"], flag_fill["нет данных"])
                 cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
                 cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -1215,17 +1475,26 @@ def write_rows(ws, rows: list[dict], header_color: str):
         ws.auto_filter.ref = f"A1:{get_column_letter(len(HEADERS))}{len(rows)+1}"
 
 
-def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
-    ws["A1"] = "Оценка ликвидности склада АТИ"
+def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str], source_lines: list[str] | None = None):
+    ws["A1"] = "Оценка ликвидности склада АТИ (Utair)"
     ws["A1"].font = Font(bold=True, size=16, color="1A1A1A", name="Calibri")
-    ws["A2"] = f"Дата отчёта: {datetime.now():%Y-%m-%d %H:%M} | Источники: ТАЗ ORDERS, ТУЗ (группы запросов), EXPENDABLES, АТИ"
+    ws["A2"] = (
+        f"Дата отчёта: {datetime.now():%Y-%m-%d %H:%M} | "
+        "Источники: ТАЗ (несколько периодов), ТУЗ, EXPENDABLES/CSV, АТИ"
+    )
     ws.merge_cells("A2:F2")
+
+    with_rev = [r for r in scored if r.get("potential_revenue_usd") is not None]
+    total_rev = sum(r["potential_revenue_usd"] for r in with_rev)
+    matched = sum(1 for r in scored if r["liquidity_grade"] != "D")
 
     summary = [
         ("Строк в исходном АТИ", len(ati_rows)),
         ("Позиций в отчёте (P/N после агрегации)", len(scored)),
         ("Уникальных P/N на складе", len({r["pn"] for r in scored})),
-        ("Суммарное кол-во на складе, шт.", sum(r["qty"] for r in scored)),
+        ("Суммарное кол-во на складе Utair, шт.", sum(r["qty"] for r in scored)),
+        ("Позиций с найденным спросом (A/B/C)", matched),
+        ("Позиций без спроса (D)", sum(1 for r in scored if r["liquidity_grade"] == "D")),
         ("Раздел 1 — Condition пусто", sum(1 for r in scored if r["section"] == 1)),
         ("Раздел 2 — Condition US/NA", sum(1 for r in scored if r["section"] == 2)),
         ("Раздел 3 — прочие Condition", sum(1 for r in scored if r["section"] == 3)),
@@ -1237,9 +1506,11 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         ("Цена: уверенность средняя", sum(1 for r in scored if r["price_confidence"] == "средняя")),
         ("Цена: уверенность низкая", sum(1 for r in scored if r["price_confidence"] == "низкая")),
         ("Цена: н/п (нет sell/offered)", sum(1 for r in scored if r["price_confidence"] == "н/п")),
-        ("Событий ТАЗ (уник. P/N+№заказа)", taz_n),
-        ("Событий ТУЗ (сырые строки)", tuz_n),
-        ("Событий EXPENDABLES (сырые строки)", exp_n),
+        ("Позиций с потенциальной выручкой", len(with_rev)),
+        ("Суммарная потенц. выручка (qty×цена), USD", round(total_rev, 2)),
+        ("Событий ТАЗ после дедупа (P/N+№заказа)", taz_n),
+        ("Событий ТУЗ после дедупа (сырые строки)", tuz_n),
+        ("Событий EXPENDABLES после дедупа", exp_n),
     ]
     ws["A4"] = "Сводка"
     ws["A4"].font = Font(bold=True, size=13)
@@ -1247,87 +1518,233 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str]):
         ws.cell(i, 1, k).font = Font(name="Calibri", size=11)
         cell = ws.cell(i, 2, v)
         cell.font = Font(bold=True, name="Calibri", size=11)
-        if "н/п" in k or "низкая" in k:
-            pass
+        if "выручка" in k.lower() and isinstance(v, (int, float)):
+            cell.number_format = '"$"#,##0.00'
 
-    ws["A23"] = "Методика оценки"
-    ws["A23"].font = Font(bold=True, size=13)
+    row = 5 + len(summary) + 1
+    ws.cell(row, 1, "Методика оценки").font = Font(bold=True, size=13)
     method = [
         "A — высокая: подтверждённые заказы и/или устойчивый спрос у нескольких клиентов.",
         "B — средняя: есть заказы или заметные повторные запросы.",
         "C — низкая: единичные/редкие запросы без сильной истории продаж.",
-        "D — нет спроса: P/N не найден в ТАЗ/ТУЗ/EXPENDABLES (с учётом нормализации и ALT).",
-        "Балл учитывает число заказов/запросов, число уникальных клиентов, объёмы; заказы ТАЗ весят больше запросов.",
-        "Одинаковые P/N на складе сведены в одну строку внутри раздела Condition; «Кол-во на складе» = сумма штук.",
-        "Заказы ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
-        "Запросы ТУЗ+EXP: 1 запрос = P/N + клиент + календарный день (источники объединены).",
-        "Одна ориентировочная цена: приоритет свежая медиана ТАЗ (≤6 мес.) → любая ТАЗ → свежие Offered/Sell ТУЗ+EXP → любые запросы.",
-        "Уверенность: высокая — свежий заказ ТАЗ с sell; средняя — старый ТАЗ или свежие запросы; низкая — только давние запросы; н/п — цены нет.",
-        "Детали расчёта цены — в столбце «Обоснование оценки». В ориентир НЕ входят Закупка/Supplier/Root/Market Price EA.",
-        "US/NA выделены отдельно: спрос на P/N ≠ лёгкая продажа в текущем состоянии.",
+        "D — нет спроса: P/N не найден в ТАЗ/ТУЗ/EXPENDABLES (нормализация, soft-ключ, ALT).",
+        "Заказы ТАЗ: 1 заказ = P/N + номер заказа (счёта); дубли между файлами периодов снимаются.",
+        "Запросы ТУЗ+EXP: 1 запрос = P/N + клиент + календарный день; пересечения периодов дедуплицируются.",
+        "«Кол-во на складе Utair» = сумма штук по P/N в разделе Condition.",
+        "Потенц. выручка = ориентировочная цена × кол-во на складе Utair (только где есть sell/offered).",
+        "Ориентир цены: свежая медиана ТАЗ (≤6 мес.) → любая ТАЗ → свежие Offered/Sell → любые запросы.",
+        "В ориентир НЕ входят Закупка/Supplier/Root/Market Price EA.",
+        "US/NA и пустое состояние выделены: спрос на P/N ≠ готовность партии к продаже.",
     ]
-    for i, t in enumerate(method, 24):
-        ws.cell(i, 1, t)
-        ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
+    for j, t in enumerate(method):
+        ws.cell(row + 1 + j, 1, t)
+        ws.merge_cells(start_row=row + 1 + j, start_column=1, end_row=row + 1 + j, end_column=6)
 
-    ws["A36"] = "Замечания по качеству данных (авто)"
-    ws["A36"].font = Font(bold=True, size=13)
-    for i, t in enumerate(notes, 37):
-        ws.cell(i, 1, f"• {t}")
-        ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
+    row2 = row + 1 + len(method) + 1
+    ws.cell(row2, 1, "Замечания по качеству данных (авто)").font = Font(bold=True, size=13)
+    for i, t in enumerate(notes):
+        ws.cell(row2 + 1 + i, 1, f"• {t}")
+        ws.merge_cells(start_row=row2 + 1 + i, start_column=1, end_row=row2 + 1 + i, end_column=6)
+
+    if source_lines:
+        row3 = row2 + 1 + len(notes) + 1
+        ws.cell(row3, 1, "Загруженные источники").font = Font(bold=True, size=13)
+        for i, t in enumerate(source_lines):
+            ws.cell(row3 + 1 + i, 1, f"• {t}")
+            ws.merge_cells(start_row=row3 + 1 + i, start_column=1, end_row=row3 + 1 + i, end_column=6)
 
     ws.column_dimensions["A"].width = 62
     ws.column_dimensions["B"].width = 18
 
 
+def build_seller_priority(scored: list[dict], limit: int = 60) -> list[dict]:
+    """Позиции 1-й очереди для уточнения у продавца: ликвидные + высокая потенц. выручка.
+
+    Включаем US/NA и пустое состояние — как раз там нужна верификация.
+    """
+    eligible = [
+        r
+        for r in scored
+        if r["liquidity_grade"] in {"A", "B"}
+        or (
+            r["liquidity_grade"] == "C"
+            and (r.get("potential_revenue_usd") or 0) >= 5000
+            and (r["taz_orders"] + r["requests"]) >= 2
+        )
+    ]
+
+    def prio_key(r):
+        rev = r.get("potential_revenue_usd") or 0
+        needs_info = 1 if r["section"] in {1, 2} else 0
+        return (
+            GRADE_ORDER[r["liquidity_grade"]],
+            -needs_info,
+            -rev,
+            -r["liquidity_score"],
+            -r["qty"],
+            r["partno"],
+        )
+
+    return sorted(eligible, key=prio_key)[:limit]
+
+
+def audit_unmatched(scored: list[dict], by_pn: dict, soft_to_pns: dict, alt_to_pns: dict) -> dict:
+    """Глубокая проверка D-позиций: нет ли скрытых совпадений."""
+    d_rows = [r for r in scored if r["liquidity_grade"] == "D"]
+    soft_hits = 0
+    alt_hits = 0
+    contains_hits = []
+    market_soft = set(soft_to_pns.keys())
+    market_pns = set(by_pn.keys())
+
+    for r in d_rows:
+        pn = r["pn"]
+        soft = soft_pn_key(pn)
+        if soft in market_soft and soft_to_pns[soft]:
+            soft_hits += 1
+        if pn in alt_to_pns:
+            alt_hits += 1
+        # очень осторожный contains: только если складской PN длинный и целиком входит
+        if len(soft) >= 8:
+            for mp in market_pns:
+                ms = soft_pn_key(mp)
+                if soft != ms and (soft in ms or ms in soft) and abs(len(soft) - len(ms)) <= 3:
+                    contains_hits.append((pn, mp))
+                    break
+
+    return {
+        "d_count": len(d_rows),
+        "soft_cluster_nonempty": soft_hits,
+        "alt_hits": alt_hits,
+        "near_contains": contains_hits[:20],
+        "near_contains_n": len(contains_hits),
+    }
+
+
 def main():
-    print("Loading TAZ...")
-    taz = load_taz(DATA / "TAZ_17.07.2026.xlsx")
-    print(f"  TAZ unique orders (P/N+№заказа preload): {len(taz)}")
-    print("Loading TUZ...")
-    tuz = load_tuz(DATA / "TUZ_17.07.2026.xlsx")
-    print(f"  TUZ raw rows kept: {len(tuz)}")
+    taz_files = [
+        DATA / "TAZ_17.07.2026.xlsx",
+        DATA / "TA3 2025.xlsx",
+        DATA / "TA3-Архив 2024-01-26.xlsx",
+    ]
+    tuz_files = [
+        DATA / "TUZ_17.07.2026.xlsx",
+        DATA / "ТУЗ 2025 Jan - June.xlsx",
+        DATA / "ТУЗ 6_19.xlsx",
+    ]
+    exp_xlsx = [DATA / "EXPENDABLES.xlsx"]
+    exp_csv = sorted(DATA.glob("*.csv"))
+
+    source_lines: list[str] = []
+    taz: list[Event] = []
+    print("Loading TAZ files...")
+    for path in taz_files:
+        if not path.exists():
+            print(f"  MISSING {path.name}")
+            continue
+        part = load_taz(path)
+        print(f"  {path.name}: {len(part)} orders")
+        source_lines.append(f"ТАЗ {path.name}: {len(part)} строк заказов")
+        taz.extend(part)
+
+    tuz: list[Event] = []
+    print("Loading TUZ files...")
+    for path in tuz_files:
+        if not path.exists():
+            print(f"  MISSING {path.name}")
+            continue
+        part = load_tuz(path)
+        print(f"  {path.name}: {len(part)} requests")
+        source_lines.append(f"ТУЗ {path.name}: {len(part)} строк запросов")
+        tuz.extend(part)
+
+    exp: list[Event] = []
     print("Loading EXPENDABLES...")
-    exp_path = DATA / "EXPENDABLES.xlsx"
-    if exp_path.exists():
-        exp = load_exp(exp_path)
-        print(f"  EXP raw rows kept: {len(exp)}")
-    else:
-        exp = []
-        print("  WARNING: EXPENDABLES.xlsx not found — requests counted from TUZ only")
+    for path in exp_xlsx:
+        if path.exists():
+            part = load_exp(path)
+            print(f"  {path.name}: {len(part)} requests")
+            source_lines.append(f"EXP {path.name}: {len(part)} строк")
+            exp.extend(part)
+        else:
+            print(f"  MISSING {path.name} (июльский xlsx — используем архивные CSV)")
+            source_lines.append(f"ВНИМАНИЕ: {path.name} отсутствует — нет вкладки EXP 2026 xlsx")
+    for path in exp_csv:
+        part = load_exp_csv(path)
+        print(f"  {path.name}: {len(part)} requests")
+        source_lines.append(f"EXP CSV {path.name}: {len(part)} строк")
+        exp.extend(part)
+
     print("Loading ATI...")
     ati = load_ati(DATA / "ATI.xlsx")
     print(f"  ATI rows: {len(ati)}")
 
-    all_events = taz + tuz + exp
+    # глобальный дедуп событий между файлами до индекса
+    def event_global_key(e: Event):
+        if e.kind == "order":
+            inv = normalize_invoice(e.request_no) or f"NO_INV|{client_key(e.client)}|{day_key(e.date)}|{round(e.qty or 0, 4)}"
+            return ("O", e.pn, inv)
+        return ("R", e.pn, client_key(e.client), day_key(e.date), round(e.qty or 0, 4), round(e.price or 0, 2), (e.description or "")[:40])
+
+    all_raw = taz + tuz + exp
+    seen_ev = set()
+    all_events: list[Event] = []
+    for e in all_raw:
+        k = event_global_key(e)
+        if k in seen_ev:
+            continue
+        seen_ev.add(k)
+        all_events.append(e)
+    print(f"  Events raw={len(all_raw)} after cross-file dedupe={len(all_events)}")
+
     by_pn, soft_to_pns, alt_to_pns = build_market_index(all_events)
     print(f"  Market unique PNs: {len(by_pn)}")
 
-    # data quality notes
     ati_pn_counts = defaultdict(int)
     for r in ati:
         ati_pn_counts[r["pn"]] += 1
     dup_pn = sum(1 for v in ati_pn_counts.values() if v > 1)
-    empty_cond = sum(1 for r in ati if not r["condition"])
     stock = aggregate_ati_stock(ati)
-    notes = [
-        f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте одна строка на P/N внутри раздела Condition, кол-во = сумма штук.",
-        f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
-        "Правило запросов: 1 запрос = P/N + клиент + календарный день (ТУЗ и EXP вместе).",
-        "Правило заказов ТАЗ: 1 заказ = P/N + номер заказа (счёта).",
-        "Исправлено чтение ТУЗ: учтён сдвиг колонок (Sales/Purch ID) и сохранение всех Offered по квотам одного RFQ.",
-        "Колонки ATA и S/N убраны; запросы ТУЗ и EXP объединены в один столбец.",
-        "Сопоставление P/N: регистр, пробелы, тире; soft-ключ и ALT P/N.",
-        "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
-        "«Закупка на склад» не считается рыночным клиентом.",
-    ]
-    if not exp:
-        notes.insert(0, "ВНИМАНИЕ: файл EXPENDABLES отсутствует в среде — столбец запросов пока без EXP.")
 
     scored = []
     for item in stock:
         market = resolve_market(item["pn"], by_pn, soft_to_pns, alt_to_pns)
         scored.append(build_row_from_stock(item, market))
+
+    audit = audit_unmatched(scored, by_pn, soft_to_pns, alt_to_pns)
+    print(
+        "  Unmatched audit D=",
+        audit["d_count"],
+        "soft_nonempty=",
+        audit["soft_cluster_nonempty"],
+        "alt=",
+        audit["alt_hits"],
+        "near_contains=",
+        audit["near_contains_n"],
+    )
+    if audit["near_contains"]:
+        print("  near-contains samples:", audit["near_contains"][:8])
+
+    notes = [
+        f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте одна строка на P/N внутри раздела Condition.",
+        f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
+        "Дедуп заказов: P/N + №счёта across всех файлов ТАЗ.",
+        "Дедуп запросов: P/N + клиент + день (+ qty/price/desc для сырых строк) across ТУЗ/EXP.",
+        "Сопоставление P/N: регистр, пробелы, тире; soft-ключ и ALT P/N.",
+        "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
+        "«Закупка на склад» не считается рыночным клиентом.",
+        f"Аудит D-позиций: soft-кластер непустой у {audit['soft_cluster_nonempty']}, "
+        f"ALT-ссылок {audit['alt_hits']}, near-contains {audit['near_contains_n']} "
+        "(near-contains вроде 601R57502-1↔601R57502 не включались автоматически).",
+        "Offered «min\\nmax» в одной ячейке: берём первую строку (min), не склеиваем цифры.",
+        "Файл АТИ восстановлен из предыдущего отчёта (агрегированный вид); исходный serial-level upload в среде отсутствует.",
+    ]
+    if not (DATA / "EXPENDABLES.xlsx").exists():
+        notes.insert(
+            0,
+            "Нет EXPENDABLES.xlsx (копия 17.07.2026) — учтены только архивные CSV. "
+            "Возможен пробел по расходникам 2H2025–2026.",
+        )
 
     def sort_key(r):
         return (GRADE_ORDER[r["liquidity_grade"]], -r["liquidity_score"], -r["qty"], r["partno"])
@@ -1346,6 +1763,9 @@ def main():
         else:
             cur = top_by_pn[pn]
             cur["qty"] += r["qty"]
+            # пересчитать выручку по суммарному qty
+            if cur.get("price_ref_usd") is not None:
+                cur["potential_revenue_usd"] = round(float(cur["price_ref_usd"]) * float(cur["qty"]), 2)
             cur["lines"] = cur.get("lines", 0) + r.get("lines", 0)
             conds = {x.strip() for x in cur["condition"].split(",") if x.strip()}
             conds |= {x.strip() for x in r["condition"].split(",") if x.strip()}
@@ -1370,16 +1790,28 @@ def main():
                     "ac_typ",
                 ):
                     cur[k] = r[k]
+                if cur.get("price_ref_usd") is not None:
+                    cur["potential_revenue_usd"] = round(float(cur["price_ref_usd"]) * float(cur["qty"]), 2)
                 cur["rationale"] = (
                     f"{r['rationale']} (в ТОП qty суммирован по всем состояниям склада: {cur['qty']:g} шт.)"
                 )
     top = sorted(top_by_pn.values(), key=sort_key)[:80]
+    seller_prio = build_seller_priority(scored, limit=60)
+
+    taz_n = sum(1 for e in all_events if e.source == "TAZ")
+    tuz_n = sum(1 for e in all_events if e.source == "TUZ")
+    exp_n = sum(1 for e in all_events if e.source == "EXP")
 
     print("Writing Excel...")
     wb = openpyxl.Workbook()
     ws0 = wb.active
     ws0.title = "0. Сводка"
-    write_summary(ws0, ati, scored, len(taz), len(tuz), len(exp), notes)
+    write_summary(ws0, ati, scored, taz_n, tuz_n, exp_n, notes, source_lines)
+
+    ws_prio = wb.create_sheet("1 очередь у продавца")
+    write_rows(ws_prio, seller_prio, "8B4513")
+    ws_prio["A1"].value  # header already set
+    # пояснение над таблицей нельзя без сдвига — добавим примечание в легенду
 
     ws_top = wb.create_sheet("ТОП ликвидных")
     write_rows(ws_top, top, "1F7A4D")
@@ -1393,7 +1825,6 @@ def main():
     ws3 = wb.create_sheet("3. Прочие Condition")
     write_rows(ws3, sec3, "2F5D9F")
 
-    # compact legend sheet
     wsl = wb.create_sheet("Легенда")
     wsl["A1"] = "Цвета ликвидности"
     wsl["A1"].font = Font(bold=True, size=13)
@@ -1428,6 +1859,10 @@ def main():
         wsl.cell(i, 2, desc)
     wsl["A20"] = "Ликвидность и балл скрыты: сортировка по ним сохранена в ранге. Детали — в обосновании."
     wsl["A21"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
+    wsl["A22"] = "«Кол-во на складе Utair» — остаток на складе; потенц. выручка = цена × это кол-во."
+    wsl["A23"] = (
+        "Лист «1 очередь у продавца»: A/B и сильные C с выручкой; приоритет US/NA и пустому состоянию."
+    )
     wsl.column_dimensions["A"].width = 36
     wsl.column_dimensions["B"].width = 70
 
@@ -1437,13 +1872,15 @@ def main():
     wb.save(OUT_COPY)
     print(f"Saved: {OUT}")
     print(f"Saved: {OUT_COPY}")
+    total_rev = sum(r["potential_revenue_usd"] for r in scored if r.get("potential_revenue_usd") is not None)
     print(
         "Counts:",
-        f"sec1={len(sec1)} sec2={len(sec2)} sec3={len(sec3)} top={len(top)}",
+        f"sec1={len(sec1)} sec2={len(sec2)} sec3={len(sec3)} top={len(top)} seller={len(seller_prio)}",
         f"A={sum(1 for r in scored if r['liquidity_grade']=='A')}",
         f"B={sum(1 for r in scored if r['liquidity_grade']=='B')}",
         f"C={sum(1 for r in scored if r['liquidity_grade']=='C')}",
         f"D={sum(1 for r in scored if r['liquidity_grade']=='D')}",
+        f"rev_total=${total_rev:,.0f}",
         f"price_conf high/med/low/na="
         f"{sum(1 for r in scored if r['price_confidence']=='высокая')}/"
         f"{sum(1 for r in scored if r['price_confidence']=='средняя')}/"
