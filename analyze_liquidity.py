@@ -109,6 +109,92 @@ def soft_pn_key(pn: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", pn)
 
 
+def pn_variant_bases(pn: str) -> list[str]:
+    """Базовые формы P/N без хвостовых суффиксов (-1, -1S, S и т.п.)."""
+    out = []
+    cur = pn
+    for _ in range(4):
+        if not cur or len(soft_pn_key(cur)) < 6:
+            break
+        out.append(cur)
+        m = re.search(r"([-_/][A-Z0-9]{1,4}|[A-Z])$", cur, re.I)
+        if not m:
+            break
+        nxt = cur[: m.start()]
+        if not nxt or nxt == cur:
+            break
+        cur = nxt
+    # уникальные с сохранением порядка
+    seen = set()
+    uniq = []
+    for x in out:
+        if x not in seen:
+            seen.add(x)
+            uniq.append(x)
+    return uniq
+
+
+def find_near_pn_matches(pn: str, by_pn: dict[str, MarketAgg], soft_to_pns: dict[str, set[str]]) -> list[tuple[str, str]]:
+    """Близкие варианты P/N только по явным суффиксам (-1, -1S, WE, S).
+
+    Не используем «отрезание последней цифры» — иначе MS28778-20 ↔ MS28778-2.
+    """
+    hits: list[tuple[str, str]] = []
+    seen = set()
+    if is_sample_pn(pn) or pn in {"-", "—", "."}:
+        return hits
+    soft = soft_pn_key(pn)
+    if len(soft) < 6:
+        return hits
+
+    def add(mp: str, reason: str):
+        if mp == pn or mp in seen or mp not in by_pn:
+            return
+        if is_sample_pn(mp):
+            return
+        if len(soft_pn_key(mp)) < 6:
+            return
+        seen.add(mp)
+        hits.append((mp, reason))
+
+    bases: list[str] = []
+    # буквенные pack/variant суффиксы (часто WE)
+    for lit in ("WE", "S"):
+        if pn.upper().endswith(lit) and len(pn) > len(lit) + 5:
+            bases.append(pn[: -len(lit)])
+    # один хвостовой -N / -NN / -NLetter (601R57502-1, 601R13081-1S)
+    m = re.search(r"[-_/]\d{1,2}[A-Z]?$", pn, re.I)
+    if m:
+        bases.append(pn[: m.start()])
+    # двойной шаг: -1S → сначала S уже сняли, ещё -1
+    for b in list(bases):
+        m2 = re.search(r"[-_/]\d{1,2}[A-Z]?$", b, re.I)
+        if m2 and len(soft_pn_key(b[: m2.start()])) >= 6:
+            bases.append(b[: m2.start()])
+
+    for base in bases:
+        bsoft = soft_pn_key(base)
+        if len(bsoft) < 6:
+            continue
+        if base in by_pn:
+            add(base, f"суффикс: склад {pn} ↔ рынок {base}")
+        for mp in soft_to_pns.get(bsoft, set()):
+            if soft_pn_key(mp) == bsoft:
+                add(mp, f"суффикс: склад {pn} ↔ рынок {mp}")
+
+    # обратное: на рынке наш P/N + WE/S (склад без суффикса)
+    if not hits:
+        for lit in ("WE", "S"):
+            cand = pn + lit
+            if cand in by_pn:
+                add(cand, f"суффикс: склад {pn} ↔ рынок {cand}")
+            for mp in soft_to_pns.get(soft + lit, set()):
+                if soft_pn_key(mp) == soft + lit:
+                    add(mp, f"суффикс: склад {pn} ↔ рынок {mp}")
+
+    return hits
+
+
 def norm_client(value: Any) -> str:
     if value is None:
         return ""
@@ -1108,10 +1194,13 @@ def load_ati(path: Path) -> list[dict]:
             continue
         if not r or r[0] is None:
             continue
+        pn = norm_pn(r[0])
+        if is_sample_pn(pn):
+            continue
         rows.append(
             {
                 "partno": str(r[0]).strip(),
-                "pn": norm_pn(r[0]),
+                "pn": pn,
                 "serialno": str(r[1]).strip() if r[1] is not None else "",
                 "description": str(r[2]).strip() if r[2] is not None else "",
                 "ata": str(r[3]).strip() if len(r) > 3 and r[3] is not None else "",
@@ -1145,9 +1234,10 @@ def resolve_market(
     soft_to_pns: dict[str, set[str]],
     alt_to_pns: dict[str, set[str]],
 ) -> MarketAgg:
-    """Собирает агрегат рынка для P/N склада с учётом soft/alt."""
+    """Собирает агрегат рынка для P/N склада с учётом soft/alt/вариантов."""
     result = MarketAgg()
     matched_pns = set()
+    near_notes: list[str] = []
 
     if pn in by_pn:
         matched_pns.add(pn)
@@ -1159,9 +1249,6 @@ def resolve_market(
         if stripped != pn and stripped in by_pn:
             matched_pns.add(stripped)
             result.matched_via.add("ведущие нули")
-        # склад без нулей, рынок с нулями — редкий случай: soft-ключ уже совпадёт по цифрам
-        # (soft_pn_key не меняет набор цифр, но ведущие нули сохраняются в soft → не совпадут).
-        # Дополнительно пробуем soft без ведущих нулей:
         soft_stripped = stripped
         for mp in soft_to_pns.get(soft_stripped, set()):
             if mp.isdigit():
@@ -1177,13 +1264,9 @@ def resolve_market(
     soft = soft_pn_key(pn)
     candidates = soft_to_pns.get(soft, set())
     if candidates:
-        # only accept soft if single cluster or exact already present
         if pn not in by_pn:
-            # avoid aggressive overmatch: only if exactly one distinct soft candidate
-            # OR candidates include obvious hyphen variants of same
             close = {c for c in candidates if soft_pn_key(c) == soft}
             if len(close) == 1 or all(soft_pn_key(c) == soft for c in close):
-                # merge close variants
                 for c in close:
                     if c != pn:
                         result.matched_via.add("нормализация (дефисы/пробелы)")
@@ -1191,10 +1274,17 @@ def resolve_market(
         else:
             for c in candidates:
                 if soft_pn_key(c) == soft and c != pn:
-                    # hyphen variant of same
                     if abs(len(c) - len(pn)) <= 2 or soft_pn_key(c) == soft:
                         matched_pns.add(c)
                         result.matched_via.add("нормализация (дефисы/пробелы)")
+
+    # варианты с суффиксом/близостью — если точного спроса ещё нет
+    if not matched_pns:
+        for mp, reason in find_near_pn_matches(pn, by_pn, soft_to_pns):
+            matched_pns.add(mp)
+            near_notes.append(reason)
+        if near_notes:
+            result.matched_via.add("вариант P/N (суффикс/близость)")
 
     for mp in matched_pns:
         src = by_pn.get(mp)
@@ -1204,6 +1294,9 @@ def resolve_market(
 
     if not result.matched_via and matched_pns:
         result.matched_via.add("точное P/N")
+
+    # сохраняем пояснение для отчёта
+    result.near_match_notes = near_notes  # type: ignore[attr-defined]
     return result
 
 
@@ -1298,6 +1391,9 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     rationale = rationale + f" На складе: {stock['qty']:g} шт. ({stock['lines']} строк АТИ)."
     rationale = rationale + f" Состояние склада: {extra}."
     rationale = rationale + " " + price_detail
+    near_notes = getattr(market, "near_match_notes", None) or []
+    if near_notes:
+        rationale += " ПОМЕТКА: сопоставление по варианту P/N (" + "; ".join(near_notes[:3]) + ")."
     if has_demand and not has_sell_offered:
         rationale += (
             " ВНИМАНИЕ: спрос/заказы есть, но sell/offered цены нет — денежная оценка невозможна."
@@ -1311,6 +1407,7 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     if ref_price is not None and stock["qty"]:
         potential_rev = round(float(ref_price) * float(stock["qty"]), 2)
 
+    # match_via уже включает тип сопоставления
     return {
         "liquidity_grade": grade,
         "liquidity_score": score,
@@ -1333,6 +1430,7 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "match_via": ", ".join(sorted(market.matched_via)) if market.matched_via else "нет",
         "rationale": rationale,
         "section": stock["section"],
+        "near_match": bool(near_notes),
     }
 
 
@@ -1725,26 +1823,26 @@ def main():
     if audit["near_contains"]:
         print("  near-contains samples:", audit["near_contains"][:8])
 
+    near_variant_n = sum(1 for r in scored if "вариант P/N" in (r.get("match_via") or ""))
     notes = [
         f"В АТИ {dup_pn} P/N встречались более одного раза — в отчёте одна строка на P/N внутри раздела Condition.",
         f"Исходных строк АТИ: {len(ati)}; после агрегации позиций: {len(stock)}.",
         "Дедуп заказов: P/N + №счёта across всех файлов ТАЗ.",
         "Дедуп запросов: P/N + клиент + день (+ qty/price/desc для сырых строк) across ТУЗ/EXP.",
-        "Сопоставление P/N: регистр, пробелы, тире; soft-ключ и ALT P/N.",
+        "Сопоставление P/N: регистр, пробелы, тире; soft-ключ; ALT; ведущие нули; варианты с суффиксом.",
+        f"Вариантное сопоставление (напр. 601R57502-1↔601R57502): {near_variant_n} позиций; "
+        "в обосновании есть пометка «ПОМЕТКА: сопоставление по варианту P/N».",
         "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
         "«Закупка на склад» не считается рыночным клиентом.",
-        f"Аудит D-позиций: soft-кластер непустой у {audit['soft_cluster_nonempty']}, "
-        f"ALT-ссылок {audit['alt_hits']}, near-contains {audit['near_contains_n']} "
-        "(near-contains вроде 601R57502-1↔601R57502 не включались автоматически).",
-        "Offered «min\\nmax» в одной ячейке: берём первую строку (min), не склеиваем цифры.",
-        "Файл АТИ восстановлен из предыдущего отчёта (агрегированный вид); исходный serial-level upload в среде отсутствует.",
+        f"Позиций без спроса (D): {audit['d_count']} — после полного прохода по рынку (включая варианты).",
+        "Offered в ТУЗ иногда содержит два числа в одной ячейке (две строки) — сейчас берём верхнее число.",
+        "АТИ: исходный файл «АТИ для реализации» (serial-level).",
     ]
-    if not (DATA / "EXPENDABLES.xlsx").exists():
-        notes.insert(
-            0,
-            "Нет EXPENDABLES.xlsx (копия 17.07.2026) — учтены только архивные CSV. "
-            "Возможен пробел по расходникам 2H2025–2026.",
-        )
+    exp_utair = list(DATA.glob("*1 DECEMBER 2025*Utair*.csv")) + list(DATA.glob("*DECEMBER 2025*Exp*.csv"))
+    if exp_utair:
+        notes.insert(0, f"Подключён EXPENDABLES Utair CSV: {exp_utair[0].name}.")
+    elif not (DATA / "EXPENDABLES.xlsx").exists():
+        notes.insert(0, "Нет EXPENDABLES.xlsx — учтены архивные CSV.")
 
     def sort_key(r):
         return (GRADE_ORDER[r["liquidity_grade"]], -r["liquidity_score"], -r["qty"], r["partno"])
