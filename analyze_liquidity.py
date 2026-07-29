@@ -223,34 +223,51 @@ def parse_money(value: Any) -> Optional[float]:
     s = str(value).strip()
     if not s or s in {"-", "—", "n/a", "N/A"}:
         return None
-    # В ТУЗ Offered часто «min\nmax» в одной ячейке — берём первую строку, не склеиваем
-    if "\n" in s or "\r" in s:
-        s = s.splitlines()[0].strip()
     s = s.replace("\u00a0", " ").replace("\u202f", " ")
-    s = re.sub(r"[^\d,.\-]", "", s)
-    if not s or s in {".", ",", "-", "-.", ".-"}:
-        return None
-    # European: 1.234,56 or 1 234,56 already stripped spaces
-    if "," in s and "." in s:
-        if s.rfind(",") > s.rfind("."):
-            s = s.replace(".", "").replace(",", ".")
-        else:
-            s = s.replace(",", "")
-    elif "," in s:
-        # 100,00 or 2939,77
-        parts = s.split(",")
-        if len(parts[-1]) <= 2:
-            s = s.replace(",", ".")
-        else:
-            s = s.replace(",", "")
-    try:
-        v = float(s)
-    except ValueError:
-        return None
-    # защита от мусора/склеек: единичная авиазапчасть > $5M почти наверняка ошибка парсинга
-    if v > 5_000_000:
-        return None
-    return v
+
+    def parse_money_one(x: str) -> Optional[float]:
+        x = str(x).strip()
+        if not x or x in {"-", "—", "n/a", "N/A"}:
+            return None
+        x = re.sub(r"[^\d,.\-]", "", x)
+        if not x or x in {".", ",", "-", "-.", ".-"}:
+            return None
+        # European: 1.234,56 or 1 234,56 already stripped spaces
+        if "," in x and "." in x:
+            if x.rfind(",") > x.rfind("."):
+                x = x.replace(".", "").replace(",", ".")
+            else:
+                x = x.replace(",", "")
+        elif "," in x:
+            # 100,00 or 2939,77
+            parts = x.split(",")
+            if len(parts[-1]) <= 2:
+                x = x.replace(",", ".")
+            else:
+                x = x.replace(",", "")
+        try:
+            v = float(x)
+        except ValueError:
+            return None
+        # защита от мусора/склеек: единичная авиазапчасть > $5M почти наверняка ошибка парсинга
+        if v > 5_000_000:
+            return None
+        return v
+
+    # В ТУЗ Offered часто «min\nmax» в одной ячейке — берём минимальное число из строк
+    if "\n" in s or "\r" in s:
+        parts = [ln.strip() for ln in s.splitlines() if ln.strip()]
+        vals = []
+        for ln in parts:
+            v = parse_money_one(ln)
+            if v is not None:
+                vals.append(v)
+        if vals:
+            return min(vals)
+        # если не распарсилось — пробуем первую строку как fallback
+        s = parts[0] if parts else s
+
+    return parse_money_one(s)
 
 
 def parse_qty(value: Any) -> float:
@@ -1835,7 +1852,7 @@ def main():
         "Цена ориентир только из «Продажная, ед.» / «Offered per unit $» / «Sell Price EA».",
         "«Закупка на склад» не считается рыночным клиентом.",
         f"Позиций без спроса (D): {audit['d_count']} — после полного прохода по рынку (включая варианты).",
-        "Offered в ТУЗ иногда содержит два числа в одной ячейке (две строки) — сейчас берём верхнее число.",
+        "Offered в ТУЗ иногда содержит два числа в одной ячейке (две строки) — сейчас берём нижнее число (минимум).",
         "АТИ: исходный файл «АТИ для реализации» (serial-level).",
     ]
     exp_utair = list(DATA.glob("*1 DECEMBER 2025*Utair*.csv")) + list(DATA.glob("*DECEMBER 2025*Exp*.csv"))
