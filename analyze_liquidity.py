@@ -1673,34 +1673,76 @@ def write_summary(ws, ati_rows, scored, taz_n, tuz_n, exp_n, notes: list[str], s
 
 
 def build_seller_priority(scored: list[dict], limit: int = 60) -> list[dict]:
-    """Позиции 1-й очереди для уточнения у продавца: ликвидные + высокая потенц. выручка.
+    """Лист «Запросить документы»: без состояния не кладём.
 
-    Включаем US/NA и пустое состояние — как раз там нужна верификация.
+    Приоритет на дорогие позиции (по потенц. выручке), включая ансервис (US/NA).
+    Затем добавляем топ ликвидных (A/B) с известным состоянием.
     """
-    eligible = [
+    # Без состояния (section==1) не включаем — оно идёт отдельным листом Unknown Condition
+    known = [
         r
         for r in scored
-        if r["liquidity_grade"] in {"A", "B"}
-        or (
-            r["liquidity_grade"] == "C"
-            and (r.get("potential_revenue_usd") or 0) >= 5000
-            and (r["taz_orders"] + r["requests"]) >= 2
-        )
+        if r.get("section") != 1 and (r.get("condition") or "") != "(пусто)"
     ]
 
-    def prio_key(r):
+    def row_key_for_rev(r: dict) -> tuple:
         rev = r.get("potential_revenue_usd") or 0
-        needs_info = 1 if r["section"] in {1, 2} else 0
         return (
-            GRADE_ORDER[r["liquidity_grade"]],
-            -needs_info,
             -rev,
+            GRADE_ORDER[r["liquidity_grade"]],
             -r["liquidity_score"],
             -r["qty"],
             r["partno"],
         )
 
-    return sorted(eligible, key=prio_key)[:limit]
+    def row_key_for_liq(r: dict) -> tuple:
+        return (
+            GRADE_ORDER[r["liquidity_grade"]],
+            -r["liquidity_score"],
+            -r["qty"],
+            r["partno"],
+        )
+
+    expensive = sorted(known, key=row_key_for_rev)
+    top_liq = sorted([r for r in known if r["liquidity_grade"] in {"A", "B"}], key=row_key_for_liq)
+
+    res: list[dict] = []
+    used: set[tuple] = set()
+
+    def ukey(r: dict) -> tuple:
+        return (r["pn"], r["section"], r.get("condition"), r["partno"])
+
+    n_exp = max(1, limit // 2)
+    for r in expensive:
+        if len(res) >= n_exp:
+            break
+        k = ukey(r)
+        if k in used:
+            continue
+        used.add(k)
+        res.append(r)
+
+    for r in top_liq:
+        if len(res) >= limit:
+            break
+        k = ukey(r)
+        if k in used:
+            continue
+        used.add(k)
+        res.append(r)
+
+    # Если по какой-то причине не набрали — добираем по потенц. выручке среди known
+    if len(res) < limit:
+        for r in expensive:
+            if len(res) >= limit:
+                break
+            k = ukey(r)
+            if k in used:
+                continue
+            used.add(k)
+            res.append(r)
+
+    return res[:limit]
 
 
 def audit_unmatched(scored: list[dict], by_pn: dict, soft_to_pns: dict, alt_to_pns: dict) -> dict:
@@ -1870,6 +1912,9 @@ def main():
 
     top_by_pn: dict[str, dict] = {}
     for r in scored:
+        # Без состояния — исключаем из топов, оно идёт отдельными листами
+        if r.get("section") == 1:
+            continue
         if r["liquidity_grade"] not in {"A", "B"}:
             continue
         pn = r["pn"]
@@ -1923,7 +1968,7 @@ def main():
     ws0.title = "0. Сводка"
     write_summary(ws0, ati, scored, taz_n, tuz_n, exp_n, notes, source_lines)
 
-    ws_prio = wb.create_sheet("1 очередь у продавца")
+    ws_prio = wb.create_sheet("Запросить документы")
     write_rows(ws_prio, seller_prio, "8B4513")
     ws_prio["A1"].value  # header already set
     # пояснение над таблицей нельзя без сдвига — добавим примечание в легенду
@@ -1931,13 +1976,14 @@ def main():
     ws_top = wb.create_sheet("ТОП ликвидных")
     write_rows(ws_top, top, "1F7A4D")
 
-    ws1 = wb.create_sheet("1. Condition пусто")
+    ws1 = wb.create_sheet("Unknown Condition")
     write_rows(ws1, sec1, "6B4C9A")
 
-    ws2 = wb.create_sheet("2. Condition US_NA")
+    ws2 = wb.create_sheet("Ансервис")
     write_rows(ws2, sec2, "B33B3B")
 
-    ws3 = wb.create_sheet("3. Прочие Condition")
+    # В Excel нельзя использовать '/' в названии листа
+    ws3 = wb.create_sheet("SV_OH_NEW")
     write_rows(ws3, sec3, "2F5D9F")
 
     wsl = wb.create_sheet("Легенда")
