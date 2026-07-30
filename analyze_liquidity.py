@@ -213,6 +213,30 @@ def is_sample_pn(pn: str) -> bool:
     return False
 
 
+def is_plausible_client(client: str, pn: str = "") -> bool:
+    """Отсекает явный мусор/сдвиг колонок, но не короткие коды авиакомпаний (S7, U6, …)."""
+    if not client:
+        return True
+    if client.upper() in SAMPLE_CLIENT:
+        return False
+    c = client.strip()
+    # коды перевозчиков / короткие обозначения: S7, U6, UT, VDT, A4…
+    if re.fullmatch(r"[A-Za-zА-Яа-я]{1,4}\d{0,2}", c):
+        return True
+    # в колонке Client оказался тот же P/N — сдвиг раскладки
+    if pn and norm_pn(c) == pn:
+        return False
+    # чисто число (часто Request № / Sales ID при сдвиге)
+    if re.fullmatch(r"\d+(\.0+)?", c.replace(" ", "").replace("\u00a0", "")):
+        return False
+    # длинная «PN-подобная» строка без двухбуквенного слова
+    if re.search(r"\d", c) and not re.search(r"[A-Za-zА-Яа-я]{2,}", c):
+        soft = re.sub(r"[^A-Za-z0-9]", "", c)
+        if len(soft) >= 5:
+            return False
+    return True
+
+
 def parse_money(value: Any) -> Optional[float]:
     if value is None or value == "":
         return None
@@ -925,9 +949,8 @@ def _extract_tuz_row(r: tuple, layouts: list[dict[str, int]]) -> Optional[dict]:
         client = norm_client(get("client"))
         if client.upper() in SAMPLE_CLIENT:
             continue
-        # client не должен выглядеть как P/N при валидном PN
-        if client and not re.search(r"[A-Za-zА-Яа-я]{2,}", client) and re.search(r"\d", client):
-            # похоже на номер, а не клиента — пробуем другую раскладку
+        # client не должен быть мусором/сдвинутым P/N; S7 и подобные коды — ок
+        if not is_plausible_client(client, pn):
             continue
 
         alt = norm_pn(get("alt"))
