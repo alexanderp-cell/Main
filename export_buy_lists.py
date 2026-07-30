@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Рекомендации к выкупу со склада АТИ:
-- 1 внутренний файл (ликвидный/неликвидный сервис и ансервис)
-- 2 клиентских файла пока: только ликвидный сервис и ликвидный ансервис
+- внутренний файл: сервис (только rotables), расходка, ансервис, неизвестное
+- клиентские: ликвидный сервис (rotables), ликвидный ансервис, ликвидная расходка
   (формат склада АТИ, одна строка на P/N)
 """
 from __future__ import annotations
@@ -22,6 +22,7 @@ ART_DIR = Path("/opt/cursor/artifacts")
 INTERNAL_NAME = "ATI_buyout_recommendations_internal.xlsx"
 CLIENT_SERVICEABLE = "ATI_buyout_client_serviceable.xlsx"
 CLIENT_UNSERVICEABLE = "ATI_buyout_client_unserviceable.xlsx"
+CLIENT_EXPENDABLES = "ATI_buyout_client_expendables.xlsx"
 # старый файл unknown больше не генерируем
 LEGACY_CLIENT_UNKNOWN = "ATI_buyout_client_unknown.xlsx"
 
@@ -51,6 +52,44 @@ def sort_key(r: dict):
         -r["qty"],
         r["partno"],
     )
+
+
+def is_expendable_part(row: dict, market: al.MarketAgg) -> bool:
+    """
+    Расходка (expendables): в основном в таблицах EXP, редко в ТУЗ,
+    обычно NEW, редко по 1 шт, обычно недорогие.
+    Дорогие позиции даже при EXP-рынке оставляем как rotables.
+    """
+    n_tuz = len(market.request_keys_tuz)
+    n_exp = len(market.request_keys_exp)
+    price = row.get("price_ref_usd")
+    if price is None:
+        price = 0.0
+    cond = (row.get("condition") or "").upper()
+    qty = row.get("qty") or 0
+
+    # Дорогие — скорее rotables (даже если встречаются в EXP-рынке)
+    if price >= 2000:
+        return False
+
+    # Чистый EXP-рынок без ТУЗ
+    if n_exp > 0 and n_tuz == 0:
+        return True
+
+    # EXP доминирует и позиция недорогая
+    if n_exp >= 2 and n_exp > n_tuz and price > 0 and price < 1000:
+        return True
+
+    # Сильное доминирование EXP
+    if n_exp >= 3 and n_exp >= 3 * max(n_tuz, 1) and price < 1500:
+        return True
+
+    # Нет рыночных запросов, но по складу похоже на расходку
+    if n_exp == 0 and n_tuz == 0:
+        if "NEW" in cond and price > 0 and price < 300 and qty >= 2:
+            return True
+
+    return False
 
 
 def load_all_market_and_score():
@@ -124,21 +163,26 @@ def load_all_market_and_score():
     scored = []
     for item in stock:
         market = al.resolve_market(item["pn"], by_pn, soft_to_pns, alt_to_pns)
-        scored.append(al.build_row_from_stock(item, market))
+        row = al.build_row_from_stock(item, market)
+        row["is_expendable"] = is_expendable_part(row, market)
+        scored.append(row)
     return ati, scored
 
 
 def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
-    svc = [r for r in scored_buy if r["section"] == 3]
+    svc = [r for r in scored_buy if r["section"] == 3 and not r.get("is_expendable")]
+    exp = [r for r in scored_buy if r["section"] == 3 and r.get("is_expendable")]
     us = [r for r in scored_buy if r["section"] == 2]
     unk = [r for r in scored_buy if r["section"] == 1]
 
     sheets = [
         ("1. Сервис ликвидный", sorted([r for r in svc if is_liquid(r)], key=sort_key), "1F7A4D"),
         ("2. Сервис неликвидный", sorted([r for r in svc if not is_liquid(r)], key=sort_key), "2F5D9F"),
-        ("3. Ансервис ликвидный", sorted([r for r in us if is_liquid(r)], key=sort_key), "B33B3B"),
-        ("4. Ансервис неликвидный", sorted([r for r in us if not is_liquid(r)], key=sort_key), "C47F00"),
-        ("5. Неизвестное", sorted(unk, key=sort_key), "6B4C9A"),
+        ("3. Расходка ликвидная", sorted([r for r in exp if is_liquid(r)], key=sort_key), "0E7490"),
+        ("4. Расходка неликвидная", sorted([r for r in exp if not is_liquid(r)], key=sort_key), "117A65"),
+        ("5. Ансервис ликвидный", sorted([r for r in us if is_liquid(r)], key=sort_key), "B33B3B"),
+        ("6. Ансервис неликвидный", sorted([r for r in us if not is_liquid(r)], key=sort_key), "C47F00"),
+        ("7. Неизвестное", sorted(unk, key=sort_key), "6B4C9A"),
     ]
 
     wb = openpyxl.Workbook()
@@ -159,11 +203,13 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         ("Рекомендовано позиций (P/N×состояние)", len(scored_buy)),
         ("Ликвидные (A/B)", liquid_n),
         ("Неликвидные (C)", len(scored_buy) - liquid_n),
-        ("Сервис ликвидный", len(sheets[0][1])),
-        ("Сервис неликвидный", len(sheets[1][1])),
-        ("Ансервис ликвидный", len(sheets[2][1])),
-        ("Ансервис неликвидный", len(sheets[3][1])),
-        ("Неизвестное состояние", len(sheets[4][1])),
+        ("Сервис ликвидный (rotables)", len(sheets[0][1])),
+        ("Сервис неликвидный (rotables)", len(sheets[1][1])),
+        ("Расходка ликвидная", len(sheets[2][1])),
+        ("Расходка неликвидная", len(sheets[3][1])),
+        ("Ансервис ликвидный", len(sheets[4][1])),
+        ("Ансервис неликвидный", len(sheets[5][1])),
+        ("Неизвестное состояние", len(sheets[6][1])),
         ("Суммарное кол-во Utair в рекомендациях, шт.", sum(r["qty"] for r in scored_buy)),
         ("Суммарная потенц. выручка (где есть цена), USD", round(total_rev, 2)),
     ]
@@ -176,16 +222,18 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         if "выручка" in k.lower() and isinstance(v, (int, float)):
             cell.number_format = '"$"#,##0.00'
 
-    ws0["A17"] = "Методика"
-    ws0["A17"].font = Font(bold=True, size=13)
+    ws0["A20"] = "Методика"
+    ws0["A20"].font = Font(bold=True, size=13)
     method = [
         "Ликвидный = оценка A или B (устойчивый рыночный спрос).",
         "Неликвидный = C и ниже в этом файле (практически сильный C; D не включаем).",
-        "Сервис / ансервис разделены; C+ убраны с «ликвидных» вкладок в отдельные.",
+        "Сервис = только rotables (ремонтируемые/заменяемые узлы).",
+        "Расходка = expendables: в основном рынок EXP (не ТУЗ), обычно NEW, недорогие, редко по 1 шт.",
+        "Дорогие (≥ $2 000) даже при EXP-рынке остаются в Сервисе как rotables.",
         "Сортировка внутри листа: ликвидность (A→B→C) → потенц. выручка → балл → qty.",
-        "Клиенту пока: только ликвидный сервис и ликвидный ансервис, 1 строка на P/N.",
+        "Клиенту: ликвидный сервис (rotables), ликвидный ансервис, ликвидная расходка — 1 строка на P/N.",
     ]
-    for i, t in enumerate(method, 18):
+    for i, t in enumerate(method, 21):
         ws0.cell(i, 1, t)
         ws0.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
     ws0.column_dimensions["A"].width = 70
@@ -202,7 +250,10 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         c.fill = al.GRADE_FILL[g]
         c.font = al.GRADE_FONT
         wsl.cell(i, 2, name)
-    wsl["A7"] = "Внутренний файл. Клиенту — только ликвидный сервис и ликвидный ансервис (агрегат по P/N)."
+    wsl["A7"] = (
+        "Внутренний файл. Клиенту — ликвидный сервис (rotables), "
+        "ликвидный ансервис и ликвидная расходка (агрегат по P/N)."
+    )
     wsl.column_dimensions["A"].width = 12
     wsl.column_dimensions["B"].width = 50
 
@@ -328,11 +379,18 @@ def write_client_ati_aggregated(
 def main():
     ati, scored = load_all_market_and_score()
     buy = [r for r in scored if is_buy_candidate(r)]
-    liquid_svc = [r for r in buy if r["section"] == 3 and is_liquid(r)]
+    liquid_svc = [
+        r for r in buy if r["section"] == 3 and is_liquid(r) and not r.get("is_expendable")
+    ]
+    liquid_exp = [
+        r for r in buy if r["section"] == 3 and is_liquid(r) and r.get("is_expendable")
+    ]
     liquid_us = [r for r in buy if r["section"] == 2 and is_liquid(r)]
     print(
         f"Buy candidates: {len(buy)}; "
-        f"liquid svc={len(liquid_svc)}, liquid us={len(liquid_us)}"
+        f"liquid rotables={len(liquid_svc)}, liquid exp={len(liquid_exp)}, "
+        f"liquid us={len(liquid_us)}; "
+        f"exp total in buy={sum(1 for r in buy if r.get('is_expendable'))}"
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -342,20 +400,20 @@ def main():
     counts = write_internal(internal, buy, len(ati))
     openpyxl.load_workbook(internal).save(ART_DIR / INTERNAL_NAME)
 
-    # клиенту — только ликвидные сервис и ансервис, 1 строка на P/N
     n1 = write_client_ati_aggregated(OUT_DIR / CLIENT_SERVICEABLE, ati, liquid_svc)
     openpyxl.load_workbook(OUT_DIR / CLIENT_SERVICEABLE).save(ART_DIR / CLIENT_SERVICEABLE)
     n2 = write_client_ati_aggregated(OUT_DIR / CLIENT_UNSERVICEABLE, ati, liquid_us)
     openpyxl.load_workbook(OUT_DIR / CLIENT_UNSERVICEABLE).save(ART_DIR / CLIENT_UNSERVICEABLE)
+    n3 = write_client_ati_aggregated(OUT_DIR / CLIENT_EXPENDABLES, ati, liquid_exp)
+    openpyxl.load_workbook(OUT_DIR / CLIENT_EXPENDABLES).save(ART_DIR / CLIENT_EXPENDABLES)
 
-    # убрать устаревший unknown-клиентский файл, если остался
     for folder in (OUT_DIR, ART_DIR):
         legacy = folder / LEGACY_CLIENT_UNKNOWN
         if legacy.exists():
             legacy.unlink()
             print(f"Removed legacy: {legacy}")
 
-    print("Done.", counts, f"client_svc={n1}", f"client_us={n2}")
+    print("Done.", counts, f"client_svc={n1}", f"client_us={n2}", f"client_exp={n3}")
 
 
 if __name__ == "__main__":
