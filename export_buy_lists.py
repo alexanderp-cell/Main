@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 Рекомендации к выкупу со склада АТИ:
-- 1 внутренний файл (формат как liquidity assessment)
-- 3 клиентских файла (формат как склад АТИ: partno/serialno/...)
-  по состоянию: сервисное / ансервис / неизвестное
+- 1 внутренний файл (ликвидный/неликвидный сервис и ансервис)
+- 2 клиентских файла пока: только ликвидный сервис и ликвидный ансервис
+  (формат склада АТИ, одна строка на P/N)
 """
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -21,39 +20,33 @@ OUT_DIR = Path("/workspace/output")
 ART_DIR = Path("/opt/cursor/artifacts")
 
 INTERNAL_NAME = "ATI_buyout_recommendations_internal.xlsx"
-CLIENT_NAMES = {
-    3: "ATI_buyout_client_serviceable.xlsx",
-    2: "ATI_buyout_client_unserviceable.xlsx",
-    1: "ATI_buyout_client_unknown.xlsx",
-}
-CLIENT_SHEET_TITLES = {
-    3: "Сервисное состояние",
-    2: "Ансервисное состояние",
-    1: "Неизвестное состояние",
-}
+CLIENT_SERVICEABLE = "ATI_buyout_client_serviceable.xlsx"
+CLIENT_UNSERVICEABLE = "ATI_buyout_client_unserviceable.xlsx"
+# старый файл unknown больше не генерируем
+LEGACY_CLIENT_UNKNOWN = "ATI_buyout_client_unknown.xlsx"
 
 
 def is_buy_candidate(r: dict) -> bool:
-    """Позиции, которые имеет смысл рекомендовать к выкупу."""
+    """Позиции для внутреннего списка рекомендаций."""
     g = r["liquidity_grade"]
     if g in {"A", "B"}:
         return True
     if g == "C":
         demand = (r.get("taz_orders") or 0) + (r.get("requests") or 0)
         rev = r.get("potential_revenue_usd") or 0
-        # сильный C: повторный спрос или заметная потенц. выручка
         return demand >= 2 or rev >= 3000
     return False
 
 
-def sort_key(r: dict):
-    """Для выкупа важнее деньги, не буква ликвидности.
+def is_liquid(r: dict) -> bool:
+    return r["liquidity_grade"] in {"A", "B"}
 
-    Иначе расходка с оценкой A ($10–200) уезжает выше ротабля B на $50–100k.
-    """
+
+def sort_key(r: dict):
+    """Сначала ликвидность (A→B→C), затем потенц. выручка."""
     return (
-        -(r.get("potential_revenue_usd") or 0),
         al.GRADE_ORDER[r["liquidity_grade"]],
+        -(r.get("potential_revenue_usd") or 0),
         -r["liquidity_score"],
         -r["qty"],
         r["partno"],
@@ -61,7 +54,6 @@ def sort_key(r: dict):
 
 
 def load_all_market_and_score():
-    """Повторно собирает scored-позиции теми же правилами, что основной отчёт."""
     taz_files = [
         al.DATA / "TAZ_17.07.2026.xlsx",
         al.DATA / "TA3 2025.xlsx",
@@ -137,11 +129,18 @@ def load_all_market_and_score():
 
 
 def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
-    sec = {
-        3: sorted([r for r in scored_buy if r["section"] == 3], key=sort_key),
-        2: sorted([r for r in scored_buy if r["section"] == 2], key=sort_key),
-        1: sorted([r for r in scored_buy if r["section"] == 1], key=sort_key),
-    }
+    svc = [r for r in scored_buy if r["section"] == 3]
+    us = [r for r in scored_buy if r["section"] == 2]
+    unk = [r for r in scored_buy if r["section"] == 1]
+
+    sheets = [
+        ("1. Сервис ликвидный", sorted([r for r in svc if is_liquid(r)], key=sort_key), "1F7A4D"),
+        ("2. Сервис неликвидный", sorted([r for r in svc if not is_liquid(r)], key=sort_key), "2F5D9F"),
+        ("3. Ансервис ликвидный", sorted([r for r in us if is_liquid(r)], key=sort_key), "B33B3B"),
+        ("4. Ансервис неликвидный", sorted([r for r in us if not is_liquid(r)], key=sort_key), "C47F00"),
+        ("5. Неизвестное", sorted(unk, key=sort_key), "6B4C9A"),
+    ]
+
     wb = openpyxl.Workbook()
     ws0 = wb.active
     ws0.title = "0. Сводка"
@@ -149,22 +148,24 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
     ws0["A1"].font = Font(bold=True, size=16, name="Calibri")
     ws0["A2"] = (
         f"Дата: {datetime.now():%Y-%m-%d %H:%M} | "
-        "Критерий: ликвидность A/B или сильный C (спрос ≥2 или потенц. выручка ≥ $3 000)"
+        "Ликвидные = A/B; неликвидные = C (сильный C: спрос ≥2 или выручка ≥ $3 000)"
     )
     ws0.merge_cells("A2:F2")
 
     total_rev = sum(r.get("potential_revenue_usd") or 0 for r in scored_buy)
+    liquid_n = sum(1 for r in scored_buy if is_liquid(r))
     rows_sum = [
         ("Строк в исходном АТИ", ati_n),
         ("Рекомендовано позиций (P/N×состояние)", len(scored_buy)),
-        ("Сервисное состояние", len(sec[3])),
-        ("Ансервисное состояние", len(sec[2])),
-        ("Неизвестное состояние", len(sec[1])),
+        ("Ликвидные (A/B)", liquid_n),
+        ("Неликвидные (C)", len(scored_buy) - liquid_n),
+        ("Сервис ликвидный", len(sheets[0][1])),
+        ("Сервис неликвидный", len(sheets[1][1])),
+        ("Ансервис ликвидный", len(sheets[2][1])),
+        ("Ансервис неликвидный", len(sheets[3][1])),
+        ("Неизвестное состояние", len(sheets[4][1])),
         ("Суммарное кол-во Utair в рекомендациях, шт.", sum(r["qty"] for r in scored_buy)),
         ("Суммарная потенц. выручка (где есть цена), USD", round(total_rev, 2)),
-        ("A / B / C среди рекомендаций", f"{sum(1 for r in scored_buy if r['liquidity_grade']=='A')} / "
-         f"{sum(1 for r in scored_buy if r['liquidity_grade']=='B')} / "
-         f"{sum(1 for r in scored_buy if r['liquidity_grade']=='C')}"),
     ]
     ws0["A4"] = "Сводка"
     ws0["A4"].font = Font(bold=True, size=13)
@@ -175,26 +176,23 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         if "выручка" in k.lower() and isinstance(v, (int, float)):
             cell.number_format = '"$"#,##0.00'
 
-    ws0["A14"] = "Методика"
-    ws0["A14"].font = Font(bold=True, size=13)
+    ws0["A17"] = "Методика"
+    ws0["A17"].font = Font(bold=True, size=13)
     method = [
-        "Сервисное: Condition не пустое и не US/NA (N, SV, OH, R, S, IT, …).",
-        "Ансервис: Condition US или NA.",
-        "Неизвестное: Condition пустое.",
-        "В клиентские файлы попадают исходные строки склада (с serialno) по отобранным P/N и разделу состояния.",
-        "Сортировка внутри листа: потенц. выручка → ликвидность → балл → qty "
-        "(чтобы дорогие позиции не уезжали ниже расходки с буквой A).",
-        "D (нет спроса) в рекомендации не входят.",
+        "Ликвидный = оценка A или B (устойчивый рыночный спрос).",
+        "Неликвидный = C и ниже в этом файле (практически сильный C; D не включаем).",
+        "Сервис / ансервис разделены; C+ убраны с «ликвидных» вкладок в отдельные.",
+        "Сортировка внутри листа: ликвидность (A→B→C) → потенц. выручка → балл → qty.",
+        "Клиенту пока: только ликвидный сервис и ликвидный ансервис, 1 строка на P/N.",
     ]
-    for i, t in enumerate(method, 15):
+    for i, t in enumerate(method, 18):
         ws0.cell(i, 1, t)
         ws0.merge_cells(start_row=i, start_column=1, end_row=i, end_column=6)
     ws0.column_dimensions["A"].width = 70
     ws0.column_dimensions["B"].width = 22
 
-    al.write_rows(wb.create_sheet("1. Сервисное"), sec[3], "2F5D9F")
-    al.write_rows(wb.create_sheet("2. Ансервис"), sec[2], "B33B3B")
-    al.write_rows(wb.create_sheet("3. Неизвестное"), sec[1], "6B4C9A")
+    for title, rows, color in sheets:
+        al.write_rows(wb.create_sheet(title), rows, color)
 
     wsl = wb.create_sheet("Легенда")
     wsl["A1"] = "Ликвидность"
@@ -204,18 +202,81 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         c.fill = al.GRADE_FILL[g]
         c.font = al.GRADE_FONT
         wsl.cell(i, 2, name)
-    wsl["A7"] = "Этот файл — внутренний. Клиенту отправляются 3 отдельных файла в формате склада АТИ."
+    wsl["A7"] = "Внутренний файл. Клиенту — только ликвидный сервис и ликвидный ансервис (агрегат по P/N)."
     wsl.column_dimensions["A"].width = 12
-    wsl.column_dimensions["B"].width = 40
+    wsl.column_dimensions["B"].width = 50
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
     print(f"Saved internal: {path}")
-    return {k: len(v) for k, v in sec.items()}
+    return {title: len(rows) for title, rows, _ in sheets}
 
 
-def write_client_ati(path: Path, ati_rows: list[dict], keys: set[tuple], title_note: str):
-    """Файл как склад АТИ: partno, serialno, description, ata_chapter, ac_typ, condition, qty."""
+def aggregate_ati_by_pn(ati_rows: list[dict], keys: set[tuple]) -> list[dict]:
+    """Одна строка на P/N внутри раздела состояния; qty = сумма; serialno пустой."""
+    groups: dict[str, dict] = {}
+    order: list[str] = []
+    for r in ati_rows:
+        sec = al.condition_section(r.get("condition") or "")
+        key = (r["pn"], sec)
+        if key not in keys:
+            continue
+        pn = r["pn"]
+        if pn not in groups:
+            groups[pn] = {
+                "partno": r.get("partno") or pn,
+                "serialno": "",
+                "description": r.get("description") or "",
+                "ata": r.get("ata") or "",
+                "ac_typs": set(),
+                "conditions": set(),
+                "qty": 0.0,
+                "pn": pn,
+            }
+            order.append(pn)
+        g = groups[pn]
+        q = r.get("qty") if r.get("qty") is not None else 1.0
+        g["qty"] += float(q) if q else 1.0
+        if r.get("description") and not g["description"]:
+            g["description"] = r["description"]
+        if r.get("ata") and not g["ata"]:
+            g["ata"] = r["ata"]
+        if r.get("ac_typ"):
+            g["ac_typs"].add(str(r["ac_typ"]).strip())
+        cond = (r.get("condition") or "").strip()
+        if cond:
+            g["conditions"].add(cond.upper())
+
+    out = []
+    for pn in order:
+        g = groups[pn]
+        out.append(
+            {
+                "partno": g["partno"],
+                "serialno": "",
+                "description": g["description"],
+                "ata": g["ata"],
+                "ac_typ": ", ".join(sorted(x for x in g["ac_typs"] if x)),
+                "condition": ", ".join(sorted(g["conditions"])) if g["conditions"] else "",
+                "qty": g["qty"],
+                "pn": pn,
+            }
+        )
+    return out
+
+
+def write_client_ati_aggregated(
+    path: Path,
+    ati_rows: list[dict],
+    scored_subset: list[dict],
+) -> int:
+    """Клиентский файл в формате склада АТИ, без дублей P/N."""
+    keys = {(r["pn"], r["section"]) for r in scored_subset}
+    # порядок как во внутреннем топе (ликвидность → выручка)
+    rank = {r["pn"]: i for i, r in enumerate(sorted(scored_subset, key=sort_key))}
+    aggregated = aggregate_ati_by_pn(ati_rows, keys)
+    aggregated.sort(key=lambda x: rank.get(x["pn"], 10**9))
+
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Лист2"
@@ -235,53 +296,43 @@ def write_client_ati(path: Path, ati_rows: list[dict], keys: set[tuple], title_n
         cell.border = thin
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
-    # сохраняем порядок исходного склада
-    n = 0
-    for r in ati_rows:
-        sec = al.condition_section(r.get("condition") or "")
-        key = (r["pn"], sec)
-        if key not in keys:
-            continue
+    for i, r in enumerate(aggregated):
         vals = [
-            r.get("partno") or "",
-            r.get("serialno") or "",
-            r.get("description") or "",
-            r.get("ata") or "",
-            r.get("ac_typ") or "",
-            r.get("condition") or "",
-            r.get("qty") if r.get("qty") is not None else 1,
+            r["partno"],
+            r["serialno"],
+            r["description"],
+            r["ata"],
+            r["ac_typ"],
+            r["condition"],
+            r["qty"],
         ]
         for col, val in enumerate(vals, 1):
-            cell = ws.cell(n + 2, col, val)
+            cell = ws.cell(i + 2, col, val)
             cell.border = thin
             cell.alignment = Alignment(vertical="center")
-        n += 1
 
     widths = [18, 16, 36, 10, 12, 12, 8]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A2"
+    n = len(aggregated)
     if n:
         ws.auto_filter.ref = f"A1:G{n + 1}"
 
-    # скрытый/служебный комментарий на отдельном листе не нужен клиенту —
-    # только формат склада. title_note пишем в свойствах через doc props? skip.
-    _ = title_note
-
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
-    print(f"Saved client ({n} rows): {path}")
+    print(f"Saved client ({n} unique P/N): {path}")
     return n
 
 
 def main():
     ati, scored = load_all_market_and_score()
     buy = [r for r in scored if is_buy_candidate(r)]
+    liquid_svc = [r for r in buy if r["section"] == 3 and is_liquid(r)]
+    liquid_us = [r for r in buy if r["section"] == 2 and is_liquid(r)]
     print(
-        f"Buy candidates: {len(buy)} "
-        f"(svc={sum(1 for r in buy if r['section']==3)}, "
-        f"us={sum(1 for r in buy if r['section']==2)}, "
-        f"unk={sum(1 for r in buy if r['section']==1)})"
+        f"Buy candidates: {len(buy)}; "
+        f"liquid svc={len(liquid_svc)}, liquid us={len(liquid_us)}"
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -289,18 +340,22 @@ def main():
 
     internal = OUT_DIR / INTERNAL_NAME
     counts = write_internal(internal, buy, len(ati))
-    art_internal = ART_DIR / INTERNAL_NAME
-    openpyxl.load_workbook(internal).save(art_internal)
-    print(f"Saved internal copy: {art_internal}")
+    openpyxl.load_workbook(internal).save(ART_DIR / INTERNAL_NAME)
 
-    for section, fname in CLIENT_NAMES.items():
-        keys = {(r["pn"], r["section"]) for r in buy if r["section"] == section}
-        path = OUT_DIR / fname
-        n = write_client_ati(path, ati, keys, CLIENT_SHEET_TITLES[section])
-        openpyxl.load_workbook(path).save(ART_DIR / fname)
-        print(f"  section {section}: {len(keys)} PN-groups, {n} warehouse lines → {fname}")
+    # клиенту — только ликвидные сервис и ансервис, 1 строка на P/N
+    n1 = write_client_ati_aggregated(OUT_DIR / CLIENT_SERVICEABLE, ati, liquid_svc)
+    openpyxl.load_workbook(OUT_DIR / CLIENT_SERVICEABLE).save(ART_DIR / CLIENT_SERVICEABLE)
+    n2 = write_client_ati_aggregated(OUT_DIR / CLIENT_UNSERVICEABLE, ati, liquid_us)
+    openpyxl.load_workbook(OUT_DIR / CLIENT_UNSERVICEABLE).save(ART_DIR / CLIENT_UNSERVICEABLE)
 
-    print("Done.", counts)
+    # убрать устаревший unknown-клиентский файл, если остался
+    for folder in (OUT_DIR, ART_DIR):
+        legacy = folder / LEGACY_CLIENT_UNKNOWN
+        if legacy.exists():
+            legacy.unlink()
+            print(f"Removed legacy: {legacy}")
+
+    print("Done.", counts, f"client_svc={n1}", f"client_us={n2}")
 
 
 if __name__ == "__main__":
