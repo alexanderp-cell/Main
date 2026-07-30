@@ -1392,6 +1392,38 @@ def price_data_flag(market: MarketAgg) -> str:
     return "нет данных"
 
 
+def unified_price_confidence(price_conf: str, price_flag: str) -> str:
+    """Единая метрика «Уверенность в цене»: свежесть + тип источника."""
+    if price_conf == "высокая":
+        return "высокая (заказы ТАЗ)"
+    if price_conf == "средняя":
+        if price_flag == "есть заказы":
+            return "средняя (заказы ТАЗ)"
+        return "средняя (предложения)"
+    if price_conf == "низкая":
+        return "низкая (предложения)"
+    # н/п — цены для ориентира нет
+    if price_flag == "есть заказы":
+        return "н/п (заказы без sell)"
+    if price_flag == "есть запросы, но нет предложений":
+        return "н/п (запросы без предложений)"
+    if price_flag == "есть предложения":
+        # теоретически не должно: предложения обычно дают цену
+        return "н/п (предложения без цены)"
+    return "н/п (нет данных)"
+
+
+def unified_price_confidence_bucket(label: str) -> str:
+    """Цветовой бакет для единой метрики."""
+    if label.startswith("высокая"):
+        return "высокая"
+    if label.startswith("средняя"):
+        return "средняя"
+    if label.startswith("низкая"):
+        return "низкая"
+    return "н/п"
+
+
 def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
     score, grade, rationale = liquidity_score(market)
     ref_price, price_conf, price_detail = compute_indicative_price(market)
@@ -1442,6 +1474,7 @@ def build_row_from_stock(stock: dict, market: MarketAgg) -> dict:
         "potential_revenue_usd": potential_rev,
         "price_confidence": price_conf,
         "price_flag": flag,
+        "price_confidence_unified": unified_price_confidence(price_conf, flag),
         "has_sell_offered": has_sell_offered,
         "has_demand": has_demand,
         "match_via": ", ".join(sorted(market.matched_via)) if market.matched_via else "нет",
@@ -1489,8 +1522,8 @@ HEADERS = [
     ("Кол-во на складе Utair", 12),
     ("Ориентировочная цена USD", 14),
     ("Потенц. выручка USD", 14),
-    ("Уверенность", 12),
-    ("Флаг цены", 28),
+    ("Ликвидность", 12),
+    ("Уверенность в цене", 28),
     ("Спрос (заказы/запросы)", 48),
     ("Обоснование оценки", 80),
 ]
@@ -1545,13 +1578,11 @@ def write_rows(ws, rows: list[dict], header_color: str):
         "низкая": PatternFill("solid", fgColor="C47F00"),
         "н/п": PatternFill("solid", fgColor="8A8A8A"),
     }
-    flag_fill = {
-        "есть заказы": PatternFill("solid", fgColor="1F7A4D"),
-        "есть предложения": PatternFill("solid", fgColor="2F6FED"),
-        "есть запросы, но нет предложений": PatternFill("solid", fgColor="C47F00"),
-        "нет данных": PatternFill("solid", fgColor="8A8A8A"),
-    }
     for i, r in enumerate(rows, 1):
+        unified = r.get("price_confidence_unified") or unified_price_confidence(
+            r.get("price_confidence", "н/п"), r.get("price_flag", "нет данных")
+        )
+        grade = r.get("liquidity_grade") or "D"
         values = [
             i,
             r["ac_typ"],
@@ -1561,8 +1592,8 @@ def write_rows(ws, rows: list[dict], header_color: str):
             r["qty"],
             r["price_ref_usd"],
             r.get("potential_revenue_usd"),
-            r["price_confidence"],
-            r["price_flag"],
+            grade,
+            unified,
             r["demand_summary"],
             r["rationale"],
         ]
@@ -1578,13 +1609,14 @@ def write_rows(ws, rows: list[dict], header_color: str):
             if col in {7, 8} and isinstance(val, (int, float)):
                 cell.number_format = '"$"#,##0.00'
             if col == 9:
-                cell.fill = conf_fill.get(r["price_confidence"], conf_fill["н/п"])
-                cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
+                cell.fill = GRADE_FILL.get(grade, GRADE_FILL["D"])
+                cell.font = GRADE_FONT
                 cell.alignment = Alignment(horizontal="center", vertical="center")
             if col == 10:
-                cell.fill = flag_fill.get(r["price_flag"], flag_fill["нет данных"])
-                cell.font = Font(bold=True, color="FFFFFF", name="Calibri")
-                cell.alignment = Alignment(horizontal="center", vertical="center")
+                bucket = unified_price_confidence_bucket(unified)
+                cell.fill = conf_fill.get(bucket, conf_fill["н/п"])
+                cell.font = Font(bold=True, color="FFFFFF", name="Calibri", size=10)
+                cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
         ws.row_dimensions[i + 1].height = 56
     if rows:
         ws.auto_filter.ref = f"A1:{get_column_letter(len(HEADERS))}{len(rows)+1}"
@@ -1944,6 +1976,7 @@ def main():
                     "price_ref_usd",
                     "price_confidence",
                     "price_flag",
+                    "price_confidence_unified",
                     "match_via",
                     "rationale",
                     "description",
@@ -1994,36 +2027,25 @@ def main():
         c.fill = GRADE_FILL[g]
         c.font = GRADE_FONT
         wsl.cell(i, 2, name)
-    wsl["A8"] = "Уверенность в цене"
+    wsl["A8"] = "Уверенность в цене (единая метрика)"
     wsl["A8"].font = Font(bold=True, size=13)
     for i, (name, color, desc) in enumerate([
-        ("высокая", "1F7A4D", "есть заказ ТАЗ с продажной ценой за последние 6 мес."),
-        ("средняя", "2F6FED", "есть ТАЗ (не свежий) или свежие Offered/Sell в ТУЗ/EXP"),
-        ("низкая", "C47F00", "заказов ТАЗ нет, предложения ТУЗ/EXP давние"),
-        ("н/п", "8A8A8A", "нет sell/offered цены — ориентир не рассчитан"),
+        ("высокая (заказы ТАЗ)", "1F7A4D", "свежий заказ ТАЗ с продажной ценой (≤6 мес.)"),
+        ("средняя (заказы ТАЗ)", "2F6FED", "заказ ТАЗ с sell есть, но не свежий"),
+        ("средняя (предложения)", "2F6FED", "заказов нет; свежие Offered/Sell в ТУЗ/EXP"),
+        ("низкая (предложения)", "C47F00", "заказов нет; Offered/Sell только давние"),
+        ("н/п (заказы без sell)", "8A8A8A", "заказы ТАЗ есть, но продажной цены нет"),
+        ("н/п (запросы без предложений)", "8A8A8A", "запросы есть, Offered/Sell не заполняли"),
+        ("н/п (нет данных)", "8A8A8A", "нет заказов и запросов — ориентир не рассчитан"),
     ], 9):
         c = wsl.cell(i, 1, name)
         c.fill = PatternFill("solid", fgColor=color)
-        c.font = Font(bold=True, color="FFFFFF", name="Calibri")
+        c.font = Font(bold=True, color="FFFFFF", name="Calibri", size=9)
         wsl.cell(i, 2, desc)
-    wsl["A14"] = "Флаг цены"
-    wsl["A14"].font = Font(bold=True, size=13)
-    for i, (name, color, desc) in enumerate([
-        ("есть заказы", "1F7A4D", "в ТАЗ есть заказы по P/N"),
-        ("есть предложения", "2F6FED", "заказов нет, но в ТУЗ/EXP есть Offered/Sell Price"),
-        ("есть запросы, но нет предложений", "C47F00", "запросы ТУЗ/EXP есть, но Offered/Sell ни разу не заполняли"),
-        ("нет данных", "8A8A8A", "нет заказов и запросов по P/N"),
-    ], 15):
-        c = wsl.cell(i, 1, name)
-        c.fill = PatternFill("solid", fgColor=color)
-        c.font = Font(bold=True, color="FFFFFF", name="Calibri")
-        wsl.cell(i, 2, desc)
-    wsl["A20"] = "Ликвидность и балл скрыты: сортировка по ним сохранена в ранге. Детали — в обосновании."
-    wsl["A21"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
-    wsl["A22"] = "«Кол-во на складе Utair» — остаток на складе; потенц. выручка = цена × это кол-во."
-    wsl["A23"] = (
-        "Лист «1 очередь у продавца»: A/B и сильные C с выручкой; приоритет US/NA и пустому состоянию."
-    )
+    wsl["A17"] = "Ликвидность (A–D) — сила рыночного спроса; Уверенность в цене — качество денежного ориентира."
+    wsl["A18"] = "В ориентир НЕ входят: Закупка, Supplier/Root Price, Market Price EA."
+    wsl["A19"] = "«Кол-во на складе Utair» — остаток; потенц. выручка = цена × это кол-во."
+    wsl["A20"] = "Лист «Запросить документы»: дорогие + топ ликвидных с известным состоянием (вкл. ансервис)."
     wsl.column_dimensions["A"].width = 36
     wsl.column_dimensions["B"].width = 70
 
