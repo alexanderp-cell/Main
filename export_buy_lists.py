@@ -47,9 +47,13 @@ def is_buy_candidate(r: dict) -> bool:
 
 
 def sort_key(r: dict):
+    """Для выкупа важнее деньги, не буква ликвидности.
+
+    Иначе расходка с оценкой A ($10–200) уезжает выше ротабля B на $50–100k.
+    """
     return (
-        al.GRADE_ORDER[r["liquidity_grade"]],
         -(r.get("potential_revenue_usd") or 0),
+        al.GRADE_ORDER[r["liquidity_grade"]],
         -r["liquidity_score"],
         -r["qty"],
         r["partno"],
@@ -178,7 +182,8 @@ def write_internal(path: Path, scored_buy: list[dict], ati_n: int):
         "Ансервис: Condition US или NA.",
         "Неизвестное: Condition пустое.",
         "В клиентские файлы попадают исходные строки склада (с serialno) по отобранным P/N и разделу состояния.",
-        "Сортировка внутри листа: ликвидность → потенц. выручка → балл → qty.",
+        "Сортировка внутри листа: потенц. выручка → ликвидность → балл → qty "
+        "(чтобы дорогие позиции не уезжали ниже расходки с буквой A).",
         "D (нет спроса) в рекомендации не входят.",
     ]
     for i, t in enumerate(method, 15):
