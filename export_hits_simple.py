@@ -143,7 +143,7 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
     ws = wb.active
     ws.title = "Позиции"
     headers1 = [
-        "P/N", "Описание", "Тип", "Condition на складе", "Кол-во",
+        "P/N", "Описание", "Тип", "Тип ВС (рынок)", "Condition на складе", "Кол-во",
         "Источник склада", "Заказов ТАЗ", "Запросов ТУЗ",
         "Клиенты (заказы)", "Клиенты (запросы)",
         "Цена индикат. USD", "Источник цены",
@@ -158,10 +158,12 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
         # клиенты в исходном регистре из появлений
         ord_clients = sorted({e.client for e in evs if e.source == "TAZ" and e.client}, key=str.lower)
         req_clients = sorted({e.client for e in evs if e.source == "TUZ" and e.client}, key=str.lower)
+        ac_types = sorted({e.ac_type for e in evs if e.ac_type}, key=str.lower)
         vals = [
             pn,
             g["desc"],
             "LLP" if g["is_llp"] else "Rotable",
+            ", ".join(ac_types),
             ", ".join(sorted(g["conds"])),
             g["qty"],
             "+".join(sorted(g["sources"])),
@@ -179,16 +181,16 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
             cell = ws.cell(ri, ci, v)
             cell.border = THIN
             cell.alignment = Alignment(vertical="center", wrap_text=True)
-    for i, w in enumerate([18, 36, 10, 14, 8, 14, 10, 10, 28, 28, 12, 18, 12, 12, 28], 1):
+    for i, w in enumerate([18, 36, 10, 18, 14, 8, 14, 10, 10, 28, 28, 12, 18, 12, 12, 28], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
-    ws.auto_filter.ref = f"A1:O{len(hits)+1}"
+    ws.auto_filter.ref = f"A1:P{len(hits)+1}"
     ws.freeze_panes = "B2"
 
     # --- Sheet 2: Appearances detail ---
     ws2 = wb.create_sheet("Появления")
     headers2 = [
         "P/N склада", "Описание склада", "Тип", "Кол-во на складе",
-        "Где", "Лист / источник", "Дата", "Клиент",
+        "Где", "Лист / источник", "Дата", "Клиент", "Тип ВС",
         "P/N в документе", "ALT P/N", "Описание (рынок)",
         "Condition", "Qty (заказ/запрос)", "Цена USD",
         "№ счёта / Request №",
@@ -211,6 +213,7 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
                 e.sheet or e.source,
                 d.isoformat() if d else "",
                 e.client,
+                e.ac_type,
                 e.pn,
                 e.alt,
                 e.description,
@@ -223,12 +226,12 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
                 cell = ws2.cell(ri, ci, v)
                 cell.border = THIN
                 cell.fill = TAZ_FILL if e.source == "TAZ" else TUZ_FILL
-                cell.alignment = Alignment(vertical="center", wrap_text=ci in {2, 11})
+                cell.alignment = Alignment(vertical="center", wrap_text=ci in {2, 12})
             ri += 1
 
-    for i, w in enumerate([18, 32, 10, 10, 14, 16, 12, 22, 18, 14, 32, 10, 10, 12, 22], 1):
+    for i, w in enumerate([18, 32, 10, 10, 14, 16, 12, 22, 12, 18, 14, 32, 10, 10, 12, 22], 1):
         ws2.column_dimensions[get_column_letter(i)].width = w
-    ws2.auto_filter.ref = f"A1:O{ri-1}"
+    ws2.auto_filter.ref = f"A1:P{ri-1}"
     ws2.freeze_panes = "B2"
 
     # --- Sheet 3: short note ---
@@ -236,9 +239,10 @@ def write_report(stock_map, events, by_pn, soft_to_pns, path: Path):
     lines = [
         "Упрощённая сверка: только позиции склада поставщика, которые есть в ТАЗ и/или ТУЗ.",
         "",
-        "Лист «Позиции» — сводка по P/N (сколько заказов/запросов, клиенты, индикативная цена).",
-        "Лист «Появления» — каждое появление в ТАЗ/ТУЗ: дата, клиент, цена, № счёта или Request.",
+        "Лист «Позиции» — сводка по P/N (сколько заказов/запросов, клиенты, тип ВС, индикативная цена).",
+        "Лист «Появления» — каждое появление в ТАЗ/ТУЗ: дата, клиент, тип ВС, цена, № счёта или Request.",
         "",
+        "Тип ВС: из ТАЗ колонка «ТИП ВС (Продажи)», из ТУЗ колонка «A/C».",
         "ТАЗ: полный файл 27.07.2026 (ORDERS), без «Закупка на склад».",
         "ТУЗ: полный файл 31.07.2026.",
         "Склад: GEM LLP + Available Units; при overlap qty = число LLP-серий.",

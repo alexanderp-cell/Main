@@ -214,6 +214,7 @@ class Event:
     request_no: str = ""
     sheet: str = ""
     description: str = ""
+    ac_type: str = ""
 
 
 @dataclass
@@ -308,6 +309,7 @@ TAZ_ALIASES = {
     "cond": ["condition"],
     "sell": ["продажная, ед"],
     "status": ["status"],
+    "ac": ["тип вс", "тип вс (продажи)", "a/c", "aircraft"],
 }
 
 
@@ -364,6 +366,10 @@ def load_taz(path: Path) -> list[Event]:
         alt = norm_pn(cell(r, "alt"))
         desc = str(cell(r, "desc") or "").strip()
         dt = cell(r, "date")
+        ac_raw = cell(r, "ac")
+        ac_type = str(ac_raw).strip() if ac_raw is not None else ""
+        if ac_type.lower() in {"nan", "none", "тип вс", "a/c", "n/a", "-"}:
+            ac_type = ""
         key = ("TAZ", pn, invoice or f"NO_INV|{client_key(client)}|{day_key(dt)}|{round(qty, 4)}")
         if key in seen:
             continue
@@ -375,6 +381,7 @@ def load_taz(path: Path) -> list[Event]:
             alt=alt if alt and alt != pn else "",
             client=client, qty=qty, price=price, condition=cond,
             date=dt, request_no=invoice, sheet="ORDERS", description=desc,
+            ac_type=ac_type,
         ))
     return events
 
@@ -388,6 +395,7 @@ TUZ_ALIASES = {
     "pn": ["p/n", "part number", "partnumber"],
     "alt": ["alt. p/n", "alt p/n", "alt pn", "alt.pn"],
     "client": ["client", "customer"],
+    "ac": ["a/c", "ac", "aircraft", "тип вс"],
     "desc": ["description"],
     "qty": ["qty"],
     "cond": ["cond", "condition"],
@@ -400,19 +408,19 @@ TUZ_ALIASES = {
 
 def _tuz_layouts(primary: dict[str, int]) -> list[dict[str, int]]:
     classic_24 = {
-        "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
+        "date": 1, "req": 2, "client": 4, "ac": 5, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
         "cond": 18, "price": 24, "invoice": 27,
     }
     classic_27 = {
-        "date": 1, "req": 2, "client": 4, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
+        "date": 1, "req": 2, "client": 4, "ac": 5, "pn": 6, "alt": 7, "desc": 8, "qty": 9,
         "cond": 21, "price": 27, "invoice": 30,
     }
     shifted = {
-        "date": 3, "req": 4, "client": 6, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
+        "date": 3, "req": 4, "client": 6, "ac": 7, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
         "cond": 21, "price": 27, "invoice": 30,
     }
     qv2 = {
-        "date": 3, "req": 4, "client": 6, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
+        "date": 3, "req": 4, "client": 6, "ac": 7, "pn": 8, "alt": 9, "desc": 10, "qty": 11,
         "cond": 20, "price": 26, "invoice": 29,
     }
     layouts = []
@@ -452,6 +460,13 @@ def _extract_tuz_row(r: tuple, layouts: list[dict[str, int]]) -> Optional[dict]:
         cond = str(get("cond") or "").strip()
         if cond.lower() in {"cond", "condition"}:
             cond = ""
+        ac_raw = get("ac")
+        ac_type = str(ac_raw).strip() if ac_raw is not None else ""
+        if ac_type.lower() in {"nan", "none", "a/c", "ac", "n/a", "-", "тип вс"}:
+            ac_type = ""
+        # не путать сдвинутый P/N / клиент с типом ВС
+        if ac_type and (soft_pn_key(ac_type.upper()) == soft_pn_key(pn) or len(ac_type) > 40):
+            ac_type = ""
         dt = get("date")
         if parse_date(dt) is None:
             for idx in (1, 3, mapping.get("date")):
@@ -470,6 +485,7 @@ def _extract_tuz_row(r: tuple, layouts: list[dict[str, int]]) -> Optional[dict]:
             "cond": cond,
             "date": dt,
             "req": req or invoice,
+            "ac_type": ac_type,
         }
     return None
 
@@ -490,6 +506,7 @@ def load_tuz(path: Path) -> list[Event]:
         if "pn" not in mapping:
             continue
         mapping.setdefault("client", 4)
+        mapping.setdefault("ac", mapping["pn"] - 1 if mapping["pn"] > 0 else 5)
         mapping.setdefault("alt", mapping["pn"] + 1)
         mapping.setdefault("desc", mapping["pn"] + 2)
         mapping.setdefault("qty", mapping["pn"] + 3)
@@ -521,6 +538,7 @@ def load_tuz(path: Path) -> list[Event]:
                 client=parsed["client"], qty=parsed["qty"], price=parsed["price"],
                 condition=parsed["cond"], date=parsed["date"],
                 request_no=parsed["req"], sheet=sheet, description=parsed["desc"],
+                ac_type=parsed.get("ac_type") or "",
             ))
     wb.close()
     return events
