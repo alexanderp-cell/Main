@@ -655,6 +655,7 @@ def write_weekly_summary_sheet(
     client: str,
     summary: WeeklySummary,
     sheet_title: str = "Сводка за неделю",
+    cute_comments: bool = False,
 ) -> None:
     ws.sheet_view.showGridLines = False
     widths = {
@@ -678,6 +679,8 @@ def write_weekly_summary_sheet(
     ws.merge_cells("A1:M1")
     title = ws["A1"]
     title.value = f"{sheet_title} — {client}"
+    if cute_comments:
+        title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
 
     ws.merge_cells("A2:M2")
@@ -688,8 +691,16 @@ def write_weekly_summary_sheet(
     )
     _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
+    mood_cards = build_section_mood_cards(summary) if cute_comments else {}
+    mood_images = {
+        "Новые заказы": LAVENDER_CUP,
+        "Отгруженные заказы": LAVENDER_HEART,
+        "Оплаченные клиентом": LAVENDER_CUP,
+    }
+
     row = 4
     for section in (summary.new_orders, summary.shipped_orders, summary.paid_orders):
+        section_start = row
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
         section_cell = ws.cell(row, 1)
         section_cell.value = section.title
@@ -722,32 +733,39 @@ def write_weekly_summary_sheet(
             empty.value = "Нет данных за период"
             _style_cell(empty, font=FONT_BODY, alignment=ALIGN_LEFT, border=BORDER_THIN)
             row += 2
-            continue
+        else:
+            for item in section.rows:
+                for col_idx, header in enumerate(headers, start=1):
+                    cell = ws.cell(row, col_idx)
+                    value = item.get(header)
+                    cell.value = value
+                    number_format = None
+                    if header in WEEKLY_MONEY_HEADERS:
+                        number_format = NUM_FMT
+                        align = ALIGN_RIGHT
+                    elif header in WEEKLY_DATE_HEADERS:
+                        number_format = DATE_FMT if value else None
+                        align = ALIGN_CENTER
+                    elif header == "QTY":
+                        align = ALIGN_RIGHT
+                    else:
+                        align = ALIGN_LEFT
+                    fill = None
+                    if header == "Поставка" and isinstance(value, str) and value.startswith("просрочка"):
+                        fill = FILL_ALERT
+                    elif header == "Поставка" and isinstance(value, str) and value.startswith("досрочно"):
+                        fill = PatternFill("solid", fgColor=COLOR_LIGHT_GREEN)
+                    _style_cell(cell, font=FONT_BODY, fill=fill, alignment=align, border=BORDER_THIN, number_format=number_format)
+                row += 1
+            row += 2
 
-        for item in section.rows:
-            for col_idx, header in enumerate(headers, start=1):
-                cell = ws.cell(row, col_idx)
-                value = item.get(header)
-                cell.value = value
-                number_format = None
-                if header in WEEKLY_MONEY_HEADERS:
-                    number_format = NUM_FMT
-                    align = ALIGN_RIGHT
-                elif header in WEEKLY_DATE_HEADERS:
-                    number_format = DATE_FMT if value else None
-                    align = ALIGN_CENTER
-                elif header == "QTY":
-                    align = ALIGN_RIGHT
-                else:
-                    align = ALIGN_LEFT
-                fill = None
-                if header == "Поставка" and isinstance(value, str) and value.startswith("просрочка"):
-                    fill = FILL_ALERT
-                elif header == "Поставка" and isinstance(value, str) and value.startswith("досрочно"):
-                    fill = PatternFill("solid", fgColor=COLOR_LIGHT_GREEN)
-                _style_cell(cell, font=FONT_BODY, fill=fill, alignment=align, border=BORDER_THIN, number_format=number_format)
-            row += 1
-        row += 2
+        if cute_comments and section.title in mood_cards:
+            _write_mood_card(
+                ws,
+                section_start,
+                mood_cards[section.title],
+                mood_images.get(section.title, LAVENDER_HEART),
+            )
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
     note = ws.cell(row, 1)
@@ -756,6 +774,8 @@ def write_weekly_summary_sheet(
         "В итог попадает только сумма платежей с датой в периоде. "
         "Для отгрузок при пустой фактической дате используется BC (ожидаемая дата прихода)."
     )
+    if cute_comments:
+        note.value += "  ·  комментарии справа — нежное резюме недели ♡"
     _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
 
@@ -1063,6 +1083,157 @@ ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 LAVENDER_BANNER = ASSETS_DIR / "banner_wide.png"
 LAVENDER_CUP = ASSETS_DIR / "cup_small.png"
 LAVENDER_PATTERN = ASSETS_DIR / "pattern_bg.png"
+LAVENDER_HEART = ASSETS_DIR / "heart_small.png"
+
+
+def build_section_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
+    """Cute narrative cards for weekly sections (lavender raf tone)."""
+    cards: dict[str, dict[str, str]] = {}
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    if new.count == 0:
+        cards["Новые заказы"] = {
+            "title": "☕ Тихая чашечка",
+            "body": (
+                "Новых заказов на этой неделе нет — бывает. "
+                "Идеальный момент выпить лавандовый раф и набраться сил 💜"
+            ),
+        }
+    elif max_amount >= 30000 or new.total >= 150000:
+        cards["Новые заказы"] = {
+            "title": "✨ Мы молодцы!",
+            "body": (
+                f"Продажи за неделю — {new.total:,.0f} USD по {new.count} позициям. "
+                f"Есть и крупные заказы (до {max_amount:,.0f} USD). "
+                "Нежный отчёт гордится вами 🥰"
+            ),
+        }
+    elif max_amount < 5000 and new.total < 25000:
+        cards["Новые заказы"] = {
+            "title": "🪙 Копейка рубль бережёт",
+            "body": (
+                f"Заказов немного и они аккуратные: {new.count} поз. на {new.total:,.0f} USD. "
+                "Мелкие позиции тоже греют портфель — как пенка на рафе 🥛"
+            ),
+        }
+    else:
+        cards["Новые заказы"] = {
+            "title": "🌷 Спокойная, но уверенная неделя",
+            "body": (
+                f"{new.count} новых позиций на {new.total:,.0f} USD. "
+                "Без лишнего шума, зато с ароматом лаванды и пользой для клиента 💜"
+            ),
+        }
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    if shipped.count == 0:
+        cards["Отгруженные заказы"] = {
+            "title": "📦 Пока на складе уюта",
+            "body": "Отгрузок за период нет. Всё на своих местах — можно спокойно вдохнуть аромат лаванды 🌸",
+        }
+    elif shipped.count and late / shipped.count >= 0.5:
+        cards["Отгруженные заказы"] = {
+            "title": "🌙 Главное — доехали",
+            "body": (
+                f"Из {shipped.count} отгрузок много с опозданием ({late}). "
+                "Ничего страшного: лаванда не торопится, а мы бережно доводим поставки. "
+                "Клиент всё равно получит заботу 🫶"
+            ),
+        }
+    elif early > late:
+        cards["Отгруженные заказы"] = {
+            "title": "🏁 Быстрее пенки на рафе!",
+            "body": (
+                f"Красота: {early} досрочных из {shipped.count}. "
+                "Неделя на позитиве — как свежий лавандовый раф утром ☀️💜"
+            ),
+        }
+    else:
+        cards["Отгруженные заказы"] = {
+            "title": "🚚 Ровный ритм",
+            "body": (
+                f"Отгружено {shipped.count} поз. на {shipped.total:,.0f} USD. "
+                "Всё движется мягко и уверенно — именно так и должен звучать нежный отчёт ✨"
+            ),
+        }
+
+    paid = summary.paid_orders
+    if paid.count == 0 or paid.total <= 0:
+        cards["Оплаченные клиентом"] = {
+            "title": "🫧 Оплаты на паузе",
+            "body": (
+                "Пока без платежей за период. Не грустим — "
+                "иногда тишина нужна, чтобы следующий раф был ещё вкуснее ☕"
+            ),
+        }
+    elif paid.total >= 100000:
+        cards["Оплаченные клиентом"] = {
+            "title": "💸 Касса звенит!",
+            "body": (
+                f"За неделю пришло {paid.total:,.0f} USD по {paid.count} позициям. "
+                "Спасибо клиенту — это самый сливочный момент нежного отчёта 🥰💜"
+            ),
+        }
+    else:
+        cards["Оплаченные клиентом"] = {
+            "title": "🥛 Деньги капают — и это мило",
+            "body": (
+                f"Оплачено {paid.total:,.0f} USD ({paid.count} поз.). "
+                "Даже небольшой платёж греет, как лавандовый раф в холодный день 🌸"
+            ),
+        }
+
+    return cards
+
+
+def _write_mood_card(
+    ws,
+    start_row: int,
+    card: dict[str, str],
+    image_path: Path,
+    col_start: int = 15,
+) -> None:
+    """Place a cute comment card to the right of a summary table."""
+    title_cell = ws.cell(start_row, col_start)
+    ws.merge_cells(start_row=start_row, start_column=col_start, end_row=start_row, end_column=col_start + 3)
+    title_cell.value = card["title"]
+    _style_cell(
+        title_cell,
+        font=Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY),
+        fill=PatternFill("solid", fgColor="F3EAF8"),
+        alignment=Alignment(horizontal="left", vertical="center"),
+        border=BORDER_THIN,
+    )
+    for c in range(col_start + 1, col_start + 4):
+        _style_cell(ws.cell(start_row, c), fill=PatternFill("solid", fgColor="F3EAF8"), border=BORDER_THIN)
+
+    body_row = start_row + 1
+    ws.merge_cells(start_row=body_row, start_column=col_start, end_row=body_row + 3, end_column=col_start + 3)
+    body_cell = ws.cell(body_row, col_start)
+    body_cell.value = card["body"]
+    cream = PatternFill("solid", fgColor="FFF8F2")
+    _style_cell(
+        body_cell,
+        font=Font(name="Calibri", size=10, color="6B5B7A"),
+        fill=cream,
+        alignment=Alignment(horizontal="left", vertical="top", wrap_text=True),
+        border=BORDER_THIN,
+    )
+    for r in range(body_row, body_row + 4):
+        for c in range(col_start, col_start + 4):
+            if r == body_row and c == col_start:
+                continue
+            _style_cell(ws.cell(r, c), fill=cream, border=BORDER_THIN)
+        ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 18)
+
+    for letter, width in (("O", 18), ("P", 16), ("Q", 16), ("R", 16), ("S", 14)):
+        ws.column_dimensions[letter].width = width
+
+    _add_image(ws, image_path, f"S{start_row}", width=72, height=72)
 
 
 def _add_image(ws, path: Path, anchor: str, width: int | None = None, height: int | None = None) -> None:
@@ -1226,7 +1397,13 @@ def generate_report(
         summary = build_weekly_summary(client_df, previous_df, week_start, week_end)
         weekly_ws = wb.create_sheet(summary_sheet_name)
         weekly_ws.sheet_properties.tabColor = theme.tab_summary
-        write_weekly_summary_sheet(weekly_ws, client, summary, sheet_title=summary_title)
+        write_weekly_summary_sheet(
+            weekly_ws,
+            client,
+            summary,
+            sheet_title=summary_title,
+            cute_comments=(theme.name == "lavender_raf"),
+        )
     else:
         summary_sheet_name = None
 
