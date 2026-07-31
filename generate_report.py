@@ -96,6 +96,109 @@ COLOR_LIGHT_RED = "F8CBAD"
 COLOR_WHITE = "FFFFFF"
 COLOR_ZEBRA = "F7F9FC"
 COLOR_SUBTOTAL = "FFF2CC"
+COLOR_BORDER = "B4C6E7"
+
+
+@dataclass(frozen=True)
+class ReportTheme:
+    name: str
+    navy: str
+    blue: str
+    light_blue: str
+    green: str
+    light_green: str
+    orange: str
+    light_orange: str
+    zebra: str
+    subtotal: str
+    border: str
+    tab_total: str
+    tab_shipped: str
+    tab_in_work: str
+    tab_summary: str
+    title_font: str = "Calibri"
+
+
+THEMES = {
+    "default": ReportTheme(
+        name="default",
+        navy=COLOR_NAVY,
+        blue=COLOR_BLUE,
+        light_blue=COLOR_LIGHT_BLUE,
+        green=COLOR_GREEN,
+        light_green=COLOR_LIGHT_GREEN,
+        orange=COLOR_ORANGE,
+        light_orange=COLOR_LIGHT_ORANGE,
+        zebra=COLOR_ZEBRA,
+        subtotal=COLOR_SUBTOTAL,
+        border=COLOR_BORDER,
+        tab_total=COLOR_NAVY,
+        tab_shipped=COLOR_GREEN,
+        tab_in_work=COLOR_ORANGE,
+        tab_summary="7030A0",
+    ),
+    # Soft lavender Rafa / milk-lavender palette for Aeroflot.
+    "lavender_raf": ReportTheme(
+        name="lavender_raf",
+        navy="5C4B73",
+        blue="8E7AA8",
+        light_blue="EDE4F5",
+        green="7A6B9A",
+        light_green="F3ECF8",
+        orange="A88BB8",
+        light_orange="F8F0E8",
+        zebra="FAF7FC",
+        subtotal="F2E8F7",
+        border="D4C4E0",
+        tab_total="8E7AA8",
+        tab_shipped="A88BB8",
+        tab_in_work="C4A8D4",
+        tab_summary="B59AC7",
+        title_font="Georgia",
+    ),
+}
+
+
+def activate_theme(theme: ReportTheme) -> None:
+    global COLOR_NAVY, COLOR_BLUE, COLOR_LIGHT_BLUE, COLOR_GREEN, COLOR_LIGHT_GREEN
+    global COLOR_ORANGE, COLOR_LIGHT_ORANGE, COLOR_ZEBRA, COLOR_SUBTOTAL, COLOR_BORDER
+    global FONT_TITLE, FONT_SUBTITLE, FONT_SECTION, FONT_HEADER, FONT_BODY, FONT_BODY_BOLD, FONT_KPI
+    global FILL_SECTION_WORK, FILL_SECTION_SHIPPED, FILL_HEADER, FILL_SUBTOTAL, FILL_TOTAL_ROW, FILL_KPI, FILL_ALERT
+    global THIN, BORDER_THIN, BORDER_BOTTOM
+
+    COLOR_NAVY = theme.navy
+    COLOR_BLUE = theme.blue
+    COLOR_LIGHT_BLUE = theme.light_blue
+    COLOR_GREEN = theme.green
+    COLOR_LIGHT_GREEN = theme.light_green
+    COLOR_ORANGE = theme.orange
+    COLOR_LIGHT_ORANGE = theme.light_orange
+    COLOR_ZEBRA = theme.zebra
+    COLOR_SUBTOTAL = theme.subtotal
+    COLOR_BORDER = theme.border
+
+    FONT_TITLE = Font(name=theme.title_font, size=16, bold=True, color=COLOR_NAVY)
+    FONT_SUBTITLE = Font(name="Calibri", size=11, color="6B5B73" if theme.name == "lavender_raf" else "595959")
+    FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
+    FONT_HEADER = Font(name="Calibri", size=10, bold=True, color=COLOR_WHITE)
+    FONT_BODY = Font(name="Calibri", size=10)
+    FONT_BODY_BOLD = Font(name="Calibri", size=10, bold=True)
+    FONT_KPI = Font(name=theme.title_font, size=14, bold=True, color=COLOR_NAVY)
+
+    FILL_SECTION_WORK = PatternFill("solid", fgColor=COLOR_BLUE)
+    FILL_SECTION_SHIPPED = PatternFill("solid", fgColor=COLOR_GREEN)
+    FILL_HEADER = PatternFill("solid", fgColor=COLOR_NAVY)
+    FILL_SUBTOTAL = PatternFill("solid", fgColor=COLOR_SUBTOTAL)
+    FILL_TOTAL_ROW = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
+    FILL_KPI = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
+    FILL_ALERT = PatternFill("solid", fgColor=COLOR_LIGHT_ORANGE)
+
+    THIN = Side(style="thin", color=COLOR_BORDER)
+    BORDER_THIN = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+    BORDER_BOTTOM = Border(bottom=Side(style="medium", color=COLOR_NAVY))
+
+
+activate_theme(THEMES["default"])
 
 FONT_TITLE = Font(name="Calibri", size=16, bold=True, color=COLOR_NAVY)
 FONT_SUBTITLE = Font(name="Calibri", size=11, color="595959")
@@ -113,7 +216,7 @@ FILL_TOTAL_ROW = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
 FILL_KPI = PatternFill("solid", fgColor=COLOR_LIGHT_BLUE)
 FILL_ALERT = PatternFill("solid", fgColor=COLOR_LIGHT_ORANGE)
 
-THIN = Side(style="thin", color="B4C6E7")
+THIN = Side(style="thin", color=COLOR_BORDER)
 BORDER_THIN = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 BORDER_BOTTOM = Border(bottom=Side(style="medium", color=COLOR_NAVY))
 
@@ -546,7 +649,12 @@ def build_weekly_summary(
     )
 
 
-def write_weekly_summary_sheet(ws, client: str, summary: WeeklySummary) -> None:
+def write_weekly_summary_sheet(
+    ws,
+    client: str,
+    summary: WeeklySummary,
+    sheet_title: str = "Сводка за неделю",
+) -> None:
     ws.sheet_view.showGridLines = False
     widths = {
         "A": 14,
@@ -568,7 +676,7 @@ def write_weekly_summary_sheet(ws, client: str, summary: WeeklySummary) -> None:
 
     ws.merge_cells("A1:M1")
     title = ws["A1"]
-    title.value = f"Сводка за неделю — {client}"
+    title.value = f"{sheet_title} — {client}"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
 
     ws.merge_cells("A2:M2")
@@ -595,7 +703,7 @@ def write_weekly_summary_sheet(ws, client: str, summary: WeeklySummary) -> None:
 
         ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=8)
         totals = ws.cell(row, 1)
-        label = "Оплачено за неделю" if section.title == "Оплаченные клиентом" else "Сумма"
+        label = "Оплачено за период" if section.title == "Оплаченные клиентом" else "Сумма"
         totals.value = f"Количество: {section.count}   |   {label}: {section.total:,.2f} USD"
         _style_cell(totals, font=FONT_BODY_BOLD, fill=FILL_KPI, alignment=ALIGN_LEFT, border=BORDER_THIN)
         row += 1
@@ -951,8 +1059,14 @@ def generate_report(
     previous_date: date | None = None,
     week_days: int = 7,
     excluded_invoicers: set[str] | None = None,
+    theme_name: str = "default",
+    summary_title: str = "Сводка за неделю",
+    summary_sheet_name: str = "Сводка за неделю",
 ) -> Path:
     report_date = report_date or date.today()
+    theme = THEMES.get(theme_name, THEMES["default"])
+    activate_theme(theme)
+
     df = load_taz(input_path, excluded_invoicers=excluded_invoicers)
     client_df = filter_client(df, client)
 
@@ -968,7 +1082,7 @@ def generate_report(
     wb = Workbook()
     total_ws = wb.active
     total_ws.title = "Total"
-    total_ws.sheet_properties.tabColor = COLOR_NAVY
+    total_ws.sheet_properties.tabColor = theme.tab_total
     write_total_sheet(
         total_ws,
         client,
@@ -991,16 +1105,16 @@ def generate_report(
         week_end = report_date
         week_start = previous_date or (report_date - timedelta(days=week_days))
         summary = build_weekly_summary(client_df, previous_df, week_start, week_end)
-        weekly_ws = wb.create_sheet("Сводка за неделю")
-        weekly_ws.sheet_properties.tabColor = "7030A0"
-        write_weekly_summary_sheet(weekly_ws, client, summary)
+        weekly_ws = wb.create_sheet(summary_sheet_name)
+        weekly_ws.sheet_properties.tabColor = theme.tab_summary
+        write_weekly_summary_sheet(weekly_ws, client, summary, sheet_title=summary_title)
 
     shipped_ws = wb.create_sheet("Отгружено")
-    shipped_ws.sheet_properties.tabColor = COLOR_GREEN
+    shipped_ws.sheet_properties.tabColor = theme.tab_shipped
     write_detail_sheet(shipped_ws, shipped_df, shipped_totals)
 
     in_work_ws = wb.create_sheet("В работе")
-    in_work_ws.sheet_properties.tabColor = COLOR_ORANGE
+    in_work_ws.sheet_properties.tabColor = theme.tab_in_work
     write_detail_sheet(in_work_ws, in_work_df, in_work_totals)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1060,6 +1174,22 @@ def main() -> None:
         action="store_true",
         help="Include Invoicer=ФЭ rows (needed for clients like Белавиа)",
     )
+    parser.add_argument(
+        "--theme",
+        choices=sorted(THEMES.keys()),
+        default="default",
+        help="Visual theme (lavender_raf for Aeroflot)",
+    )
+    parser.add_argument(
+        "--summary-title",
+        default="Сводка за неделю",
+        help="Title for the period summary sheet",
+    )
+    parser.add_argument(
+        "--summary-sheet",
+        default="Сводка за неделю",
+        help="Worksheet name for the period summary",
+    )
     args = parser.parse_args()
 
     excluded = set() if args.include_fe else set(EXCLUDED_INVOICERS)
@@ -1074,6 +1204,9 @@ def main() -> None:
         previous_date=args.previous_date,
         week_days=args.week_days,
         excluded_invoicers=excluded,
+        theme_name=args.theme,
+        summary_title=args.summary_title,
+        summary_sheet_name=args.summary_sheet,
     )
     print(f"Report saved: {result}")
     print(f"Client: {args.client}")
@@ -1081,9 +1214,11 @@ def main() -> None:
     print(f"В работе rows: {len(filter_in_work(loaded))}")
     print(f"Отгружено rows: {len(filter_shipped(loaded))}")
     if args.previous_input or args.previous_report or args.previous_date:
-        print("Weekly summary sheet: included")
+        print(f"Summary sheet: {args.summary_sheet}")
     if args.include_fe:
         print("Invoicer ФЭ: included")
+    if args.theme != "default":
+        print(f"Theme: {args.theme}")
 
 
 if __name__ == "__main__":
