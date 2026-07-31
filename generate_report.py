@@ -12,6 +12,7 @@ from typing import Any
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -137,23 +138,23 @@ THEMES = {
         tab_in_work=COLOR_ORANGE,
         tab_summary="7030A0",
     ),
-    # Soft lavender Rafa / milk-lavender palette for Aeroflot.
+    # Soft lavender Raf / milk-lavender palette for Aeroflot.
     "lavender_raf": ReportTheme(
         name="lavender_raf",
-        navy="5C4B73",
-        blue="8E7AA8",
-        light_blue="EDE4F5",
-        green="7A6B9A",
-        light_green="F3ECF8",
-        orange="A88BB8",
-        light_orange="F8F0E8",
-        zebra="FAF7FC",
-        subtotal="F2E8F7",
-        border="D4C4E0",
-        tab_total="8E7AA8",
-        tab_shipped="A88BB8",
-        tab_in_work="C4A8D4",
-        tab_summary="B59AC7",
+        navy="6B5B7A",
+        blue="B59AC7",
+        light_blue="F3EAF8",
+        green="C4A8D4",
+        light_green="F7F1FA",
+        orange="D4B8D8",
+        light_orange="FFF8F2",
+        zebra="FCFAFD",
+        subtotal="F6ECF8",
+        border="E2D4EC",
+        tab_total="B59AC7",
+        tab_shipped="C4A8D4",
+        tab_in_work="D8C4E8",
+        tab_summary="E0CDEF",
         title_font="Georgia",
     ),
 }
@@ -944,15 +945,24 @@ def write_total_sheet(
     # Title block
     ws.merge_cells("A1:H1")
     title = ws["A1"]
-    title.value = f"Отчёт по заказам — {client}"
+    if FONT_TITLE.name == "Georgia":
+        title.value = f"♡ Отчёт по заказам — {client} ♡"
+    else:
+        title.value = f"Отчёт по заказам — {client}"
     _style_cell(title, font=FONT_TITLE, alignment=Alignment(horizontal="left", vertical="center"))
 
     ws.merge_cells("A2:H2")
     subtitle = ws["A2"]
-    subtitle.value = (
-        f"Дата отчёта: {report_date.strftime('%d.%m.%Y')}   |   "
-        f"В работе: {in_work_count} поз.   |   Отгружено: {shipped_count} поз."
-    )
+    if FONT_TITLE.name == "Georgia":
+        subtitle.value = (
+            f"Дата отчёта: {report_date.strftime('%d.%m.%Y')}   |   "
+            f"В работе: {in_work_count} поз.   |   Отгружено: {shipped_count} поз.   |   лавандовый раф"
+        )
+    else:
+        subtitle.value = (
+            f"Дата отчёта: {report_date.strftime('%d.%m.%Y')}   |   "
+            f"В работе: {in_work_count} поз.   |   Отгружено: {shipped_count} поз."
+        )
     _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
     # KPI cards
@@ -1049,6 +1059,101 @@ def load_report_snapshot_as_previous(path: Path) -> pd.DataFrame:
     return merged
 
 
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+LAVENDER_BANNER = ASSETS_DIR / "banner_wide.png"
+LAVENDER_CUP = ASSETS_DIR / "cup_small.png"
+LAVENDER_PATTERN = ASSETS_DIR / "pattern_bg.png"
+
+
+def _add_image(ws, path: Path, anchor: str, width: int | None = None, height: int | None = None) -> None:
+    if not path.exists():
+        return
+    img = XLImage(str(path))
+    if width is not None:
+        img.width = width
+    if height is not None:
+        img.height = height
+    ws.add_image(img, anchor)
+
+
+def write_lavender_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    cream = PatternFill("solid", fgColor="FFF8F2")
+    lilac = PatternFill("solid", fgColor="F3EAF8")
+    for row in range(1, 36):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 14):
+            cell = ws.cell(row, col)
+            cell.fill = cream if row < 18 else lilac
+    for col in range(1, 14):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:L2")
+    title = ws["A2"]
+    title.value = f"♡  {client}  ♡"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="6B5B7A"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 40
+
+    ws.merge_cells("A3:L3")
+    subtitle = ws["A3"]
+    subtitle.value = "лавандовый раф · нежный статус заказов"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=14, italic=True, color="9B7EAD"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:L4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="8A7398"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, LAVENDER_BANNER, "B6", width=780, height=420)
+    _add_image(ws, LAVENDER_CUP, "K28", width=160, height=160)
+
+    ws.merge_cells("A30:J31")
+    note = ws["A30"]
+    note.value = (
+        "мягкий лавандовый раф: эспрессо, сливки и цветочный аромат — "
+        "тот же уют, только в отчёте по заказам ♡"
+    )
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="6B5B7A"),
+        fill=PatternFill("solid", fgColor="F7F1FA"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+
+
+def decorate_lavender_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], LAVENDER_CUP, "I1", width=110, height=110)
+    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
+        _add_image(wb[summary_sheet_name], LAVENDER_CUP, "L1", width=100, height=100)
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], LAVENDER_CUP, "AT1", width=80, height=80)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], LAVENDER_CUP, "AT1", width=80, height=80)
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
@@ -1080,8 +1185,22 @@ def generate_report(
     shipped_over_30 = shipped_balance_over_30_days(shipped_raw, report_date)
 
     wb = Workbook()
-    total_ws = wb.active
-    total_ws.title = "Total"
+    if theme.name == "lavender_raf":
+        cover = wb.active
+        cover.title = "Обложка ♡"
+        cover.sheet_properties.tabColor = "E8D5F0"
+        write_lavender_cover_sheet(
+            cover,
+            client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
+    else:
+        total_ws = wb.active
+        total_ws.title = "Total"
     total_ws.sheet_properties.tabColor = theme.tab_total
     write_total_sheet(
         total_ws,
@@ -1108,6 +1227,8 @@ def generate_report(
         weekly_ws = wb.create_sheet(summary_sheet_name)
         weekly_ws.sheet_properties.tabColor = theme.tab_summary
         write_weekly_summary_sheet(weekly_ws, client, summary, sheet_title=summary_title)
+    else:
+        summary_sheet_name = None
 
     shipped_ws = wb.create_sheet("Отгружено")
     shipped_ws.sheet_properties.tabColor = theme.tab_shipped
@@ -1116,6 +1237,9 @@ def generate_report(
     in_work_ws = wb.create_sheet("В работе")
     in_work_ws.sheet_properties.tabColor = theme.tab_in_work
     write_detail_sheet(in_work_ws, in_work_df, in_work_totals)
+
+    if theme.name == "lavender_raf":
+        decorate_lavender_sheets(wb, summary_sheet_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_path)
