@@ -46,10 +46,23 @@ SAMPLE_FILE = "ОБРАЗЕЦ.xlsx"      # эталон структуры и о
 STOCK_FILE = "ОСТАТКИ.xlsx"       # актуальные остатки (источник данных)
 OUTPUT_FILE = "ГОТОВЫЕ_ОСТАТКИ.xlsx"
 
-# Порядок столбцов совпадает в обоих файлах:
+# Порядок столбцов в ИТОГОВОМ файле (как в образце):
 # 1 Part Number | 2 Alt PN | 3 DESCRIPTION | 4 Quantity | 5 Condition | 6 AC Type
 COL_PN, COL_ALT, COL_DESC, COL_QTY, COL_COND, COL_AC = 1, 2, 3, 4, 5, 6
 NCOLS = 6
+
+# Как распознать столбцы во ВХОДНОМ файле остатков по тексту заголовка.
+# Структура выгрузки может меняться (например, столбец состояния может
+# отсутствовать, а тип ВС — сдвинуться), поэтому столбцы ищем по названию,
+# а не по фиксированному номеру. Ключи совпадают с полями записи.
+STOCK_HEADER_PATTERNS = {
+    "pn":   [r"P/?N", r"PART\s*NUMBER", r"ПАРТ", r"ПАРТ\w*"],
+    "alt":  [r"ALT"],
+    "desc": [r"DESCR", r"НАИМЕН", r"ОПИСАН"],
+    "qty":  [r"QTY", r"QUANT", r"КОЛ[-\s]?ВО", r"КОЛИЧ"],
+    "cond": [r"СОСТОЯН", r"CONDITION", r"COND\b"],
+    "ac":   [r"ТИП\s*ВС", r"AC\s*TYPE", r"ТИП"],
+}
 
 GREEN = "FF00FF00"  # цвет "хороших" (зелёных) строк
 
@@ -317,6 +330,39 @@ def consolidate_records(records):
     return result
 
 
+def detect_stock_columns(stock_ws):
+    """Определяет номера столбцов входного файла остатков по их заголовкам.
+
+    Возвращает словарь {pn, alt, desc, qty, cond, ac -> номер столбца или None}.
+    Порядок важен: столбец "Alt PN" не должен перехватить столбец "PN",
+    поэтому длинные/специфичные шаблоны проверяются первыми, а уже занятые
+    столбцы повторно не используются.
+    """
+    headers = {}
+    for c in range(1, stock_ws.max_column + 1):
+        val = stock_ws.cell(1, c).value
+        if val not in (None, ""):
+            headers[c] = str(val).strip().upper()
+
+    mapping = {key: None for key in STOCK_HEADER_PATTERNS}
+    used = set()
+    # Сначала более специфичные поля (alt, cond, ac, qty, desc), затем pn —
+    # чтобы "ALT PN" не был ошибочно принят за "P/N".
+    for key in ("alt", "cond", "ac", "qty", "desc", "pn"):
+        for pattern in STOCK_HEADER_PATTERNS[key]:
+            rx = re.compile(pattern)
+            for col, text in headers.items():
+                if col in used:
+                    continue
+                if rx.search(text):
+                    mapping[key] = col
+                    used.add(col)
+                    break
+            if mapping[key] is not None:
+                break
+    return mapping
+
+
 def build_sample_order(sample_ws):
     """Строит порядок типов ВС по первому появлению в образце (нормализованный ключ)."""
     order = {}
@@ -352,12 +398,29 @@ def main():
     stock_wb = openpyxl.load_workbook(STOCK_FILE)
     stock_ws = stock_wb.active
 
+    # Определяем столбцы входного файла по заголовкам (структура может меняться).
+    cols = detect_stock_columns(stock_ws)
+    if cols["pn"] is None:
+        raise SystemExit("Не найден столбец с Part Number в файле %s" % STOCK_FILE)
+    missing = [k for k in ("alt", "desc", "qty", "cond", "ac") if cols[k] is None]
+    if missing:
+        names = {"alt": "Alt PN", "desc": "DESCRIPTION", "qty": "Quantity",
+                 "cond": "Condition", "ac": "AC Type"}
+        print("  ВНИМАНИЕ: во входном файле нет столбцов: %s "
+              "(в результате они будут пустыми)" % ", ".join(names[k] for k in missing))
+
+    def stock_val(row, key):
+        col = cols[key]
+        return stock_ws.cell(row, col).value if col else None
+
+    max_stock_col = max(c for c in cols.values() if c)
+
     records = []
     stats = {"total": 0, "kept": 0, "dropped_color": 0, "dropped_font": 0}
     for row in range(2, stock_ws.max_row + 1):
-        pn_cell = stock_ws.cell(row, COL_PN)
+        pn_cell = stock_ws.cell(row, cols["pn"])
         # Пропускаем полностью пустые строки.
-        if all(stock_ws.cell(row, c).value in (None, "") for c in range(1, NCOLS + 1)):
+        if all(stock_ws.cell(row, c).value in (None, "") for c in range(1, max_stock_col + 1)):
             continue
         stats["total"] += 1
         if not is_green(pn_cell):
@@ -368,11 +431,11 @@ def main():
             continue
 
         pn = clean_main_pn(pn_cell.value)
-        alt = clean_alt_pn(stock_ws.cell(row, COL_ALT).value, pn)
-        desc = clean_text_value(stock_ws.cell(row, COL_DESC).value)
-        qty = clean_quantity(stock_ws.cell(row, COL_QTY).value)
-        cond = clean_text_value(stock_ws.cell(row, COL_COND).value)
-        ac = normalize_ac(stock_ws.cell(row, COL_AC).value)
+        alt = clean_alt_pn(stock_val(row, "alt"), pn)
+        desc = clean_text_value(stock_val(row, "desc"))
+        qty = clean_quantity(stock_val(row, "qty"))
+        cond = clean_text_value(stock_val(row, "cond"))
+        ac = normalize_ac(stock_val(row, "ac"))
 
         records.append({"pn": pn, "alt": alt, "desc": desc, "qty": qty,
                         "cond": cond, "ac": ac})
