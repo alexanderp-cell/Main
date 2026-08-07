@@ -1,106 +1,111 @@
 # SERVICE AGREEMENT No. ____ / JT-BSI-2026
 
-**for Aircraft Inspection and Engine/APU Borescope Inspection Services**
+**for Aircraft Inspection and Engine/APU Borescope Inspection Services**  
+**Aircraft: Boeing 737-500, Registration VQ-BOO**
 
 Place of conclusion: ________________  Date: «____» ____________ 2026
 
 ---
 
-**JET Technic** ([full legal name as per Company Card], registered address: [address], registration / tax ID: [●], hereinafter the **“Contractor”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney No. ● dated ●], on the one part, and
+**JET Technic** (address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Ishani, No. 71/57, Kadikoy, 34722, Istanbul, Turkey; email: sales@jetechnic.com; registration / tax ID: [● — per Company Card], hereinafter the **“Contractor”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney No. ● dated ●], on the one part, and
 
-**[CLIENT FULL LEGAL NAME]** (registered address: [address], registration / tax ID: [●], hereinafter the **“Customer”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney], on the other part,
+**[CLIENT FULL LEGAL NAME]** (registered address: [●], registration / tax ID: [●], hereinafter the **“Customer”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney], on the other part,
 
-collectively referred to as the **“Parties”** and individually as a **“Party”**, have entered into this Service Agreement (the **“Agreement”**) as follows:
+collectively the **“Parties”**, have entered into this Service Agreement (the **“Agreement”**) as follows:
 
 ## 1. SUBJECT OF THE AGREEMENT
 
-**1.1.** The Contractor undertakes to provide, and the Customer undertakes to accept and pay for, the following services (the **“Services”**):
+**1.1.** The Contractor shall provide, and the Customer shall accept and pay for, the following services in respect of Boeing 737-500, registration mark **VQ-BOO** (the **“Aircraft”**) (the **“Services”**):
 
-(a) inspection of the Aircraft (airframe / visual / technical inspection as specified in the Commercial Proposal);  
-(b) borescope inspection (BSI) of the Aircraft engines; and  
-(c) borescope inspection (BSI) of the Auxiliary Power Unit (APU).
+(a) borescope inspection (BSI) of two (2) CFM56-3 engines (work scope to be confirmed / as per Proposal);  
+(b) borescope inspection (BSI) of APU APS2000;  
+(c) Aircraft General Visual Inspection (GVI), including landing gears, cabin and avionics compartment;  
+(d) paperwork inspection relating to the engines and APU; and  
+(e) related transportation and accommodation of the Contractor’s personnel as included in the Price.
 
-**1.2.** The detailed scope, methodology, deliverables, exclusions, price and timelines are set out in the Commercial Proposal **“BSI JT” dated 06.08.2026** (the **“Proposal”**), which forms an integral **Annex No. 1** to this Agreement. In case of conflict, the body of this Agreement prevails, except for technical scope and price, for which the Proposal prevails.
+**1.2.** The Commercial Proposal **“VQ-BOO BSI and Inspection” / “BSI JT” dated 06 August 2026** (the **“Proposal”**) forms integral **Annex No. 1**. Technical scope and Price follow the Proposal; otherwise this Agreement prevails.
 
-**1.3.** Aircraft identification (to be completed / as available): Type / Model: [●]; MSN: [●]; Registration: [●]; Engines: [type / ESN ●]; APU: [type / S/N ●].
+**1.3.** Place of performance: **JAT Tehnika, Belgrade, Republic of Serbia** (Belgrade Airport area). Access to the airport area and to the Aircraft shall be provided by the Customer.
 
-**1.4.** Place of performance: **Belgrade Airport (BEG), Republic of Serbia**; Aircraft is currently in storage in the hangar of **JAT Tehnika**. Access to the Aircraft and hangar facilities is arranged by / with the involvement of JAT Tehnika and/or the Customer.
+**1.4.** BSI shall be performed by a certified engineer. Deliverables: BSI / inspection report(s) and video materials for the BSI.
 
 ## 2. TERM OF PERFORMANCE
 
-**2.1.** The Services shall be performed within **[●] business days** from the later of: (i) the Effective Date of this Agreement; (ii) receipt of the advance payment (if applicable); and (iii) provision of Aircraft access, hangar slot and required documentation by the Customer / JAT Tehnika.
+**2.1.** Approximate time required for the Services is **3 (three) days**, starting from the later of: (i) the Effective Date; (ii) receipt of the advance payment (if any); and (iii) provision of Aircraft / airport access and required documentation by the Customer.
 
-**2.2.** Upon completion, the Contractor shall deliver a written inspection / BSI report (electronic copy is sufficient unless otherwise agreed). The Customer shall confirm acceptance within **5 (five) business days** or state reasoned objections; failing which the Services are deemed accepted.
+**2.2.** The Customer shall confirm acceptance of the report(s) within **5 (five) business days** or state reasoned objections; otherwise the Services are deemed accepted.
 
 ## 3. PRICE AND PAYMENT
 
-**3.1.** The total contract price for the Services is **[amount in figures and words] [USD / EUR]** (the **“Price”**), as per the Proposal, exclusive / inclusive of VAT (as applicable under applicable law).
+**3.1.** The total Price is **USD 24,000.00** (twenty-four thousand US dollars), exclusive of any applicable taxes and fees, allocated as follows:
 
-**3.2.** Payment terms: **[e.g. 100% advance / 50% advance within 3 banking days of invoice and 50% within 5 banking days after delivery of the report]**, by bank transfer to the Contractor’s account specified in Clause 10 / the Company Card / invoice.
+| Description | USD |
+|---|---:|
+| BSI CFM56-3 – 2 Engines (work scope TBD) | 9,500.00 |
+| BSI APU APS2000 | 4,000.00 |
+| Aircraft GVI (landing gears, cabin, avionics compartment) | 3,000.00 |
+| Paperwork inspection (Engines, APU) | 3,500.00 |
+| Transportation and accommodation costs | 4,000.00 |
+| **TOTAL** | **24,000.00** |
 
-**3.3.** Any additional works outside the Proposal scope (including extra man-hours due to delayed access, non-readiness of the Aircraft, or Customer’s change requests) shall be agreed in writing and charged at rates stated in the Proposal or as otherwise agreed.
+**3.2.** Payment: **[100% advance / 50% advance within 3 banking days of invoice and 50% within 5 banking days after delivery of the report(s)]**, by bank transfer to the Contractor’s account in Clause 10 / invoice. Currency: USD.
 
-**3.4.** Travel, visa, local transportation, hangar / MRO access fees of JAT Tehnika, airport passes and similar third-party charges are **[included in the Price / payable by the Customer separately against supporting documents]**, as stated in the Proposal.
+**3.3.** Works outside the Proposal scope (including extra time due to delayed access or Aircraft non-readiness) shall be agreed in writing and charged separately.
 
 ## 4. OBLIGATIONS OF THE PARTIES
 
-**4.1.** The Contractor shall: (a) perform the Services in a professional manner using qualified personnel and suitable equipment; (b) comply with applicable safety rules at the place of performance and JAT Tehnika hangar procedures; (c) deliver the report within the agreed term; (d) keep Customer information confidential.
+**4.1.** The Contractor shall perform the Services professionally, comply with site safety / JAT Tehnika procedures, and deliver the report(s) and BSI video materials.
 
-**4.2.** The Customer shall: (a) timely provide Aircraft access, hangar coordination with JAT Tehnika, and all technical documentation reasonably required (status, last inspections, engine/APU data, authorizations); (b) ensure that persons granting access have authority; (c) pay the Price as agreed; (d) appoint a contact person for operational coordination.
+**4.2.** The Customer shall timely provide airport and Aircraft access, hangar coordination with JAT Tehnika, authorizations and technical documentation reasonably required, pay the Price, and appoint a contact person.
 
-**4.3.** The Services constitute inspection / diagnostic activities and do **not** include repair, rectification, certification of airworthiness, or release to service, unless expressly agreed in writing. Findings in the report are based on the condition observed at the time of inspection and available access.
+**4.3.** The Services are inspection / diagnostic only and do not include repair, rectification, airworthiness certification or release to service, unless agreed in writing. Findings reflect the condition and access available at the time of inspection. Engine BSI work scope remains subject to confirmation (“TBD”) as stated in the Proposal.
 
 ## 5. LIABILITY AND FORCE MAJEURE
 
-**5.1.** Each Party is liable for breach of this Agreement in accordance with applicable law, subject to Clause 5.2.
+**5.1.** Except for willful misconduct or gross negligence, the Contractor’s aggregate liability shall not exceed the Price actually paid. Neither Party is liable for indirect or consequential losses (including Aircraft downtime), except as mandatory law requires.
 
-**5.2.** Except for willful misconduct or gross negligence, the Contractor’s aggregate liability under this Agreement shall not exceed the Price actually paid by the Customer. Neither Party is liable for indirect, incidental or consequential losses (including loss of profit, loss of use of the Aircraft, or downtime), except where mandatory law provides otherwise.
-
-**5.3.** A Party is excused from performance while prevented by force majeure (including war, sanctions preventing performance, natural disasters, epidemic, acts of authorities, airport / hangar closure), provided prompt notice is given. If force majeure continues for more than **30 days**, either Party may terminate this Agreement by written notice without penalty, subject to payment for Services already performed.
+**5.2.** Force majeure (including war, sanctions preventing performance, natural disasters, epidemic, acts of authorities, airport/hangar closure) excuses performance while it continues, subject to prompt notice. If it exceeds 30 days, either Party may terminate by written notice without penalty, paying for Services already performed.
 
 ## 6. CONFIDENTIALITY
 
-**6.1.** Each Party shall keep confidential the other Party’s non-public commercial and technical information obtained in connection with this Agreement and shall not disclose it to third parties without prior written consent, except to professional advisors and as required by law or competent authorities. This Clause survives for **3 (three) years** after termination.
+**6.1.** Each Party shall keep confidential the other Party’s non-public commercial and technical information obtained under this Agreement for **3 (three) years** after termination, except disclosure to professional advisors or as required by law.
 
 ## 7. TERM, AMENDMENTS AND TERMINATION
 
-**7.1.** This Agreement enters into force on the date of signing by both Parties (or the later signature date) (the **“Effective Date”**) and remains in force until full performance of the Parties’ obligations.
+**7.1.** This Agreement enters into force on the date of signing by both Parties (or the later signature date) (the **“Effective Date”**) and remains in force until full performance.
 
-**7.2.** Either Party may terminate this Agreement by written notice if the other Party materially breaches and fails to cure within **10 (ten) business days** of notice. The Customer may cancel before start of works subject to reimbursement of documented costs incurred by the Contractor.
+**7.2.** Either Party may terminate for material breach uncured within **10 business days** of notice. The Customer may cancel before start of works subject to reimbursement of the Contractor’s documented costs.
 
-**7.3.** Amendments are valid only if made in writing and signed by both Parties (including exchange of signed PDF scans).
+**7.3.** Amendments are valid only in writing signed by both Parties (including signed PDF scans).
 
 ## 8. GOVERNING LAW AND DISPUTES
 
-**8.1.** This Agreement is governed by the laws of **[● — e.g. England and Wales / Russian Federation / Republic of Serbia]**, without regard to conflict-of-laws rules.
+**8.1.** This Agreement is governed by the laws of **[● — recommended: Republic of Türkiye / England and Wales]**, without regard to conflict-of-laws rules.
 
-**8.2.** The Parties shall attempt to settle disputes amicably within **15 (fifteen) business days**. Failing amicable settlement, disputes shall be referred to **[competent court at the Contractor’s registered office / arbitration: ●]**. The language of proceedings shall be English, unless otherwise agreed.
+**8.2.** Disputes not settled amicably within **15 business days** shall be referred to **[competent courts of Istanbul, Türkiye / arbitration: ●]**. Proceedings language: English, unless otherwise agreed.
 
 ## 9. FINAL PROVISIONS
 
-**9.1.** This Agreement is executed in English and Russian in two counterparts (one for each Party). In case of discrepancy, the **[English / Russian]** version shall prevail. Each counterpart (including PDF scan of a signed original) has equal legal force.
+**9.1.** Executed in English and Russian in two counterparts. In case of discrepancy, the **English** version prevails. PDF scans of signed originals have equal force.
 
-**9.2.** Annexes forming integral parts of this Agreement: **Annex No. 1** — Commercial Proposal “BSI JT” dated 06.08.2026; **Annex No. 2** — Contractor’s Company Card / bank details (as updated).
+**9.2.** Annexes: **Annex No. 1** — Commercial Proposal dated 06 August 2026; **Annex No. 2** — Contractor Company Card / bank details.
 
-**9.3.** Notices may be sent by email to the addresses in Clause 10, with originals/scans upon request. Notices are deemed received on the next business day after sending, if no delivery failure notice is received.
+**9.3.** Notices by email to Clause 10 addresses are deemed received on the next business day if no delivery failure notice is received.
 
 ## 10. DETAILS AND SIGNATURES OF THE PARTIES
 
 | CONTRACTOR: JET Technic | CUSTOMER: [●] |
 |---|---|
-| Full legal name: [●] | Full legal name: [●] |
-| Address: [●] | Address: [●] |
-| Reg. / Tax ID: [●] | Reg. / Tax ID: [●] |
-| Bank: [●] | Bank: [●] |
-| Account / IBAN: [●] | Account / IBAN: [●] |
-| SWIFT: [●] | SWIFT: [●] |
-| Email: [●] Tel.: [●] | Email: [●] Tel.: [●] |
-| ________________ / [Name] / | ________________ / [Name] / |
-| Title: [●] L.S. | Title: [●] L.S. |
+| Address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Ishani, No. 71/57, Kadikoy, 34722, Istanbul, Turkey | Full legal name: [●] |
+| Reg. / Tax ID: [●] | Address: [●] |
+| Bank / IBAN / SWIFT: [●] | Reg. / Tax ID: [●] |
+| Email: sales@jetechnic.com | Bank / IBAN / SWIFT: [●] |
+| ________________ / [Name] / | Email: [●] Tel.: [●] |
+| Title: [●] L.S. | ________________ / [Name] / Title: [●] L.S. |
 
 ---
 
-Annex No. 1 — Commercial Proposal “BSI JT” dated 06.08.2026 (attached).  
-Annex No. 2 — JET Technic Company Card / payment details (attached).
+Annex No. 1 — Commercial Proposal “VQ-BOO BSI and Inspection” dated 06 August 2026 (attached).  
+Annex No. 2 — JET Technic Company Card / payment details (to be attached).
 
-*DRAFT — for internal review. Not a signed contract. Placeholders “[●]” to be completed from the Company Card, Proposal and Customer data.*
+*DRAFT for internal review. Customer and bank/registration details still pending. Not legal advice.*

@@ -1,6 +1,6 @@
-# Draft Service Agreement — Aircraft & Engine/APU Borescope Inspection (JT-BSI-2026)
+# Draft Service Agreement — VQ-BOO BSI & Inspection (JT-BSI-2026)
 
-Черновики соглашения на оказание услуг инспекции ВС и бороскопической инспекции двигателей / ВСУ (BSI) для **JET Technic**.
+Черновики соглашения по КП **VQ-BOO BSI and Inspection** от **06.08.2026** (JET Technic).
 
 ## Files
 
@@ -8,31 +8,27 @@
 |------|----------|
 | `Service_Agreement_JT-BSI-2026_EN.docx` | English |
 | `Dogovor_JT-BSI-2026_RU.docx` | Russian |
-| `Service_Agreement_JT-BSI-2026_EN.md` | English (editable text) |
-| `Dogovor_JT-BSI-2026_RU.md` | Russian (editable text) |
+| `Service_Agreement_JT-BSI-2026_EN.md` | English (text) |
+| `Dogovor_JT-BSI-2026_RU.md` | Russian (text) |
+| `COMMERCIAL_PROPOSAL_BSI_JT_06.08.26.pdf` | Annex No. 1 source |
 
-## Context used
+## Filled from Commercial Proposal
 
-- Contractor: **JET Technic**
-- Services: aircraft inspection + engine BSI + APU BSI
-- Location: Belgrade Airport (BEG), Serbia; aircraft in storage at **JAT Tehnika** hangar
-- Commercial Proposal: **BSI JT dated 06.08.2026** → Annex No. 1
-- Customer legal entity: **not yet provided** (placeholders)
+- Aircraft: **Boeing 737-500 VQ-BOO**
+- Engines BSI: **CFM56-3 × 2** (work scope TBD) — USD 9,500
+- APU BSI: **APS2000** — USD 4,000
+- Aircraft GVI — USD 3,000
+- Paperwork inspection — USD 3,500
+- Transport & accommodation — USD 4,000
+- **Total: USD 24,000** (excl. taxes/fees)
+- Location: **JAT Tehnika, Belgrade**
+- Duration: **~3 days**
+- Contractor address (Istanbul) + `sales@jetechnic.com`
 
-## Placeholders to complete `[●]`
+## Still pending `[●]`
 
-1. Full legal name, address, reg./tax IDs, bank details of JET Technic (from Company Card)  
-2. Customer company details and signatory  
-3. Aircraft type / MSN / registration / engine & APU serials  
-4. Price, currency, VAT treatment, payment schedule (from Commercial Proposal)  
-5. Performance period (business days)  
-6. Whether travel / JAT Tehnika access fees are included or extra  
-7. Governing law and dispute forum  
-8. Prevailing language (EN vs RU) in case of discrepancy  
-
-## Notes
-
-- Compact draft aimed at **2–3 pages** (Times New Roman 10 pt, narrow margins).  
-- Scope and price are incorporated **by reference** to the Commercial Proposal to keep the body short.  
-- PDF source files (`COMMERCIAL PROPOSAL BSI JT 06.08.26`, `JET TECHNIC COMPANY CARD`) were **not available** in the agent workspace at generation time; amounts and legal details must be filled from those originals before sending to the client.  
-- This is a **working draft for internal review**, not legal advice and not an executed contract.
+1. Contractor registration / tax ID and bank details (Company Card)  
+2. Customer legal entity and signatory  
+3. Payment schedule choice (100% advance vs 50/50)  
+4. Governing law / dispute forum final choice  
+5. Engine BSI work scope confirmation (TBD in KP)
