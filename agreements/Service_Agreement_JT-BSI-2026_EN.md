@@ -7,7 +7,7 @@ Place of conclusion: ________________  Date: «____» ____________ 2026
 
 ---
 
-**JET Technic** (address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Ishani, No. 71/57, Kadikoy, 34722, Istanbul, Turkey; email: sales@jetechnic.com; registration / tax ID: [● — per Company Card], hereinafter the **“Contractor”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney No. ● dated ●], on the one part, and
+**JET TECHNIC / Hava Araclari Lojistik Sanayi ve Ticaret Anonim** (registered address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Is Merkezi, No: 71/57, Kadikoy, Istanbul, Turkiye; Company No. **389609-5**; Tax No. **484 212 4015**; tel. **+90 533 736 84 00**; email: **sales@jetechnic.com**; hereinafter the **“Contractor”**), represented by **Serdar Guler**, Director General, acting on the basis of the Articles of Association / authority vested in the Director General, on the one part, and
 
 **[CLIENT FULL LEGAL NAME]** (registered address: [●], registration / tax ID: [●], hereinafter the **“Customer”**), represented by [full name, title], acting on the basis of [Charter / Power of Attorney], on the other part,
 
@@ -23,21 +23,21 @@ collectively the **“Parties”**, have entered into this Service Agreement (th
 (d) paperwork inspection relating to the engines and APU; and  
 (e) related transportation and accommodation of the Contractor’s personnel as included in the Price.
 
-**1.2.** The Commercial Proposal **“VQ-BOO BSI and Inspection” / “BSI JT” dated 06 August 2026** (the **“Proposal”**) forms integral **Annex No. 1**. Technical scope and Price follow the Proposal; otherwise this Agreement prevails.
+**1.2.** The Commercial Proposal **“VQ-BOO BSI and Inspection” dated 06 August 2026** (the **“Proposal”**) forms integral **Annex No. 1**. Technical scope and Price follow the Proposal; otherwise this Agreement prevails.
 
-**1.3.** Place of performance: **JAT Tehnika, Belgrade, Republic of Serbia** (Belgrade Airport area). Access to the airport area and to the Aircraft shall be provided by the Customer.
+**1.3.** Place of performance: **JAT Tehnika, Belgrade, Republic of Serbia**. Access to the airport area and to the Aircraft shall be provided by the Customer.
 
 **1.4.** BSI shall be performed by a certified engineer. Deliverables: BSI / inspection report(s) and video materials for the BSI.
 
 ## 2. TERM OF PERFORMANCE
 
-**2.1.** Approximate time required for the Services is **3 (three) days**, starting from the later of: (i) the Effective Date; (ii) receipt of the advance payment (if any); and (iii) provision of Aircraft / airport access and required documentation by the Customer.
+**2.1.** Approximate time required is **3 (three) days** from the later of: (i) the Effective Date; (ii) receipt of the advance payment (if any); and (iii) provision of Aircraft / airport access and required documentation by the Customer.
 
 **2.2.** The Customer shall confirm acceptance of the report(s) within **5 (five) business days** or state reasoned objections; otherwise the Services are deemed accepted.
 
 ## 3. PRICE AND PAYMENT
 
-**3.1.** The total Price is **USD 24,000.00** (twenty-four thousand US dollars), exclusive of any applicable taxes and fees, allocated as follows:
+**3.1.** The total Price is **USD 24,000.00** (twenty-four thousand US dollars), exclusive of any applicable taxes and fees:
 
 | Description | USD |
 |---|---:|
@@ -48,7 +48,7 @@ collectively the **“Parties”**, have entered into this Service Agreement (th
 | Transportation and accommodation costs | 4,000.00 |
 | **TOTAL** | **24,000.00** |
 
-**3.2.** Payment: **[100% advance / 50% advance within 3 banking days of invoice and 50% within 5 banking days after delivery of the report(s)]**, by bank transfer to the Contractor’s account in Clause 10 / invoice. Currency: USD.
+**3.2.** Payment: **[100% advance / 50% advance within 3 banking days of invoice and 50% within 5 banking days after delivery of the report(s)]**, in USD by bank transfer to the Contractor’s USD account in Clause 10. Bank charges of the remitting bank are for the Customer’s account.
 
 **3.3.** Works outside the Proposal scope (including extra time due to delayed access or Aircraft non-readiness) shall be agreed in writing and charged separately.
 
@@ -80,9 +80,9 @@ collectively the **“Parties”**, have entered into this Service Agreement (th
 
 ## 8. GOVERNING LAW AND DISPUTES
 
-**8.1.** This Agreement is governed by the laws of **[● — recommended: Republic of Türkiye / England and Wales]**, without regard to conflict-of-laws rules.
+**8.1.** This Agreement is governed by the laws of the **Republic of Türkiye**, without regard to conflict-of-laws rules.
 
-**8.2.** Disputes not settled amicably within **15 business days** shall be referred to **[competent courts of Istanbul, Türkiye / arbitration: ●]**. Proceedings language: English, unless otherwise agreed.
+**8.2.** Disputes not settled amicably within **15 business days** shall be referred to the competent courts of **Istanbul, Türkiye**. Proceedings language: English, unless otherwise agreed.
 
 ## 9. FINAL PROVISIONS
 
@@ -94,18 +94,22 @@ collectively the **“Parties”**, have entered into this Service Agreement (th
 
 ## 10. DETAILS AND SIGNATURES OF THE PARTIES
 
-| CONTRACTOR: JET Technic | CUSTOMER: [●] |
+| CONTRACTOR: JET TECHNIC | CUSTOMER: [●] |
 |---|---|
-| Address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Ishani, No. 71/57, Kadikoy, 34722, Istanbul, Turkey | Full legal name: [●] |
-| Reg. / Tax ID: [●] | Address: [●] |
-| Bank / IBAN / SWIFT: [●] | Reg. / Tax ID: [●] |
-| Email: sales@jetechnic.com | Bank / IBAN / SWIFT: [●] |
-| ________________ / [Name] / | Email: [●] Tel.: [●] |
-| Title: [●] L.S. | ________________ / [Name] / Title: [●] L.S. |
+| Legal name: Hava Araclari Lojistik Sanayi ve Ticaret Anonim | Full legal name: [●] |
+| Address: Egitim Mahallesi, Fahrettin Kerim Gokay Caddesi, Ortaklar Is Merkezi, No: 71/57, Kadikoy, Istanbul, Turkiye | Address: [●] |
+| Company No.: 389609-5 Tax No.: 484 212 4015 | Reg. / Tax ID: [●] |
+| Bank: YAPI KREDI BANK | Bank / IBAN / SWIFT: [●] |
+| IBAN (USD): TR850006701000000015176740 | Email: [●] Tel.: [●] |
+| IBAN (EUR): TR430006701000000015213968 | |
+| IBAN (TRY): TR260006701000000015208357 | |
+| SWIFT: YAPITRISXXX | |
+| Tel.: +90 533 736 84 00 Email: sales@jetechnic.com Web: jetechnic.com | |
+| ________________ / Serdar Guler / Director General L.S. | ________________ / [Name] / Title: [●] L.S. |
 
 ---
 
 Annex No. 1 — Commercial Proposal “VQ-BOO BSI and Inspection” dated 06 August 2026 (attached).  
-Annex No. 2 — JET Technic Company Card / payment details (to be attached).
+Annex No. 2 — JET TECHNIC Company Card (attached).
 
-*DRAFT for internal review. Customer and bank/registration details still pending. Not legal advice.*
+*DRAFT for internal review. Customer details and payment schedule still pending. Not legal advice.*
