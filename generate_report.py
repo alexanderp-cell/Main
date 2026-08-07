@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -689,13 +690,31 @@ def write_weekly_summary_sheet(
         f"Период: {summary.week_start.strftime('%d.%m.%Y')} — "
         f"{summary.week_end.strftime('%d.%m.%Y')}"
     )
+    if cute_comments:
+        epigraphs = [
+            "сегодняшний раф — с ноткой перрона и терпения",
+            "помешиваем цифры медленно, чтобы не сбить пенку",
+            "нежный отчёт на связи: дышим, считаем, хвалим",
+            "курс лавандовый, турбулентность эмоциональная — низкая",
+            "в кадре только забота, заказы и чуть-чуть сливок",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
     _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
     mood_cards = build_section_mood_cards(summary) if cute_comments else {}
+    # Rotate illustrations by week so the right-side collage feels fresh.
+    week_seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+    image_cycle = [LAVENDER_CUP, LAVENDER_HEART, LAVENDER_CUP]
+    if week_seed % 2:
+        image_cycle = [LAVENDER_HEART, LAVENDER_CUP, LAVENDER_HEART]
     mood_images = {
-        "Новые заказы": LAVENDER_CUP,
-        "Отгруженные заказы": LAVENDER_HEART,
-        "Оплаченные клиентом": LAVENDER_CUP,
+        "Новые заказы": image_cycle[0],
+        "Отгруженные заказы": image_cycle[1],
+        "Оплаченные клиентом": image_cycle[2],
     }
 
     row = 4
@@ -1086,108 +1105,349 @@ LAVENDER_PATTERN = ASSETS_DIR / "pattern_bg.png"
 LAVENDER_HEART = ASSETS_DIR / "heart_small.png"
 
 
+def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
+    """Stable per-week pick so comments change from week to week."""
+    digest = hashlib.md5(seed.encode("utf-8")).hexdigest()
+    idx = int(digest[:8], 16) % len(options)
+    return options[idx]
+
+
+def _fmt_money(value: float) -> str:
+    return f"{value:,.0f}".replace(",", " ")
+
+
+def _avg_late_days(shipped_rows: list[dict[str, Any]]) -> tuple[int, int, int]:
+    late_days: list[int] = []
+    for row in shipped_rows:
+        note = str(row.get("Поставка", ""))
+        if note.startswith("просрочка"):
+            m = re.search(r"(\d+)", note)
+            if m:
+                late_days.append(int(m.group(1)))
+    if not late_days:
+        return 0, 0, 0
+    return len(late_days), int(sum(late_days) / len(late_days)), max(late_days)
+
+
+def _top_sale_line(rows: list[dict[str, Any]]) -> tuple[str, float]:
+    best_desc, best_amt = "", 0.0
+    for row in rows:
+        amt = float(row.get("Сумма, USD") or 0)
+        if amt >= best_amt:
+            best_amt = amt
+            desc = str(row.get("DESCRIPTION") or row.get("P/N") or "позиция").strip()
+            best_desc = re.sub(r"\s+", " ", desc)[:42]
+    return best_desc, best_amt
+
+
+def _category_mix(rows: list[dict[str, Any]]) -> str:
+    cats: dict[str, int] = {}
+    for row in rows:
+        cat = str(row.get("Category") or "").strip().upper() or "OTHER"
+        cats[cat] = cats.get(cat, 0) + 1
+    if not cats:
+        return ""
+    top = sorted(cats.items(), key=lambda x: (-x[1], x[0]))
+    bits = [f"{name.lower()} ×{n}" for name, n in top[:2]]
+    return ", ".join(bits)
+
+
 def build_section_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
-    """Cute narrative cards for weekly sections (lavender raf tone)."""
+    """Cute narrative cards for weekly sections — fresh copy every week."""
     cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
 
     new = summary.new_orders
     amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
     max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
     if new.count == 0:
-        cards["Новые заказы"] = {
-            "title": "☕ Тихая чашечка",
-            "body": (
-                "Новых заказов на этой неделе нет — бывает. "
-                "Идеальный момент выпить лавандовый раф и набраться сил 💜"
+        options = [
+            (
+                "☕ Тихая чашечка",
+                f"За {period} новых заказов нет — бывает и такая погода. "
+                "Идеальный момент прогреть лавандовый раф и набраться сил 💜",
             ),
-        }
+            (
+                "🌸 Пауза между рейсами",
+                "Новых позиций на этой неделе нет. Нежный отчёт шепчет: "
+                "даже Аэрофлоту иногда нужна мягкая посадка ✈️",
+            ),
+            (
+                "🫧 Пена без заказа",
+                "Тишина в продажах. Завариваем раф, разминаем крылья — "
+                "следующая неделя уже рулит к нам 💜",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|sales|empty", options)
     elif max_amount >= 30000 or new.total >= 150000:
-        cards["Новые заказы"] = {
-            "title": "✨ Мы молодцы!",
-            "body": (
-                f"Продажи за неделю — {new.total:,.0f} USD по {new.count} позициям. "
-                f"Есть и крупные заказы (до {max_amount:,.0f} USD). "
-                "Нежный отчёт гордится вами 🥰"
+        options = [
+            (
+                "✨ Мы молодцы!",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда недели — «{top_desc}» на {max_m} USD. "
+                "Нежный отчёт аплодирует стоя 🥰✈️",
             ),
-        }
+            (
+                "🛫 Взлётная полоса продаж",
+                f"{new.count} новых заказов на {money} USD (средний чек ~{avg_m}). "
+                f"Крупняк до {max_m} USD — крылья Аэрофлота ловят попутный ветер 💜",
+            ),
+            (
+                "💜 Раф с двойной порцией",
+                f"Неделя со вкусом победы: {money} USD. "
+                f"В меню — {mix or 'микс позиций'}, а топ — «{top_desc}». "
+                "Так держать, команда! ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|sales|big", options)
     elif max_amount < 5000 and new.total < 25000:
-        cards["Новые заказы"] = {
-            "title": "🪙 Копейка рубль бережёт",
-            "body": (
-                f"Заказов немного и они аккуратные: {new.count} поз. на {new.total:,.0f} USD. "
-                "Мелкие позиции тоже греют портфель — как пенка на рафе 🥛"
+        options = [
+            (
+                "🪙 Копейка рубль бережёт",
+                f"Аккуратная неделя: {new.count} поз. на {money} USD. "
+                "Мелкие заказы — как сахарная пудра на рафе: мало, но мило 🥛",
             ),
-        }
+            (
+                "🌱 Маленький, но свой урожай",
+                f"{money} USD по {new.count} позициям. Без фанфар — зато честно. "
+                "Нежный отчёт шепчет: тихий рост тоже рост 🌷",
+            ),
+            (
+                "🧁 Мини-десерт недели",
+                f"Чек скромный ({avg_m} USD в среднем), но портфель не пустой. "
+                f"За {period} набралось {money} USD — и это уже повод улыбнуться 💜",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|sales|small", options)
     else:
-        cards["Новые заказы"] = {
-            "title": "🌷 Спокойная, но уверенная неделя",
-            "body": (
-                f"{new.count} новых позиций на {new.total:,.0f} USD. "
-                "Без лишнего шума, зато с ароматом лаванды и пользой для клиента 💜"
+        options = [
+            (
+                "🌷 Ровный эшелон",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Средний чек ~{avg_m}; топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Без турбулентности — только лавандовый курс 💜",
             ),
-        }
+            (
+                "✈️ Крейсерский режим",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · микс: {mix}." if mix else ".")
+                + " Не взрыв, не штиль — комфортная высота для нежного отчёта ✨",
+            ),
+            (
+                "🥛 Пенка средней плотности",
+                f"За неделю набралось {money} USD. "
+                f"Самый заметный след — «{top_desc}» на {_fmt_money(top_amt)} USD. "
+                "Аэрофлот в деле, раф остывать не успевает 🥰",
+            ),
+            (
+                "🌤️ Мягкая ясная неделя",
+                f"{new.count} заказов, {money} USD. "
+                "Ни бури, ни скуки — именно такой прогноз любит нежный отчёт 💜🌸",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
 
     shipped = summary.shipped_orders
     late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
     early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
     if shipped.count == 0:
-        cards["Отгруженные заказы"] = {
-            "title": "📦 Пока на складе уюта",
-            "body": "Отгрузок за период нет. Всё на своих местах — можно спокойно вдохнуть аромат лаванды 🌸",
-        }
+        options = [
+            (
+                "📦 Склад в режиме spa",
+                "Отгрузок за период нет. Всё на полочках, лаванда в воздухе — можно выдохнуть 🌸",
+            ),
+            (
+                "🛋️ Выходной у рампы",
+                "Ни одной отгрузки. Нежный отчёт ставит чашку на стол и говорит: отдых тоже логистика ☕",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|ship|empty", options)
     elif shipped.count and late / shipped.count >= 0.5:
-        cards["Отгруженные заказы"] = {
-            "title": "🌙 Главное — доехали",
-            "body": (
-                f"Из {shipped.count} отгрузок много с опозданием ({late}). "
-                "Ничего страшного: лаванда не торопится, а мы бережно доводим поставки. "
-                "Клиент всё равно получит заботу 🫶"
+        options = [
+            (
+                "🌙 Главное — долетели",
+                f"Из {shipped.count} отгрузок ({ship_money} USD) с опозданием {late}"
+                + (f", в среднем на ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Дышим глубже: детали всё равно нашли путь к клиенту. "
+                "Лаванда не торопит — она сопровождает 🫶💜",
             ),
-        }
+            (
+                "🛟 Спокойно, мы на связи",
+                f"{late} из {shipped.count} пришли позже плана — бывает на больших маршрутах. "
+                f"Отгружено на {ship_money} USD. Нежный отчёт обнимает команду и шепчет: "
+                "лучше поздно с заботой, чем рано с тревогой 🌸",
+            ),
+            (
+                "🌧️ Дождик на перроне",
+                f"Просрочек много ({late}), но самолёты тоже ждут погоду. "
+                f"За неделю ушло {shipped.count} поз. на {ship_money} USD. "
+                "Мы рядом, клиент в курсе, раф тёплый — значит, всё поправимо ☔️💜",
+            ),
+            (
+                "🕯️ Мягкий свет в конце перрона",
+                f"Да, график гуляет (до {late_max} дн. у самой «задумчивой» позиции). "
+                f"Но {shipped.count} отгрузок уже в пути/у клиента. "
+                "Не ругаем календарь — хвалим упорство ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|ship|late", options)
     elif early > late:
-        cards["Отгруженные заказы"] = {
-            "title": "🏁 Быстрее пенки на рафе!",
-            "body": (
-                f"Красота: {early} досрочных из {shipped.count}. "
-                "Неделя на позитиве — как свежий лавандовый раф утром ☀️💜"
+        options = [
+            (
+                "🏁 Быстрее пенки на рафе!",
+                f"Досрочно: {early} из {shipped.count}. "
+                f"Ещё {on_time} в срок, опозданий всего {late}. "
+                "Неделя на позитиве — как утренний лавандовый раф перед вылетом ☀️💜",
             ),
-        }
+            (
+                "🚀 Ранний слот",
+                f"{early} позиций приехали раньше срока. "
+                f"Отгружено на {ship_money} USD — нежный отчёт ставит лайк экипажу ✈️✨",
+            ),
+            (
+                "💎 Пунктуальность со сливками",
+                f"График почти мурлычет: досрочно {early}, в срок {on_time}. "
+                "Так и хочется добавить второй шотик эспрессо в раф ☕🥰",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|ship|early", options)
     else:
-        cards["Отгруженные заказы"] = {
-            "title": "🚚 Ровный ритм",
-            "body": (
-                f"Отгружено {shipped.count} поз. на {shipped.total:,.0f} USD. "
-                "Всё движется мягко и уверенно — именно так и должен звучать нежный отчёт ✨"
+        options = [
+            (
+                "🚚 Ровный ритм перрона",
+                f"Отгружено {shipped.count} поз. на {ship_money} USD "
+                f"(досрочно {early}, в срок {on_time}, позже {late}). "
+                "Мягкий, уверенный ход — фирменный стиль нежного отчёта ✨",
             ),
-        }
+            (
+                "🧭 Курс стабильный",
+                f"{shipped.count} отгрузок за {period}. Без драм, с результатом на {ship_money} USD. "
+                "Иногда лучший комментарий — «всё штатно» 💜",
+            ),
+            (
+                "🌸 Логистика с ароматом",
+                f"Неделя отгрузок: {ship_money} USD. "
+                f"Баланс сроков — рано {early} / вовремя {on_time} / позже {late}. "
+                "Дышим ровно, летим дальше ✈️",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
 
     paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
     if paid.count == 0 or paid.total <= 0:
-        cards["Оплаченные клиентом"] = {
-            "title": "🫧 Оплаты на паузе",
-            "body": (
+        options = [
+            (
+                "🫧 Оплаты на паузе",
                 "Пока без платежей за период. Не грустим — "
-                "иногда тишина нужна, чтобы следующий раф был ещё вкуснее ☕"
+                "тишина нужна, чтобы следующий раф был ещё вкуснее ☕",
             ),
-        }
+            (
+                "🎧 Ждём радиообмена",
+                "Касса молчит, но это не финал. Нежный отчёт ставит напоминалку "
+                "и наливает ещё глоточек лаванды 💜",
+            ),
+            (
+                "🌙 Ночная стоянка денег",
+                "Платежей нет — бывает. Зато есть повод пересчитать звёзды и планы на следующую неделю ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|pay|empty", options)
     elif paid.total >= 100000:
-        cards["Оплаченные клиентом"] = {
-            "title": "💸 Касса звенит!",
-            "body": (
-                f"За неделю пришло {paid.total:,.0f} USD по {paid.count} позициям. "
-                "Спасибо клиенту — это самый сливочный момент нежного отчёта 🥰💜"
+        options = [
+            (
+                "💸 Касса звенит в лаванде!",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший платёж ~{_fmt_money(max_pay)}). "
+                "Самый сливочный момент нежного отчёта — спасибо, Аэрофлот 🥰💜",
             ),
-        }
+            (
+                "🏦 Дождь из бонусных миль… почти",
+                f"{paid_money} USD на счёте настроения. "
+                f"{paid.count} платежей, и каждый — как тёплый след на перроне. "
+                "Мы это отмечаем двойной пенкой ✨☕",
+            ),
+            (
+                "🥳 День зарплаты рафа",
+                f"Оплаты на {paid_money} USD. Нежный отчёт кружит вальс вокруг кассы "
+                "и шепчет команде: вы это заслужили ✈️💜",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|pay|big", options)
     else:
-        cards["Оплаченные клиентом"] = {
-            "title": "🥛 Деньги капают — и это мило",
-            "body": (
-                f"Оплачено {paid.total:,.0f} USD ({paid.count} поз.). "
-                "Даже небольшой платёж греет, как лавандовый раф в холодный день 🌸"
+        options = [
+            (
+                "🥛 Деньги капают — и греют",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Даже не рекордный платёж согревает, как лавандовый раф в прохладный день 🌸",
             ),
-        }
+            (
+                "💳 Мягкий приход",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Нежный отчёт кивает одобрительно: движение есть 💜",
+            ),
+            (
+                "🍯 Ложечка сливок в кассу",
+                f"Пришло {paid_money} USD. Не фейерверк — зато честный сладкий момент. "
+                f"Самый заметный платёж: {_fmt_money(max_pay)} USD. Спасибо клиенту ✨",
+            ),
+            (
+                "📻 Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, настроение взлётное, раф не остыл ✈️🥰",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
 
     return cards
+
+
+def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "мягкий лавандовый раф: эспрессо, сливки и цветочный аромат — "
+            "тот же уют, только в отчёте по заказам ♡"
+        ),
+        (
+            f"сегодня в чашке — статус на {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} отгружено. помешиваем осторожно 💜"
+        ),
+        (
+            "не гонимся за идеальным графиком — наливаем заботу, "
+            "добавляем терпение и щепотку лаванды ✨"
+        ),
+        (
+            "этот отчёт пахнет перроном на закате и свежей пенкой. "
+            "Аэрофлот, мы рядом — даже когда сроки гуляют ✈️♡"
+        ),
+        (
+            "инструкция барриста нежного отчёта: "
+            "смотреть цифры без паники, хвалить команду, допивать раф до конца ☕"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
 
 
 def _write_mood_card(
@@ -1212,7 +1472,7 @@ def _write_mood_card(
         _style_cell(ws.cell(start_row, c), fill=PatternFill("solid", fgColor="F3EAF8"), border=BORDER_THIN)
 
     body_row = start_row + 1
-    ws.merge_cells(start_row=body_row, start_column=col_start, end_row=body_row + 3, end_column=col_start + 3)
+    ws.merge_cells(start_row=body_row, start_column=col_start, end_row=body_row + 4, end_column=col_start + 3)
     body_cell = ws.cell(body_row, col_start)
     body_cell.value = card["body"]
     cream = PatternFill("solid", fgColor="FFF8F2")
@@ -1223,14 +1483,14 @@ def _write_mood_card(
         alignment=Alignment(horizontal="left", vertical="top", wrap_text=True),
         border=BORDER_THIN,
     )
-    for r in range(body_row, body_row + 4):
+    for r in range(body_row, body_row + 5):
         for c in range(col_start, col_start + 4):
             if r == body_row and c == col_start:
                 continue
             _style_cell(ws.cell(r, c), fill=cream, border=BORDER_THIN)
-        ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 18)
+        ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 20)
 
-    for letter, width in (("O", 18), ("P", 16), ("Q", 16), ("R", 16), ("S", 14)):
+    for letter, width in (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14)):
         ws.column_dimensions[letter].width = width
 
     _add_image(ws, image_path, f"S{start_row}", width=72, height=72)
@@ -1302,10 +1562,7 @@ def write_lavender_cover_sheet(
 
     ws.merge_cells("A30:J31")
     note = ws["A30"]
-    note.value = (
-        "мягкий лавандовый раф: эспрессо, сливки и цветочный аромат — "
-        "тот же уют, только в отчёте по заказам ♡"
-    )
+    note.value = lavender_cover_epigraph(report_date, in_work_count, shipped_count)
     _style_cell(
         note,
         font=Font(name="Georgia", size=11, italic=True, color="6B5B7A"),
