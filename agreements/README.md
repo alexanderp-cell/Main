@@ -2,7 +2,14 @@
 
 Compact inspection agreement (no appendix). Letterhead logo from JET Technic KP.
 
-## Download (.doc)
+## Download
+
+**DOCX (recommended — Calibri preserved correctly in Word):**
+
+- EN: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Service_Agreement_JT-BSI-2026_EN.docx
+- RU: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Dogovor_JT-BSI-2026_RU.docx
+
+**DOC (legacy Word 97 format — fonts may shift on conversion):**
 
 - EN: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Service_Agreement_JT-BSI-2026_EN.doc
 - RU: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Dogovor_JT-BSI-2026_RU.doc
