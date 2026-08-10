@@ -343,12 +343,25 @@ def patch_xml_root(root, font=FONT):
 
 
 def patch_docx_fonts(path: Path, font: str = FONT):
+    replacements = (
+        ('typeface="Cambria"', f'typeface="{font}"'),
+        ('typeface="Times New Roman"', f'typeface="{font}"'),
+        ('w:ascii="Times New Roman"', f'w:ascii="{font}"'),
+        ('w:hAnsi="Times New Roman"', f'w:hAnsi="{font}"'),
+        ('w:cs="Times New Roman"', f'w:cs="{font}"'),
+        ('w:ascii="Cambria"', f'w:ascii="{font}"'),
+        ('w:hAnsi="Cambria"', f'w:hAnsi="{font}"'),
+        ('w:cs="Cambria"', f'w:cs="{font}"'),
+    )
     buf = io.BytesIO()
     with zipfile.ZipFile(path, 'r') as zin, zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zout:
         for item in zin.infolist():
             data = zin.read(item.filename)
             if item.filename.startswith('word/') and item.filename.endswith('.xml'):
-                root = ET.fromstring(data)
+                text = data.decode('utf-8')
+                for old, new in replacements:
+                    text = text.replace(old, new)
+                root = ET.fromstring(text.encode('utf-8'))
                 patch_xml_root(root, font)
                 data = ET.tostring(root, encoding='utf-8', xml_declaration=True)
             zout.writestr(item, data)
