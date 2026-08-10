@@ -84,6 +84,9 @@ HEADERS = [
 
 
 def find_ccl_path() -> Optional[Path]:
+    fixed = DATA / "CCL_Fastair_Rev4_09.xlsx"
+    if fixed.exists():
+        return fixed
     patterns = [
         "*Перечен*.xlsx",
         "*перечен*.xlsx",
@@ -120,6 +123,76 @@ def find_ccl_path() -> Optional[Path]:
         scored.append((score, p.stat().st_mtime, p))
     scored.sort(reverse=True)
     return scored[0][2] if scored and scored[0][0] > 0 else (scored[0][2] if scored else None)
+
+
+AZUR_RAW_CANDIDATES = [
+    DATA / "Azur_US_list_10.04.26.xlsx",
+    UPLOADS / "US_list_as_of_10.04.26-export._ae8c.xlsx",
+]
+
+
+def find_azur_raw_path() -> Optional[Path]:
+    for p in AZUR_RAW_CANDIDATES:
+        if p.exists() and _is_repair_shelf_export(p):
+            return p
+    for d in (DATA, UPLOADS):
+        if not d.exists():
+            continue
+        for p in sorted(d.glob("US_list*.xlsx"), reverse=True):
+            if _is_repair_shelf_export(p):
+                return p
+    return None
+
+
+def _is_repair_shelf_export(path: Path) -> bool:
+    try:
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        ws = wb.active
+        headers = [str(c).strip() if c is not None else "" for c in next(ws.iter_rows(max_row=1, values_only=True))]
+        wb.close()
+        return "PN" in headers and "Serial_Number" in headers
+    except Exception:
+        return False
+
+
+def load_stock_from_draft(path: Path) -> list[dict]:
+    """Fallback: восстановить агрегат из предыдущего черновика (если исходник недоступен)."""
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb.active
+    out = []
+    for r in ws.iter_rows(min_row=3, values_only=True):
+        if not r or not r[0]:
+            continue
+        partno = str(r[0]).strip()
+        pn = al.norm_pn(partno)
+        mark = str(r[4] or "").strip()
+        special = []
+        if mark.startswith("Нестандартное состояние:"):
+            tail = mark.split(":", 1)[-1]
+            for c in tail.split(","):
+                c = c.strip().upper()
+                if c in SPECIAL_CONDITIONS:
+                    special.append(c)
+        out.append(
+            {
+                "pn": pn,
+                "partno": partno,
+                "qty": float(r[2] or 0),
+                "description": str(r[1] or "").strip(),
+                "condition": str(r[3] or "").strip(),
+                "mark": mark,
+                "special": special,
+                "reason": str(r[5] or "").strip(),
+                "remarks": str(r[6] or "").strip(),
+                "store": str(r[7] or "").strip(),
+                "owner": str(r[8] or "").strip(),
+                "ac_reg": str(r[9] or "").strip(),
+                "lines": int(r[2] or 1),
+            }
+        )
+    wb.close()
+    print(f"Loaded cached aggregation from draft: {len(out)} P/N")
+    return out
 
 
 def load_azur_rows(path: Path) -> list[dict]:
@@ -796,28 +869,31 @@ def validate(scored: list[dict], raw_n: int, agg: list[dict]) -> list[str]:
 
 
 def main():
-    if not AZUR_FILE.exists():
-        # try uploads
-        up = UPLOADS / "US_list_as_of_10.04.26-export._ae8c.xlsx"
-        if up.exists():
-            AZUR_FILE.parent.mkdir(parents=True, exist_ok=True)
-            import shutil
+    raw_path = find_azur_raw_path()
+    draft_path = OUT_DIR / OUT_NAME
+    raw_n = 0
+    used_draft = False
 
-            shutil.copy(up, AZUR_FILE)
-        else:
-            print("Azur file not found", AZUR_FILE)
-            sys.exit(1)
-
-    print("Loading Azur warehouse...")
-    raw = load_azur_rows(AZUR_FILE)
-    stock = aggregate_azur(raw)
+    if raw_path:
+        print(f"Loading Azur warehouse from {raw_path.name}...")
+        raw = load_azur_rows(raw_path)
+        raw_n = len(raw)
+        stock = aggregate_azur(raw)
+    elif draft_path.exists():
+        print("WARNING: исходный US list недоступен — используем агрегат из предыдущего черновика")
+        stock = load_stock_from_draft(draft_path)
+        raw_n = sum(int(r.get("lines") or r["qty"]) for r in stock)
+        used_draft = True
+    else:
+        print("Azur warehouse file not found (Repair Shelf export or previous draft)")
+        sys.exit(1)
 
     print("Loading market (TAZ/TUZ)...")
     by_pn, soft_to_pns, alt_to_pns, ac_by_pn, market_n = load_market()
 
     ccl_path = find_ccl_path()
     if ccl_path:
-        print(f"CCL found: {ccl_path}")
+        print(f"CCL found: {ccl_path.name}")
         ccl_label = ccl_path.name
     else:
         print("WARNING: CCL catalog not found — repair columns will be н/д")
@@ -826,7 +902,9 @@ def main():
 
     print("Scoring liquidity...")
     scored = score_stock(stock, by_pn, soft_to_pns, alt_to_pns, ac_by_pn, repair_map)
-    issues = validate(scored, len(raw), stock)
+    issues = validate(scored, raw_n, stock)
+    if used_draft:
+        issues.append("source= cached draft aggregation (re-upload US list to refresh)")
     if issues:
         print("VALIDATION ISSUES:", issues)
 
@@ -843,9 +921,9 @@ def main():
     openpyxl.load_workbook(out).save(ART_DIR / OUT_NAME)
 
     if not ccl_path:
-        print("\n*** Нужен файл CCL (Перечень обслуживаемых компонентов Фастэйр) для финализации ремонта ***")
+        print("\n*** Нужен файл CCL для финализации ремонта ***")
         return 2
-    return 0 if not issues else 1
+    return 0 if not any(i for i in issues if not i.startswith("source=")) else 1
 
 
 if __name__ == "__main__":
