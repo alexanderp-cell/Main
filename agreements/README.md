@@ -7,6 +7,8 @@ JET TECHNIC letterhead drafts (logo from Commercial Proposal), with **Appendix N
 - EN: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Service_Agreement_JT-BSI-2026_EN.doc
 - RU: https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/aircraft-inspection-agreement-4169/agreements/Dogovor_JT-BSI-2026_RU.doc
 
+**Yellow highlight** marks fields to fill in or options to select (contract no., date, Customer details, payment option A/B/C, signatures).
+
 ## Files
 
 | File | Notes |
