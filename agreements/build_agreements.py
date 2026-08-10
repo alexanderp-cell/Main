@@ -316,7 +316,7 @@ def build_ru():
 
 
 def patch_rfonts_element(rfonts, font=FONT):
-    theme_keys = [k for k in list(rfonts.attrib.keys()) if 'Theme' in k]
+    theme_keys = [k for k in list(rfonts.attrib.keys()) if 'Theme' in k or k.endswith('theme')]
     for k in theme_keys:
         del rfonts.attrib[k]
     for tag in ('ascii', 'hAnsi', 'cs', 'eastAsia'):
