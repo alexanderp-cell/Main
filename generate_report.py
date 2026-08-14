@@ -52,8 +52,11 @@ COL_DAYS_TO_DELIVER = "Дней на поставку (ЧИСЛО)"
 COL_LEAD_TIME = "Lead time"
 COL_DEADLINE = "КРАЙНЯЯ ДАТА ПОСТАВКИ"
 
+STATUS_SHIPPED = "3 SHIPPED"
+STATUS_FINISHED = "4 FINISHED"
 STATUSES_IN_WORK = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
-STATUSES_SHIPPED = {"3 SHIPPED", "4 FINISHED"}
+STATUSES_SHIPPED = {STATUS_SHIPPED, STATUS_FINISHED}
+CUTE_THEMES = {"lavender_raf", "como_prosecco"}
 
 COLUMN_RENAME = {
     COL_INVOICE: "№ счета",
@@ -158,6 +161,25 @@ THEMES = {
         tab_summary="E0CDEF",
         title_font="Georgia",
     ),
+    # Pastel prosecco on Lake Como promenade — Aeroflot.
+    "como_prosecco": ReportTheme(
+        name="como_prosecco",
+        navy="4A5D6A",
+        blue="8FB8C4",
+        light_blue="E8F2F4",
+        green="A8C5B0",
+        light_green="F3F7F2",
+        orange="C9A46A",
+        light_orange="FBF4EA",
+        zebra="FBF8F3",
+        subtotal="F3E8D8",
+        border="D9D0C4",
+        tab_total="8FB8C4",
+        tab_shipped="A8C5B0",
+        tab_in_work="D4B48A",
+        tab_summary="E5D5B8",
+        title_font="Georgia",
+    ),
 }
 
 
@@ -180,7 +202,11 @@ def activate_theme(theme: ReportTheme) -> None:
     COLOR_BORDER = theme.border
 
     FONT_TITLE = Font(name=theme.title_font, size=16, bold=True, color=COLOR_NAVY)
-    FONT_SUBTITLE = Font(name="Calibri", size=11, color="6B5B73" if theme.name == "lavender_raf" else "595959")
+    subtitle_color = {
+        "lavender_raf": "6B5B73",
+        "como_prosecco": "6A7B78",
+    }.get(theme.name, "595959")
+    FONT_SUBTITLE = Font(name="Calibri", size=11, color=subtitle_color)
     FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
     FONT_HEADER = Font(name="Calibri", size=10, bold=True, color=COLOR_WHITE)
     FONT_BODY = Font(name="Calibri", size=10)
@@ -445,8 +471,8 @@ def add_row_key(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def report_snapshot(df: pd.DataFrame) -> pd.DataFrame:
-    parts = [filter_in_work(df), filter_shipped(df)]
+def report_snapshot(df: pd.DataFrame, client: str = "Utair") -> pd.DataFrame:
+    parts = [filter_in_work(df, client), filter_shipped(df, client)]
     if not parts:
         return pd.DataFrame()
     snapshot = pd.concat(parts, ignore_index=True)
@@ -454,8 +480,8 @@ def report_snapshot(df: pd.DataFrame) -> pd.DataFrame:
     return snapshot.drop_duplicates(subset="_key")
 
 
-def report_snapshot_keys(df: pd.DataFrame) -> set[str]:
-    snap = report_snapshot(df)
+def report_snapshot_keys(df: pd.DataFrame, client: str = "Utair") -> set[str]:
+    snap = report_snapshot(df, client)
     if snap.empty:
         return set()
     return set(snap["_key"])
@@ -515,6 +541,7 @@ def build_weekly_summary(
     previous_df: pd.DataFrame,
     week_start: date,
     week_end: date,
+    client: str = "Utair",
 ) -> WeeklySummary:
     current = add_row_key(current_df)
     previous = add_row_key(previous_df)
@@ -525,7 +552,7 @@ def build_weekly_summary(
         order_date = parse_date(row.get(COL_ORDER_DATE))
         if order_date is None or not (week_start <= order_date <= week_end):
             continue
-        if row[COL_STATUS] not in STATUSES_IN_WORK:
+        if not row_counts_as_in_work(row, client):
             continue
         new_rows.append(
             {
@@ -543,23 +570,24 @@ def build_weekly_summary(
 
     shipped_rows: list[dict[str, Any]] = []
     for _, row in current.iterrows():
-        if row[COL_STATUS] not in STATUSES_SHIPPED:
+        if not row_counts_as_shipped_status(row, client):
             continue
         actual_date, actual_source = resolve_actual_delivery(row)
         delivery_in_week = actual_date is not None and week_start <= actual_date <= week_end
 
         prev_status = None
+        prev_was_shipped = False
         if row["_key"] in prev_by_key.index:
             prev_row = prev_by_key.loc[row["_key"]]
             if isinstance(prev_row, pd.DataFrame):
                 prev_row = prev_row.iloc[0]
             prev_status = prev_row[COL_STATUS]
+            prev_was_shipped = row_counts_as_shipped_status(prev_row, client)
 
-        status_became_shipped = (
-            prev_status is not None
-            and prev_status not in STATUSES_SHIPPED
-            and row[COL_STATUS] in STATUSES_SHIPPED
-        )
+        status_became_shipped = (not prev_was_shipped) and row_counts_as_shipped_status(row, client)
+        if prev_status is None and not delivery_in_week:
+            # No previous snapshot match: keep delivery-in-week as the trigger.
+            status_became_shipped = False
         if not (status_became_shipped or delivery_in_week):
             continue
 
@@ -657,6 +685,7 @@ def write_weekly_summary_sheet(
     summary: WeeklySummary,
     sheet_title: str = "Сводка за неделю",
     cute_comments: bool = False,
+    theme_name: str = "default",
 ) -> None:
     ws.sheet_view.showGridLines = False
     widths = {
@@ -680,7 +709,9 @@ def write_weekly_summary_sheet(
     ws.merge_cells("A1:M1")
     title = ws["A1"]
     title.value = f"{sheet_title} — {client}"
-    if cute_comments:
+    if cute_comments and theme_name == "como_prosecco":
+        title.value = f"🥂 {sheet_title} — {client} · просекко на Комо"
+    elif cute_comments:
         title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
 
@@ -690,7 +721,20 @@ def write_weekly_summary_sheet(
         f"Период: {summary.week_start.strftime('%d.%m.%Y')} — "
         f"{summary.week_end.strftime('%d.%m.%Y')}"
     )
-    if cute_comments:
+    if cute_comments and theme_name == "como_prosecco":
+        epigraphs = [
+            "бокал на перилах, озеро дышит, цифры сверкают",
+            "cin cin: считаем неделю, не расплёскивая пузырьки",
+            "набережная Комо, пастель и лёгкий золотой отсвет",
+            "сегодня отчёт пахнет лимоном, камнем и просекко",
+            "виллы стоят веками — мы просто поднимаем бокал за неделю",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
+    elif cute_comments:
         epigraphs = [
             "сегодняшний раф — с ноткой перрона и терпения",
             "помешиваем цифры медленно, чтобы не сбить пенку",
@@ -705,17 +749,29 @@ def write_weekly_summary_sheet(
         subtitle.value = f"{subtitle.value}  ·  {epi}"
     _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
-    mood_cards = build_section_mood_cards(summary) if cute_comments else {}
-    # Rotate illustrations by week so the right-side collage feels fresh.
-    week_seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
-    image_cycle = [LAVENDER_CUP, LAVENDER_HEART, LAVENDER_CUP]
-    if week_seed % 2:
-        image_cycle = [LAVENDER_HEART, LAVENDER_CUP, LAVENDER_HEART]
-    mood_images = {
-        "Новые заказы": image_cycle[0],
-        "Отгруженные заказы": image_cycle[1],
-        "Оплаченные клиентом": image_cycle[2],
-    }
+    mood_cards = {}
+    mood_images: dict[str, Path] = {}
+    if cute_comments:
+        if theme_name == "como_prosecco":
+            mood_cards = build_como_mood_cards(summary)
+            cycle = [COMO_GLASS, COMO_LAKE, COMO_LEMON, COMO_VILLA, COMO_TERRACE]
+            seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            mood_images = {
+                "Новые заказы": cycle[seed % len(cycle)],
+                "Отгруженные заказы": cycle[(seed + 1) % len(cycle)],
+                "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
+            }
+        else:
+            mood_cards = build_section_mood_cards(summary)
+            week_seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            image_cycle = [LAVENDER_CUP, LAVENDER_HEART, LAVENDER_CUP]
+            if week_seed % 2:
+                image_cycle = [LAVENDER_HEART, LAVENDER_CUP, LAVENDER_HEART]
+            mood_images = {
+                "Новые заказы": image_cycle[0],
+                "Отгруженные заказы": image_cycle[1],
+                "Оплаченные клиентом": image_cycle[2],
+            }
 
     row = 4
     for section in (summary.new_orders, summary.shipped_orders, summary.paid_orders):
@@ -783,7 +839,8 @@ def write_weekly_summary_sheet(
                 ws,
                 section_start,
                 mood_cards[section.title],
-                mood_images.get(section.title, LAVENDER_HEART),
+                mood_images.get(section.title, COMO_GLASS if theme_name == "como_prosecco" else LAVENDER_HEART),
+                theme_name=theme_name,
             )
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
@@ -793,21 +850,51 @@ def write_weekly_summary_sheet(
         "В итог попадает только сумма платежей с датой в периоде. "
         "Для отгрузок при пустой фактической дате используется BC (ожидаемая дата прихода)."
     )
-    if cute_comments:
+    if cute_comments and theme_name == "como_prosecco":
+        note.value += "  ·  справа — тост за неделю на набережной Комо 🥂"
+    elif cute_comments:
         note.value += "  ·  комментарии справа — нежное резюме недели ♡"
     _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
+
+
+def comment_has_ddp_mow(value: Any) -> bool:
+    return bool(re.search(r"\bDDP\s*MOW\b", str(value or ""), flags=re.IGNORECASE))
+
+
+def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
+    status = row.get(COL_STATUS)
+    if client == "Аэрофлот":
+        return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
+    if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
+        return True
+    return status in STATUSES_IN_WORK
+
+
+def row_counts_as_shipped_status(row: pd.Series, client: str) -> bool:
+    status = row.get(COL_STATUS)
+    if client == "Аэрофлот":
+        return status == STATUS_FINISHED
+    if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
+        return False
+    return status in STATUSES_SHIPPED
 
 
 def filter_client(df: pd.DataFrame, client: str) -> pd.DataFrame:
     return df[df[COL_CUSTOMER] == client].copy()
 
 
-def filter_in_work(df: pd.DataFrame) -> pd.DataFrame:
-    return df[df[COL_STATUS].isin(STATUSES_IN_WORK)].copy()
+def filter_in_work(df: pd.DataFrame, client: str = "Utair") -> pd.DataFrame:
+    if df.empty:
+        return df.copy()
+    mask = df.apply(lambda row: row_counts_as_in_work(row, client), axis=1)
+    return df[mask].copy()
 
 
-def filter_shipped(df: pd.DataFrame) -> pd.DataFrame:
-    shipped = df[df[COL_STATUS].isin(STATUSES_SHIPPED)].copy()
+def filter_shipped(df: pd.DataFrame, client: str = "Utair") -> pd.DataFrame:
+    if df.empty:
+        return df.copy()
+    mask = df.apply(lambda row: row_counts_as_shipped_status(row, client), axis=1)
+    shipped = df[mask].copy()
     shipped["_balance"] = shipped[COL_BALANCE].map(parse_numeric)
     return shipped[shipped["_balance"] != 0].drop(columns="_balance")
 
@@ -1103,6 +1190,14 @@ LAVENDER_BANNER = ASSETS_DIR / "banner_wide.png"
 LAVENDER_CUP = ASSETS_DIR / "cup_small.png"
 LAVENDER_PATTERN = ASSETS_DIR / "pattern_bg.png"
 LAVENDER_HEART = ASSETS_DIR / "heart_small.png"
+COMO_BANNER = ASSETS_DIR / "como-banner-wide.jpg"
+COMO_PROMENADE = ASSETS_DIR / "como-promenade.jpg"
+COMO_PATTERN = ASSETS_DIR / "como-pattern.jpg"
+COMO_GLASS = ASSETS_DIR / "como-glass-small.jpg"
+COMO_LAKE = ASSETS_DIR / "como-lake-small.jpg"
+COMO_LEMON = ASSETS_DIR / "como-lemon-small.jpg"
+COMO_VILLA = ASSETS_DIR / "como-villa-small.jpg"
+COMO_TERRACE = ASSETS_DIR / "como-terrace-small.jpg"
 
 
 def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
@@ -1423,6 +1518,244 @@ def build_section_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]
     return cards
 
 
+def build_como_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
+    """Pastel prosecco / Lake Como narrative cards — fresh copy each week."""
+    cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
+    if new.count == 0:
+        options = [
+            (
+                "🥂 Тихий бокал на перилах",
+                f"За {period} новых заказов нет. Озеро всё равно сверкает — "
+                "идеальный момент смотреть на виллы и не торопить пузырьки ✨",
+            ),
+            (
+                "🍋 Пауза с лимоном",
+                "Продажи молчат, как полдень в Белладжо. Cin cin за терпение: "
+                "следующая неделя уже плещется у набережной 🌿",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|sales|empty", options)
+    elif max_amount >= 30000 or new.total >= 150000:
+        options = [
+            (
+                "✨ Cin cin — мы молодцы!",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда террасы — «{top_desc}» на {max_m} USD. "
+                "Просекко само поднимается в бокале 🥂💛",
+            ),
+            (
+                "🌅 Закат над Комо и крупный чек",
+                f"{new.count} заказов на {money} USD. Средний чек ~{avg_m}, "
+                f"а топ сияет как вилла на воде. Аэрофлот, это было красиво ✈️",
+            ),
+            (
+                "🍾 Бутылка открыта не зря",
+                f"Неделя со вкусом праздника: {money} USD"
+                + (f", микс {mix}" if mix else "")
+                + f". «{top_desc}» — тот самый золотой блик на стекле ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|sales|big", options)
+    elif max_amount < 5000 and new.total < 25000:
+        options = [
+            (
+                "🪙 Копейка рубль бережёт",
+                f"Аккуратные {new.count} поз. на {money} USD. "
+                "Как мелкие пузырьки: по одному почти не слышно, вместе — уже игристое 🥂",
+            ),
+            (
+                "🍋 Долька лимона в бокале",
+                f"Чек скромный (в среднем ~{avg_m} USD), зато живой. "
+                f"За {period} набралось {money} USD — лёгкий аперитив недели 🌿",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|sales|small", options)
+    else:
+        options = [
+            (
+                "🌿 Крейсер по озеру",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Ни шторма, ни штиля — ровная гладь Комо ✨",
+            ),
+            (
+                "🥂 Аперитив средней крепости",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · {mix}." if mix else ".")
+                + " Садимся на набережную, не спешим, пьём маленькими глотками 💛",
+            ),
+            (
+                "🌤️ Мягкий свет вилл",
+                f"{new.count} заказов, {money} USD, средний чек ~{avg_m}. "
+                "Именно такой пастельный прогноз любит отчёт с просекко 🍋",
+            ),
+            (
+                "⛵ Парус на горизонте",
+                f"За неделю {money} USD. Самый заметный блик — «{top_desc}». "
+                "Аэрофлот держит курс вдоль берега, бокал не проливается 🥂",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
+    if shipped.count == 0:
+        options = [
+            (
+                "🏡 Виллы пока закрыты",
+                "Отгрузок-FINISHED за период нет. Озеро спокойно, бокал на столе — "
+                "SHIPPED гуляют по набережной «в работе», и это по правилам 🌿",
+            ),
+            (
+                "🫧 Пузырьки отдыхают",
+                "На этой неделе finished-отгрузок не случилось. "
+                "Не грустим: Комо умеет ждать красиво ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|ship|empty", options)
+    elif shipped.count and late / shipped.count >= 0.5:
+        options = [
+            (
+                "🌙 Озеро никуда не спешит",
+                f"Из {shipped.count} отгрузок (только FINISHED, {ship_money} USD) "
+                f"с опозданием {late}"
+                + (f", в среднем ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Виллы стоят веками — и поставки тоже доходят. "
+                "Дышим, смотрим на воду, поднимаем бокал за терпение 🫶🥂",
+            ),
+            (
+                "🛟 Спокойно, мы на набережной",
+                f"{late} из {shipped.count} пришли позже плана. "
+                f"На {ship_money} USD всё равно уже у клиента. "
+                "Просекко не кипит — оно играет. Мы рядом 💛",
+            ),
+            (
+                "🌧️ Лёгкий дождик над Комо",
+                f"График гуляет, но берег на месте: {shipped.count} поз. на {ship_money} USD. "
+                "Лучше опоздать с заботой, чем спешить без неё. Cin cin 🍋",
+            ),
+            (
+                "🕯️ Золотой час всё равно будет",
+                f"Да, сроки плавают (до {late_max} дн. у самой задумчивой). "
+                f"Но {shipped.count} finished-отгрузок уже сверкают, как стёкла на закате ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|ship|late", options)
+    elif early > late:
+        options = [
+            (
+                "🏁 Быстрее пузырьков!",
+                f"Досрочно {early} из {shipped.count}, в срок {on_time}. "
+                "Неделя как утренний просекко на террасе: холодно, золото, восторг ☀️🥂",
+            ),
+            (
+                "⛵ Ранний катер к вилле",
+                f"{early} позиций приехали раньше срока, отгружено на {ship_money} USD. "
+                "Наливаем второй бокал — за экипаж ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|ship|early", options)
+    else:
+        options = [
+            (
+                "🚶 Ровный шаг по набережной",
+                f"FINISHED: {shipped.count} поз. на {ship_money} USD "
+                f"(рано {early} / вовремя {on_time} / позже {late}). "
+                "Пастельный ритм — фирменный стиль Комо 🌿",
+            ),
+            (
+                "🥂 Тост за ровную логистику",
+                f"{shipped.count} отгрузок за {period} на {ship_money} USD. "
+                "Без драмы, с видом на воду. Иногда лучший комментарий — cin cin ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
+
+    paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
+    if paid.count == 0 or paid.total <= 0:
+        options = [
+            (
+                "🫧 Оплаты ещё в бутылке",
+                "Платежей за период нет. Не грустим: просекко тоже сначала лежит на льду, "
+                "а потом открывается с праздником 🥂",
+            ),
+            (
+                "🌙 Ночная гладь кассы",
+                "Пока тихо. Смотрим на огни вилл и верим, что следующий перевод "
+                "придёт с лимонной цедрой 🍋",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|pay|empty", options)
+    elif paid.total >= 100000:
+        options = [
+            (
+                "🍾 Касса играет, как просекко!",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший ~{_fmt_money(max_pay)}). "
+                "Это тот самый бокал, который звякает о перила 💛🥂",
+            ),
+            (
+                "💛 Золото на воде",
+                f"{paid_money} USD — закат полностью наш. "
+                f"{paid.count} платежей, и каждый пузырёк на месте. Спасибо, Аэрофлот ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|pay|big", options)
+    else:
+        options = [
+            (
+                "🥂 Ещё по глотку",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Не фейерверк — зато честный аперитив. Касса мурлычет, озеро довольно 🍋",
+            ),
+            (
+                "💳 Мягкий приход на террасу",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Поднимаем бокал: движение есть 🌿",
+            ),
+            (
+                "🍋 Цедра в кассе",
+                f"Пришло {paid_money} USD. Самый заметный платёж: {_fmt_money(max_pay)} USD. "
+                "Спасибо клиенту — просекко сегодня с характером ✨",
+            ),
+            (
+                "⛵ Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, вид на Комо отличный, бокал не пустой 🥂",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|como|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
+    return cards
+
+
 def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
     options = [
         (
@@ -1456,29 +1789,38 @@ def _write_mood_card(
     card: dict[str, str],
     image_path: Path,
     col_start: int = 15,
+    theme_name: str = "lavender_raf",
 ) -> None:
     """Place a cute comment card to the right of a summary table."""
+    if theme_name == "como_prosecco":
+        title_fill = PatternFill("solid", fgColor="E8F2F4")
+        cream = PatternFill("solid", fgColor="FBF4EA")
+        body_font = Font(name="Calibri", size=10, color="4A5D6A")
+    else:
+        title_fill = PatternFill("solid", fgColor="F3EAF8")
+        cream = PatternFill("solid", fgColor="FFF8F2")
+        body_font = Font(name="Calibri", size=10, color="6B5B7A")
+
     title_cell = ws.cell(start_row, col_start)
     ws.merge_cells(start_row=start_row, start_column=col_start, end_row=start_row, end_column=col_start + 3)
     title_cell.value = card["title"]
     _style_cell(
         title_cell,
         font=Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY),
-        fill=PatternFill("solid", fgColor="F3EAF8"),
+        fill=title_fill,
         alignment=Alignment(horizontal="left", vertical="center"),
         border=BORDER_THIN,
     )
     for c in range(col_start + 1, col_start + 4):
-        _style_cell(ws.cell(start_row, c), fill=PatternFill("solid", fgColor="F3EAF8"), border=BORDER_THIN)
+        _style_cell(ws.cell(start_row, c), fill=title_fill, border=BORDER_THIN)
 
     body_row = start_row + 1
     ws.merge_cells(start_row=body_row, start_column=col_start, end_row=body_row + 4, end_column=col_start + 3)
     body_cell = ws.cell(body_row, col_start)
     body_cell.value = card["body"]
-    cream = PatternFill("solid", fgColor="FFF8F2")
     _style_cell(
         body_cell,
-        font=Font(name="Calibri", size=10, color="6B5B7A"),
+        font=body_font,
         fill=cream,
         alignment=Alignment(horizontal="left", vertical="top", wrap_text=True),
         border=BORDER_THIN,
@@ -1493,7 +1835,7 @@ def _write_mood_card(
     for letter, width in (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14)):
         ws.column_dimensions[letter].width = width
 
-    _add_image(ws, image_path, f"S{start_row}", width=72, height=72)
+    _add_image(ws, image_path, f"S{start_row}", width=78, height=78)
 
 
 def _add_image(ws, path: Path, anchor: str, width: int | None = None, height: int | None = None) -> None:
@@ -1582,6 +1924,129 @@ def decorate_lavender_sheets(wb: Workbook, summary_sheet_name: str | None) -> No
         _add_image(wb["Отгружено"], LAVENDER_CUP, "AT1", width=80, height=80)
 
 
+def como_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "бокал просекко на набережной Комо: пастель, лимон и лёгкий золотой отсвет — "
+            "тот же уют, только в отчёте по заказам 🥂"
+        ),
+        (
+            f"сегодня на перилах — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. cin cin ✨"
+        ),
+        (
+            "виллы не торопятся, озеро дышит, мы считаем заказы маленькими глотками 🍋"
+        ),
+        (
+            "SHIPPED гуляет по набережной как «в работе»; FINISHED — уже тост на террасе 🌿"
+        ),
+        (
+            "инструкция сомелье нежного отчёта: смотреть цифры без паники, "
+            "хвалить команду, не расплёскивать пузырьки 🥂"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
+
+
+def write_como_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    cream = PatternFill("solid", fgColor="FBF4EA")
+    mist = PatternFill("solid", fgColor="E8F2F4")
+    sage = PatternFill("solid", fgColor="F3F7F2")
+    for row in range(1, 42):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 15):
+            cell = ws.cell(row, col)
+            if row < 6:
+                cell.fill = cream
+            elif row < 22:
+                cell.fill = mist
+            else:
+                cell.fill = sage
+    for col in range(1, 15):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:N2")
+    title = ws["A2"]
+    title.value = f"🥂  {client}  🥂"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="4A5D6A"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 40
+
+    ws.merge_cells("A3:N3")
+    subtitle = ws["A3"]
+    subtitle.value = "просекко на набережной озера Комо · пастельный статус заказов"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=13, italic=True, color="7A8F8A"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:N4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено (FINISHED) {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="6A7B78"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, COMO_BANNER, "B6", width=720, height=400)
+    _add_image(ws, COMO_GLASS, "L6", width=130, height=130)
+    _add_image(ws, COMO_LEMON, "L14", width=110, height=110)
+    _add_image(ws, COMO_PROMENADE, "B24", width=520, height=280)
+    _add_image(ws, COMO_VILLA, "J24", width=120, height=120)
+    _add_image(ws, COMO_LAKE, "L24", width=120, height=120)
+    _add_image(ws, COMO_TERRACE, "J32", width=120, height=120)
+
+    ws.merge_cells("A38:I40")
+    note = ws["A38"]
+    note.value = como_cover_epigraph(report_date, in_work_count, shipped_count)
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="4A5D6A"),
+        fill=PatternFill("solid", fgColor="FBF4EA"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+    ws.row_dimensions[38].height = 22
+    ws.row_dimensions[39].height = 22
+
+
+def decorate_como_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], COMO_GLASS, "I1", width=108, height=108)
+        _add_image(wb["Total"], COMO_LEMON, "K1", width=72, height=72)
+    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
+        ws = wb[summary_sheet_name]
+        _add_image(ws, COMO_GLASS, "L1", width=92, height=92)
+        _add_image(ws, COMO_VILLA, "M1", width=72, height=72)
+        _add_image(ws, COMO_LAKE, "T4", width=88, height=88)
+        _add_image(ws, COMO_TERRACE, "T20", width=88, height=88)
+        _add_image(ws, COMO_LEMON, "T36", width=80, height=80)
+        ws.column_dimensions["T"].width = 14
+        ws.column_dimensions["U"].width = 12
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], COMO_LAKE, "AT1", width=78, height=78)
+        _add_image(wb["В работе"], COMO_VILLA, "AV1", width=64, height=64)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], COMO_GLASS, "AT1", width=78, height=78)
+        _add_image(wb["Отгружено"], COMO_TERRACE, "AV1", width=64, height=64)
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
@@ -1603,8 +2068,8 @@ def generate_report(
     df = load_taz(input_path, excluded_invoicers=excluded_invoicers)
     client_df = filter_client(df, client)
 
-    in_work_raw = filter_in_work(client_df)
-    shipped_raw = filter_shipped(client_df)
+    in_work_raw = filter_in_work(client_df, client)
+    shipped_raw = filter_shipped(client_df, client)
     in_work_df = prepare_output_frame(in_work_raw)
     shipped_df = prepare_output_frame(shipped_raw)
 
@@ -1613,7 +2078,20 @@ def generate_report(
     shipped_over_30 = shipped_balance_over_30_days(shipped_raw, report_date)
 
     wb = Workbook()
-    if theme.name == "lavender_raf":
+    if theme.name == "como_prosecco":
+        cover = wb.active
+        cover.title = "Обложка 🥂"
+        cover.sheet_properties.tabColor = "E5D5B8"
+        write_como_cover_sheet(
+            cover,
+            client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
+    elif theme.name == "lavender_raf":
         cover = wb.active
         cover.title = "Обложка ♡"
         cover.sheet_properties.tabColor = "E8D5F0"
@@ -1651,7 +2129,7 @@ def generate_report(
             previous_df = client_df.iloc[0:0].copy()
         week_end = report_date
         week_start = previous_date or (report_date - timedelta(days=week_days))
-        summary = build_weekly_summary(client_df, previous_df, week_start, week_end)
+        summary = build_weekly_summary(client_df, previous_df, week_start, week_end, client=client)
         weekly_ws = wb.create_sheet(summary_sheet_name)
         weekly_ws.sheet_properties.tabColor = theme.tab_summary
         write_weekly_summary_sheet(
@@ -1659,7 +2137,8 @@ def generate_report(
             client,
             summary,
             sheet_title=summary_title,
-            cute_comments=(theme.name == "lavender_raf"),
+            cute_comments=(theme.name in CUTE_THEMES),
+            theme_name=theme.name,
         )
     else:
         summary_sheet_name = None
@@ -1672,7 +2151,9 @@ def generate_report(
     in_work_ws.sheet_properties.tabColor = theme.tab_in_work
     write_detail_sheet(in_work_ws, in_work_df, in_work_totals)
 
-    if theme.name == "lavender_raf":
+    if theme.name == "como_prosecco":
+        decorate_como_sheets(wb, summary_sheet_name)
+    elif theme.name == "lavender_raf":
         decorate_lavender_sheets(wb, summary_sheet_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1736,7 +2217,7 @@ def main() -> None:
         "--theme",
         choices=sorted(THEMES.keys()),
         default="default",
-        help="Visual theme (lavender_raf for Aeroflot)",
+        help="Visual theme (como_prosecco for Aeroflot, lavender_raf legacy)",
     )
     parser.add_argument(
         "--summary-title",
@@ -1769,8 +2250,8 @@ def main() -> None:
     print(f"Report saved: {result}")
     print(f"Client: {args.client}")
     loaded = filter_client(load_taz(args.input, excluded_invoicers=excluded), args.client)
-    print(f"В работе rows: {len(filter_in_work(loaded))}")
-    print(f"Отгружено rows: {len(filter_shipped(loaded))}")
+    print(f"В работе rows: {len(filter_in_work(loaded, args.client))}")
+    print(f"Отгружено rows: {len(filter_shipped(loaded, args.client))}")
     if args.previous_input or args.previous_report or args.previous_date:
         print(f"Summary sheet: {args.summary_sheet}")
     if args.include_fe:
