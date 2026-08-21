@@ -56,7 +56,7 @@ STATUS_SHIPPED = "3 SHIPPED"
 STATUS_FINISHED = "4 FINISHED"
 STATUSES_IN_WORK = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
 STATUSES_SHIPPED = {STATUS_SHIPPED, STATUS_FINISHED}
-CUTE_THEMES = {"lavender_raf", "como_prosecco"}
+CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari"}
 
 COLUMN_RENAME = {
     COL_INVOICE: "№ счета",
@@ -180,6 +180,25 @@ THEMES = {
         tab_summary="E5D5B8",
         title_font="Georgia",
     ),
+    # Ferrari 250 GTO at Casino de Monte-Carlo — Aeroflot weekly theme.
+    "montecarlo_ferrari": ReportTheme(
+        name="montecarlo_ferrari",
+        navy="3B0A14",
+        blue="8B1E2D",
+        light_blue="F4E7D8",
+        green="B08D57",
+        light_green="F7F0E4",
+        orange="C9A227",
+        light_orange="F8EED9",
+        zebra="FBF6EE",
+        subtotal="F0E0C8",
+        border="D4C2A5",
+        tab_total="8B1E2D",
+        tab_shipped="B08D57",
+        tab_in_work="C9A227",
+        tab_summary="3B0A14",
+        title_font="Georgia",
+    ),
 }
 
 
@@ -205,6 +224,7 @@ def activate_theme(theme: ReportTheme) -> None:
     subtitle_color = {
         "lavender_raf": "6B5B73",
         "como_prosecco": "6A7B78",
+        "montecarlo_ferrari": "5C3B2E",
     }.get(theme.name, "595959")
     FONT_SUBTITLE = Font(name="Calibri", size=11, color=subtitle_color)
     FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
@@ -709,7 +729,9 @@ def write_weekly_summary_sheet(
     ws.merge_cells("A1:M1")
     title = ws["A1"]
     title.value = f"{sheet_title} — {client}"
-    if cute_comments and theme_name == "como_prosecco":
+    if cute_comments and theme_name == "montecarlo_ferrari":
+        title.value = f"♦ {sheet_title} — {client} · Monte-Carlo · Ferrari 250 GTO"
+    elif cute_comments and theme_name == "como_prosecco":
         title.value = f"🥂 {sheet_title} — {client} · просекко на Комо"
     elif cute_comments:
         title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
@@ -721,7 +743,20 @@ def write_weekly_summary_sheet(
         f"Период: {summary.week_start.strftime('%d.%m.%Y')} — "
         f"{summary.week_end.strftime('%d.%m.%Y')}"
     )
-    if cute_comments and theme_name == "como_prosecco":
+    if cute_comments and theme_name == "montecarlo_ferrari":
+        epigraphs = [
+            "красная 250 GTO у казино — и неделя, которая знает цену себе",
+            "золотой свет фасада, влажный асфальт и цифры без блефа",
+            "Monte-Carlo не прощает суеты: считаем спокойно, как ставка наверняка",
+            "шампанское в купе, ключ в замке зажигания, отчёт на высокой передаче",
+            "богатый тон недели: кармин, золото и лёгкий запах бензина класса гран-при",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
+    elif cute_comments and theme_name == "como_prosecco":
         epigraphs = [
             "бокал на перилах, озеро дышит, цифры сверкают",
             "cin cin: считаем неделю, не расплёскивая пузырьки",
@@ -752,7 +787,16 @@ def write_weekly_summary_sheet(
     mood_cards = {}
     mood_images: dict[str, Path] = {}
     if cute_comments:
-        if theme_name == "como_prosecco":
+        if theme_name == "montecarlo_ferrari":
+            mood_cards = build_montecarlo_mood_cards(summary)
+            cycle = [MONTE_FERRARI, MONTE_CASINO, MONTE_CHAMPAGNE, MONTE_ROULETTE, MONTE_GOLD]
+            seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            mood_images = {
+                "Новые заказы": cycle[seed % len(cycle)],
+                "Отгруженные заказы": cycle[(seed + 1) % len(cycle)],
+                "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
+            }
+        elif theme_name == "como_prosecco":
             mood_cards = build_como_mood_cards(summary)
             cycle = [COMO_GLASS, COMO_LAKE, COMO_LEMON, COMO_VILLA, COMO_TERRACE]
             seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
@@ -835,11 +879,15 @@ def write_weekly_summary_sheet(
             row += 2
 
         if cute_comments and section.title in mood_cards:
+            default_img = {
+                "montecarlo_ferrari": MONTE_FERRARI,
+                "como_prosecco": COMO_GLASS,
+            }.get(theme_name, LAVENDER_HEART)
             _write_mood_card(
                 ws,
                 section_start,
                 mood_cards[section.title],
-                mood_images.get(section.title, COMO_GLASS if theme_name == "como_prosecco" else LAVENDER_HEART),
+                mood_images.get(section.title, default_img),
                 theme_name=theme_name,
             )
 
@@ -850,7 +898,9 @@ def write_weekly_summary_sheet(
         "В итог попадает только сумма платежей с датой в периоде. "
         "Для отгрузок при пустой фактической дате используется BC (ожидаемая дата прихода)."
     )
-    if cute_comments and theme_name == "como_prosecco":
+    if cute_comments and theme_name == "montecarlo_ferrari":
+        note.value += "  ·  справа — тост за неделю у казино Монте-Карло ♦"
+    elif cute_comments and theme_name == "como_prosecco":
         note.value += "  ·  справа — тост за неделю на набережной Комо 🥂"
     elif cute_comments:
         note.value += "  ·  комментарии справа — нежное резюме недели ♡"
@@ -862,6 +912,9 @@ def comment_has_ddp_mow(value: Any) -> bool:
 
 
 def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
+    """Utair: DDP MOW in SHIPPED stays in work until FINISHED.
+    Aeroflot: SHIPPED counts as in work; only FINISHED is shipped.
+    """
     status = row.get(COL_STATUS)
     if client == "Аэрофлот":
         return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
@@ -871,6 +924,9 @@ def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
 
 
 def row_counts_as_shipped_status(row: pd.Series, client: str) -> bool:
+    """Utair: SHIPPED+FINISHED are shipped, except DDP MOW which needs FINISHED.
+    Aeroflot: only FINISHED counts as shipped.
+    """
     status = row.get(COL_STATUS)
     if client == "Аэрофлот":
         return status == STATUS_FINISHED
@@ -1198,6 +1254,13 @@ COMO_LAKE = ASSETS_DIR / "como-lake-small.jpg"
 COMO_LEMON = ASSETS_DIR / "como-lemon-small.jpg"
 COMO_VILLA = ASSETS_DIR / "como-villa-small.jpg"
 COMO_TERRACE = ASSETS_DIR / "como-terrace-small.jpg"
+MONTE_BANNER = ASSETS_DIR / "montecarlo-banner-wide.jpg"
+MONTE_PROMENADE = ASSETS_DIR / "montecarlo-promenade.jpg"
+MONTE_FERRARI = ASSETS_DIR / "montecarlo-ferrari-small.jpg"
+MONTE_CASINO = ASSETS_DIR / "montecarlo-casino-small.jpg"
+MONTE_CHAMPAGNE = ASSETS_DIR / "montecarlo-champagne-small.jpg"
+MONTE_ROULETTE = ASSETS_DIR / "montecarlo-roulette-small.jpg"
+MONTE_GOLD = ASSETS_DIR / "montecarlo-gold-small.jpg"
 
 
 def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
@@ -1756,6 +1819,242 @@ def build_como_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
     return cards
 
 
+def build_montecarlo_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
+    """Ferrari 250 GTO / Monte-Carlo casino narrative cards."""
+    cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
+    if new.count == 0:
+        options = [
+            (
+                "♦ Тихий заезд к казино",
+                f"За {period} новых заказов нет. Ferrari остывает у фасада — "
+                "иногда роскошь в том, чтобы просто стоять и блестеть ✨",
+            ),
+            (
+                "🕯️ Антракт перед ставкой",
+                "Продажи молчат, как зал перед рулеткой. Не блефуем — "
+                "ждём следующую партию с достоинством ♠️",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|sales|empty", options)
+    elif max_amount >= 30000 or new.total >= 150000:
+        options = [
+            (
+                "🏎️ Grand Prix продаж!",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда вечера — «{top_desc}» на {max_m} USD. "
+                "Красная 250 GTO аплодирует фарами ✨♦",
+            ),
+            (
+                "💎 Ставка сыграла",
+                f"{new.count} заказов на {money} USD. Средний чек ~{avg_m}. "
+                "Это уже не аперитив — это джекпот у казино Монте-Карло 🥂",
+            ),
+            (
+                "🔑 Ключ от вечера",
+                f"Неделя класса гран-при: {money} USD"
+                + (f", микс {mix}" if mix else "")
+                + f". «{top_desc}» сверкает как лак на капоте 🔴",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|sales|big", options)
+    elif max_amount < 5000 and new.total < 25000:
+        options = [
+            (
+                "🪙 Мелкая, но честная ставка",
+                f"Аккуратные {new.count} поз. на {money} USD. "
+                "В Монте-Карло уважают и скромный чип — если он на своём месте ♠️",
+            ),
+            (
+                "🥂 Купе наполовину",
+                f"Чек скромный (~{avg_m} USD), зато живой. "
+                f"За {period} — {money} USD. Не блеф, а разгон перед кругом ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|sales|small", options)
+    else:
+        options = [
+            (
+                "🌴 Круиз по набережной",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Ровный ход, золотой свет, без лишнего шума ♦",
+            ),
+            (
+                "♠️ Игра средней руки",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · {mix}." if mix else ".")
+                + " Не джекпот и не пас — уверенная ставка Аэрофлота ✨",
+            ),
+            (
+                "🔴 Кармин недели",
+                f"{new.count} заказов, {money} USD, средний чек ~{avg_m}. "
+                "Именно такой тон любит Ferrari у казино: богатство без крика 🏎️",
+            ),
+            (
+                "✨ Фары на казино",
+                f"За неделю {money} USD. Самый яркий блик — «{top_desc}». "
+                "Аэрофлот держит курс вдоль Place du Casino 💛",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
+    if shipped.count == 0:
+        options = [
+            (
+                "🏛️ Казино закрыто на час",
+                "FINISHED-отгрузок за период нет. SHIPPED гуляет по залу как «в работе» — "
+                "по правилам стола. Ferrari ждёт у подъезда ✨",
+            ),
+            (
+                "🕯️ Пауза у рулетки",
+                "Пока без finished-отгрузок. В Монте-Карло умеют ждать красиво ♦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|ship|empty", options)
+    elif shipped.count and late / shipped.count >= 0.5:
+        options = [
+            (
+                "🌙 Ночь длинная — дорога короче",
+                f"Из {shipped.count} finished-отгрузок ({ship_money} USD) "
+                f"с опозданием {late}"
+                + (f", в среднем ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Даже 250 GTO иногда стоит в пробке. "
+                "Главное — доехать с достоинством ♠️🫶",
+            ),
+            (
+                "🛟 Спокойно, дилер рядом",
+                f"{late} из {shipped.count} позже плана, на {ship_money} USD всё равно у клиента. "
+                "Не блефуем нервами — поднимаем купе за терпение 🥂",
+            ),
+            (
+                "🌧️ Дождь на Place du Casino",
+                f"График гуляет, асфальт блестит: {shipped.count} поз. на {ship_money} USD. "
+                "Лучше опоздать роскошно, чем спешить дёшево ✨",
+            ),
+            (
+                "🔑 Золотой час всё равно наш",
+                f"Да, сроки плавают (до {late_max} дн.). "
+                f"Но {shipped.count} finished-отгрузок уже сияют, как лак на капоте 🔴",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|ship|late", options)
+    elif early > late:
+        options = [
+            (
+                "🏁 Быстрее рулетки!",
+                f"Досрочно {early} из {shipped.count}, в срок {on_time}. "
+                "Неделя как красная GTO на пустой набережной — чистый кайф 🏎️✨",
+            ),
+            (
+                "💎 Ранний валет",
+                f"{early} позиций раньше срока, отгружено на {ship_money} USD. "
+                "Дилер кивает: красивая комбинация ♠️",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|ship|early", options)
+    else:
+        options = [
+            (
+                "🚶 Ровный круг у казино",
+                f"FINISHED: {shipped.count} поз. на {ship_money} USD "
+                f"(рано {early} / вовремя {on_time} / позже {late}). "
+                "Богатый, спокойный ритм — фирменный стиль вечера ♦",
+            ),
+            (
+                "🥂 Тост за логистику гран-при",
+                f"{shipped.count} отгрузок за {period} на {ship_money} USD. "
+                "Без драмы, с золотым светом. Иногда лучший комментарий — «банк наш» ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
+
+    paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
+    if paid.count == 0 or paid.total <= 0:
+        options = [
+            (
+                "🫧 Касса на паузе",
+                "Платежей за период нет. Не грустим: даже в Монте-Карло "
+                "сначала показывают карты, потом считают банк ♠️",
+            ),
+            (
+                "🌙 Ночная тишина стола",
+                "Пока без оплат. Смотрим на фасад казино и верим, "
+                "что следующий перевод приедет на красной Ferrari ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|pay|empty", options)
+    elif paid.total >= 100000:
+        options = [
+            (
+                "💎 Джекпот кассы!",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший ~{_fmt_money(max_pay)}). "
+                "Это тот самый звук, когда фишки сыплются на сукно 🥂♦",
+            ),
+            (
+                "🏎️ Банк на высокой передаче",
+                f"{paid_money} USD — вечер полностью наш. "
+                f"{paid.count} платежей, и каждый блестит как лак 250 GTO. Спасибо, Аэрофлот ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|pay|big", options)
+    else:
+        options = [
+            (
+                "🥂 Ещё по купе",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Не джекпот — зато честный, золотой приход. Касса довольна 💛",
+            ),
+            (
+                "💳 Мягкий приход к столу",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Дилер кивает: движение есть ♠️",
+            ),
+            (
+                "🔑 Золотой ключ кассы",
+                f"Пришло {paid_money} USD. Самый заметный платёж: {_fmt_money(max_pay)} USD. "
+                "Спасибо клиенту — ставка сыграла красиво ✨",
+            ),
+            (
+                "🔴 Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, Ferrari у подъезда, шампанское холодное 🏎️🥂",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|mc|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
+    return cards
+
+
 def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
     options = [
         (
@@ -1792,21 +2091,28 @@ def _write_mood_card(
     theme_name: str = "lavender_raf",
 ) -> None:
     """Place a cute comment card to the right of a summary table."""
-    if theme_name == "como_prosecco":
+    if theme_name == "montecarlo_ferrari":
+        title_fill = PatternFill("solid", fgColor="3B0A14")
+        cream = PatternFill("solid", fgColor="F8EED9")
+        body_font = Font(name="Calibri", size=10, color="3B0A14")
+        title_font = Font(name="Georgia", size=12, bold=True, color="F4E7D8")
+    elif theme_name == "como_prosecco":
         title_fill = PatternFill("solid", fgColor="E8F2F4")
         cream = PatternFill("solid", fgColor="FBF4EA")
         body_font = Font(name="Calibri", size=10, color="4A5D6A")
+        title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
     else:
         title_fill = PatternFill("solid", fgColor="F3EAF8")
         cream = PatternFill("solid", fgColor="FFF8F2")
         body_font = Font(name="Calibri", size=10, color="6B5B7A")
+        title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
 
     title_cell = ws.cell(start_row, col_start)
     ws.merge_cells(start_row=start_row, start_column=col_start, end_row=start_row, end_column=col_start + 3)
     title_cell.value = card["title"]
     _style_cell(
         title_cell,
-        font=Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY),
+        font=title_font,
         fill=title_fill,
         alignment=Alignment(horizontal="left", vertical="center"),
         border=BORDER_THIN,
@@ -2047,6 +2353,129 @@ def decorate_como_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
         _add_image(wb["Отгружено"], COMO_TERRACE, "AV1", width=64, height=64)
 
 
+def montecarlo_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "Ferrari 250 GTO у казино Монте-Карло: кармин, золото и влажный асфальт — "
+            "та же роскошь, только в отчёте по заказам ♦"
+        ),
+        (
+            f"сегодня на Place du Casino — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. банк открыт ✨"
+        ),
+        (
+            "не блефуем цифрами — ставим на ясность, терпение и высокий стиль ♠️"
+        ),
+        (
+            "SHIPPED гуляет по залу как «в работе»; FINISHED — уже валет на столе 🏎️"
+        ),
+        (
+            "инструкция сомелье гран-при: смотреть кассу без суеты, "
+            "хвалить команду, не расплёскивать шампанское 🥂"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
+
+
+def write_montecarlo_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    cream = PatternFill("solid", fgColor="F8EED9")
+    crimson = PatternFill("solid", fgColor="3B0A14")
+    gold = PatternFill("solid", fgColor="F0E0C8")
+    for row in range(1, 44):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 15):
+            cell = ws.cell(row, col)
+            if row < 6:
+                cell.fill = cream
+            elif row < 23:
+                cell.fill = crimson
+            else:
+                cell.fill = gold
+    for col in range(1, 15):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:N2")
+    title = ws["A2"]
+    title.value = f"♦  {client}  ♦"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="3B0A14"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 42
+
+    ws.merge_cells("A3:N3")
+    subtitle = ws["A3"]
+    subtitle.value = "Ferrari 250 GTO · Casino de Monte-Carlo · weekly grand prix status"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=13, italic=True, color="8B1E2D"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:N4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено (FINISHED) {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="5C3B2E"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, MONTE_BANNER, "B6", width=720, height=400)
+    _add_image(ws, MONTE_FERRARI, "L6", width=130, height=130)
+    _add_image(ws, MONTE_CHAMPAGNE, "L14", width=110, height=110)
+    _add_image(ws, MONTE_PROMENADE, "B24", width=520, height=280)
+    _add_image(ws, MONTE_CASINO, "J24", width=120, height=120)
+    _add_image(ws, MONTE_ROULETTE, "L24", width=120, height=120)
+    _add_image(ws, MONTE_GOLD, "J32", width=120, height=120)
+
+    ws.merge_cells("A38:I41")
+    note = ws["A38"]
+    note.value = montecarlo_cover_epigraph(report_date, in_work_count, shipped_count)
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="F8EED9"),
+        fill=PatternFill("solid", fgColor="3B0A14"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+    for r in (38, 39, 40, 41):
+        ws.row_dimensions[r].height = 20
+
+
+def decorate_montecarlo_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], MONTE_FERRARI, "I1", width=110, height=110)
+        _add_image(wb["Total"], MONTE_CHAMPAGNE, "K1", width=72, height=72)
+    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
+        ws = wb[summary_sheet_name]
+        _add_image(ws, MONTE_FERRARI, "L1", width=92, height=92)
+        _add_image(ws, MONTE_CASINO, "M1", width=72, height=72)
+        _add_image(ws, MONTE_ROULETTE, "T4", width=88, height=88)
+        _add_image(ws, MONTE_GOLD, "T20", width=88, height=88)
+        _add_image(ws, MONTE_CHAMPAGNE, "T36", width=80, height=80)
+        ws.column_dimensions["T"].width = 14
+        ws.column_dimensions["U"].width = 12
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], MONTE_CASINO, "AT1", width=78, height=78)
+        _add_image(wb["В работе"], MONTE_ROULETTE, "AV1", width=64, height=64)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], MONTE_FERRARI, "AT1", width=78, height=78)
+        _add_image(wb["Отгружено"], MONTE_GOLD, "AV1", width=64, height=64)
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
@@ -2078,7 +2507,20 @@ def generate_report(
     shipped_over_30 = shipped_balance_over_30_days(shipped_raw, report_date)
 
     wb = Workbook()
-    if theme.name == "como_prosecco":
+    if theme.name == "montecarlo_ferrari":
+        cover = wb.active
+        cover.title = "Обложка ♦"
+        cover.sheet_properties.tabColor = "8B1E2D"
+        write_montecarlo_cover_sheet(
+            cover,
+            client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
+    elif theme.name == "como_prosecco":
         cover = wb.active
         cover.title = "Обложка 🥂"
         cover.sheet_properties.tabColor = "E5D5B8"
@@ -2151,7 +2593,9 @@ def generate_report(
     in_work_ws.sheet_properties.tabColor = theme.tab_in_work
     write_detail_sheet(in_work_ws, in_work_df, in_work_totals)
 
-    if theme.name == "como_prosecco":
+    if theme.name == "montecarlo_ferrari":
+        decorate_montecarlo_sheets(wb, summary_sheet_name)
+    elif theme.name == "como_prosecco":
         decorate_como_sheets(wb, summary_sheet_name)
     elif theme.name == "lavender_raf":
         decorate_lavender_sheets(wb, summary_sheet_name)
@@ -2217,7 +2661,7 @@ def main() -> None:
         "--theme",
         choices=sorted(THEMES.keys()),
         default="default",
-        help="Visual theme (como_prosecco for Aeroflot, lavender_raf legacy)",
+        help="Visual theme (montecarlo_ferrari / como_prosecco for Aeroflot)",
     )
     parser.add_argument(
         "--summary-title",
