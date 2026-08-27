@@ -479,11 +479,20 @@ def render_html(
     flagged = [r for r in rows if r.flags]
 
     by_client: dict[str, list[RealizedRow]] = defaultdict(list)
+    by_supplier: dict[str, list[RealizedRow]] = defaultdict(list)
     for r in rows:
         by_client[r.customer].append(r)
+        supplier_name = r.supplier.strip() if r.supplier and r.supplier.strip() else "(без поставщика)"
+        by_supplier[supplier_name].append(r)
     clients_sorted = sorted(by_client.keys(), key=lambda c: (-sum(x.sale for x in by_client[c]), c))
+    suppliers_sorted = sorted(by_supplier.keys(), key=lambda s: (-sum(x.sale for x in by_supplier[s]), s))
 
-    def client_block(customer: str, items: list[RealizedRow]) -> str:
+    def group_block(
+        title: str,
+        items: list[RealizedRow],
+        *,
+        mode: str,
+    ) -> str:
         c_sale = sum(r.sale for r in items)
         c_plan = sum(r.margin_plan for r in items)
         c_fact = sum(r.margin_fact for r in items)
@@ -502,12 +511,13 @@ def render_html(
             flag_html = ""
             if r.flags:
                 flag_html = "<div class='flags'>" + "<br>".join(f"⚠ {f}" for f in r.flags) + "</div>"
+            third_col = r.supplier if mode == "client" else r.customer
             rows_html.append(
                 f"""
 <tr class="{'flagged' if r.flags else ''}">
   <td>{r.invoice}</td>
   <td>{r.pn}<div class="muted">{r.description[:60]}</div></td>
-  <td>{r.supplier}</td>
+  <td>{third_col}</td>
   <td>{r.pay_type_raw}</td>
   <td class="num">{fmt_money(r.sale, 0)}</td>
   <td class="num">{fmt_money(r.margin_plan, 0)}<div class="muted">{fmt_pct(r.margin_plan_pct)}</div></td>
@@ -520,27 +530,33 @@ def render_html(
 </tr>"""
             )
 
+        third_header = "Поставщик" if mode == "client" else "Клиент"
+        pay_block = ""
+        if mode == "client":
+            pay_block = f"""
+      <div><div class="label">Оплата после отгрузки</div><div class="value">{fmt_days(c_pay)} дн.</div><div class="muted">{comment}</div></div>"""
+
         return f"""
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">{customer}</span>
+    <span class="group-name">{title}</span>
     <span class="pill">{len(items)} поз.</span>
     <span class="pill">продажа {fmt_money(c_sale, 0)} USD</span>
     <span class="pill">маржа факт {fmt_money(c_fact, 0)} USD ({fmt_pct(fact_pct)})</span>
     <span class="pill">Δ маржи {fmt_money(delta, 0)}</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">{fmt_money(c_plan, 0)} USD ({fmt_pct(plan_pct)})</div></div>
       <div><div class="label">Маржа факт</div><div class="value">{fmt_money(c_fact, 0)} USD ({fmt_pct(fact_pct)})</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">{fmt_days(c_s1)} / {fmt_days(c_s2)}</div></div>
-      <div><div class="label">Оплата после отгрузки</div><div class="value">{fmt_days(c_pay)} дн.</div><div class="muted">{comment}</div></div>
+      {pay_block}
       <div><div class="label">Курсовая разница</div><div class="value">{fmt_money(c_fx, 0)} RUB</div></div>
     </div>
     <table>
       <thead>
         <tr>
-          <th>Счёт</th><th>P/N</th><th>Поставщик</th><th>Тип оплаты</th>
+          <th>Счёт</th><th>P/N</th><th>{third_header}</th><th>Тип оплаты</th>
           <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
           <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
         </tr>
@@ -575,9 +591,13 @@ def render_html(
 
     flags_summary = ""
     if flagged:
-        flags_summary = f"<p class='muted'>Строк с пометками/аномалиями: <b>{len(flagged)}</b> (см. детали по клиентам).</p>"
+        flags_summary = (
+            f"<p class='muted'>Строк с пометками/аномалиями: <b>{len(flagged)}</b> "
+            f"(см. детали в списках клиентов и поставщиков).</p>"
+        )
 
-    client_blocks = "\n".join(client_block(c, by_client[c]) for c in clients_sorted)
+    client_blocks = "\n".join(group_block(c, by_client[c], mode="client") for c in clients_sorted)
+    supplier_blocks = "\n".join(group_block(s, by_supplier[s], mode="supplier") for s in suppliers_sorted)
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -586,60 +606,81 @@ def render_html(
 <title>Реализованные заказы — {month_name} {year}</title>
 <style>
 :root {{
-  --bg:#f4f1ea; --card:#fffdf8; --ink:#1f2a2e; --muted:#5c6b70;
-  --accent:#0f6b5c; --accent2:#b45309; --line:#e2ddd2; --warn:#9a3412;
+  --bg:#e7ecef;
+  --card:#ffffff;
+  --ink:#202020;
+  --muted:#4c4c4c;
+  --navy:#022f40;
+  --cyan:#d5fbff;
+  --orange:#fe621d;
+  --line:#c4c4c4;
+  --warn:#fe621d;
 }}
 * {{ box-sizing:border-box; }}
 body {{
-  margin:0; font-family: "Source Serif 4", "Iowan Old Style", Georgia, serif;
-  color:var(--ink); background:
-    radial-gradient(1200px 600px at 10% -10%, #efe6d4 0%, transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, #dceee8 0%, transparent 55%),
-    var(--bg);
+  margin:0;
+  font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink);
+  background: linear-gradient(180deg, #022f40 0 160px, var(--bg) 160px);
   line-height:1.45;
 }}
-.wrap {{ max-width:1200px; margin:0 auto; padding:32px 20px 64px; }}
-h1 {{ font-size:34px; margin:0 0 6px; letter-spacing:-0.02em; }}
-h2 {{ font-size:22px; margin:28px 0 12px; }}
-.sub {{ color:#5c6b70; margin-bottom:22px; }}
+.wrap {{ max-width:1200px; margin:0 auto; padding:28px 20px 64px; }}
+.brand {{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  color:#ffffff; margin-bottom:18px;
+}}
+.brand-mark {{
+  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+  background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700;
+}}
+h1 {{ font-size:30px; margin:0 0 6px; color:#ffffff; font-weight:700; }}
+.sub {{ color:#d5fbff; margin-bottom:18px; font-size:14px; }}
+h2 {{ font-size:20px; margin:28px 0 12px; color:var(--navy); }}
 .card {{
-  background:var(--card); border:1px solid var(--line); border-radius:18px;
-  padding:18px 18px 8px; box-shadow:0 10px 30px rgba(31,42,46,.05);
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:18px 18px 8px;
 }}
 .kpi-grid {{
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
 }}
 .kpi-grid.small {{ grid-template-columns:repeat(3,minmax(0,1fr)); }}
 .kpi, .kpi-grid > div {{
-  background:#f8f5ee; border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+  background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px;
 }}
-.label {{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#6a787c; }}
-.value {{ font-size:22px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; }}
-.muted {{ color:#6a787c; font-size:12px; margin-top:4px; }}
-details.client {{
-  background:var(--card); border:1px solid var(--line); border-radius:14px;
+.label {{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }}
+.value {{ font-size:20px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; color:var(--navy); }}
+.muted {{ color:#757575; font-size:12px; margin-top:4px; }}
+.tabs {{ display:flex; gap:8px; margin:8px 0 14px; }}
+.tabs a {{
+  text-decoration:none; color:var(--navy); background:#ffffff; border:1px solid var(--line);
+  padding:8px 12px; border-radius:6px; font-size:13px; font-weight:700;
+}}
+.tabs a:hover {{ background:var(--cyan); }}
+details.group {{
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
   margin:10px 0; overflow:hidden;
 }}
-details.client summary {{
+details.group summary {{
   cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:linear-gradient(90deg, #022f40 0%, #022f40 12px, #ffffff 12px);
 }}
-details.client summary::-webkit-details-marker {{ display:none; }}
-.client-name {{ font-weight:700; font-size:18px; margin-right:auto; }}
+details.group summary::-webkit-details-marker {{ display:none; }}
+.group-name {{ font-weight:700; font-size:16px; margin-right:auto; color:var(--navy); padding-left:8px; }}
 .pill {{
-  font-size:12px; background:#eef6f3; border:1px solid #cfe3dc; color:#0f6b5c;
-  border-radius:999px; padding:4px 10px; font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
+  border-radius:4px; padding:4px 10px; font-weight:700;
 }}
-.client-body {{ padding:0 14px 16px; border-top:1px solid var(--line); }}
-table {{ width:100%; border-collapse:collapse; font-size:13px; font-family: ui-sans-serif, system-ui, sans-serif; }}
-th, td {{ border-bottom:1px solid var(--line); padding:8px 6px; vertical-align:top; text-align:left; }}
-th {{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#617074; }}
+.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); }}
+table {{ width:100%; border-collapse:collapse; font-size:13px; }}
+th, td {{ border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }}
+th {{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.flagged {{ background:#fff7ed; }}
-.flags {{ color:var(--warn); font-size:12px; }}
+tr.flagged {{ background:#fff4ec; }}
+.flags {{ color:var(--orange); font-size:12px; }}
 .attention {{
-  margin-top:28px; padding:16px; border-radius:16px; border:1px solid #f0c7a5; background:#fff4ea;
+  margin-top:28px; padding:16px; border-radius:8px; border:1px solid #fe621d; background:#fff7f2;
 }}
-.footer {{ margin-top:28px; color:#6a787c; font-size:12px; }}
+.footer {{ margin-top:28px; color:#4c4c4c; font-size:12px; }}
 @media (max-width:900px) {{
   .kpi-grid, .kpi-grid.small {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
@@ -647,14 +688,16 @@ tr.flagged {{ background:#fff7ed; }}
 </head>
 <body>
 <div class="wrap">
+  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">realized orders report</div></div>
   <h1>Реализованные заказы — {month_name} {year}</h1>
   <div class="sub">Период {period} · статус FINISHED · остаток клиента = 0 · месяц = max(факт отгрузки, полная оплата)</div>
 
   <section class="card">
-    <h2>Сводка за месяц</h2>
+    <h2 style="margin-top:0">Сводка за месяц</h2>
     <div class="kpi-grid">
       <div class="kpi"><div class="label">Позиций</div><div class="value">{len(rows)}</div></div>
       <div class="kpi"><div class="label">Клиентов</div><div class="value">{len(by_client)}</div></div>
+      <div class="kpi"><div class="label">Поставщиков</div><div class="value">{len(by_supplier)}</div></div>
       <div class="kpi"><div class="label">Продажи</div><div class="value">{fmt_money(total_sale, 0)}<div class="muted">USD</div></div></div>
       <div class="kpi"><div class="label">Курсовая разница</div><div class="value">{fmt_money(total_fx, 0)}<div class="muted">RUB · {fx_n} сделок</div></div></div>
       <div class="kpi"><div class="label">Маржа план</div><div class="value">{fmt_money(total_plan, 0)}<div class="muted">{fmt_pct((total_plan/total_sale*100) if total_sale else None)} от продаж</div></div></div>
@@ -665,13 +708,21 @@ tr.flagged {{ background:#fff7ed; }}
     {flags_summary}
   </section>
 
-  <h2>Клиенты</h2>
+  <div class="tabs">
+    <a href="#clients">По клиентам</a>
+    <a href="#suppliers">По поставщикам</a>
+  </div>
+
+  <h2 id="clients">Клиенты</h2>
   {client_blocks or "<p>Нет реализованных позиций за месяц.</p>"}
+
+  <h2 id="suppliers">Поставщики</h2>
+  {supplier_blocks or "<p>Нет реализованных позиций за месяц.</p>"}
 
   {attention_html}
 
   <div class="footer">
-    Источник: ТАЗ · курсы USD ЦБ РФ (XML_daily) ·
+    FASTAIR · источник ТАЗ · курсы USD ЦБ РФ (XML_daily) ·
     этап1: взятие в работу → оплата поставщику; этап2: оплата поставщику → факт отгрузки
     (кроме Lufthansa / Blue Ocean). Курсовая разница только если оплата клиента позже оплаты поставщику:
     Q(оплата клиента USD) × (курс_клиента − курс_поставщика).

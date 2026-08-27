@@ -5,60 +5,81 @@
 <title>Реализованные заказы — апрель 2026</title>
 <style>
 :root {
-  --bg:#f4f1ea; --card:#fffdf8; --ink:#1f2a2e; --muted:#5c6b70;
-  --accent:#0f6b5c; --accent2:#b45309; --line:#e2ddd2; --warn:#9a3412;
+  --bg:#e7ecef;
+  --card:#ffffff;
+  --ink:#202020;
+  --muted:#4c4c4c;
+  --navy:#022f40;
+  --cyan:#d5fbff;
+  --orange:#fe621d;
+  --line:#c4c4c4;
+  --warn:#fe621d;
 }
 * { box-sizing:border-box; }
 body {
-  margin:0; font-family: "Source Serif 4", "Iowan Old Style", Georgia, serif;
-  color:var(--ink); background:
-    radial-gradient(1200px 600px at 10% -10%, #efe6d4 0%, transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, #dceee8 0%, transparent 55%),
-    var(--bg);
+  margin:0;
+  font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink);
+  background: linear-gradient(180deg, #022f40 0 160px, var(--bg) 160px);
   line-height:1.45;
 }
-.wrap { max-width:1200px; margin:0 auto; padding:32px 20px 64px; }
-h1 { font-size:34px; margin:0 0 6px; letter-spacing:-0.02em; }
-h2 { font-size:22px; margin:28px 0 12px; }
-.sub { color:#5c6b70; margin-bottom:22px; }
+.wrap { max-width:1200px; margin:0 auto; padding:28px 20px 64px; }
+.brand {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  color:#ffffff; margin-bottom:18px;
+}
+.brand-mark {
+  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+  background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700;
+}
+h1 { font-size:30px; margin:0 0 6px; color:#ffffff; font-weight:700; }
+.sub { color:#d5fbff; margin-bottom:18px; font-size:14px; }
+h2 { font-size:20px; margin:28px 0 12px; color:var(--navy); }
 .card {
-  background:var(--card); border:1px solid var(--line); border-radius:18px;
-  padding:18px 18px 8px; box-shadow:0 10px 30px rgba(31,42,46,.05);
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:18px 18px 8px;
 }
 .kpi-grid {
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
 }
 .kpi-grid.small { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .kpi, .kpi-grid > div {
-  background:#f8f5ee; border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+  background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px;
 }
-.label { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#6a787c; }
-.value { font-size:22px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; }
-.muted { color:#6a787c; font-size:12px; margin-top:4px; }
-details.client {
-  background:var(--card); border:1px solid var(--line); border-radius:14px;
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:20px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; color:var(--navy); }
+.muted { color:#757575; font-size:12px; margin-top:4px; }
+.tabs { display:flex; gap:8px; margin:8px 0 14px; }
+.tabs a {
+  text-decoration:none; color:var(--navy); background:#ffffff; border:1px solid var(--line);
+  padding:8px 12px; border-radius:6px; font-size:13px; font-weight:700;
+}
+.tabs a:hover { background:var(--cyan); }
+details.group {
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
   margin:10px 0; overflow:hidden;
 }
-details.client summary {
+details.group summary {
   cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:linear-gradient(90deg, #022f40 0%, #022f40 12px, #ffffff 12px);
 }
-details.client summary::-webkit-details-marker { display:none; }
-.client-name { font-weight:700; font-size:18px; margin-right:auto; }
+details.group summary::-webkit-details-marker { display:none; }
+.group-name { font-weight:700; font-size:16px; margin-right:auto; color:var(--navy); padding-left:8px; }
 .pill {
-  font-size:12px; background:#eef6f3; border:1px solid #cfe3dc; color:#0f6b5c;
-  border-radius:999px; padding:4px 10px; font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
+  border-radius:4px; padding:4px 10px; font-weight:700;
 }
-.client-body { padding:0 14px 16px; border-top:1px solid var(--line); }
-table { width:100%; border-collapse:collapse; font-size:13px; font-family: ui-sans-serif, system-ui, sans-serif; }
-th, td { border-bottom:1px solid var(--line); padding:8px 6px; vertical-align:top; text-align:left; }
-th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#617074; }
+.group-body { padding:0 14px 16px; border-top:1px solid var(--line); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
+th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
 td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-tr.flagged { background:#fff7ed; }
-.flags { color:var(--warn); font-size:12px; }
+tr.flagged { background:#fff4ec; }
+.flags { color:var(--orange); font-size:12px; }
 .attention {
-  margin-top:28px; padding:16px; border-radius:16px; border:1px solid #f0c7a5; background:#fff4ea;
+  margin-top:28px; padding:16px; border-radius:8px; border:1px solid #fe621d; background:#fff7f2;
 }
-.footer { margin-top:28px; color:#6a787c; font-size:12px; }
+.footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
 @media (max-width:900px) {
   .kpi-grid, .kpi-grid.small { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
@@ -66,14 +87,16 @@ tr.flagged { background:#fff7ed; }
 </head>
 <body>
 <div class="wrap">
+  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">realized orders report</div></div>
   <h1>Реализованные заказы — апрель 2026</h1>
   <div class="sub">Период 01.04.2026 — 30.04.2026 · статус FINISHED · остаток клиента = 0 · месяц = max(факт отгрузки, полная оплата)</div>
 
   <section class="card">
-    <h2>Сводка за месяц</h2>
+    <h2 style="margin-top:0">Сводка за месяц</h2>
     <div class="kpi-grid">
       <div class="kpi"><div class="label">Позиций</div><div class="value">161</div></div>
       <div class="kpi"><div class="label">Клиентов</div><div class="value">31</div></div>
+      <div class="kpi"><div class="label">Поставщиков</div><div class="value">8</div></div>
       <div class="kpi"><div class="label">Продажи</div><div class="value">4 848 008<div class="muted">USD</div></div></div>
       <div class="kpi"><div class="label">Курсовая разница</div><div class="value">-60 883 417<div class="muted">RUB · 86 сделок</div></div></div>
       <div class="kpi"><div class="label">Маржа план</div><div class="value">879 661<div class="muted">18.1% от продаж</div></div></div>
@@ -81,24 +104,30 @@ tr.flagged { background:#fff7ed; }
       <div class="kpi"><div class="label">Δ маржи (факт − план)</div><div class="value">-79 058<div class="muted">USD</div></div></div>
       <div class="kpi"><div class="label">Сроки, дн.</div><div class="value">59.8<div class="muted">этап1 26.6 · этап2 37.8 · оплата после отгрузки 34.8</div></div></div>
     </div>
-    <p class='muted'>Строк с пометками/аномалиями: <b>115</b> (см. детали по клиентам).</p>
+    <p class='muted'>Строк с пометками/аномалиями: <b>115</b> (см. детали в списках клиентов и поставщиков).</p>
   </section>
 
-  <h2>Клиенты</h2>
+  <div class="tabs">
+    <a href="#clients">По клиентам</a>
+    <a href="#suppliers">По поставщикам</a>
+  </div>
+
+  <h2 id="clients">Клиенты</h2>
   
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Северсталь</span>
+    <span class="group-name">Северсталь</span>
     <span class="pill">5 поз.</span>
     <span class="pill">продажа 2 445 080 USD</span>
     <span class="pill">маржа факт 354 287 USD (14.5%)</span>
     <span class="pill">Δ маржи -44 646</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">398 932 USD (16.3%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">354 287 USD (14.5%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">2.0 / 12.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">21.0 дн.</div><div class="muted">задержки: в среднем 21.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-54 327 449 RUB</div></div>
     </div>
@@ -188,19 +217,20 @@ tr.flagged { background:#fff7ed; }
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Тулпар Техник</span>
+    <span class="group-name">Тулпар Техник</span>
     <span class="pill">11 поз.</span>
     <span class="pill">продажа 595 042 USD</span>
     <span class="pill">маржа факт 77 972 USD (13.1%)</span>
     <span class="pill">Δ маржи -14 777</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">92 749 USD (15.6%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">77 972 USD (13.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">39.8 / 36.8</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">44.1 дн.</div><div class="muted">часто задерживает: в среднем 44.1 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-3 930 356 RUB</div></div>
     </div>
@@ -374,19 +404,20 @@ tr.flagged { background:#fff7ed; }
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Смартавиа</span>
+    <span class="group-name">Смартавиа</span>
     <span class="pill">6 поз.</span>
     <span class="pill">продажа 476 500 USD</span>
     <span class="pill">маржа факт 23 964 USD (5.0%)</span>
     <span class="pill">Δ маржи -14 989</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">38 952 USD (8.2%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">23 964 USD (5.0%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">27.4 / 30.6</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -490,19 +521,20 @@ tr.flagged { background:#fff7ed; }
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Utair</span>
+    <span class="group-name">Utair</span>
     <span class="pill">41 поз.</span>
     <span class="pill">продажа 238 081 USD</span>
     <span class="pill">маржа факт 50 189 USD (21.1%)</span>
     <span class="pill">Δ маржи -352</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">50 541 USD (21.2%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">50 189 USD (21.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">48.7 / 19.4</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">57.3 дн.</div><div class="muted">часто задерживает: в среднем 57.3 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-705 787 RUB</div></div>
     </div>
@@ -1098,19 +1130,20 @@ VALVE</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Биджет</span>
+    <span class="group-name">Биджет</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 217 500 USD</span>
     <span class="pill">маржа факт 60 315 USD (27.7%)</span>
     <span class="pill">Δ маржи -5 700</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">66 015 USD (30.4%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">60 315 USD (27.7%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -1145,19 +1178,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Русджет</span>
+    <span class="group-name">Русджет</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 144 000 USD</span>
     <span class="pill">маржа факт 40 134 USD (27.9%)</span>
     <span class="pill">Δ маржи 1 120</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">39 014 USD (27.1%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">40 134 USD (27.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">3.0 / 9.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">5.0 дн.</div><div class="muted">ок: в среднем 5.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-614 722 RUB</div></div>
     </div>
@@ -1191,19 +1225,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Авексима Лимитед</span>
+    <span class="group-name">Авексима Лимитед</span>
     <span class="pill">2 поз.</span>
     <span class="pill">продажа 115 000 USD</span>
     <span class="pill">маржа факт 31 736 USD (27.6%)</span>
     <span class="pill">Δ маржи 3 930</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">27 806 USD (24.2%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">31 736 USD (27.6%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">4.5 / 35.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">5.5 дн.</div><div class="muted">ок: в среднем 5.5 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-779 371 RUB</div></div>
     </div>
@@ -1251,19 +1286,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">АК Сибирь</span>
+    <span class="group-name">АК Сибирь</span>
     <span class="pill">3 поз.</span>
     <span class="pill">продажа 98 160 USD</span>
     <span class="pill">маржа факт 18 321 USD (18.7%)</span>
     <span class="pill">Δ маржи 1 180</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">17 141 USD (17.5%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">18 321 USD (18.7%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">6.0 / 19.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">27.0 дн.</div><div class="muted">задержки: в среднем 27.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-7 324 RUB</div></div>
     </div>
@@ -1325,19 +1361,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">ТАРП Авиэйшн</span>
+    <span class="group-name">ТАРП Авиэйшн</span>
     <span class="pill">5 поз.</span>
     <span class="pill">продажа 92 200 USD</span>
     <span class="pill">маржа факт 26 070 USD (28.3%)</span>
     <span class="pill">Δ маржи -133</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">26 203 USD (28.4%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">26 070 USD (28.3%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">4.0 / 25.2</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">0.0 дн.</div><div class="muted">ок: в среднем 0.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">5 040 RUB</div></div>
     </div>
@@ -1427,19 +1464,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Белавиа</span>
+    <span class="group-name">Белавиа</span>
     <span class="pill">6 поз.</span>
     <span class="pill">продажа 61 210 USD</span>
     <span class="pill">маржа факт 12 913 USD (21.1%)</span>
     <span class="pill">Δ маржи 2 062</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">10 852 USD (17.7%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">12 913 USD (21.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">110.3 / 22.7</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">39.0 дн.</div><div class="muted">часто задерживает: в среднем 39.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-234 927 RUB</div></div>
     </div>
@@ -1543,19 +1581,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Русджет Техник</span>
+    <span class="group-name">Русджет Техник</span>
     <span class="pill">3 поз.</span>
     <span class="pill">продажа 58 700 USD</span>
     <span class="pill">маржа факт 20 152 USD (34.3%)</span>
     <span class="pill">Δ маржи -536</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">20 688 USD (35.2%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">20 152 USD (34.3%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">3.5 / 23.5</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">13.0 дн.</div><div class="muted">ок: в среднем 13.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-157 294 RUB</div></div>
     </div>
@@ -1617,19 +1656,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Ираэро</span>
+    <span class="group-name">Ираэро</span>
     <span class="pill">6 поз.</span>
     <span class="pill">продажа 47 447 USD</span>
     <span class="pill">маржа факт 12 444 USD (26.2%)</span>
     <span class="pill">Δ маржи -819</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">13 263 USD (28.0%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">12 444 USD (26.2%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -1733,19 +1773,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Аэрофлот</span>
+    <span class="group-name">Аэрофлот</span>
     <span class="pill">7 поз.</span>
     <span class="pill">продажа 36 224 USD</span>
     <span class="pill">маржа факт 9 786 USD (27.0%)</span>
     <span class="pill">Δ маржи -1 113</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">10 898 USD (30.1%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">9 786 USD (27.0%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">49.0 / 36.5</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">12.0 дн.</div><div class="muted">ок: в среднем 12.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">26 085 RUB</div></div>
     </div>
@@ -1863,19 +1904,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">S7 Engineering</span>
+    <span class="group-name">S7 Engineering</span>
     <span class="pill">20 поз.</span>
     <span class="pill">продажа 30 579 USD</span>
     <span class="pill">маржа факт 9 590 USD (31.4%)</span>
     <span class="pill">Δ маржи -768</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">10 358 USD (33.9%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">9 590 USD (31.4%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">-49.3 / 162.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">13.8 дн.</div><div class="muted">ок: в среднем 13.8 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-208 940 RUB</div></div>
     </div>
@@ -2175,19 +2217,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Азур Эйр</span>
+    <span class="group-name">Азур Эйр</span>
     <span class="pill">4 поз.</span>
     <span class="pill">продажа 30 000 USD</span>
     <span class="pill">маржа факт 10 179 USD (33.9%)</span>
     <span class="pill">Δ маржи -585</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">10 764 USD (35.9%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">10 179 USD (33.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">-13.3 / 60.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">7 507 RUB</div></div>
     </div>
@@ -2263,19 +2306,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Лилиенталь Джет</span>
+    <span class="group-name">Лилиенталь Джет</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 29 000 USD</span>
     <span class="pill">маржа факт 8 216 USD (28.3%)</span>
     <span class="pill">Δ маржи -88</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">8 304 USD (28.6%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">8 216 USD (28.3%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">5.0 / 43.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">48 862 RUB</div></div>
     </div>
@@ -2309,19 +2353,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">МБК-С</span>
+    <span class="group-name">МБК-С</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 28 000 USD</span>
     <span class="pill">маржа факт 10 256 USD (36.6%)</span>
     <span class="pill">Δ маржи -480</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">10 736 USD (38.3%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">10 256 USD (36.6%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">3.0 / 16.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2355,19 +2400,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Компонентс (UTG)</span>
+    <span class="group-name">Компонентс (UTG)</span>
     <span class="pill">6 поз.</span>
     <span class="pill">продажа 26 360 USD</span>
     <span class="pill">маржа факт 8 950 USD (34.0%)</span>
     <span class="pill">Δ маржи 54</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">8 896 USD (33.7%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">8 950 USD (34.0%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2471,19 +2517,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Дримджет</span>
+    <span class="group-name">Дримджет</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 16 400 USD</span>
     <span class="pill">маржа факт -400 USD (-2.4%)</span>
     <span class="pill">Δ маржи 0</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">-400 USD (-2.4%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">-400 USD (-2.4%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">20.0 дн.</div><div class="muted">задержки: в среднем 20.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2517,19 +2564,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Аэрофлот Техникс</span>
+    <span class="group-name">Аэрофлот Техникс</span>
     <span class="pill">6 поз.</span>
     <span class="pill">продажа 15 999 USD</span>
     <span class="pill">маржа факт 2 734 USD (17.1%)</span>
     <span class="pill">Δ маржи -1 221</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">3 955 USD (24.7%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">2 734 USD (17.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">32.0 / 58.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">16.5 дн.</div><div class="muted">задержки: в среднем 16.5 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">12 833 RUB</div></div>
     </div>
@@ -2633,19 +2681,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Уральские Авиалинии</span>
+    <span class="group-name">Уральские Авиалинии</span>
     <span class="pill">9 поз.</span>
     <span class="pill">продажа 11 526 USD</span>
     <span class="pill">маржа факт 3 874 USD (33.6%)</span>
     <span class="pill">Δ маржи -207</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">4 081 USD (35.4%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">3 874 USD (33.6%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2791,19 +2840,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Ямал</span>
+    <span class="group-name">Ямал</span>
     <span class="pill">3 поз.</span>
     <span class="pill">продажа 11 460 USD</span>
     <span class="pill">маржа факт 1 399 USD (12.2%)</span>
     <span class="pill">Δ маржи -68</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">1 468 USD (12.8%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">1 399 USD (12.2%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">36.0 / 102.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2865,19 +2915,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">ИКАР (Nordwind)</span>
+    <span class="group-name">ИКАР (Nordwind)</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 5 700 USD</span>
     <span class="pill">маржа факт 2 614 USD (45.9%)</span>
     <span class="pill">Δ маржи -44</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">2 658 USD (46.6%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">2 614 USD (45.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">9.0 / 37.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2911,19 +2962,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Авиастар-ТУ</span>
+    <span class="group-name">Авиастар-ТУ</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 4 900 USD</span>
     <span class="pill">маржа факт 652 USD (13.3%)</span>
     <span class="pill">Δ маржи -88</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">740 USD (15.1%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">652 USD (13.3%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">11.0 / 36.0</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -2957,19 +3009,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Глобал Скай</span>
+    <span class="group-name">Глобал Скай</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 3 050 USD</span>
     <span class="pill">маржа факт 490 USD (16.1%)</span>
     <span class="pill">Δ маржи -620</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">1 110 USD (36.4%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">490 USD (16.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">33.0 дн.</div><div class="muted">часто задерживает: в среднем 33.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-6 934 RUB</div></div>
     </div>
@@ -3003,19 +3056,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">UTG</span>
+    <span class="group-name">UTG</span>
     <span class="pill">3 поз.</span>
     <span class="pill">продажа 2 570 USD</span>
     <span class="pill">маржа факт 1 108 USD (43.1%)</span>
     <span class="pill">Δ маржи -38</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">1 146 USD (44.6%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">1 108 USD (43.1%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -3077,19 +3131,20 @@ UNIT (BCU)</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">4U Aircraft Technik</span>
+    <span class="group-name">4U Aircraft Technik</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 1 900 USD</span>
     <span class="pill">маржа факт 701 USD (36.9%)</span>
     <span class="pill">Δ маржи -81</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">782 USD (41.2%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">701 USD (36.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -3125,19 +3180,20 @@ LIGHT</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">407 Техникс</span>
+    <span class="group-name">407 Техникс</span>
     <span class="pill">2 поз.</span>
     <span class="pill">продажа 1 860 USD</span>
     <span class="pill">маржа факт 848 USD (45.6%)</span>
     <span class="pill">Δ маржи -4</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">852 USD (45.8%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">848 USD (45.6%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">6.0 дн.</div><div class="muted">ок: в среднем 6.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">-10 639 RUB</div></div>
     </div>
@@ -3185,19 +3241,20 @@ LIGHT</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">ЮВТ</span>
+    <span class="group-name">ЮВТ</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 1 860 USD</span>
     <span class="pill">маржа факт 612 USD (32.9%)</span>
     <span class="pill">Δ маржи 0</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">612 USD (32.9%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">612 USD (32.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">13.0 дн.</div><div class="muted">ок: в среднем 13.0 дн. после отгрузки (норма ≤14)</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -3231,19 +3288,20 @@ LIGHT</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">VDT</span>
+    <span class="group-name">VDT</span>
     <span class="pill">2 поз.</span>
     <span class="pill">продажа 1 060 USD</span>
     <span class="pill">маржа факт 376 USD (35.5%)</span>
     <span class="pill">Δ маржи -47</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">424 USD (40.0%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">376 USD (35.5%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -3291,19 +3349,20 @@ LIGHT</div></td>
 </details>
 
 
-<details class="client">
+<details class="group">
   <summary>
-    <span class="client-name">Скайпро Техникс</span>
+    <span class="group-name">Скайпро Техникс</span>
     <span class="pill">1 поз.</span>
     <span class="pill">продажа 640 USD</span>
     <span class="pill">маржа факт 121 USD (18.9%)</span>
     <span class="pill">Δ маржи 0</span>
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     <div class="kpi-grid small">
       <div><div class="label">Маржа план</div><div class="value">121 USD (18.9%)</div></div>
       <div><div class="label">Маржа факт</div><div class="value">121 USD (18.9%)</div></div>
       <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
       <div><div class="label">Оплата после отгрузки</div><div class="value">— дн.</div><div class="muted">недостаточно данных по оплате после отгрузки</div></div>
       <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
     </div>
@@ -3337,10 +3396,2527 @@ LIGHT</div></td>
 </details>
 
 
+  <h2 id="suppliers">Поставщики</h2>
+  
+<details class="group">
+  <summary>
+    <span class="group-name">LUFTHANSA</span>
+    <span class="pill">46 поз.</span>
+    <span class="pill">продажа 3 445 469 USD</span>
+    <span class="pill">маржа факт 445 371 USD (12.9%)</span>
+    <span class="pill">Δ маржи -74 714</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">520 085 USD (15.1%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">445 371 USD (12.9%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">-58 695 648 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="flagged">
+  <td>110625101712</td>
+  <td>117025-03<div class="muted">GENERATOR, 13 MIN (3 PERSON) (V16827)</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">37 950</td>
+  <td class="num">9 829<div class="muted">25.9%</div></td>
+  <td class="num">9 153<div class="muted">24.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25102416123</td>
+  <td>1558M31G07<div class="muted">SPOOL ASSY CPRSR ROTOR</div></td>
+  <td>Смартавиа</td>
+  <td>nan</td>
+  <td class="num">427 000</td>
+  <td class="num">25 345<div class="muted">5.9%</div></td>
+  <td class="num">14 714<div class="muted">3.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>13012612450-4</td>
+  <td>BACB30LE5DK15<div class="muted">BOLT</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">464</td>
+  <td class="num">203<div class="muted">43.7%</div></td>
+  <td class="num">190<div class="muted">40.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">10</td>
+  <td class="num">53</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20112511180-2</td>
+  <td>EN6080D5-08<div class="muted">RIVET</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">519</td>
+  <td class="num">208<div class="muted">40.1%</div></td>
+  <td class="num">192<div class="muted">37.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">14</td>
+  <td class="num">59</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>5112518350-4</td>
+  <td>NSA5101-010<div class="muted">SLEEVE</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 240</td>
+  <td class="num">486<div class="muted">39.2%</div></td>
+  <td class="num">455<div class="muted">36.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">10</td>
+  <td class="num">142</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>12092514450-3</td>
+  <td>1864<div class="muted">BULB</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">693</td>
+  <td class="num">335<div class="muted">48.3%</div></td>
+  <td class="num">307<div class="muted">44.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">18</td>
+  <td class="num">230</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>27102516260-2</td>
+  <td>327<div class="muted">LAMP</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">522</td>
+  <td class="num">293<div class="muted">56.2%</div></td>
+  <td class="num">274<div class="muted">52.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">18</td>
+  <td class="num">173</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>9122515280-2</td>
+  <td>BAC27DHY0307<div class="muted">MARKER</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">510</td>
+  <td class="num">242<div class="muted">47.4%</div></td>
+  <td class="num">216<div class="muted">42.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">18</td>
+  <td class="num">-621</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21022515173</td>
+  <td>821043-1<div class="muted">GASKET</div></td>
+  <td>Северсталь</td>
+  <td>Постоплата 100%</td>
+  <td class="num">860</td>
+  <td class="num">184<div class="muted">21.4%</div></td>
+  <td class="num">169<div class="muted">19.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">32</td>
+  <td class="num">-1 153</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>2122514150-3</td>
+  <td>F017CWBCAC<div class="muted">LAMP-FLUOR</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">551</td>
+  <td class="num">298<div class="muted">54.2%</div></td>
+  <td class="num">281<div class="muted">51.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">34</td>
+  <td class="num">-775</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>30012611450-3</td>
+  <td>GR-098<div class="muted">GROMMET</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">609</td>
+  <td class="num">281<div class="muted">46.2%</div></td>
+  <td class="num">271<div class="muted">44.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">24</td>
+  <td class="num">-1 800</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>26122517256</td>
+  <td>1158000-45<div class="muted">VALVE-REFUEL</div></td>
+  <td>АК Сибирь</td>
+  <td>Постоплата 100%</td>
+  <td class="num">11 000</td>
+  <td class="num">1 428<div class="muted">13.0%</div></td>
+  <td class="num">1 325<div class="muted">12.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">35</td>
+  <td class="num">-7 324</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032616426</td>
+  <td>GW415-7125-9<div class="muted">BRAKE CONTROL UNIT (BCU)</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">550 000</td>
+  <td class="num">81 485<div class="muted">14.8%</div></td>
+  <td class="num">67 657<div class="muted">12.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">1</td>
+  <td class="num">-3 871 890</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ сложный поставщик: крупная курсовая сумма — проверьте</div></td>
+</tr>
+<tr class="flagged">
+  <td>19022611050-3</td>
+  <td>NAS7203-3<div class="muted">BOLT, CSK HD</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">2 400</td>
+  <td class="num">1 074<div class="muted">44.8%</div></td>
+  <td class="num">1 021<div class="muted">42.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20022611050-3</td>
+  <td>AN960-616L<div class="muted">WASHER, FLAT</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">597</td>
+  <td class="num">311<div class="muted">52.1%</div></td>
+  <td class="num">301<div class="muted">50.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25022612200-3</td>
+  <td>AN960-416L<div class="muted">WASHER</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Предоплата 100%</td>
+  <td class="num">1 100</td>
+  <td class="num">502<div class="muted">45.7%</div></td>
+  <td class="num">480<div class="muted">43.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3022611300-4</td>
+  <td>7552134<div class="muted">ELEMENT</div></td>
+  <td>UTG</td>
+  <td>Предоплата 100%</td>
+  <td class="num">700</td>
+  <td class="num">445<div class="muted">63.6%</div></td>
+  <td class="num">449<div class="muted">64.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>9GR405513-00<div class="muted">SEALING RING</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">320</td>
+  <td class="num">206<div class="muted">64.3%</div></td>
+  <td class="num">205<div class="muted">63.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>4032611050-3</td>
+  <td>M83461-1-050<div class="muted">PACKING, PREFORMED</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Предоплата 100%</td>
+  <td class="num">520</td>
+  <td class="num">234<div class="muted">45.0%</div></td>
+  <td class="num">230<div class="muted">44.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>5022613200-3</td>
+  <td>570-720-102<div class="muted">CABLE, UPLOCK</div></td>
+  <td>Ямал</td>
+  <td>Предоплата 100%</td>
+  <td class="num">2 450</td>
+  <td class="num">403<div class="muted">16.5%</div></td>
+  <td class="num">397<div class="muted">16.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>5022615100-4</td>
+  <td>QA06422<div class="muted">CARTRIDGE</div></td>
+  <td>UTG</td>
+  <td>Предоплата 100%</td>
+  <td class="num">590</td>
+  <td class="num">211<div class="muted">35.7%</div></td>
+  <td class="num">214<div class="muted">36.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>9022614100-3</td>
+  <td>AN3-4A<div class="muted">BOLT # BOLT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Постоплата 100%</td>
+  <td class="num">500</td>
+  <td class="num">297<div class="muted">59.5%</div></td>
+  <td class="num">289<div class="muted">57.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ итоговый платёж клиента раньше отгрузки</div></td>
+</tr>
+<tr class="flagged">
+  <td>9022614100-3</td>
+  <td>AN4-12<div class="muted">BOLT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Постоплата 100%</td>
+  <td class="num">560</td>
+  <td class="num">233<div class="muted">41.5%</div></td>
+  <td class="num">223<div class="muted">39.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ итоговый платёж клиента раньше отгрузки</div></td>
+</tr>
+<tr class="flagged">
+  <td>9022614100-3</td>
+  <td>AN4-12A<div class="muted">BOLT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Постоплата 100%</td>
+  <td class="num">504</td>
+  <td class="num">214<div class="muted">42.5%</div></td>
+  <td class="num">206<div class="muted">40.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ итоговый платёж клиента раньше отгрузки</div></td>
+</tr>
+<tr class="flagged">
+  <td>9022614100-3</td>
+  <td>AN4-14A<div class="muted">BOLT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Постоплата 100%</td>
+  <td class="num">512</td>
+  <td class="num">218<div class="muted">42.6%</div></td>
+  <td class="num">209<div class="muted">40.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ итоговый платёж клиента раньше отгрузки</div></td>
+</tr>
+<tr class="flagged">
+  <td>2032616160-3</td>
+  <td>928-1625-01<div class="muted">COVER PAINTED
+RED NAVIGATION
+LIGHT</div></td>
+  <td>4U Aircraft Technik</td>
+  <td>Предоплата 100%</td>
+  <td class="num">1 900</td>
+  <td class="num">782<div class="muted">41.2%</div></td>
+  <td class="num">701<div class="muted">36.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16022614050-2</td>
+  <td>NAS6203-2<div class="muted">BOLT</div></td>
+  <td>407 Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">460</td>
+  <td class="num">205<div class="muted">44.7%</div></td>
+  <td class="num">198<div class="muted">43.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">-2 631</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16022614050-2</td>
+  <td>QA06855<div class="muted">CARTRIDGE-FILTER</div></td>
+  <td>407 Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 400</td>
+  <td class="num">646<div class="muted">46.2%</div></td>
+  <td class="num">650<div class="muted">46.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">-8 008</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>26032612232</td>
+  <td>NAS1102E08-6<div class="muted">SCREW</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">360</td>
+  <td class="num">116<div class="muted">32.1%</div></td>
+  <td class="num">105<div class="muted">29.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">31</td>
+  <td class="num">-1 149</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16032618300-3</td>
+  <td>2873-400<div class="muted">SEAL</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">635</td>
+  <td class="num">275<div class="muted">43.3%</div></td>
+  <td class="num">265<div class="muted">41.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">-3 735</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16022611116</td>
+  <td>170080-00<div class="muted">RH</div></td>
+  <td>Глобал Скай</td>
+  <td>Постоплата 100%</td>
+  <td class="num">3 050</td>
+  <td class="num">1 110<div class="muted">36.4%</div></td>
+  <td class="num">490<div class="muted">16.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">33</td>
+  <td class="num">-6 934</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>30102514150-3</td>
+  <td>HL79-6<div class="muted">COLLAR</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 274</td>
+  <td class="num">651<div class="muted">51.1%</div></td>
+  <td class="num">625<div class="muted">49.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">9</td>
+  <td class="num">-6 616</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>43-1374<div class="muted">Bolt</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">3 840</td>
+  <td class="num">1 190<div class="muted">31.0%</div></td>
+  <td class="num">1 134<div class="muted">29.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>63-525<div class="muted">Nut self-Locking</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">8 840</td>
+  <td class="num">2 822<div class="muted">31.9%</div></td>
+  <td class="num">2 906<div class="muted">32.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>63-526<div class="muted">Nut</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">7 200</td>
+  <td class="num">2 304<div class="muted">32.0%</div></td>
+  <td class="num">2 338<div class="muted">32.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>A38041<div class="muted">Plate</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">4 600</td>
+  <td class="num">1 638<div class="muted">35.6%</div></td>
+  <td class="num">1 672<div class="muted">36.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>6022612173</td>
+  <td>6089T11G01<div class="muted">CF34-3B1, ENGINE ASSEMBLY</div></td>
+  <td>Северсталь</td>
+  <td>Частичная предоплата</td>
+  <td class="num">2 339 020</td>
+  <td class="num">380 260<div class="muted">16.3%</div></td>
+  <td class="num">333 377<div class="muted">14.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">14</td>
+  <td class="num">-54 406 307</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ сложный поставщик: крупная курсовая сумма — проверьте</div></td>
+</tr>
+<tr class="flagged">
+  <td>6022612293</td>
+  <td>C750-1<div class="muted">ENGINE STAND FOR CF34-3B1</div></td>
+  <td>Северсталь</td>
+  <td>Частичная предоплата</td>
+  <td class="num">9 000</td>
+  <td class="num">-379<div class="muted">-4.2%</div></td>
+  <td class="num">-1 754<div class="muted">-19.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">14</td>
+  <td class="num">-209 343</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>12032614302</td>
+  <td>137-00-370-01CC<div class="muted">ESCUTCHEON CLOSED</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">4 500</td>
+  <td class="num">-872<div class="muted">-19.4%</div></td>
+  <td class="num">-663<div class="muted">-14.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">24</td>
+  <td class="num">-135 809</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ курсы: большая разница (>25 RUB/USD)</div></td>
+</tr>
+<tr class="flagged">
+  <td>12032614302</td>
+  <td>BACB30LH3-4<div class="muted">BOLT</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">144</td>
+  <td class="num">69<div class="muted">47.9%</div></td>
+  <td class="num">34<div class="muted">23.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">24</td>
+  <td class="num">-3 988</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ курсы: большая разница (>25 RUB/USD)</div></td>
+</tr>
+<tr class="flagged">
+  <td>12032614302</td>
+  <td>BACB30LH3-4<div class="muted">BOLT</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">12</td>
+  <td class="num">-17<div class="muted">-143.0%</div></td>
+  <td class="num">-41<div class="muted">-341.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">24</td>
+  <td class="num">-332</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ курсы: большая разница (>25 RUB/USD)</div></td>
+</tr>
+<tr class="flagged">
+  <td>12032614302</td>
+  <td>BACB30LH3-4<div class="muted">BOLT</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">144</td>
+  <td class="num">69<div class="muted">47.9%</div></td>
+  <td class="num">34<div class="muted">23.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">24</td>
+  <td class="num">-3 988</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим<br>⚠ курсы: большая разница (>25 RUB/USD)</div></td>
+</tr>
+<tr class="flagged">
+  <td>16032610350-3</td>
+  <td>TA12800007-01<div class="muted">QUICK DISCONNECT W/B PW4000 CLAMP</div></td>
+  <td>Азур Эйр</td>
+  <td>Предоплата 100%</td>
+  <td class="num">4 600</td>
+  <td class="num">1 428<div class="muted">31.0%</div></td>
+  <td class="num">1 323<div class="muted">28.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20112510105</td>
+  <td>2602801<div class="muted">WASHER</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">418</td>
+  <td class="num">123<div class="muted">29.3%</div></td>
+  <td class="num">123<div class="muted">29.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">54</td>
+  <td class="num">-736</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>23102511302</td>
+  <td>A3295-1<div class="muted">ROD ASSY</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">7 000</td>
+  <td class="num">1 022<div class="muted">14.6%</div></td>
+  <td class="num">822<div class="muted">11.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">44</td>
+  <td class="num">-23 166</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25032615456</td>
+  <td>8ES360000-00<div class="muted">BATTERY PACK ELPS</div></td>
+  <td>ТАРП Авиэйшн</td>
+  <td>Предоплата 100%</td>
+  <td class="num">4 400</td>
+  <td class="num">1 675<div class="muted">38.1%</div></td>
+  <td class="num">1 606<div class="muted">36.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">IBERIA</span>
+    <span class="pill">22 поз.</span>
+    <span class="pill">продажа 838 800 USD</span>
+    <span class="pill">маржа факт 212 766 USD (25.4%)</span>
+    <span class="pill">Δ маржи 10 057</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">202 709 USD (24.2%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">212 766 USD (25.4%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">9.7 / 27.5</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">-1 762 869 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="">
+  <td>2032618163</td>
+  <td>8396-05-01 00:00:00<div class="muted">(HSTA) HORIZONTAL STABILIZER TRIM ACTUATOR</div></td>
+  <td>Северсталь</td>
+  <td>Постоплата 100%</td>
+  <td class="num">96 000</td>
+  <td class="num">18 690<div class="muted">19.5%</div></td>
+  <td class="num">22 317<div class="muted">23.2%</div></td>
+  <td class="num">2</td>
+  <td class="num">12</td>
+  <td class="num">17</td>
+  <td class="num">289 354</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20032616044</td>
+  <td>GT411-6001-9<div class="muted">PCU, MULTI FUNCTION SPOILER</div></td>
+  <td>Русджет</td>
+  <td>Постоплата 100%</td>
+  <td class="num">144 000</td>
+  <td class="num">39 014<div class="muted">27.1%</div></td>
+  <td class="num">40 134<div class="muted">27.9%</div></td>
+  <td class="num">3</td>
+  <td class="num">9</td>
+  <td class="num">5</td>
+  <td class="num">-614 722</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>5022611094</td>
+  <td>Z315H0170125<div class="muted">PSU</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">15 000</td>
+  <td class="num">4 082<div class="muted">27.2%</div></td>
+  <td class="num">4 071<div class="muted">27.1%</div></td>
+  <td class="num">34</td>
+  <td class="num">19</td>
+  <td class="num">10</td>
+  <td class="num">-6 529</td>
+  <td>—</td>
+</tr>
+<tr class="flagged">
+  <td>12112513595</td>
+  <td>2124M62P05<div class="muted">Fan-Fadec Cooling</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">51 000</td>
+  <td class="num">7 403<div class="muted">14.5%</div></td>
+  <td class="num">9 473<div class="muted">18.6%</div></td>
+  <td class="num">120</td>
+  <td class="num">-8</td>
+  <td class="num">43</td>
+  <td class="num">-195 503</td>
+  <td><div class='flags'>⚠ аномалия этапа 2: похоже на постоплату поставщику (отгрузка раньше оплаты)</div></td>
+</tr>
+<tr class="">
+  <td>20012614323</td>
+  <td>1716280A<div class="muted">SLAT SKEW SENSOR E190</div></td>
+  <td>ИКАР (Nordwind)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">5 700</td>
+  <td class="num">2 658<div class="muted">46.6%</div></td>
+  <td class="num">2 614<div class="muted">45.9%</div></td>
+  <td class="num">9</td>
+  <td class="num">37</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>26032615526</td>
+  <td>3822391-6<div class="muted">CENTRIFUGAL E/C COMPRESSOR ROTOR</div></td>
+  <td>АК Сибирь</td>
+  <td>Предоплата 100%</td>
+  <td class="num">86 100</td>
+  <td class="num">15 458<div class="muted">18.0%</div></td>
+  <td class="num">16 768<div class="muted">19.5%</div></td>
+  <td class="num">6</td>
+  <td class="num">19</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>18032618494</td>
+  <td>nan<div class="muted">SIDE WINDOW (RH)</div></td>
+  <td>Авексима Лимитед</td>
+  <td>Постоплата 100%</td>
+  <td class="num">70 000</td>
+  <td class="num">13 986<div class="muted">20.0%</div></td>
+  <td class="num">17 460<div class="muted">24.9%</div></td>
+  <td class="num">5</td>
+  <td class="num">24</td>
+  <td class="num">6</td>
+  <td class="num">-658 595</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20226091012</td>
+  <td>GMT4150-1<div class="muted">CLOCK</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">57 800</td>
+  <td class="num">13 544<div class="muted">23.4%</div></td>
+  <td class="num">14 744<div class="muted">25.5%</div></td>
+  <td class="num">11</td>
+  <td class="num">32</td>
+  <td class="num">36</td>
+  <td class="num">-150 182</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>2022611112</td>
+  <td>B03AA1040<div class="muted">DUAL DISTRIBUTOR VALVE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">27 900</td>
+  <td class="num">6 086<div class="muted">21.8%</div></td>
+  <td class="num">6 746<div class="muted">24.2%</div></td>
+  <td class="num">11</td>
+  <td class="num">23</td>
+  <td class="num">45</td>
+  <td class="num">-72 493</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>25022617504</td>
+  <td>7510300-901<div class="muted">ANTENNA, ADF</div></td>
+  <td>Авексима Лимитед</td>
+  <td>Частичная предоплата</td>
+  <td class="num">45 000</td>
+  <td class="num">13 820<div class="muted">30.7%</div></td>
+  <td class="num">14 276<div class="muted">31.7%</div></td>
+  <td class="num">4</td>
+  <td class="num">46</td>
+  <td class="num">5</td>
+  <td class="num">-120 776</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20022615002</td>
+  <td>B03AA1040<div class="muted">DUAL DISTRIBUTOR
+VALVE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">28 000</td>
+  <td class="num">2 004<div class="muted">7.2%</div></td>
+  <td class="num">2 114<div class="muted">7.6%</div></td>
+  <td class="num">0</td>
+  <td class="num">16</td>
+  <td class="num">39</td>
+  <td class="num">-59 424</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20022615002</td>
+  <td>B03AA1040<div class="muted">DUAL DISTRIBUTOR
+VALVE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">28 000</td>
+  <td class="num">6 598<div class="muted">23.6%</div></td>
+  <td class="num">4 548<div class="muted">16.2%</div></td>
+  <td class="num">5</td>
+  <td class="num">6</td>
+  <td class="num">44</td>
+  <td class="num">-73 074</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>5042615504</td>
+  <td>100-1084-02<div class="muted">BATTERY CHARGER</div></td>
+  <td>МБК-С</td>
+  <td>Предоплата 100%</td>
+  <td class="num">28 000</td>
+  <td class="num">10 736<div class="muted">38.3%</div></td>
+  <td class="num">10 256<div class="muted">36.6%</div></td>
+  <td class="num">3</td>
+  <td class="num">16</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>6032615004</td>
+  <td>755299D<div class="muted">ROTARY ACT LE SLAT</div></td>
+  <td>Азур Эйр</td>
+  <td>Предоплата 100%</td>
+  <td class="num">6 500</td>
+  <td class="num">4 004<div class="muted">61.6%</div></td>
+  <td class="num">3 524<div class="muted">54.2%</div></td>
+  <td class="num">4</td>
+  <td class="num">45</td>
+  <td class="num">—</td>
+  <td class="num">17 942</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>7042618194</td>
+  <td>10604B03M09<div class="muted">DAU</div></td>
+  <td>Русджет Техник</td>
+  <td>Предоплата 100%</td>
+  <td class="num">35 000</td>
+  <td class="num">14 200<div class="muted">40.6%</div></td>
+  <td class="num">13 720<div class="muted">39.2%</div></td>
+  <td class="num">3</td>
+  <td class="num">14</td>
+  <td class="num">—</td>
+  <td class="num">-91 070</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>16022611106</td>
+  <td>604-51086-59<div class="muted">PANEL ASSY</div></td>
+  <td>ТАРП Авиэйшн</td>
+  <td>Предоплата 100%</td>
+  <td class="num">29 300</td>
+  <td class="num">5 516<div class="muted">18.8%</div></td>
+  <td class="num">5 460<div class="muted">18.6%</div></td>
+  <td class="num">6</td>
+  <td class="num">46</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>17032618106</td>
+  <td>GC215-0103-5<div class="muted">MESH</div></td>
+  <td>ТАРП Авиэйшн</td>
+  <td>Предоплата 100%</td>
+  <td class="num">5 700</td>
+  <td class="num">2 320<div class="muted">40.7%</div></td>
+  <td class="num">2 264<div class="muted">39.7%</div></td>
+  <td class="num">5</td>
+  <td class="num">24</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="flagged">
+  <td>19022617304</td>
+  <td>90-0215-3<div class="muted">CONVERTER ASSY-MOTOR</div></td>
+  <td>Азур Эйр</td>
+  <td>Предоплата 100%</td>
+  <td class="num">7 200</td>
+  <td class="num">2 208<div class="muted">30.7%</div></td>
+  <td class="num">2 152<div class="muted">29.9%</div></td>
+  <td class="num">-41</td>
+  <td class="num">100</td>
+  <td class="num">—</td>
+  <td class="num">-10 435</td>
+  <td><div class='flags'>⚠ аномалия этапа 1: оплата поставщику раньше взятия в работу</div></td>
+</tr>
+<tr class="flagged">
+  <td>19032613224</td>
+  <td>GG436-2037-5<div class="muted">VALVE, HOT AIR SHUTOFF</div></td>
+  <td>Русджет Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">21 800</td>
+  <td class="num">5 888<div class="muted">27.0%</div></td>
+  <td class="num">5 832<div class="muted">26.8%</div></td>
+  <td class="num">4</td>
+  <td class="num">33</td>
+  <td class="num">—</td>
+  <td class="num">-66 224</td>
+  <td><div class='flags'>⚠ итоговый платёж клиента раньше отгрузки</div></td>
+</tr>
+<tr class="">
+  <td>24032618186</td>
+  <td>GM127-1901-147<div class="muted">SEAL</div></td>
+  <td>ТАРП Авиэйшн</td>
+  <td>Предоплата 100%</td>
+  <td class="num">4 800</td>
+  <td class="num">1 930<div class="muted">40.2%</div></td>
+  <td class="num">1 873<div class="muted">39.0%</div></td>
+  <td class="num">5</td>
+  <td class="num">24</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>13032615486</td>
+  <td>MLD20-508<div class="muted">Oxygen mask regulator</div></td>
+  <td>Тулпар Техник</td>
+  <td>Предоплата 100%</td>
+  <td class="num">17 000</td>
+  <td class="num">4 260<div class="muted">25.1%</div></td>
+  <td class="num">4 204<div class="muted">24.7%</div></td>
+  <td class="num">9</td>
+  <td class="num">24</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>10032618124</td>
+  <td>0856TT4<div class="muted">Probe air data pitot/static</div></td>
+  <td>Лилиенталь Джет</td>
+  <td>Предоплата 100%</td>
+  <td class="num">29 000</td>
+  <td class="num">8 304<div class="muted">28.6%</div></td>
+  <td class="num">8 216<div class="muted">28.3%</div></td>
+  <td class="num">5</td>
+  <td class="num">43</td>
+  <td class="num">—</td>
+  <td class="num">48 862</td>
+  <td>—</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">ФЭИ</span>
+    <span class="pill">13 поз.</span>
+    <span class="pill">продажа 241 971 USD</span>
+    <span class="pill">маржа факт 63 492 USD (26.2%)</span>
+    <span class="pill">Δ маржи -5 700</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">69 192 USD (28.6%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">63 492 USD (26.2%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="flagged">
+  <td>1042615386</td>
+  <td>GW415-7125-5<div class="muted">BRAKE CONTROL
+UNIT (BCU)</div></td>
+  <td>Биджет</td>
+  <td>Предоплата 100%</td>
+  <td class="num">217 500</td>
+  <td class="num">66 015<div class="muted">30.4%</div></td>
+  <td class="num">60 315<div class="muted">27.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>190326132712</td>
+  <td>5483-01-07 00:00:00<div class="muted">HANDSET, INTERPHONE</div></td>
+  <td>ЮВТ</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 860</td>
+  <td class="num">612<div class="muted">32.9%</div></td>
+  <td class="num">612<div class="muted">32.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">13</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>19032617210-2</td>
+  <td>ABS1510D200NN<div class="muted">LEAD-BONDING</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Постоплата 100%</td>
+  <td class="num">255</td>
+  <td class="num">202<div class="muted">79.1%</div></td>
+  <td class="num">202<div class="muted">79.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">13</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>23022612380-2</td>
+  <td>139-00-112-00<div class="muted">Holder baggage bar</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">540</td>
+  <td class="num">231<div class="muted">42.7%</div></td>
+  <td class="num">231<div class="muted">42.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">29</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>20032614570-4</td>
+  <td>NAS1102-3-14<div class="muted">SCREW</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">210</td>
+  <td class="num">191<div class="muted">91.1%</div></td>
+  <td class="num">191<div class="muted">91.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">17</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>23032612294</td>
+  <td>63600-105<div class="muted">LIFE VEST</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">270</td>
+  <td class="num">51<div class="muted">18.9%</div></td>
+  <td class="num">51<div class="muted">18.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">10</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>23032612294</td>
+  <td>63600-105<div class="muted">LIFE VEST</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">540</td>
+  <td class="num">321<div class="muted">59.4%</div></td>
+  <td class="num">321<div class="muted">59.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">10</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>25122515566</td>
+  <td>D1D1N56-050-160/050N<div class="muted">Piston cylinder</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 550</td>
+  <td class="num">1 020<div class="muted">65.8%</div></td>
+  <td class="num">1 020<div class="muted">65.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">68</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>12032618350-3</td>
+  <td>B14056-906<div class="muted">O-RING</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">106</td>
+  <td class="num">51<div class="muted">47.6%</div></td>
+  <td class="num">51<div class="muted">47.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">34</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>21042611234</td>
+  <td>NM102420-0200<div class="muted">V-CLAMP</div></td>
+  <td>Скайпро Техникс</td>
+  <td>nan</td>
+  <td class="num">640</td>
+  <td class="num">121<div class="muted">18.9%</div></td>
+  <td class="num">121<div class="muted">18.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>14042613294</td>
+  <td>M83536-2-024M<div class="muted">RELAY</div></td>
+  <td>Русджет Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 900</td>
+  <td class="num">600<div class="muted">31.6%</div></td>
+  <td class="num">600<div class="muted">31.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">13</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>30032616000-4</td>
+  <td>HST10AG5-4<div class="muted">Hi-Lite Pin 5/32 dia</div></td>
+  <td>Северсталь</td>
+  <td>Постоплата 100%</td>
+  <td class="num">200</td>
+  <td class="num">178<div class="muted">88.9%</div></td>
+  <td class="num">178<div class="muted">88.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">28</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+<tr class="flagged">
+  <td>10042613164</td>
+  <td>160366-2<div class="muted">OIL COOLER ASSY</div></td>
+  <td>Дримджет</td>
+  <td>Постоплата 100%</td>
+  <td class="num">16 400</td>
+  <td class="num">-400<div class="muted">-2.4%</div></td>
+  <td class="num">-400<div class="muted">-2.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">20</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">JET TECHNIC</span>
+    <span class="pill">18 поз.</span>
+    <span class="pill">продажа 218 449 USD</span>
+    <span class="pill">маржа факт 49 230 USD (22.5%)</span>
+    <span class="pill">Δ маржи -7 403</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">56 632 USD (25.9%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">49 230 USD (22.5%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">16.8 / 58.2</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">-271 227 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="">
+  <td>25112510454</td>
+  <td>35-1H5-1002<div class="muted">BRAKE TEMPERATURE MONITORING UNIT</div></td>
+  <td>Аэрофлот</td>
+  <td>Постоплата 100%</td>
+  <td class="num">18 500</td>
+  <td class="num">5 564<div class="muted">30.1%</div></td>
+  <td class="num">4 507<div class="muted">24.4%</div></td>
+  <td class="num">64</td>
+  <td class="num">54</td>
+  <td class="num">17</td>
+  <td class="num">32 419</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>18122515080-2</td>
+  <td>69-78188-15<div class="muted">HAT SECTION</div></td>
+  <td>Аэрофлот Техникс</td>
+  <td>Частичная предоплата</td>
+  <td class="num">13 500</td>
+  <td class="num">2 675<div class="muted">19.8%</div></td>
+  <td class="num">1 543<div class="muted">11.4%</div></td>
+  <td class="num">32</td>
+  <td class="num">58</td>
+  <td class="num">18</td>
+  <td class="num">12 991</td>
+  <td>—</td>
+</tr>
+<tr class="flagged">
+  <td>17122510526</td>
+  <td>4142T55P03<div class="muted">HARNESS - W7 AIRCRAFT (GRAY)</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">6 757</td>
+  <td class="num">1 857<div class="muted">27.5%</div></td>
+  <td class="num">1 500<div class="muted">22.2%</div></td>
+  <td class="num">-314</td>
+  <td class="num">407</td>
+  <td class="num">27</td>
+  <td class="num">-154 201</td>
+  <td><div class='flags'>⚠ аномалия этапа 1: оплата поставщику раньше взятия в работу<br>⚠ аномалия этапа 2: >365 дней</div></td>
+</tr>
+<tr class="flagged">
+  <td>2032616064</td>
+  <td>140N2624-1<div class="muted">COLLAR-HOLD OPEN LOCK</div></td>
+  <td>Азур Эйр</td>
+  <td>Предоплата 100%</td>
+  <td class="num">11 700</td>
+  <td class="num">3 124<div class="muted">26.7%</div></td>
+  <td class="num">3 180<div class="muted">27.2%</div></td>
+  <td class="num">-3</td>
+  <td class="num">35</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ аномалия этапа 1: оплата поставщику раньше взятия в работу</div></td>
+</tr>
+<tr class="">
+  <td>19112518235</td>
+  <td>A238101255-018<div class="muted">WASHBASIN ASSY</div></td>
+  <td>Ямал</td>
+  <td>Предоплата 100%</td>
+  <td class="num">8 300</td>
+  <td class="num">854<div class="muted">10.3%</div></td>
+  <td class="num">810<div class="muted">9.8%</div></td>
+  <td class="num">36</td>
+  <td class="num">102</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>22012611506</td>
+  <td>D8420423<div class="muted">HOSE, FLEX (.250 I/D X .375 O/D)</div></td>
+  <td>Тулпар Техник</td>
+  <td>Предоплата 100%</td>
+  <td class="num">2 000</td>
+  <td class="num">674<div class="muted">33.7%</div></td>
+  <td class="num">613<div class="muted">30.6%</div></td>
+  <td class="num">46</td>
+  <td class="num">40</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>6022614513</td>
+  <td>14330-230<div class="muted">VALVE ASSY-FLUSH</div></td>
+  <td>Смартавиа</td>
+  <td>Предоплата 100%</td>
+  <td class="num">5 800</td>
+  <td class="num">1 328<div class="muted">22.9%</div></td>
+  <td class="num">1 284<div class="muted">22.1%</div></td>
+  <td class="num">27</td>
+  <td class="num">40</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>6022614513</td>
+  <td>2100-1020-00<div class="muted">CVR SS # COCKPIT VOICE RECORDER-SO ST</div></td>
+  <td>Смартавиа</td>
+  <td>Предоплата 100%</td>
+  <td class="num">13 000</td>
+  <td class="num">2 360<div class="muted">18.2%</div></td>
+  <td class="num">2 816<div class="muted">21.7%</div></td>
+  <td class="num">34</td>
+  <td class="num">33</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>6022614513</td>
+  <td>3289562-5<div class="muted">VALVE-PRECOOLER</div></td>
+  <td>Смартавиа</td>
+  <td>Предоплата 100%</td>
+  <td class="num">11 800</td>
+  <td class="num">1 508<div class="muted">12.8%</div></td>
+  <td class="num">1 564<div class="muted">13.3%</div></td>
+  <td class="num">28</td>
+  <td class="num">39</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>22012610302</td>
+  <td>LA4E20608HM0100<div class="muted">MULTIFUNCTION COMPUTER</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">34 500</td>
+  <td class="num">6 419<div class="muted">18.6%</div></td>
+  <td class="num">6 389<div class="muted">18.5%</div></td>
+  <td class="num">25</td>
+  <td class="num">12</td>
+  <td class="num">53</td>
+  <td class="num">-89 862</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>2022614522</td>
+  <td>69-39465-20G​​​​​​​<div class="muted">1.1.9 GLAND NUT</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">4 000</td>
+  <td class="num">1 466<div class="muted">36.6%</div></td>
+  <td class="num">1 109<div class="muted">27.7%</div></td>
+  <td class="num">23</td>
+  <td class="num">23</td>
+  <td class="num">34</td>
+  <td class="num">-6 539</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>10122515446</td>
+  <td>3810949-1<div class="muted">DUCT</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">4 856</td>
+  <td class="num">1 216<div class="muted">25.0%</div></td>
+  <td class="num">1 181<div class="muted">24.3%</div></td>
+  <td class="num">89</td>
+  <td class="num">41</td>
+  <td class="num">5</td>
+  <td class="num">-20 954</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>24122512466</td>
+  <td>4110-200-3<div class="muted">CYLINDER, COMPOSITE</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">4 436</td>
+  <td class="num">1 108<div class="muted">25.0%</div></td>
+  <td class="num">1 064<div class="muted">24.0%</div></td>
+  <td class="num">77</td>
+  <td class="num">38</td>
+  <td class="num">6</td>
+  <td class="num">-17 321</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>23032615073</td>
+  <td>9541M89P01<div class="muted">BEARING, BALL THRUST</div></td>
+  <td>Смартавиа</td>
+  <td>Предоплата 100%</td>
+  <td class="num">13 400</td>
+  <td class="num">6 744<div class="muted">50.3%</div></td>
+  <td class="num">1 974<div class="muted">14.7%</div></td>
+  <td class="num">29</td>
+  <td class="num">6</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>4032616393</td>
+  <td>315A2800-1<div class="muted">ACTUATOR</div></td>
+  <td>Смартавиа</td>
+  <td>Предоплата 100%</td>
+  <td class="num">5 500</td>
+  <td class="num">1 668<div class="muted">30.3%</div></td>
+  <td class="num">1 611<div class="muted">29.3%</div></td>
+  <td class="num">19</td>
+  <td class="num">35</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>12032610353</td>
+  <td>3B41-3B<div class="muted">CONTROL UNIT-ELCU</div></td>
+  <td>Авиастар-ТУ</td>
+  <td>Предоплата 100%</td>
+  <td class="num">4 900</td>
+  <td class="num">740<div class="muted">15.1%</div></td>
+  <td class="num">652<div class="muted">13.3%</div></td>
+  <td class="num">11</td>
+  <td class="num">36</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>22042614016</td>
+  <td>822-1465-101<div class="muted">RECEIVER</div></td>
+  <td>ТАРП Авиэйшн</td>
+  <td>Постоплата 100%</td>
+  <td class="num">48 000</td>
+  <td class="num">14 763<div class="muted">30.8%</div></td>
+  <td class="num">14 868<div class="muted">31.0%</div></td>
+  <td class="num">0</td>
+  <td class="num">7</td>
+  <td class="num">0</td>
+  <td class="num">5 040</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>22122510000-2</td>
+  <td>CCR264CS-3-04<div class="muted">Rivet, Blind</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">7 500</td>
+  <td class="num">2 565<div class="muted">34.2%</div></td>
+  <td class="num">2 565<div class="muted">34.2%</div></td>
+  <td class="num">80</td>
+  <td class="num">41</td>
+  <td class="num">7</td>
+  <td class="num">-32 800</td>
+  <td>—</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">BLUE OCEAN SOLUTIONS</span>
+    <span class="pill">50 поз.</span>
+    <span class="pill">продажа 82 807 USD</span>
+    <span class="pill">маржа факт 26 491 USD (32.0%)</span>
+    <span class="pill">Δ маржи -994</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">27 485 USD (33.2%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">26 491 USD (32.0%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">-139 387 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="flagged">
+  <td>25122515566</td>
+  <td>2LA007182-22<div class="muted">Light,green,navigation,wing (DS 10)</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">3 500</td>
+  <td class="num">1 004<div class="muted">28.7%</div></td>
+  <td class="num">876<div class="muted">25.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">50</td>
+  <td class="num">-18 519</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25122515566</td>
+  <td>ASNA2520-3C<div class="muted">Clip</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 500</td>
+  <td class="num">585<div class="muted">39.0%</div></td>
+  <td class="num">538<div class="muted">35.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">15</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25122515566</td>
+  <td>GM127-1909-951<div class="muted">SEAL(LH)</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">4 200</td>
+  <td class="num">976<div class="muted">23.2%</div></td>
+  <td class="num">912<div class="muted">21.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">57</td>
+  <td class="num">-20 437</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25122515566</td>
+  <td>GM127-1909-952<div class="muted">SEAL(RH)</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">3 100</td>
+  <td class="num">708<div class="muted">22.8%</div></td>
+  <td class="num">659<div class="muted">21.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">68</td>
+  <td class="num">-18 672</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>15102513035</td>
+  <td>98F27201002000<div class="muted">Safety Pin-rudder</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">480</td>
+  <td class="num">205<div class="muted">42.8%</div></td>
+  <td class="num">205<div class="muted">42.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">62</td>
+  <td class="num">-2 837</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16022610400-3</td>
+  <td>NAS1100-06-7<div class="muted">SCREW</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">398</td>
+  <td class="num">227<div class="muted">56.9%</div></td>
+  <td class="num">214<div class="muted">53.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">16</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>16022610450-3</td>
+  <td>81673-28<div class="muted">STUD, TENSION</div></td>
+  <td>АК Сибирь</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 060</td>
+  <td class="num">255<div class="muted">24.1%</div></td>
+  <td class="num">228<div class="muted">21.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">19</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>18022611050-3</td>
+  <td>MS20659-161<div class="muted">TERMINAL LUG</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">2 300</td>
+  <td class="num">698<div class="muted">30.4%</div></td>
+  <td class="num">694<div class="muted">30.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>18022611200-3</td>
+  <td>NAS514P632-9<div class="muted">SCREW</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">340</td>
+  <td class="num">223<div class="muted">65.7%</div></td>
+  <td class="num">212<div class="muted">62.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">16</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>19012615390-2</td>
+  <td>CA3105-1032-6<div class="muted">Screw</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">340</td>
+  <td class="num">217<div class="muted">63.9%</div></td>
+  <td class="num">217<div class="muted">63.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">50</td>
+  <td class="num">-2 009</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>19022615500-3</td>
+  <td>14330-211<div class="muted">IDENTIFICATION LABEL</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">638</td>
+  <td class="num">274<div class="muted">42.9%</div></td>
+  <td class="num">245<div class="muted">38.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">19</td>
+  <td class="num">-3 770</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>19022615500-3</td>
+  <td>NSA5059-8<div class="muted">NUT</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">362</td>
+  <td class="num">258<div class="muted">71.3%</div></td>
+  <td class="num">247<div class="muted">68.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">16</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25112515450-3</td>
+  <td>14330-239<div class="muted">SCREW</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 966</td>
+  <td class="num">568<div class="muted">28.9%</div></td>
+  <td class="num">524<div class="muted">26.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">19</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>6012614200-3</td>
+  <td>CR7621S-05-03<div class="muted">RIVET</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">2 977</td>
+  <td class="num">1 105<div class="muted">37.1%</div></td>
+  <td class="num">1 089<div class="muted">36.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">9</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3022611300-4</td>
+  <td>BRH10A7<div class="muted">NUT</div></td>
+  <td>UTG</td>
+  <td>Предоплата 100%</td>
+  <td class="num">1 280</td>
+  <td class="num">490<div class="muted">38.2%</div></td>
+  <td class="num">445<div class="muted">34.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>27012616050-4</td>
+  <td>321-166-902-6<div class="muted">RETAINER - SEAL</div></td>
+  <td>VDT</td>
+  <td>Предоплата 100%</td>
+  <td class="num">740</td>
+  <td class="num">220<div class="muted">29.7%</div></td>
+  <td class="num">184<div class="muted">24.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>17032610350-3</td>
+  <td>D5281004321400<div class="muted">BUSHING</div></td>
+  <td>Ямал</td>
+  <td>Предоплата 100%</td>
+  <td class="num">710</td>
+  <td class="num">211<div class="muted">29.7%</div></td>
+  <td class="num">192<div class="muted">27.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>17032610550-3</td>
+  <td>ABS1830M6-17<div class="muted">BOLT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Предоплата 100%</td>
+  <td class="num">6 100</td>
+  <td class="num">1 940<div class="muted">31.8%</div></td>
+  <td class="num">1 846<div class="muted">30.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>25022612200-3</td>
+  <td>AS21919WCE06<div class="muted">CLAMP SUPPORT</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Предоплата 100%</td>
+  <td class="num">840</td>
+  <td class="num">228<div class="muted">27.2%</div></td>
+  <td class="num">207<div class="muted">24.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3032618000-4</td>
+  <td>63-525<div class="muted">Nut self-Locking</div></td>
+  <td>Компонентс (UTG)</td>
+  <td>Предоплата 100%</td>
+  <td class="num">1 560</td>
+  <td class="num">736<div class="muted">47.2%</div></td>
+  <td class="num">696<div class="muted">44.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>4022615400-4</td>
+  <td>29100A2140096V0<div class="muted">LAMP HOLDER</div></td>
+  <td>VDT</td>
+  <td>Предоплата 100%</td>
+  <td class="num">320</td>
+  <td class="num">204<div class="muted">63.6%</div></td>
+  <td class="num">193<div class="muted">60.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>4032610500-3</td>
+  <td>D65398<div class="muted">SPRING</div></td>
+  <td>Уральские Авиалинии</td>
+  <td>Предоплата 100%</td>
+  <td class="num">890</td>
+  <td class="num">214<div class="muted">24.0%</div></td>
+  <td class="num">184<div class="muted">20.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20022611050-3</td>
+  <td>NAS1203-13D<div class="muted">BOLT, FLAT HEAD, 100 CSK</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">760</td>
+  <td class="num">323<div class="muted">42.5%</div></td>
+  <td class="num">302<div class="muted">39.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>2032619040-3</td>
+  <td>J1128P42<div class="muted">SEAL RING-METAL</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">901</td>
+  <td class="num">298<div class="muted">33.0%</div></td>
+  <td class="num">281<div class="muted">31.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">4</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>4032612500-3</td>
+  <td>200695-1<div class="muted">SEAL, SLIPPER</div></td>
+  <td>Ираэро</td>
+  <td>Предоплата 100%</td>
+  <td class="num">3 440</td>
+  <td class="num">1 027<div class="muted">29.9%</div></td>
+  <td class="num">973<div class="muted">28.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>160126132012</td>
+  <td>BACS12HN3-8<div class="muted">SCREW</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">465</td>
+  <td class="num">-211<div class="muted">-45.4%</div></td>
+  <td class="num">-211<div class="muted">-45.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-3 198</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20012615445</td>
+  <td>3A035-0181<div class="muted">SLEEVE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">760</td>
+  <td class="num">375<div class="muted">49.4%</div></td>
+  <td class="num">375<div class="muted">49.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-5 226</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>20112516405</td>
+  <td>65C33970U35<div class="muted">COLLAR</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">650</td>
+  <td class="num">-317<div class="muted">-48.8%</div></td>
+  <td class="num">-317<div class="muted">-48.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">64</td>
+  <td class="num">-3 994</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21012612002</td>
+  <td>1012375-001<div class="muted">SPRING-LIT POCKET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">900</td>
+  <td class="num">318<div class="muted">35.3%</div></td>
+  <td class="num">318<div class="muted">35.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-6 189</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21012613432</td>
+  <td>A37040<div class="muted">BRACE</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">720</td>
+  <td class="num">293<div class="muted">40.6%</div></td>
+  <td class="num">293<div class="muted">40.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-4 951</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21012613432</td>
+  <td>TE096<div class="muted">TERMINAL RING</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">384</td>
+  <td class="num">272<div class="muted">70.8%</div></td>
+  <td class="num">272<div class="muted">70.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-2 641</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>291225090012</td>
+  <td>315A1583-2<div class="muted">SPRING</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 560</td>
+  <td class="num">-62<div class="muted">-4.0%</div></td>
+  <td class="num">-62<div class="muted">-4.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-10 728</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>5012615065</td>
+  <td>66-2396-1<div class="muted">GASKET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 340</td>
+  <td class="num">134<div class="muted">10.0%</div></td>
+  <td class="num">134<div class="muted">10.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">70</td>
+  <td class="num">-9 215</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>12022610250-3</td>
+  <td>APM2893358-101<div class="muted">CABLE ASSY</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">918</td>
+  <td class="num">294<div class="muted">32.0%</div></td>
+  <td class="num">260<div class="muted">28.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>26022610300-3</td>
+  <td>HST79CK-10<div class="muted">COLLAR</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 282</td>
+  <td class="num">367<div class="muted">28.6%</div></td>
+  <td class="num">320<div class="muted">25.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>17032610450-3</td>
+  <td>MS20426D6-10<div class="muted">RIVET</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">547</td>
+  <td class="num">248<div class="muted">45.3%</div></td>
+  <td class="num">231<div class="muted">42.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>19032618250-3</td>
+  <td>MS20470AD4-12<div class="muted">RIVET</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">434</td>
+  <td class="num">268<div class="muted">61.7%</div></td>
+  <td class="num">254<div class="muted">58.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">6</td>
+  <td class="num">301</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>23012611426</td>
+  <td>CVP-1723<div class="muted">MAT-SWITCH SIGNAL</div></td>
+  <td>Тулпар Техник</td>
+  <td>Предоплата 100%</td>
+  <td class="num">992</td>
+  <td class="num">-100<div class="muted">-10.1%</div></td>
+  <td class="num">-136<div class="muted">-13.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>140126105012</td>
+  <td>231-700055-00-3704<div class="muted">SCRIVET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">3 000</td>
+  <td class="num">1 066<div class="muted">35.5%</div></td>
+  <td class="num">1 066<div class="muted">35.5%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">66</td>
+  <td class="num">-80</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>140126105012</td>
+  <td>BAC27TLG0005<div class="muted">MARKER</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">810</td>
+  <td class="num">706<div class="muted">87.2%</div></td>
+  <td class="num">706<div class="muted">87.2%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">75</td>
+  <td class="num">-5 725</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>140126105012</td>
+  <td>BACJ40AB21-15<div class="muted">JUMPER ASSY</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">400</td>
+  <td class="num">296<div class="muted">74.0%</div></td>
+  <td class="num">296<div class="muted">74.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">75</td>
+  <td class="num">-2 827</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>151225083012</td>
+  <td>J221P179<div class="muted">PACKING</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 640</td>
+  <td class="num">575<div class="muted">35.1%</div></td>
+  <td class="num">575<div class="muted">35.1%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">103</td>
+  <td class="num">-4 043</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>151225083012</td>
+  <td>J221P977<div class="muted">PACKING</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">2 320</td>
+  <td class="num">985<div class="muted">42.4%</div></td>
+  <td class="num">985<div class="muted">42.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">103</td>
+  <td class="num">-5 720</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21012610402</td>
+  <td>NAS1921M05-03<div class="muted">RIVET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">456</td>
+  <td class="num">200<div class="muted">43.9%</div></td>
+  <td class="num">200<div class="muted">43.9%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">75</td>
+  <td class="num">-3 223</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>21012610402</td>
+  <td>NAS1921M05-09<div class="muted">RIVET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">264</td>
+  <td class="num">156<div class="muted">59.0%</div></td>
+  <td class="num">156<div class="muted">59.0%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">69</td>
+  <td class="num">-1 673</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>22012610400-3</td>
+  <td>NAS1149V0316M<div class="muted">WASHER, FLAT</div></td>
+  <td>S7 Engineering</td>
+  <td>Постоплата 100%</td>
+  <td class="num">591</td>
+  <td class="num">491<div class="muted">83.1%</div></td>
+  <td class="num">475<div class="muted">80.4%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">8</td>
+  <td class="num">-67</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>19022616002</td>
+  <td>BACN11G3A5CD<div class="muted">NUTPLATE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">312</td>
+  <td class="num">196<div class="muted">62.7%</div></td>
+  <td class="num">196<div class="muted">62.7%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">35</td>
+  <td class="num">14</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3022610162</td>
+  <td>411A4902-6<div class="muted">CLIP ASSY</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">800</td>
+  <td class="num">559<div class="muted">69.8%</div></td>
+  <td class="num">559<div class="muted">69.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">68</td>
+  <td class="num">-5 011</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3022610162</td>
+  <td>65-68269-33<div class="muted">ARM ASSY</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">16 260</td>
+  <td class="num">4 487<div class="muted">27.6%</div></td>
+  <td class="num">4 487<div class="muted">27.6%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">35</td>
+  <td class="num">743</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+<tr class="flagged">
+  <td>3022610162</td>
+  <td>9285-13<div class="muted">LATCH ASSY</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">4 300</td>
+  <td class="num">2 698<div class="muted">62.8%</div></td>
+  <td class="num">2 698<div class="muted">62.8%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">20</td>
+  <td class="num">312</td>
+  <td><div class='flags'>⚠ сложный поставщик (Lufthansa/Blue Ocean) — этапы 1/2 не делим</div></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">AERO 24/7</span>
+    <span class="pill">1 поз.</span>
+    <span class="pill">продажа 10 000 USD</span>
+    <span class="pill">маржа факт 1 419 USD (14.2%)</span>
+    <span class="pill">Δ маржи -452</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">1 871 USD (18.7%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">1 419 USD (14.2%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">63.0 / 56.0</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="">
+  <td>16122511036</td>
+  <td>52C52610A1<div class="muted">MANIFOLD CTROUND SPOILER</div></td>
+  <td>Тулпар Техник</td>
+  <td>Предоплата 100%</td>
+  <td class="num">10 000</td>
+  <td class="num">1 871<div class="muted">18.7%</div></td>
+  <td class="num">1 419<div class="muted">14.2%</div></td>
+  <td class="num">63</td>
+  <td class="num">56</td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td>—</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">PRIMUS AVIATION</span>
+    <span class="pill">10 поз.</span>
+    <span class="pill">продажа 9 532 USD</span>
+    <span class="pill">маржа факт 1 479 USD (15.5%)</span>
+    <span class="pill">Δ маржи 148</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">1 330 USD (14.0%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">1 479 USD (15.5%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">77.9 / 22.2</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">-14 286 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="">
+  <td>25122515566</td>
+  <td>B0818025-001<div class="muted">Static discharger</div></td>
+  <td>Тулпар Техник</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 200</td>
+  <td class="num">266<div class="muted">22.1%</div></td>
+  <td class="num">211<div class="muted">17.6%</div></td>
+  <td class="num">41</td>
+  <td class="num">27</td>
+  <td class="num">50</td>
+  <td class="num">-838</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>19092515455</td>
+  <td>ABS0951B3LM025<div class="muted">Switch-Pushbutton</div></td>
+  <td>Белавиа</td>
+  <td>Постоплата 100%</td>
+  <td class="num">1 350</td>
+  <td class="num">230<div class="muted">17.0%</div></td>
+  <td class="num">222<div class="muted">16.4%</div></td>
+  <td class="num">131</td>
+  <td class="num">35</td>
+  <td class="num">43</td>
+  <td class="num">-1 778</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>1122517542</td>
+  <td>2D2025-12<div class="muted">FILLER</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">760</td>
+  <td class="num">76<div class="muted">10.0%</div></td>
+  <td class="num">135<div class="muted">17.8%</div></td>
+  <td class="num">58</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 270</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>1122518055</td>
+  <td>3022383<div class="muted">SEAL, PLAIN</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 100</td>
+  <td class="num">48<div class="muted">4.4%</div></td>
+  <td class="num">135<div class="muted">12.3%</div></td>
+  <td class="num">58</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 838</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>14082515152</td>
+  <td>778000<div class="muted">FILTER</div></td>
+  <td>Utair</td>
+  <td>Постоплата 100%</td>
+  <td class="num">660</td>
+  <td class="num">193<div class="muted">29.2%</div></td>
+  <td class="num">213<div class="muted">32.3%</div></td>
+  <td class="num">167</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 103</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>181225120512</td>
+  <td>SP2510-00-7050<div class="muted">HEATER</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">930</td>
+  <td class="num">186<div class="muted">20.1%</div></td>
+  <td class="num">188<div class="muted">20.3%</div></td>
+  <td class="num">41</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 554</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20112510105</td>
+  <td>5002742<div class="muted">PLATE</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">1 560</td>
+  <td class="num">104<div class="muted">6.7%</div></td>
+  <td class="num">108<div class="muted">6.9%</div></td>
+  <td class="num">69</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-2 607</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>20112510105</td>
+  <td>81489<div class="muted">CABLE WITH A4M CONNECTOR</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">520</td>
+  <td class="num">157<div class="muted">30.2%</div></td>
+  <td class="num">186<div class="muted">35.7%</div></td>
+  <td class="num">69</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-869</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>28112512305</td>
+  <td>65C33161-2<div class="muted">GASKET</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">684</td>
+  <td class="num">86<div class="muted">12.6%</div></td>
+  <td class="num">99<div class="muted">14.4%</div></td>
+  <td class="num">61</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 143</td>
+  <td>—</td>
+</tr>
+<tr class="">
+  <td>6112517302</td>
+  <td>Q4681<div class="muted">LAMP</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">768</td>
+  <td class="num">-16<div class="muted">-2.1%</div></td>
+  <td class="num">-18<div class="muted">-2.4%</div></td>
+  <td class="num">84</td>
+  <td class="num">20</td>
+  <td class="num">72</td>
+  <td class="num">-1 284</td>
+  <td>—</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
+<details class="group">
+  <summary>
+    <span class="group-name">nan</span>
+    <span class="pill">1 поз.</span>
+    <span class="pill">продажа 980 USD</span>
+    <span class="pill">маржа факт 356 USD (36.3%)</span>
+    <span class="pill">Δ маржи 0</span>
+  </summary>
+  <div class="group-body">
+    <div class="kpi-grid small">
+      <div><div class="label">Маржа план</div><div class="value">356 USD (36.3%)</div></div>
+      <div><div class="label">Маржа факт</div><div class="value">356 USD (36.3%)</div></div>
+      <div><div class="label">Этап 1 / этап 2, дн.</div><div class="value">— / —</div></div>
+      
+      <div><div class="label">Курсовая разница</div><div class="value">0 RUB</div></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Счёт</th><th>P/N</th><th>Клиент</th><th>Тип оплаты</th>
+          <th>Продажа USD</th><th>Маржа план</th><th>Маржа факт</th>
+          <th>Этап 1</th><th>Этап 2</th><th>Оплата клиента</th><th>Курс. разница RUB</th><th>Заметки</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+<tr class="flagged">
+  <td>8042616062</td>
+  <td>16-0095-1<div class="muted">LENS</div></td>
+  <td>Utair</td>
+  <td>Частичная предоплата</td>
+  <td class="num">980</td>
+  <td class="num">356<div class="muted">36.3%</div></td>
+  <td class="num">356<div class="muted">36.3%</div></td>
+  <td class="num">—</td>
+  <td class="num">—</td>
+  <td class="num">21</td>
+  <td class="num">—</td>
+  <td><div class='flags'>⚠ нет даты оплаты поставщику — этапы 1/2 н/д</div></td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+
   
 
   <div class="footer">
-    Источник: ТАЗ · курсы USD ЦБ РФ (XML_daily) ·
+    FASTAIR · источник ТАЗ · курсы USD ЦБ РФ (XML_daily) ·
     этап1: взятие в работу → оплата поставщику; этап2: оплата поставщику → факт отгрузки
     (кроме Lufthansa / Blue Ocean). Курсовая разница только если оплата клиента позже оплаты поставщику:
     Q(оплата клиента USD) × (курс_клиента − курс_поставщика).
