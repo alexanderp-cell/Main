@@ -814,7 +814,7 @@ def write_weekly_summary_sheet(
     elif cute_comments and theme_name == "tropical_yacht":
         title.value = f"⛵ {sheet_title} — {client} · яхта в тропической бухте"
     elif cute_comments and theme_name == "bmw_night":
-        title.value = f"🚗 {sheet_title} — {client} · BMW 8 Series · ночной город"
+        title.value = f"🚗 {sheet_title} — {client} · BMW 8 · набережная Казани · кальянная"
     elif cute_comments:
         title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
@@ -866,11 +866,11 @@ def write_weekly_summary_sheet(
         subtitle.value = f"{subtitle.value}  ·  {epi}"
     elif cute_comments and theme_name == "bmw_night":
         epigraphs = [
-            "BMW 8 Series у реки — и неделя, которая едет на высокой передаче",
-            "огни города в лужах, фары в ночи, цифры без пробок",
-            "ночной город не прощает суеты: считаем спокойно, как шофёр класса люкс",
-            "сапфировый кузов, отражения в воде, отчёт на cruise control",
-            "богатый тон недели: тёмно-синий, неон и лёгкий запах ночного асфальта",
+            "восьмёрка на кремлёвской набережной — и кальян, который никто не тушит",
+            "Куул-Шариф в отражениях, угли тлеют, цифры без суеты",
+            "Казань ночью: фары, дым и спокойный круиз-контроль",
+            "сапфировый кузов, яблоко-мята, отчёт не спешит",
+            "богатый тон недели: тёмно-синий лак, янтарь кальяна и Волга",
         ]
         epi = epigraphs[
             int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
@@ -924,7 +924,7 @@ def write_weekly_summary_sheet(
             }
         elif theme_name == "bmw_night":
             mood_cards = build_bmw_mood_cards(summary, client)
-            cycle = [BMW8, BMW_RIVER, BMW_LIGHTS]
+            cycle = [BMW8, BMW_HOOKAH, BMW_RIVER, BMW_LIGHTS]
             seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
             mood_images = {
                 "Новые заказы": cycle[seed % len(cycle)],
@@ -1019,6 +1019,8 @@ def write_weekly_summary_sheet(
                 theme_name=theme_name,
             )
             row = max(row, section_start + 6)
+            if theme_name == "bmw_night":
+                row = max(row, section_start + 9)
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
     note = ws.cell(row, 1)
@@ -1034,7 +1036,7 @@ def write_weekly_summary_sheet(
     elif cute_comments and theme_name == "tropical_yacht":
         note.value += "  ·  справа — тост за неделю на палубе яхты ⛵"
     elif cute_comments and theme_name == "bmw_night":
-        note.value += "  ·  справа — тост за неделю у ночной реки 🚗"
+        note.value += "  ·  справа — тост за неделю: BMW на набережной Казани и кальянная 🚗"
     elif cute_comments:
         note.value += "  ·  комментарии справа — нежное резюме недели ♡"
     _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
@@ -1437,8 +1439,10 @@ YACHT_BAY = ASSETS_DIR / "yacht-bay-small.jpg"
 YACHT_CHAMPAGNE = ASSETS_DIR / "yacht-champagne-small.jpg"
 BMW_BANNER = ASSETS_DIR / "bmw-banner-wide.jpg"
 BMW8 = ASSETS_DIR / "bmw8-small.jpg"
-BMW_RIVER = ASSETS_DIR / "bmw-river-small.jpg"
+BMW_RIVER = ASSETS_DIR / "bmw-kazan-small.jpg"
 BMW_LIGHTS = ASSETS_DIR / "bmw-lights-small.jpg"
+BMW_HOOKAH = ASSETS_DIR / "bmw-hookah-small.jpg"
+BMW_PROMENADE = ASSETS_DIR / "bmw-promenade.jpg"
 
 
 def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
@@ -2271,25 +2275,235 @@ def build_yacht_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
 
 
 def build_bmw_mood_cards(summary: WeeklySummary, client: str) -> dict[str, dict[str, str]]:
-    """BMW 8 Series / night city by the river — narrative cards."""
-    pairs = [
-        ("♦", "🚗"),
-        ("Ferrari 250 GTO", "BMW 8 Series"),
-        ("250 GTO", "восьмёрка"),
-        ("Monte-Carlo", "ночном городе"),
-        ("Place du Casino", "набережной у реки"),
-        ("казино", "набережной"),
-        ("Казино", "Набережной"),
-        ("рулетк", "поворот"),
-        ("Grand Prix", "Night Drive"),
-        ("🏎️", "🚗"),
-        ("🔴", "💙"),
-        ("блеф", "пробка"),
-        ("дилер", "шофёр"),
-        ("♠️", "🌃"),
-        ("Аэрофлот", client),
-    ]
-    return _remap_mood_cards(build_montecarlo_mood_cards(summary), pairs)
+    """BMW 8 Series on Kazan embankment + hookah lounge — original weekly copy."""
+    cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
+    if new.count == 0:
+        options = [
+            (
+                "🌙 Тихий круг у Кремля",
+                f"За {period} новых заказов нет. Восьмёрка остывает на набережной, "
+                "кальян тлеет сам по себе — иногда люкс в том, чтобы просто стоять и светиться ✨",
+            ),
+            (
+                "🫧 Антракт в кальянной",
+                "Продажи молчат, как зал между сетами. Не тушим угли — "
+                "ждём следующую волну с Казанки 🚗",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|sales|empty", options)
+    elif max_amount >= 30000 or new.total >= 150000:
+        options = [
+            (
+                "🚗 Ночной заезд на Казанку",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда вечера — «{top_desc}» на {max_m} USD. "
+                "Куул-Шариф кивает минаретами, фары BMW отвечают ✨",
+            ),
+            (
+                "💨 Дым пошёл густой",
+                f"{new.count} заказов на {money} USD. Средний чек ~{avg_m}. "
+                "Это уже не разогрев углей — это полный зал кальянной на набережной 🔥",
+            ),
+            (
+                "🔑 Ключ от восьмёрки",
+                f"Неделя класса night drive: {money} USD"
+                + (f", микс {mix}" if mix else "")
+                + f". «{top_desc}» блестит, как лак на капоте у Кремля 💙",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|sales|big", options)
+    elif max_amount < 5000 and new.total < 25000:
+        options = [
+            (
+                "🍃 Лёгкая затяжка",
+                f"Аккуратные {new.count} поз. на {money} USD. "
+                "В кальянной уважают и короткий сет — если он ровный и без гари ✨",
+            ),
+            (
+                "💙 Купе наполовину",
+                f"Чек скромный (~{avg_m} USD), зато живой. "
+                f"За {period} — {money} USD. Не гонка, а прогрев перед кругом по набережной 🚗",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|sales|small", options)
+    else:
+        options = [
+            (
+                "🌃 Круиз вдоль Кремля",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Ровный ход, янтарь кальяна, без лишнего шума 🚗",
+            ),
+            (
+                "🔥 Угли в норме",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · {mix}." if mix else ".")
+                + f" Не дрифт и не простой — уверенный night drive {client} ✨",
+            ),
+            (
+                "💙 Сапфир недели",
+                f"{new.count} заказов, {money} USD, средний чек ~{avg_m}. "
+                "Именно такой тон любит восьмёрка у Казанки: богатство без крика 🚗",
+            ),
+            (
+                "✨ Фары на Куул-Шариф",
+                f"За неделю {money} USD. Самый яркий блик — «{top_desc}». "
+                f"{client} держит курс вдоль кремлёвской набережной 💙",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
+    if shipped.count == 0:
+        options = [
+            (
+                "🛋️ Кальянная ещё пустая",
+                "FINISHED-отгрузок за период нет. SHIPPED гуляет по набережной как «в работе» — "
+                "по правилам салона. Восьмёрка ждёт у Кремля ✨",
+            ),
+            (
+                "🌙 Пауза у реки",
+                "Пока без finished-отгрузок. Казань умеет ждать красиво — "
+                "угли тлеют, Волга не торопится 🚗",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|ship|empty", options)
+    elif shipped.count and late / shipped.count >= 0.5:
+        options = [
+            (
+                "🌫️ Дым подольше обычного",
+                f"Из {shipped.count} finished-отгрузок ({ship_money} USD) "
+                f"с опозданием {late}"
+                + (f", в среднем ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Даже BMW иногда стоит в пробке на набережной. "
+                "Главное — доехать с достоинством 🫶",
+            ),
+            (
+                "🛟 Спокойно, кальян не гаснет",
+                f"{late} из {shipped.count} позже плана, на {ship_money} USD всё равно у клиента. "
+                "Не дёргаем ручник — поднимаем шланг за терпение 💨",
+            ),
+            (
+                "🌧️ Мокрый камень Казанки",
+                f"График гуляет, плитка блестит: {shipped.count} поз. на {ship_money} USD. "
+                "Лучше опоздать роскошно, чем спешить дёшево ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|ship|late", options)
+    elif early > late:
+        options = [
+            (
+                "🏁 Быстрее дыма!",
+                f"Досрочно {early} из {shipped.count}, в срок {on_time}. "
+                "Неделя как пустая набережная ночью — чистый кайф, фары в пол 🚗✨",
+            ),
+            (
+                "💨 Ранний сет",
+                f"{early} позиций раньше срока, отгружено на {ship_money} USD. "
+                "Хозяин кальянной кивает: красивая комбинация 🔥",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|ship|early", options)
+    else:
+        options = [
+            (
+                "🚶 Ровный круг у Кремля",
+                f"FINISHED: {shipped.count} поз. на {ship_money} USD "
+                f"(рано {early} / вовремя {on_time} / позже {late}). "
+                "Богатый, спокойный ритм — фирменный стиль ночной Казани 🚗",
+            ),
+            (
+                "🔥 Тост за логистику night drive",
+                f"{shipped.count} отгрузок за {period} на {ship_money} USD. "
+                "Без драмы, с отражениями в Казанке. Иногда лучший комментарий — «поехали» ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
+
+    paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
+    if paid.count == 0 or paid.total <= 0:
+        options = [
+            (
+                "🫧 Касса на паузе",
+                "Платежей за период нет. Не грустим: даже в кальянной "
+                "сначала разжигают угли, потом считают вечер 🔥",
+            ),
+            (
+                "🌙 Тишина на набережной",
+                "Пока без оплат. Смотрим на Куул-Шариф и верим, "
+                "что следующий перевод приедет на восьмёрке ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|pay|empty", options)
+    elif paid.total >= 100000:
+        options = [
+            (
+                "💎 Касса как полный зал",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший ~{_fmt_money(max_pay)}). "
+                "Это тот самый густой дым, когда вечер уже наш 🔥🚗",
+            ),
+            (
+                "🚗 Банк на высокой передаче",
+                f"{paid_money} USD — ночь полностью наша. "
+                f"{paid.count} платежей, и каждый блестит как лак BMW. Спасибо, {client} ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|pay|big", options)
+    else:
+        options = [
+            (
+                "💨 Ещё по затяжке",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Не фейерверк — зато честный, янтарный приход. Касса довольна 💙",
+            ),
+            (
+                "💳 Мягкий приход к столу",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Хозяин кальянной кивает: движение есть 🔥",
+            ),
+            (
+                "🔑 Ключ от кассы",
+                f"Пришло {paid_money} USD. Самый заметный платёж: {_fmt_money(max_pay)} USD. "
+                f"Спасибо {client} — ночной круг сыграл красиво ✨",
+            ),
+            (
+                "💙 Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, BMW у набережной, угли горячие 🚗🔥",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|bmw|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
+    return cards
 
 
 def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
@@ -2333,26 +2547,36 @@ def _write_mood_card(
         cream = PatternFill("solid", fgColor="F8EED9")
         body_font = Font(name="Calibri", size=10, color="3B0A14")
         title_font = Font(name="Georgia", size=12, bold=True, color="F4E7D8")
+        img_size = 78
+        img_col = "S"
     elif theme_name == "como_prosecco":
         title_fill = PatternFill("solid", fgColor="E8F2F4")
         cream = PatternFill("solid", fgColor="FBF4EA")
         body_font = Font(name="Calibri", size=10, color="4A5D6A")
         title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
+        img_size = 78
+        img_col = "S"
     elif theme_name == "tropical_yacht":
         title_fill = PatternFill("solid", fgColor="0B3D4C")
         cream = PatternFill("solid", fgColor="FBF3E0")
         body_font = Font(name="Calibri", size=10, color="0B3D4C")
         title_font = Font(name="Georgia", size=12, bold=True, color="E0F4F7")
+        img_size = 78
+        img_col = "S"
     elif theme_name == "bmw_night":
         title_fill = PatternFill("solid", fgColor="0D1B2A")
         cream = PatternFill("solid", fgColor="E8EDFA")
         body_font = Font(name="Calibri", size=10, color="0D1B2A")
         title_font = Font(name="Georgia", size=12, bold=True, color="E8EEF4")
+        img_size = 118
+        img_col = "T"
     else:
         title_fill = PatternFill("solid", fgColor="F3EAF8")
         cream = PatternFill("solid", fgColor="FFF8F2")
         body_font = Font(name="Calibri", size=10, color="6B5B7A")
         title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
+        img_size = 78
+        img_col = "S"
 
     title_cell = ws.cell(start_row, col_start)
     title_cell.value = card["title"]
@@ -2369,7 +2593,13 @@ def _write_mood_card(
         _style_cell(ws.cell(start_row, c), fill=title_fill, border=BORDER_THIN)
 
     body_row = start_row + 1
-    ws.merge_cells(start_row=body_row, start_column=col_start, end_row=body_row + 4, end_column=col_start + 3)
+    body_span = 6 if theme_name == "bmw_night" else 4
+    ws.merge_cells(
+        start_row=body_row,
+        start_column=col_start,
+        end_row=body_row + body_span,
+        end_column=col_start + 3,
+    )
     body_cell = ws.cell(body_row, col_start)
     body_cell.value = card["body"]
     _style_cell(
@@ -2379,27 +2609,35 @@ def _write_mood_card(
         alignment=Alignment(horizontal="left", vertical="top", wrap_text=True),
         border=BORDER_THIN,
     )
-    for r in range(body_row, body_row + 5):
+    for r in range(body_row, body_row + body_span + 1):
         for c in range(col_start, col_start + 4):
             if r == body_row and c == col_start:
                 continue
             _style_cell(ws.cell(r, c), fill=cream, border=BORDER_THIN)
         ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 20)
 
-    for letter, width in (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14)):
-        ws.column_dimensions[letter].width = width
+    for letter, width in (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 18), ("U", 4)):
+        ws.column_dimensions[letter].width = max(ws.column_dimensions[letter].width or 0, width)
 
-    _add_image(ws, image_path, f"S{start_row}", width=78, height=78)
+    _add_image(ws, image_path, f"{img_col}{start_row}", width=img_size, height=img_size)
 
 
 def _add_image(ws, path: Path, anchor: str, width: int | None = None, height: int | None = None) -> None:
     if not path.exists():
         return
     img = XLImage(str(path))
-    if width is not None:
+    native_w, native_h = img.width, img.height
+    if width is not None and height is not None and native_w and native_h:
+        # Keep native aspect ratio: fit inside the requested box instead of stretching.
+        scale = min(width / native_w, height / native_h)
+        img.width = max(1, int(native_w * scale))
+        img.height = max(1, int(native_h * scale))
+    elif width is not None and native_w:
         img.width = width
-    if height is not None:
+        img.height = max(1, int(native_h * width / native_w)) if native_h else width
+    elif height is not None and native_h:
         img.height = height
+        img.width = max(1, int(native_w * height / native_h)) if native_w else height
     ws.add_image(img, anchor)
 
 
@@ -2849,22 +3087,22 @@ def decorate_yacht_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
 def bmw_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
     options = [
         (
-            "BMW 8 Series у ночной реки: сапфир, неон и отражения в воде — "
+            "BMW 8 Series на кремлёвской набережной Казани: сапфир, Куул-Шариф и лёгкий дым кальяна — "
             "тот же люкс, только в отчёте по заказам 🚗"
         ),
         (
-            f"сегодня на набережной — статус {report_date.strftime('%d.%m')}: "
-            f"{in_work} в работе, {shipped} finished-отгрузок. круиз-контроль включён ✨"
+            f"сегодня у Казанки — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. угли горят, круиз-контроль включён ✨"
         ),
         (
-            "не тормозим на цифрах — держим курс на ясность, терпение и ночной стиль 🌃"
+            "не тормозим на цифрах — держим курс на ясность, терпение и ночной казанский стиль 🌃"
         ),
         (
-            "SHIPPED едет по городу как «в работе»; FINISHED — уже на парковке у реки 🚗"
+            "SHIPPED едет по набережной как «в работе»; FINISHED — уже в кальянной у реки 🚗"
         ),
         (
-            "инструкция шофёра: смотреть кассу без суеты, "
-            "хвалить команду, не терять блеск фар в лужах ✨"
+            "инструкция night drive: смотреть кассу без суеты, "
+            "хвалить команду, не тушить кальян раньше времени 🔥"
         ),
     ]
     digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
@@ -2883,7 +3121,7 @@ def write_bmw_cover_sheet(
     silver = PatternFill("solid", fgColor="E8EDFA")
     navy = PatternFill("solid", fgColor="0D1B2A")
     mist = PatternFill("solid", fgColor="E8EEF4")
-    for row in range(1, 44):
+    for row in range(1, 48):
         ws.row_dimensions[row].height = 18
         for col in range(1, 15):
             cell = ws.cell(row, col)
@@ -2909,7 +3147,7 @@ def write_bmw_cover_sheet(
 
     ws.merge_cells("A3:N3")
     subtitle = ws["A3"]
-    subtitle.value = "BMW 8 Series · ночной город · река · weekly night drive status"
+    subtitle.value = "BMW 8 Series · набережная Казани · кальянная · weekly night drive"
     _style_cell(
         subtitle,
         font=Font(name="Georgia", size=13, italic=True, color="5C7AEA"),
@@ -2930,15 +3168,16 @@ def write_bmw_cover_sheet(
         alignment=Alignment(horizontal="center", vertical="center"),
     )
 
-    _add_image(ws, BMW_BANNER, "B6", width=720, height=400)
-    _add_image(ws, BMW8, "L6", width=130, height=130)
-    _add_image(ws, BMW_LIGHTS, "L14", width=110, height=110)
-    _add_image(ws, BMW_RIVER, "B24", width=520, height=280)
-    _add_image(ws, BMW8, "J24", width=120, height=120)
-    _add_image(ws, BMW_LIGHTS, "L24", width=120, height=120)
+    # Banner keeps 16:9; thumbs stay square — no stretch.
+    _add_image(ws, BMW_BANNER, "B6", width=720, height=405)
+    _add_image(ws, BMW8, "L6", width=140, height=140)
+    _add_image(ws, BMW_HOOKAH, "L14", width=120, height=120)
+    _add_image(ws, BMW_PROMENADE, "B25", width=520, height=300)
+    _add_image(ws, BMW_RIVER, "J25", width=130, height=130)
+    _add_image(ws, BMW_LIGHTS, "L25", width=130, height=130)
 
-    ws.merge_cells("A38:I41")
-    note = ws["A38"]
+    ws.merge_cells("A42:I45")
+    note = ws["A42"]
     note.value = bmw_cover_epigraph(report_date, in_work_count, shipped_count)
     _style_cell(
         note,
@@ -2946,29 +3185,21 @@ def write_bmw_cover_sheet(
         fill=PatternFill("solid", fgColor="1B3A5C"),
         alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
     )
-    for r in (38, 39, 40, 41):
+    for r in (42, 43, 44, 45):
         ws.row_dimensions[r].height = 20
 
 
 def decorate_bmw_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
     if "Total" in wb.sheetnames:
         _add_image(wb["Total"], BMW8, "I1", width=110, height=110)
-        _add_image(wb["Total"], BMW_LIGHTS, "K1", width=72, height=72)
-    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
-        ws = wb[summary_sheet_name]
-        _add_image(ws, BMW8, "L1", width=92, height=92)
-        _add_image(ws, BMW_RIVER, "M1", width=72, height=72)
-        _add_image(ws, BMW_LIGHTS, "T4", width=88, height=88)
-        _add_image(ws, BMW8, "T20", width=88, height=88)
-        _add_image(ws, BMW_RIVER, "T36", width=80, height=80)
-        ws.column_dimensions["T"].width = 14
-        ws.column_dimensions["U"].width = 12
+        _add_image(wb["Total"], BMW_HOOKAH, "K1", width=88, height=88)
+    # Summary: do not pin extra images to T-column — mood cards already live there.
     if "В работе" in wb.sheetnames:
-        _add_image(wb["В работе"], BMW_RIVER, "AT1", width=78, height=78)
-        _add_image(wb["В работе"], BMW_LIGHTS, "AV1", width=64, height=64)
+        _add_image(wb["В работе"], BMW_HOOKAH, "AT1", width=96, height=96)
+        _add_image(wb["В работе"], BMW_RIVER, "AV1", width=80, height=80)
     if "Отгружено" in wb.sheetnames:
-        _add_image(wb["Отгружено"], BMW8, "AT1", width=78, height=78)
-        _add_image(wb["Отгружено"], BMW_LIGHTS, "AV1", width=64, height=64)
+        _add_image(wb["Отгружено"], BMW8, "AT1", width=96, height=96)
+        _add_image(wb["Отгружено"], BMW_LIGHTS, "AV1", width=80, height=80)
 
 
 def generate_report(
