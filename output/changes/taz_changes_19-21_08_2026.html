@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<title>Изменения ТАЗ — 21.08.2026</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#ffffff; --ink:#202020; --muted:#4c4c4c;
+  --navy:#022f40; --cyan:#d5fbff; --orange:#fe621d; --line:#c4c4c4;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 160px, var(--bg) 160px);
+  line-height:1.45;
+}
+.wrap { max-width:1200px; margin:0 auto; padding:28px 20px 64px; }
+.brand { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff; margin-bottom:18px; }
+.brand-mark { font-size:13px; letter-spacing:.12em; text-transform:uppercase; background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700; }
+h1 { font-size:30px; margin:0 0 6px; color:#fff; font-weight:700; }
+.sub { color:#d5fbff; margin-bottom:18px; font-size:14px; }
+h2 { font-size:20px; margin:28px 0 12px; color:var(--navy); }
+h3 { font-size:16px; margin:18px 0 10px; color:var(--navy); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px; }
+.kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:12px 0 18px; }
+.kpi-grid > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:20px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; color:var(--navy); }
+.muted { color:#757575; font-size:12px; margin-top:4px; }
+.trouble-block { border:2px solid var(--orange); border-radius:10px; padding:16px; background:#fff9f5; margin:20px 0; }
+.trouble-block h2 { margin-top:0; color:#b3470f; }
+details.group { background:var(--card); border:1px solid var(--line); border-radius:8px; margin:10px 0; overflow:hidden; }
+details.group summary { cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:linear-gradient(90deg,#022f40 0%,#022f40 12px,#fff 12px); }
+details.group summary::-webkit-details-marker { display:none; }
+.group-name { font-weight:700; font-size:15px; margin-right:auto; color:var(--navy); padding-left:8px; }
+.pill { font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy); border-radius:4px; padding:4px 10px; font-weight:700; }
+.pill.warn { background:#ffe8d9; border-color:#ffc4a3; color:#b3470f; }
+.pill.ok { background:#e6f7ea; border-color:#b8e6c1; color:#1f6b32; }
+.group-body { padding:0 14px 16px; border-top:1px solid var(--line); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
+th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.pos { color:#1f6b32; } .neg { color:#c0392b; }
+.footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
+@media (max-width:900px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">TAZ changes report</div></div>
+  <h1>Изменения статусов ТАЗ</h1>
+  <div class="sub">Период 19.08.2026 → 21.08.2026 (2 дн.) · сравнение двух выгрузок · даты отмены/гарантии/TROUBLE — по косвенным признакам</div>
+
+  <section class="card">
+    <h2 style="margin-top:0">Сводка периода</h2>
+    <div class="kpi-grid">
+      <div><div class="label">Отмены</div><div class="value">14</div></div>
+      <div><div class="label">Возвраты</div><div class="value">7</div></div>
+      <div><div class="label">Гарантии (новые)</div><div class="value">0</div></div>
+      <div><div class="label">TROUBLE сейчас / события</div><div class="value">85</div></div>
+    </div>
+    <p class="muted">Отмена за период: было NOT PAID / PAID / TROUBLE → стало CANCELLED или REFUND.
+    Гарантия: те же исходные статусы → WARRANTY.
+    Точной даты в ТАЗ нет — фиксируем факт между двумя снимками.</p>
+  </section>
+
+  <section class="trouble-block">
+    <h2>TROUBLE — проблемные заказы</h2>
+    <p class="muted">TROUBLE ставится при сбое по заказу (EXP: кол-во/ед. изм.; ROTABLE: замена юнита).
+    Длительность считается по разнице снимков: если в обоих TROUBLE — минимум 2 дн.;
+    если вошёл/вышел за период — от 0 до 2 дн.</p>
+    <div class="kpi-grid">
+      <div><div class="label">Было TROUBLE на 19.08</div><div class="value">42</div></div>
+      <div><div class="label">Решено за период</div><div class="value">42<div class="muted">100.0% от стартовых</div></div></div>
+      <div><div class="label">→ отмена / возврат</div><div class="value">0<div class="muted">0.0% от стартовых</div></div></div>
+      <div><div class="label">Новых TROUBLE</div><div class="value">41</div></div>
+      <div><div class="label">Всё ещё TROUBLE</div><div class="value">0<div class="muted">ср. ≥≥0 дн.</div></div></div>
+      <div><div class="label">Δ маржа (решённые)</div><div class="value">6 303<div class="muted">в плюс 30 · в минус 12</div></div></div>
+    </div>
+    
+<details class="group" open>
+  <summary>
+    <span class="group-name">Новые TROUBLE за период</span>
+    <span class="pill warn">41 поз.</span>
+    <span class="pill">продажа 335 862 USD</span>
+    <span class="pill">Δ маржа 104 585</span>
+  </summary>
+  <div class="group-body"><table>
+  <thead><tr>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Статус</th><th>В TROUBLE</th>
+    <th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
+  </tr></thead>
+  <tbody><tr>
+  <td>407 Техникс</td>
+  <td>10082616500-2</td>
+  <td>D5537002021000<div class='muted'>BUSH</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 540 → 206</td>
+  <td class='num neg'>-346</td>
+  <td class='num'>-1</td>
+  <td>продажа Δ -1 334 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>16072617550-2</td>
+  <td>DAN125-4<div class='muted'>WASHER</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>288 → 4 840</td>
+  <td class='num pos'>819</td>
+  <td class='num'>-111</td>
+  <td>кол-во 30 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +4 552 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>3082600100-2</td>
+  <td>NSA5355-5ACL<div class='muted'>Lock washer</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>350 → 890</td>
+  <td class='num pos'>149</td>
+  <td class='num'>-9</td>
+  <td>кол-во 50 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +540 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>3082600100-2</td>
+  <td>NSA8208-259<div class='muted'>SEAL</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>3 150 → 270</td>
+  <td class='num neg'>-1 784</td>
+  <td class='num'>+12</td>
+  <td>кол-во 50 → 27; EXP: вероятно правка количества / ед. изм.; продажа Δ -2 880 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>FLAGAVIA</td>
+  <td>7082613546</td>
+  <td>S9412-552<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>200 → 15 300</td>
+  <td class='num pos'>2 813</td>
+  <td class='num'>-93</td>
+  <td>кол-во 25 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +15 100 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Nordwind</td>
+  <td>11082615375</td>
+  <td>822-0998-102<div class='muted'>MODULE ASSY-INTEGRATED MAINT ACCESS TERM</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>14 500 → 360</td>
+  <td class='num neg'>-1 262</td>
+  <td class='num'>-341</td>
+  <td>продажа Δ -14 140 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>S7 Engineering</td>
+  <td>7082614050-3</td>
+  <td>C10GT3-12<div class='muted'>CLAMP ASSY</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 200 → 280</td>
+  <td class='num neg'>-203</td>
+  <td class='num'>+10</td>
+  <td>кол-во 8 → 40; EXP: вероятно правка количества / ед. изм.; продажа Δ -920 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>UTG</td>
+  <td>31072609150-4</td>
+  <td>2-162N602-70<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>300 → 1 680</td>
+  <td class='num pos'>320</td>
+  <td class='num'>+14</td>
+  <td>продажа Δ +1 380 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>29072615350-4</td>
+  <td>698322-10<div class='muted'>PACKING WITH RETAINER</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>600 → 36 700</td>
+  <td class='num pos'>7 659</td>
+  <td class='num'>-55</td>
+  <td>кол-во 100 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +36 100 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>5082615100-4</td>
+  <td>CR3522P5-3<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 600 → 270</td>
+  <td class='num neg'>-469</td>
+  <td class='num'>-58</td>
+  <td>кол-во 200 → 30; EXP: вероятно правка количества / ед. изм.; продажа Δ -1 330 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Well Known aviation technology</td>
+  <td>JTI300726-9</td>
+  <td>338-006-102-0<div class='muted'>SPACER</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>37 536 → 77 000</td>
+  <td class='num pos'>26 604</td>
+  <td class='num'>-381</td>
+  <td>кол-во 23 → 20; EXP: вероятно правка количества / ед. изм.; продажа Δ +39 464 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Well Known aviation technology</td>
+  <td>JTI300726-9</td>
+  <td>503489-2<div class='muted'>ACTUATOR</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>62 346 → 1 320</td>
+  <td class='num neg'>-8 389</td>
+  <td class='num'>+8</td>
+  <td>кол-во 2 → 3; ROTABLE: проверьте замену юнита; продажа Δ -61 026 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Well Known aviation technology</td>
+  <td>JTI300726-9</td>
+  <td>D5311219120200<div class='muted'>FWD LH DOOR SILL FWD LH</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>6 570 → 380</td>
+  <td class='num neg'>-2 858</td>
+  <td class='num'>+2</td>
+  <td>продажа Δ -6 190 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>АТРАН</td>
+  <td>5082610150-4</td>
+  <td>BACN10YF32CD<div class='muted'>NUTPLATE</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>3 509 → 510</td>
+  <td class='num neg'>-3 215</td>
+  <td class='num'>-59</td>
+  <td>кол-во 11 → 30; EXP: вероятно правка количества / ед. изм.; продажа Δ -2 999 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>АТРАН</td>
+  <td>5082610150-4</td>
+  <td>CR3222-6-7<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>3 300 → 300</td>
+  <td class='num neg'>-3 010</td>
+  <td class='num'>-58</td>
+  <td>кол-во 10 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ -3 000 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Авиастар-ТУ</td>
+  <td>27072616250-3</td>
+  <td>40349-10<div class='muted'>RETAINER</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>800 → 3 040</td>
+  <td class='num pos'>1 094</td>
+  <td class='num'>-745</td>
+  <td>кол-во 25 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +2 240 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Аэрофлот</td>
+  <td>5082616500-4</td>
+  <td>1250-30-019<div class='muted'>SCREW</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>304 → 350</td>
+  <td class='num pos'>13</td>
+  <td class='num'>-61</td>
+  <td>кол-во 2 → 25; EXP: вероятно правка количества / ед. изм.; продажа Δ +46 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Закупка на склад</td>
+  <td>-</td>
+  <td>163500-117<div class='muted'>WINDSHIELD-LH</div></td>
+  <td>ROTABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>0 → 0</td>
+  <td class='num pos'>64 393</td>
+  <td class='num'>+181</td>
+  <td>новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>22072610300-3</td>
+  <td>M25988/1-214<div class='muted'>O-RING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>600 → 500</td>
+  <td class='num neg'>-159</td>
+  <td class='num'>-43</td>
+  <td>кол-во 100 → 20; EXP: вероятно правка количества / ед. изм.; продажа Δ -100 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>23072611100-3</td>
+  <td>S9412-138<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>408 → 4 590</td>
+  <td class='num pos'>3 222</td>
+  <td class='num'>-39</td>
+  <td>кол-во 6 → 3; EXP: вероятно правка количества / ед. изм.; продажа Δ +4 182 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>23072611100-3</td>
+  <td>S9412-212<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>500 → 2 600</td>
+  <td class='num neg'>-92</td>
+  <td class='num'>-396</td>
+  <td>кол-во 20 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +2 100 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>24072610100-3</td>
+  <td>AS3582-137<div class='muted'>PACKING, PREFORMED, O-RING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>374 → 280</td>
+  <td class='num neg'>-129</td>
+  <td class='num'>-76</td>
+  <td>кол-во 17 → 10; EXP: вероятно правка количества / ед. изм.; продажа Δ -94 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>6082611100-3</td>
+  <td>MS24693-S3<div class='muted'>SCREW</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>450 → 300</td>
+  <td class='num neg'>-142</td>
+  <td class='num'>-42</td>
+  <td>кол-во 90 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ -150 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>6082611150-3</td>
+  <td>MS35206-216<div class='muted'>SCREW</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>420 → 1 140</td>
+  <td class='num pos'>113</td>
+  <td class='num'>-15</td>
+  <td>кол-во 120 → 3; EXP: вероятно правка количества / ед. изм.; продажа Δ +720 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>НЕОМАРКЕТ</td>
+  <td>23072611550-4</td>
+  <td>VL1359GE92<div class='muted'>SEAL-D SHAPED</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>540 → 2 950</td>
+  <td class='num pos'>741</td>
+  <td class='num'>-290</td>
+  <td>кол-во 15 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ +2 410 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Победа</td>
+  <td>50826-1</td>
+  <td>AS3066-10<div class='muted'>NUT</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 001 → 260</td>
+  <td class='num neg'>-234</td>
+  <td class='num'>-58</td>
+  <td>кол-во 13 → 20; EXP: вероятно правка количества / ед. изм.; продажа Δ -741 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Скайпро Техникс</td>
+  <td>11082613526</td>
+  <td>145-21644-501<div class='muted'>PROFILE</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>480 → 10 700</td>
+  <td class='num pos'>3 301</td>
+  <td class='num'>+0</td>
+  <td>продажа Δ +10 220 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Скайпро Техникс</td>
+  <td>11082613526</td>
+  <td>MS21133-08<div class='muted'>NUT-EXTERNAL WRENCHING,SPLINE DRIVE</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 040 → 500</td>
+  <td class='num pos'>64</td>
+  <td class='num'>-49</td>
+  <td>кол-во 16 → 100; EXP: вероятно правка количества / ед. изм.; продажа Δ -540 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Скайпро Техникс</td>
+  <td>11082613526</td>
+  <td>NAS514P832-7<div class='muted'>SCREW CSK HD,SLOT CROSS, SSTEEL</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>150 → 8 250</td>
+  <td class='num pos'>481</td>
+  <td class='num'>-52</td>
+  <td>продажа Δ +8 100 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>21072618100-3</td>
+  <td>BACB30NW6K4Y<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 200 → 300</td>
+  <td class='num neg'>-338</td>
+  <td class='num'>-21</td>
+  <td>кол-во 120 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ -900 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>21072618100-3</td>
+  <td>BACB30YP6K3<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 050 → 15 800</td>
+  <td class='num pos'>196</td>
+  <td class='num'>+7</td>
+  <td>кол-во 350 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +14 750 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>21072618100-3</td>
+  <td>BACB30YP6K5<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 400 → 1 100</td>
+  <td class='num neg'>-164</td>
+  <td class='num'>-25</td>
+  <td>кол-во 350 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ -300 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>21072618100-3</td>
+  <td>BACC30BL5<div class='muted'>COLLAR</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>9 300 → 18 500</td>
+  <td class='num neg'>-1 543</td>
+  <td class='num'>-8</td>
+  <td>кол-во 620 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +9 200 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Уральские Авиалинии</td>
+  <td>13082610195</td>
+  <td>071-50026-0400<div class='muted'>ANTENNA-RADIO ALTIMETER</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>11 000 → 800</td>
+  <td class='num neg'>-1 272</td>
+  <td class='num'>-246</td>
+  <td>продажа Δ -10 200 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Уральские Авиалинии</td>
+  <td>4082612563</td>
+  <td>41SG381-1<div class='muted'>OIL PRESSURE TRANSMITTER</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>2 300 → 2 240</td>
+  <td class='num neg'>-424</td>
+  <td class='num'>-68</td>
+  <td>продажа Δ -60 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27072616050-3</td>
+  <td>ABS0337-01A<div class='muted'>RECEPTACLE</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>500 → 800</td>
+  <td class='num pos'>205</td>
+  <td class='num'>+11</td>
+  <td>кол-во 100 → 200; EXP: вероятно правка количества / ед. изм.; продажа Δ +300 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27072616050-3</td>
+  <td>EN6114V4-14<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>300 → 1 600</td>
+  <td class='num pos'>672</td>
+  <td class='num'>-4</td>
+  <td>кол-во 20 → 400; EXP: вероятно правка количества / ед. изм.; продажа Δ +1 300 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27072616050-3</td>
+  <td>EN6114V4-9<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>320 → 9 400</td>
+  <td class='num pos'>2 272</td>
+  <td class='num'>-141</td>
+  <td>кол-во 40 → 5; EXP: вероятно правка количества / ед. изм.; продажа Δ +9 080 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27072616050-3</td>
+  <td>EN6114V5-14<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>288 → 306</td>
+  <td class='num neg'>-174</td>
+  <td class='num'>-205</td>
+  <td>кол-во 6 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +18 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27072616050-3</td>
+  <td>EN6114V5-15<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>279 → 1 250</td>
+  <td class='num pos'>264</td>
+  <td class='num'>+4</td>
+  <td>кол-во 9 → 25; EXP: вероятно правка количества / ед. изм.; продажа Δ +971 USD; новый TROUBLE за период</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>28072618450-3</td>
+  <td>H44539<div class='muted'>O-RING</div></td>
+  <td>EXPENDABLE</td>
+  <td>2 PAID → 6 TROUBLE</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>795 → 108 000</td>
+  <td class='num pos'>15 395</td>
+  <td class='num'>-9</td>
+  <td>кол-во 3 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +107 205 USD; новый TROUBLE за период</td>
+</tr></tbody>
+</table></div>
+</details>
+
+<details class="group" open>
+  <summary>
+    <span class="group-name">Решены (TROUBLE → рабочий статус)</span>
+    <span class="pill ok">42 поз.</span>
+    <span class="pill">продажа 1 608 938 USD</span>
+    <span class="pill">Δ маржа 264 705</span>
+  </summary>
+  <div class="group-body"><table>
+  <thead><tr>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Статус</th><th>В TROUBLE</th>
+    <th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
+  </tr></thead>
+  <tbody><tr>
+  <td>FLAGAVIA</td>
+  <td>21052616426</td>
+  <td>F7XC301910011A8<div class='muted'>VALVE.
+ANTI-ICING</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>36 700 → 33 500</td>
+  <td class='num neg'>-1 359</td>
+  <td class='num'>+89</td>
+  <td>продажа Δ -3 200 USD; срок поставки сдвинут на +89 дн.; «дней на поставку» 35 → 60; маржа упала после решения</td>
+</tr><tr>
+  <td>Nordwind</td>
+  <td>29072614273</td>
+  <td>80-178-03-88013<div class='muted'>LGCIU-LANDING GEAR CONTROL INTERFACE UNIT</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>15 800 → 10 200</td>
+  <td class='num pos'>1 380</td>
+  <td class='num'>+24</td>
+  <td>продажа Δ -5 600 USD; срок поставки сдвинут на +24 дн.; «дней на поставку» 20 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>Nordwind</td>
+  <td>7072610593</td>
+  <td>4323070-00-66-26<div class='muted'>OVEN</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>18 500 → 280 000</td>
+  <td class='num pos'>109 950</td>
+  <td class='num'>+5</td>
+  <td>продажа Δ +261 500 USD; срок поставки сдвинут на +5 дн.; «дней на поставку» 25 → 65; маржа выросла после решения</td>
+</tr><tr>
+  <td>S7 Engineering</td>
+  <td>10072616456</td>
+  <td>3822391-6<div class='muted'>CENTRIFUGAL E/C
+COMPRESSOR
+ROTOR</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>108 000 → 11 400</td>
+  <td class='num neg'>-11 528</td>
+  <td class='num'>+30</td>
+  <td>продажа Δ -96 600 USD; срок поставки сдвинут на +30 дн.; «дней на поставку» 30 → 60; маржа упала после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>10072613152</td>
+  <td>48559Y<div class='muted'>NAMEPLATE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>360 → 12 600</td>
+  <td class='num pos'>4 356</td>
+  <td class='num'>+28</td>
+  <td>кол-во 20 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +12 240 USD; срок поставки сдвинут на +28 дн.; «дней на поставку» 30 → 40; маржа выросла после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>10072614325</td>
+  <td>3601193-8<div class='muted'>ATOMIZER ASSY -
+FUEL REPAIR PART</div></td>
+  <td>GSE/TOOL</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>8 500 → 15 000</td>
+  <td class='num pos'>2 964</td>
+  <td class='num'>+3</td>
+  <td>продажа Δ +6 500 USD; срок поставки сдвинут на +3 дн.; «дней на поставку» 60 → 35; маржа выросла после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>13072610495</td>
+  <td>66-15959-1<div class='muted'>WASHER</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>290 → 12 500</td>
+  <td class='num pos'>3 221</td>
+  <td class='num'>-22</td>
+  <td>продажа Δ +12 210 USD; срок поставки сдвинут на -22 дн.; «дней на поставку» 30 → 35; маржа выросла после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>17072615315</td>
+  <td>236024-3<div class='muted'>PLACARD</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 140 → 4 600</td>
+  <td class='num pos'>462</td>
+  <td class='num'>+18</td>
+  <td>кол-во 3 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +3 460 USD; срок поставки сдвинут на +18 дн.; маржа выросла после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>22072610315</td>
+  <td>BACC2C4C06720EG<div class='muted'>CABLE ASSY</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>890 → 13 900</td>
+  <td class='num pos'>2 954</td>
+  <td class='num'>-16</td>
+  <td>продажа Δ +13 010 USD; срок поставки сдвинут на -16 дн.; «дней на поставку» 30 → 40; маржа выросла после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>22072613105</td>
+  <td>3291214-2<div class='muted'>VALVE BLEED AIR</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>39 900 → 33 000</td>
+  <td class='num neg'>-2 220</td>
+  <td class='num'>+13</td>
+  <td>продажа Δ -6 900 USD; срок поставки сдвинут на +13 дн.; маржа упала после решения</td>
+</tr><tr>
+  <td>Utair</td>
+  <td>6082611055</td>
+  <td>7123-19973-02AB<div class='muted'>PRESSURE
+CONTROL PANEL</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>22 500 → 20 300</td>
+  <td class='num pos'>3 728</td>
+  <td class='num'>+3</td>
+  <td>продажа Δ -2 200 USD; срок поставки сдвинут на +3 дн.; «дней на поставку» 25 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>17112513450-4</td>
+  <td>33342<div class='muted'>BEARING</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>800 → 16 500</td>
+  <td class='num pos'>3 032</td>
+  <td class='num'>+252</td>
+  <td>кол-во 2 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +15 700 USD; срок поставки сдвинут на +252 дн.; «дней на поставку» 20 → 25; маржа выросла после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>26062616100-4</td>
+  <td>E0052N10B06SWE<div class='muted'>CONNECTOR</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>300 → 95 973</td>
+  <td class='num neg'>-190</td>
+  <td class='num'>-1015</td>
+  <td>продажа Δ +95 673 USD; срок поставки сдвинут на -1015 дн.; «дней на поставку» 25 → 180; маржа упала после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>27052618550-4</td>
+  <td>CR3224-4-3<div class='muted'>BLIND RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>260 → 300</td>
+  <td class='num neg'>-70</td>
+  <td class='num'>+69</td>
+  <td>продажа Δ +40 USD; срок поставки сдвинут на +69 дн.; маржа упала после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>CR3214-6-04<div class='muted'>BLIND RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>270 → 320</td>
+  <td class='num neg'>-60</td>
+  <td class='num'>+70</td>
+  <td>кол-во 30 → 40; EXP: вероятно правка количества / ед. изм.; продажа Δ +50 USD; срок поставки сдвинут на +70 дн.; маржа упала после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>CR3224-4-02<div class='muted'>BLIND RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>500 → 123 000</td>
+  <td class='num pos'>29 425</td>
+  <td class='num'>-623</td>
+  <td>кол-во 20 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +122 500 USD; срок поставки сдвинут на -623 дн.; «дней на поставку» 21 → 35; маржа выросла после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>CR3224-6-5<div class='muted'>BLIND RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>510 → 3 280</td>
+  <td class='num pos'>699</td>
+  <td class='num'>+66</td>
+  <td>кол-во 30 → 8; EXP: вероятно правка количества / ед. изм.; продажа Δ +2 770 USD; срок поставки сдвинут на +66 дн.; маржа выросла после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>CR3522-5-6<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>350 → 360</td>
+  <td class='num pos'>50</td>
+  <td class='num'>+66</td>
+  <td>кол-во 25 → 40; EXP: вероятно правка количества / ед. изм.; продажа Δ +10 USD; срок поставки сдвинут на +66 дн.; «дней на поставку» 25 → 21; маржа выросла после решения</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8072615100-4</td>
+  <td>81004-37602<div class='muted'>SOCKET ASSY</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 320 → 240</td>
+  <td class='num neg'>-273</td>
+  <td class='num'>+30</td>
+  <td>кол-во 3 → 30; EXP: вероятно правка количества / ед. изм.; продажа Δ -1 080 USD; срок поставки сдвинут на +30 дн.; «дней на поставку» 30 → 25; маржа упала после решения</td>
+</tr><tr>
+  <td>Авиакомплекс</td>
+  <td>10062612500-3</td>
+  <td>MS25036-149N<div class='muted'>TERMINAL LUG</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 590 → 54 000</td>
+  <td class='num pos'>6 635</td>
+  <td class='num'>+33</td>
+  <td>кол-во 3 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +49 410 USD; срок поставки сдвинут на +33 дн.; «дней на поставку» 25 → 45; маржа выросла после решения</td>
+</tr><tr>
+  <td>Аэрофлот</td>
+  <td>250615100-4</td>
+  <td>NAS1102E3-10<div class='muted'>SCREW</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>500 → 24 000</td>
+  <td class='num pos'>6 176</td>
+  <td class='num'>+59</td>
+  <td>кол-во 100 → 3; EXP: вероятно правка количества / ед. изм.; продажа Δ +23 500 USD; срок поставки сдвинут на +59 дн.; «дней на поставку» 25 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>Аэрофлот</td>
+  <td>250615100-4</td>
+  <td>NSA5472-10K7<div class='muted'>NUT</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>300 → 394</td>
+  <td class='num pos'>90</td>
+  <td class='num'>+53</td>
+  <td>кол-во 50 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +94 USD; срок поставки сдвинут на +53 дн.; маржа выросла после решения</td>
+</tr><tr>
+  <td>Аэрофлот Техникс</td>
+  <td>17032611560-2</td>
+  <td>NSA935405-01<div class='muted'>MOUNT</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>300 → 25 200</td>
+  <td class='num pos'>6 380</td>
+  <td class='num'>+155</td>
+  <td>кол-во 30 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +24 900 USD; срок поставки сдвинут на +155 дн.; «дней на поставку» 25 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>Аэрофлот Техникс</td>
+  <td>21082517550-3</td>
+  <td>NSA931130-12<div class='muted'>FUSE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>360 → 134 800</td>
+  <td class='num pos'>26 044</td>
+  <td class='num'>+338</td>
+  <td>продажа Δ +134 440 USD; срок поставки сдвинут на +338 дн.; «дней на поставку» 30 → 25; маржа выросла после решения</td>
+</tr><tr>
+  <td>Аэрофлот Техникс</td>
+  <td>28052616510-2</td>
+  <td>111-1-1100<div class='muted'>SWITCH-PRESSURE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>2 240 → 2 600</td>
+  <td class='num pos'>460</td>
+  <td class='num'>+76</td>
+  <td>продажа Δ +360 USD; срок поставки сдвинут на +76 дн.; маржа выросла после решения</td>
+</tr><tr>
+  <td>Дримджет</td>
+  <td>7072611374</td>
+  <td>WF337192<div class='muted'>FILTER, PUMP WATER SYSTEM</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>380 → 139 000</td>
+  <td class='num pos'>19 424</td>
+  <td class='num'>+37</td>
+  <td>продажа Δ +138 620 USD; срок поставки сдвинут на +37 дн.; «дней на поставку» 25 → 21; маржа выросла после решения</td>
+</tr><tr>
+  <td>ИКАР (Nordwind)</td>
+  <td>30092510550-3</td>
+  <td>M81714/65-12-1<div class='muted'>SPLICE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>2 950 → 99 500</td>
+  <td class='num pos'>20 941</td>
+  <td class='num'>+270</td>
+  <td>кол-во 50 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +96 550 USD; срок поставки сдвинут на +270 дн.; «дней на поставку» 25 → 35; маржа выросла после решения</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>6082611050-3</td>
+  <td>S1426-6<div class='muted'>WASHER, RUBBER</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>206 → 320</td>
+  <td class='num pos'>125</td>
+  <td class='num'>-26</td>
+  <td>кол-во 2 → 80; EXP: вероятно правка количества / ед. изм.; продажа Δ +114 USD; срок поставки сдвинут на -26 дн.; «дней на поставку» 30 → 25; маржа выросла после решения</td>
+</tr><tr>
+  <td>НЕОМАРКЕТ</td>
+  <td>23072611550-4</td>
+  <td>NAS1523AA4R<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 600 → 4 000</td>
+  <td class='num pos'>1 137</td>
+  <td class='num'>+8</td>
+  <td>кол-во 400 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +2 400 USD; срок поставки сдвинут на +8 дн.; «дней на поставку» 21 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>Руслайн</td>
+  <td>14022513251</td>
+  <td>117025-02<div class='muted'>OXYGEN GENERATOR</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>77 000 → 381</td>
+  <td class='num neg'>-27 782</td>
+  <td class='num'>+413</td>
+  <td>кол-во 20 → 30; ROTABLE: проверьте замену юнита; продажа Δ -76 619 USD; срок поставки сдвинут на +413 дн.; «дней на поставку» 150 → 25; маржа упала после решения</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>26022610150-3</td>
+  <td>170-14458-990<div class='muted'>SHADE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>9 400 → 440</td>
+  <td class='num neg'>-2 172</td>
+  <td class='num'>+155</td>
+  <td>кол-во 5 → 40; EXP: вероятно правка количества / ед. изм.; продажа Δ -8 960 USD; срок поставки сдвинут на +155 дн.; маржа упала после решения</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>26052619423</td>
+  <td>146A1300-13<div class='muted'>FRAME SPLICE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 450 → 880</td>
+  <td class='num neg'>-186</td>
+  <td class='num'>+3</td>
+  <td>продажа Δ -3 570 USD; срок поставки сдвинут на +3 дн.; «дней на поставку» 30 → 25; маржа упала после решения</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>26052619423</td>
+  <td>146A1300-16<div class='muted'>FRAME SPLICE</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 500 → 32 000</td>
+  <td class='num pos'>5 970</td>
+  <td class='num'>+37</td>
+  <td>продажа Δ +27 500 USD; срок поставки сдвинут на +37 дн.; «дней на поставку» 30 → 25; маржа выросла после решения</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>26052619423</td>
+  <td>147A3215-24<div class='muted'>Section 47, from STA887 to STA1016</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 800 → 10 500</td>
+  <td class='num pos'>2 568</td>
+  <td class='num'>+58</td>
+  <td>продажа Δ +5 700 USD; срок поставки сдвинут на +58 дн.; «дней на поставку» 30 → 25; маржа выросла после решения</td>
+</tr><tr>
+  <td>Смартавиа</td>
+  <td>3082600050-3</td>
+  <td>CR3524-8-3<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>800 → 0</td>
+  <td class='num neg'>-15 331</td>
+  <td class='num'>-1</td>
+  <td>кол-во 200 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ -800 USD; срок поставки сдвинут на -1 дн.; «дней на поставку» 25 → 30; маржа упала после решения</td>
+</tr><tr>
+  <td>Уральские Авиалинии</td>
+  <td>2032611550-3</td>
+  <td>64000020<div class='muted'>SPRING</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>2 800 → 73 750</td>
+  <td class='num pos'>10 894</td>
+  <td class='num'>+52</td>
+  <td>кол-во 10 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +70 950 USD; срок поставки сдвинут на +52 дн.; «дней на поставку» 25 → 35; маржа выросла после решения</td>
+</tr><tr>
+  <td>ЮВТ</td>
+  <td>2806241209</td>
+  <td>HS1066<div class='muted'>Switch</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>3 040 → 84 500</td>
+  <td class='num pos'>9 924</td>
+  <td class='num'>+790</td>
+  <td>кол-во 2 → 1; ROTABLE: проверьте замену юнита; продажа Δ +81 460 USD; срок поставки сдвинут на +790 дн.; «дней на поставку» 25 → 65; маржа выросла после решения</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>19062610563</td>
+  <td>3530-0121-01<div class='muted'>BOARD PRINTED CIRCUIT</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 400 → 99 500</td>
+  <td class='num pos'>21 440</td>
+  <td class='num'>+23</td>
+  <td>продажа Δ +95 100 USD; срок поставки сдвинут на +23 дн.; «дней на поставку» 25 → 45; маржа выросла после решения</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>20032618200-3</td>
+  <td>570-720-102<div class='muted'>CABLE, UPLOCK</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>4 840 → 5 000</td>
+  <td class='num neg'>-96</td>
+  <td class='num'>+261</td>
+  <td>кол-во 2 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +160 USD; срок поставки сдвинут на +261 дн.; «дней на поставку» 25 → 213; маржа упала после решения</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>22062617223</td>
+  <td>E0028-92-0-0<div class='muted'>SWITCH-TOGGLE</div></td>
+  <td>ROTABLE</td>
+  <td>6 TROUBLE → 2 PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>1 100 → 6 200</td>
+  <td class='num pos'>837</td>
+  <td class='num'>+50</td>
+  <td>продажа Δ +5 100 USD; срок поставки сдвинут на +50 дн.; «дней на поставку» 25 → 30; маржа выросла после решения</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>27052614550-3</td>
+  <td>MS21225-6<div class='muted'>SCREW</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>990 → 53 000</td>
+  <td class='num pos'>11 086</td>
+  <td class='num'>+46</td>
+  <td>кол-во 10 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +52 010 USD; срок поставки сдвинут на +46 дн.; «дней на поставку» 25 → 10; маржа выросла после решения</td>
+</tr><tr>
+  <td>Ямал</td>
+  <td>4052616370-3</td>
+  <td>CR3212-5-9<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 1 NOT PAID</td>
+  <td class='num'>0–2 дн.</td>
+  <td class='num'>280 → 72 000</td>
+  <td class='num pos'>13 624</td>
+  <td class='num'>+103</td>
+  <td>кол-во 10 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +71 720 USD; срок поставки сдвинут на +103 дн.; «дней на поставку» 25 → 45; маржа выросла после решения</td>
+</tr></tbody>
+</table></div>
+</details>
+  </section>
+
+  <h2>Отмены (CANCELLED)</h2>
+  <section class="card"><table>
+  <thead><tr>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Статус</th>
+    <th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
+  </tr></thead>
+  <tbody><tr>
+  <td>407 Техникс</td>
+  <td>10082616500-2</td>
+  <td>770440<div class='muted'>ELEMENT-WATER FILTER</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>1 080 → 26 600</td>
+  <td class='num pos'>15 988</td>
+  <td class='num'>-89</td>
+  <td>кол-во 2 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +25 520 USD</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>10082616500-2</td>
+  <td>ABS0114T3D13<div class='muted'>BOLT</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>255 → 237 500</td>
+  <td class='num pos'>34 782</td>
+  <td class='num'>-31</td>
+  <td>кол-во 15 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +237 245 USD</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>3082600100-2</td>
+  <td>M83461-1-011<div class='muted'>PACKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>324 → 650</td>
+  <td class='num pos'>164</td>
+  <td class='num'>-69</td>
+  <td>кол-во 360 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ +326 USD</td>
+</tr><tr>
+  <td>Jetica</td>
+  <td>11022514594</td>
+  <td>M83248-1-113<div class='muted'>Packing</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>200 → 350</td>
+  <td class='num pos'>110</td>
+  <td class='num'>+478</td>
+  <td>кол-во 10 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ +150 USD</td>
+</tr><tr>
+  <td>UTG</td>
+  <td>29072618450-4</td>
+  <td>9365M41P122<div class='muted'>SEAL</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>300 → 1 290</td>
+  <td class='num pos'>168</td>
+  <td class='num'>-23</td>
+  <td>кол-во 4 → 3; EXP: вероятно правка количества / ед. изм.; продажа Δ +990 USD</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>CR3522-05-05<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>1 430 → 310</td>
+  <td class='num neg'>-253</td>
+  <td class='num'>-69</td>
+  <td>кол-во 130 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ -1 120 USD</td>
+</tr><tr>
+  <td>АК Сибирь</td>
+  <td>8032617000-3</td>
+  <td>NSA5516-18ND<div class='muted'>CLAMP</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>350 → 680</td>
+  <td class='num pos'>2</td>
+  <td class='num'>-129</td>
+  <td>кол-во 25 → 10; EXP: вероятно правка количества / ед. изм.; продажа Δ +330 USD</td>
+</tr><tr>
+  <td>Авиакомплекс</td>
+  <td>12052614550-4</td>
+  <td>MS21225-8<div class='muted'>NUT</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 5 CANCELLED</td>
+  
+  <td class='num'>8 250 → 6 900</td>
+  <td class='num neg'>-577</td>
+  <td class='num'>-26</td>
+  <td>кол-во 50 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ -1 350 USD; TROUBLE → отмена/возврат</td>
+</tr><tr>
+  <td>Авиакомплекс</td>
+  <td>3022610350-3</td>
+  <td>14330-086<div class='muted'>Seal face</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>5 100 → 660</td>
+  <td class='num neg'>-1 499</td>
+  <td class='num'>-307</td>
+  <td>кол-во 15 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ -4 440 USD</td>
+</tr><tr>
+  <td>Азур Эйр</td>
+  <td>10082613550-3</td>
+  <td>413T1010-1<div class='muted'>BUMPER</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>1 800 → 290</td>
+  <td class='num neg'>-444</td>
+  <td class='num'>-11</td>
+  <td>кол-во 100 → 29; EXP: вероятно правка количества / ед. изм.; продажа Δ -1 510 USD</td>
+</tr><tr>
+  <td>Закупка на склад</td>
+  <td></td>
+  <td>141W4835-10<div class='muted'>WINDOW ASSY-NO. 2 OPENABLE CAB (RH)</div></td>
+  <td>ROTABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>0 → 900</td>
+  <td class='num pos'>187 341</td>
+  <td class='num'>+506</td>
+  <td>кол-во 1 → 5; ROTABLE: проверьте замену юнита; продажа Δ +900 USD</td>
+</tr><tr>
+  <td>Закупка на склад</td>
+  <td>-</td>
+  <td>J149P10<div class='muted'>NUT</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>0 → 780</td>
+  <td class='num pos'>693</td>
+  <td class='num'>-156</td>
+  <td>кол-во 20 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +780 USD</td>
+</tr><tr>
+  <td>Руслайн</td>
+  <td>29052518310-2</td>
+  <td>601R35216-6<div class='muted'>SPRING ASSY, AFT BALANCE (CARGO DOOR)</div></td>
+  <td>EXPENDABLE</td>
+  <td>6 TROUBLE → 5 CANCELLED</td>
+  
+  <td class='num'>2 600 → 47 000</td>
+  <td class='num pos'>2 106</td>
+  <td class='num'>+400</td>
+  <td>продажа Δ +44 400 USD; TROUBLE → отмена/возврат</td>
+</tr><tr>
+  <td>ЮВТ</td>
+  <td>310726093012</td>
+  <td>J1212P03<div class='muted'>NUT-SELF-LOCKING</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 5 CANCELLED</td>
+  
+  <td class='num'>480 → 800</td>
+  <td class='num neg'>-13</td>
+  <td class='num'>-15</td>
+  <td>кол-во 20 → 4; EXP: вероятно правка количества / ед. изм.; продажа Δ +320 USD</td>
+</tr></tbody>
+</table></section>
+
+  <h2>Возвраты (REFUND)</h2>
+  <section class="card"><table>
+  <thead><tr>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Статус</th>
+    <th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
+  </tr></thead>
+  <tbody><tr>
+  <td>407 Техникс</td>
+  <td>10082616500-2</td>
+  <td>NSA5060C3<div class='muted'>NUT</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>300 → 3 600</td>
+  <td class='num pos'>2 070</td>
+  <td class='num'>-63</td>
+  <td>кол-во 20 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +3 300 USD</td>
+</tr><tr>
+  <td>407 Техникс</td>
+  <td>3082600100-2</td>
+  <td>649-001-211-0<div class='muted'>PIN</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>400 → 12 300</td>
+  <td class='num pos'>5 826</td>
+  <td class='num'>-183</td>
+  <td>кол-во 40 → 2; EXP: вероятно правка количества / ед. изм.; продажа Δ +11 900 USD</td>
+</tr><tr>
+  <td>UTG</td>
+  <td>29072618450-4</td>
+  <td>QA06855<div class='muted'>MANIFOLD AIR
+FILTER</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>970 → 0</td>
+  <td class='num neg'>-49 190</td>
+  <td class='num'>-401</td>
+  <td>кол-во 1 → 20; EXP: вероятно правка количества / ед. изм.; продажа Δ -970 USD</td>
+</tr><tr>
+  <td>VDT</td>
+  <td>8062616550-4</td>
+  <td>AF3522-05-05<div class='muted'>RIVET</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>1 430 → 600</td>
+  <td class='num neg'>-280</td>
+  <td class='num'>-69</td>
+  <td>кол-во 130 → 100; EXP: вероятно правка количества / ед. изм.; продажа Δ -830 USD</td>
+</tr><tr>
+  <td>Аэрофлот Техникс</td>
+  <td>5082618550-2</td>
+  <td>315A2013-1<div class='muted'>WASHER</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>280 → 740</td>
+  <td class='num pos'>153</td>
+  <td class='num'>-13</td>
+  <td>кол-во 1 → 10; EXP: вероятно правка количества / ед. изм.; продажа Δ +460 USD</td>
+</tr><tr>
+  <td>Ираэро</td>
+  <td>6082611100-3</td>
+  <td>MS21071L06<div class='muted'>NUTPLATE, ASSEMBLY</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>440 → 500</td>
+  <td class='num neg'>-106</td>
+  <td class='num'>-40</td>
+  <td>кол-во 40 → 1; EXP: вероятно правка количества / ед. изм.; продажа Δ +60 USD</td>
+</tr><tr>
+  <td>Каскад</td>
+  <td>24072611355</td>
+  <td>QSB-5-SS<div class='muted'>breather vent filter</div></td>
+  <td>EXPENDABLE</td>
+  <td>1 NOT PAID → 7 REFUND</td>
+  
+  <td class='num'>432 → 1 250</td>
+  <td class='num pos'>214</td>
+  <td class='num'>-96</td>
+  <td>кол-во 6 → 50; EXP: вероятно правка количества / ед. изм.; продажа Δ +818 USD</td>
+</tr></tbody>
+</table></section>
+
+  <h2>Гарантия (WARRANTY)</h2>
+  <section class="card"><p class='muted'>Нет изменений за период.</p></section>
+
+  <div class="footer">
+    FASTAIR · источник ТАЗ · сравнение снимков 2026-08-19 и 2026-08-21 ·
+    ключ строки: счёт + P/N + описание. Для точной длительности TROUBLE нужна цепочка еженедельных выгрузок.
+  </div>
+</div>
+</body>
+</html>
