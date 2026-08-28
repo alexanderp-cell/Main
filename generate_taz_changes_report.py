@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import html
 import zipfile
+from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -435,6 +436,10 @@ details.group summary::-webkit-details-marker { display:none; }
 .pill.warn { background:#ffe8d9; border-color:#ffc4a3; color:#b3470f; }
 .pill.ok { background:#e6f7ea; border-color:#b8e6c1; color:#1f6b32; }
 .group-body { padding:0 14px 16px; border-top:1px solid var(--line); }
+details.client { margin:8px 0; border-color:#d7e2e6; }
+details.client summary { padding:10px 14px; background:linear-gradient(90deg,#022f40 0%,#022f40 8px,#f7fbfc 8px); }
+details.client .group-name { font-size:14px; font-weight:600; }
+details.client .group-body { padding:0 8px 12px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
 th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
 th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
@@ -445,18 +450,25 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap
 """
 
 
+def group_by_customer(items: list[StatusChange]) -> list[tuple[str, list[StatusChange]]]:
+    by_client: dict[str, list[StatusChange]] = defaultdict(list)
+    for e in items:
+        name = e.customer.strip() if e.customer and e.customer.strip() else "(без клиента)"
+        by_client[name].append(e)
+    return sorted(by_client.items(), key=lambda x: (-sum(i.sale_curr for i in x[1]), x[0]))
+
+
 def render_trouble_table(items: list[StatusChange]) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
-    for e in sorted(items, key=lambda x: (x.customer, x.invoice, x.pn)):
+    for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
         margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
         dd = e.deadline_delta_days
         dd_txt = f"{dd:+d}" if dd is not None else "—"
         root = esc(e.root_supplier) if e.root_supplier else "—"
         rows.append(
             f"""<tr>
-  <td>{esc(e.customer)}</td>
   <td>{esc(e.invoice)}</td>
   <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
   <td>{esc(e.category)}</td>
@@ -471,7 +483,7 @@ def render_trouble_table(items: list[StatusChange]) -> str:
         )
     return f"""<table>
   <thead><tr>
-    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th><th>Root supplier</th>
+    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th><th>Root supplier</th>
     <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
   </tr></thead>
   <tbody>{''.join(rows)}</tbody>
@@ -482,14 +494,13 @@ def render_cancel_table(items: list[StatusChange]) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
-    for e in sorted(items, key=lambda x: (x.customer, x.invoice, x.pn)):
+    for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
         margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
         kind = "отмена" if e.curr_status == STATUS_CANCEL else "возврат"
         if e.change_kind == "cancelled_from_trouble":
             kind = "из TROUBLE → " + kind
         rows.append(
             f"""<tr>
-  <td>{esc(e.customer)}</td>
   <td>{esc(e.invoice)}</td>
   <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
   <td>{esc(e.category)}</td>
@@ -501,14 +512,44 @@ def render_cancel_table(items: list[StatusChange]) -> str:
         )
     return f"""<table>
   <thead><tr>
-    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody>{''.join(rows)}</tbody>
 </table>"""
 
 
-def render_section(title: str, items: list[StatusChange], table_html: str, pill_class: str = "") -> str:
+def render_client_groups(
+    items: list[StatusChange],
+    table_fn,
+) -> str:
+    if not items:
+        return "<p class='muted'>Нет изменений за период.</p>"
+    blocks = []
+    for client, client_items in group_by_customer(items):
+        sale = sum(e.sale_curr for e in client_items)
+        margin_d = sum(e.margin_delta for e in client_items)
+        blocks.append(
+            f"""
+<details class="group client">
+  <summary>
+    <span class="group-name">{esc(client)}</span>
+    <span class="pill">{len(client_items)} поз.</span>
+    <span class="pill">{fmt_money(sale, 0)} USD</span>
+    <span class="pill">Δ {fmt_money(margin_d, 0)}</span>
+  </summary>
+  <div class="group-body">{table_fn(client_items)}</div>
+</details>"""
+        )
+    return "".join(blocks)
+
+
+def render_section(
+    title: str,
+    items: list[StatusChange],
+    table_fn,
+    pill_class: str = "",
+) -> str:
     if not items:
         return f"""
 <details class="group">
@@ -520,16 +561,19 @@ def render_section(title: str, items: list[StatusChange], table_html: str, pill_
 </details>"""
     sale = sum(e.sale_curr for e in items)
     margin_d = sum(e.margin_delta for e in items)
+    clients = len(group_by_customer(items))
     pill = f"pill {pill_class}".strip()
+    inner = render_client_groups(items, table_fn)
     return f"""
 <details class="group">
   <summary>
     <span class="group-name">{esc(title)}</span>
     <span class="{pill}">{len(items)} поз.</span>
+    <span class="pill">{clients} кли.</span>
     <span class="pill">продажа {fmt_money(sale, 0)} USD</span>
     <span class="pill">Δ маржа {fmt_money(margin_d, 0)}</span>
   </summary>
-  <div class="group-body">{table_html}</div>
+  <div class="group-body">{inner}</div>
 </details>"""
 
 
@@ -566,9 +610,9 @@ def render_html_report(
     cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
     sections = "\n".join([
-        render_section("Новые TROUBLE", new_trouble, render_trouble_table(new_trouble), "warn"),
-        render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table(resolved_trouble), "ok"),
-        render_section("Отмены и возвраты", cancel_refund, render_cancel_table(cancel_refund), "warn"),
+        render_section("Новые TROUBLE", new_trouble, render_trouble_table, "warn"),
+        render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table, "ok"),
+        render_section("Отмены и возвраты", cancel_refund, render_cancel_table, "warn"),
     ])
 
     return f"""<!DOCTYPE html>
