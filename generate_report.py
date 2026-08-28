@@ -454,6 +454,42 @@ class WeeklySummary:
     paid_orders: WeeklySection
 
 
+def merge_weekly_summaries(items: list[tuple[str, WeeklySummary]]) -> WeeklySummary:
+    """Combine weekly sections from several clients; adds Customer column."""
+    if not items:
+        raise ValueError("merge_weekly_summaries requires at least one summary")
+    week_start = items[0][1].week_start
+    week_end = items[0][1].week_end
+
+    def merge_section(section_attr: str) -> WeeklySection:
+        prototype: WeeklySection = getattr(items[0][1], section_attr)
+        headers = ["Customer", *prototype.headers]
+        rows: list[dict[str, Any]] = []
+        total = 0.0
+        count = 0
+        for client_name, summary in items:
+            section: WeeklySection = getattr(summary, section_attr)
+            for row in section.rows:
+                rows.append({"Customer": client_name, **row})
+            total += section.total
+            count += section.count
+        return WeeklySection(
+            title=prototype.title,
+            count=count,
+            total=total,
+            rows=rows,
+            headers=headers,
+        )
+
+    return WeeklySummary(
+        week_start=week_start,
+        week_end=week_end,
+        new_orders=merge_section("new_orders"),
+        shipped_orders=merge_section("shipped_orders"),
+        paid_orders=merge_section("paid_orders"),
+    )
+
+
 def parse_numeric(value: Any) -> float:
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return 0.0
@@ -1041,6 +1077,32 @@ def filter_client(df: pd.DataFrame, client: str) -> pd.DataFrame:
     return df[df[COL_CUSTOMER] == client].copy()
 
 
+def filter_clients(df: pd.DataFrame, clients: list[str]) -> pd.DataFrame:
+    return df[df[COL_CUSTOMER].isin(clients)].copy()
+
+
+def row_customer(row: pd.Series) -> str:
+    return str(row.get(COL_CUSTOMER) or "").strip()
+
+
+def filter_in_work_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """In-work filter using each row's Customer (multi-client reports)."""
+    if df.empty:
+        return df.copy()
+    mask = df.apply(lambda row: row_counts_as_in_work(row, row_customer(row)), axis=1)
+    return df[mask].copy()
+
+
+def filter_shipped_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """Shipped filter using each row's Customer (multi-client reports)."""
+    if df.empty:
+        return df.copy()
+    mask = df.apply(lambda row: row_counts_as_shipped_status(row, row_customer(row)), axis=1)
+    shipped = df[mask].copy()
+    shipped["_balance"] = shipped[COL_BALANCE].map(parse_numeric)
+    return shipped[shipped["_balance"] != 0].drop(columns="_balance")
+
+
 def filter_in_work(df: pd.DataFrame, client: str = "Utair") -> pd.DataFrame:
     if df.empty:
         return df.copy()
@@ -1220,6 +1282,7 @@ def write_total_sheet(
     shipped_over_30: float,
     in_work_count: int,
     shipped_count: int,
+    client_stats: list[tuple[str, int, int]] | None = None,
 ) -> None:
     ws.sheet_view.showGridLines = False
     ws.column_dimensions["A"].width = 22
@@ -1247,6 +1310,9 @@ def write_total_sheet(
             f"Дата отчёта: {report_date.strftime('%d.%m.%Y')}   |   "
             f"В работе: {in_work_count} поз.   |   Отгружено: {shipped_count} поз."
         )
+    if client_stats:
+        breakdown = " · ".join(f"{name}: {iw} / {sh}" for name, iw, sh in client_stats)
+        subtitle.value += f"   |   {breakdown}"
     _style_cell(subtitle, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
 
     # KPI cards
@@ -2909,6 +2975,7 @@ def generate_report(
     input_path: Path,
     output_path: Path,
     client: str = "Utair",
+    clients: list[str] | None = None,
     report_date: date | None = None,
     previous_input: Path | None = None,
     previous_report: Path | None = None,
@@ -2923,11 +2990,29 @@ def generate_report(
     theme = THEMES.get(theme_name, THEMES["default"])
     activate_theme(theme)
 
-    df = load_taz(input_path, excluded_invoicers=excluded_invoicers)
-    client_df = filter_client(df, client)
+    report_clients = clients if clients else [client]
+    multi_client = len(report_clients) > 1
+    display_client = " + ".join(report_clients) if multi_client else client
 
-    in_work_raw = filter_in_work(client_df, client)
-    shipped_raw = filter_shipped(client_df, client)
+    df = load_taz(input_path, excluded_invoicers=excluded_invoicers)
+    if multi_client:
+        client_df = filter_clients(df, report_clients)
+        in_work_raw = filter_in_work_rows(client_df)
+        shipped_raw = filter_shipped_rows(client_df)
+        client_stats = [
+            (
+                c,
+                len(filter_in_work(filter_client(client_df, c), c)),
+                len(filter_shipped(filter_client(client_df, c), c)),
+            )
+            for c in report_clients
+        ]
+    else:
+        client_df = filter_client(df, client)
+        in_work_raw = filter_in_work(client_df, client)
+        shipped_raw = filter_shipped(client_df, client)
+        client_stats = None
+
     in_work_df = prepare_output_frame(in_work_raw)
     shipped_df = prepare_output_frame(shipped_raw)
 
@@ -2942,7 +3027,7 @@ def generate_report(
         cover.sheet_properties.tabColor = "8B1E2D"
         write_montecarlo_cover_sheet(
             cover,
-            client,
+            display_client,
             report_date,
             summary_title,
             len(in_work_df),
@@ -2955,7 +3040,7 @@ def generate_report(
         cover.sheet_properties.tabColor = "E5D5B8"
         write_como_cover_sheet(
             cover,
-            client,
+            display_client,
             report_date,
             summary_title,
             len(in_work_df),
@@ -2968,7 +3053,7 @@ def generate_report(
         cover.sheet_properties.tabColor = "1A7A8C"
         write_yacht_cover_sheet(
             cover,
-            client,
+            display_client,
             report_date,
             summary_title,
             len(in_work_df),
@@ -2981,7 +3066,7 @@ def generate_report(
         cover.sheet_properties.tabColor = "1B3A5C"
         write_bmw_cover_sheet(
             cover,
-            client,
+            display_client,
             report_date,
             summary_title,
             len(in_work_df),
@@ -2994,7 +3079,7 @@ def generate_report(
         cover.sheet_properties.tabColor = "E8D5F0"
         write_lavender_cover_sheet(
             cover,
-            client,
+            display_client,
             report_date,
             summary_title,
             len(in_work_df),
@@ -3007,31 +3092,51 @@ def generate_report(
     total_ws.sheet_properties.tabColor = theme.tab_total
     write_total_sheet(
         total_ws,
-        client,
+        display_client,
         report_date,
         in_work_totals,
         shipped_totals,
         shipped_over_30,
         len(in_work_df),
         len(shipped_df),
+        client_stats=client_stats,
     )
 
     include_weekly = previous_input or previous_report or previous_date is not None
     if include_weekly:
         if previous_input:
-            previous_df = filter_client(load_taz(previous_input, excluded_invoicers=excluded_invoicers), client)
+            prev_full = load_taz(previous_input, excluded_invoicers=excluded_invoicers)
         elif previous_report:
-            previous_df = filter_client(load_report_snapshot_as_previous(previous_report), client)
+            prev_full = load_report_snapshot_as_previous(previous_report)
         else:
-            previous_df = client_df.iloc[0:0].copy()
+            prev_full = client_df.iloc[0:0].copy()
         week_end = report_date
         week_start = previous_date or (report_date - timedelta(days=week_days))
-        summary = build_weekly_summary(client_df, previous_df, week_start, week_end, client=client)
+        if multi_client:
+            summary = merge_weekly_summaries([
+                (
+                    c,
+                    build_weekly_summary(
+                        filter_client(client_df, c),
+                        filter_client(prev_full, c),
+                        week_start,
+                        week_end,
+                        client=c,
+                    ),
+                )
+                for c in report_clients
+            ])
+        else:
+            if previous_input or previous_report:
+                previous_df = filter_client(prev_full, client)
+            else:
+                previous_df = client_df.iloc[0:0].copy()
+            summary = build_weekly_summary(client_df, previous_df, week_start, week_end, client=client)
         weekly_ws = wb.create_sheet(summary_sheet_name)
         weekly_ws.sheet_properties.tabColor = theme.tab_summary
         write_weekly_summary_sheet(
             weekly_ws,
-            client,
+            display_client,
             summary,
             sheet_title=summary_title,
             cute_comments=(theme.name in CUTE_THEMES),
@@ -3073,8 +3178,9 @@ def parse_report_date(value: str) -> date:
     raise argparse.ArgumentTypeError(f"Invalid date: {value}. Use DD.MM.YYYY or YYYY-MM-DD.")
 
 
-def default_output_name(client: str, report_date: date) -> str:
-    safe_client = re.sub(r'[\\/:*?"<>|]', "-", client.strip())
+def default_output_name(client: str, report_date: date, clients: list[str] | None = None) -> str:
+    label = " + ".join(clients) if clients and len(clients) > 1 else client
+    safe_client = re.sub(r'[\\/:*?"<>|]', "-", label.strip())
     return f"{safe_client} статус {report_date.strftime('%d.%m.%Y')}.xlsx"
 
 
@@ -3083,6 +3189,11 @@ def main() -> None:
     parser.add_argument("--input", "-i", type=Path, required=True, help="Path to TAZ .xlsx file")
     parser.add_argument("--output", "-o", type=Path, help="Output .xlsx path")
     parser.add_argument("--client", "-c", default="Utair", help="Customer name (default: Utair)")
+    parser.add_argument(
+        "--clients",
+        type=str,
+        help="Several customers in one report, comma-separated (e.g. 'S7 Engineering,АК Сибирь')",
+    )
     parser.add_argument(
         "--date",
         "-d",
@@ -3135,11 +3246,13 @@ def main() -> None:
     args = parser.parse_args()
 
     excluded = set() if args.include_fe else set(EXCLUDED_INVOICERS)
-    output = args.output or Path("reports") / default_output_name(args.client, args.date)
+    clients = [c.strip() for c in args.clients.split(",") if c.strip()] if args.clients else None
+    output = args.output or Path("reports") / default_output_name(args.client, args.date, clients)
     result = generate_report(
         args.input,
         output,
         client=args.client,
+        clients=clients,
         report_date=args.date,
         previous_input=args.previous_input,
         previous_report=args.previous_report,
@@ -3151,10 +3264,18 @@ def main() -> None:
         summary_sheet_name=args.summary_sheet,
     )
     print(f"Report saved: {result}")
-    print(f"Client: {args.client}")
-    loaded = filter_client(load_taz(args.input, excluded_invoicers=excluded), args.client)
-    print(f"В работе rows: {len(filter_in_work(loaded, args.client))}")
-    print(f"Отгружено rows: {len(filter_shipped(loaded, args.client))}")
+    display = " + ".join(clients) if clients else args.client
+    print(f"Client: {display}")
+    loaded = filter_clients(load_taz(args.input, excluded_invoicers=excluded), clients) if clients else filter_client(load_taz(args.input, excluded_invoicers=excluded), args.client)
+    if clients:
+        print(f"В работе rows: {len(filter_in_work_rows(loaded))}")
+        print(f"Отгружено rows: {len(filter_shipped_rows(loaded))}")
+        for c in clients:
+            sub = filter_client(loaded, c)
+            print(f"  {c}: в работе {len(filter_in_work(sub, c))}, отгружено {len(filter_shipped(sub, c))}")
+    else:
+        print(f"В работе rows: {len(filter_in_work(loaded, args.client))}")
+        print(f"Отгружено rows: {len(filter_shipped(loaded, args.client))}")
     if args.previous_input or args.previous_report or args.previous_date:
         print(f"Summary sheet: {args.summary_sheet}")
     if args.include_fe:
