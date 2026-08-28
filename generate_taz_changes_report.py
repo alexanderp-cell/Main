@@ -232,7 +232,12 @@ def build_notes(category: str, qty_prev: float, qty_curr: float) -> list[str]:
     return notes
 
 
-def build_commercial_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
+def build_commercial_notes(
+    prev: pd.Series,
+    curr: pd.Series,
+    qty_prev: float = 0,
+    qty_curr: float = 0,
+) -> list[str]:
     """Детализация изменений по коммерции между двумя снимками."""
     notes: list[str] = []
 
@@ -255,7 +260,6 @@ def build_commercial_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
         money_delta("закупка", purch_p, purch_c, "увеличилась", "уменьшилась"),
         money_delta("транспорт", trans_p, trans_c, "увеличился", "уменьшился"),
         money_delta("продажа", sale_p, sale_c, "увеличилась", "уменьшилась"),
-        money_delta("fee", fee_p, fee_c, "увеличился", "уменьшился"),
     ):
         if part:
             notes.append(part)
@@ -270,17 +274,48 @@ def build_commercial_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
     if root_p.lower() != root_c.lower() and (root_p or root_c):
         notes.append(f"root supplier: {root_p or '—'} → {root_c or '—'}")
 
+    qty_changed = qty_prev and qty_curr and abs(qty_prev - qty_curr) > 0.009
+    fee_note = money_delta("fee", fee_p, fee_c, "увеличился", "уменьшился")
+    if fee_note and (notes or qty_changed):
+        notes.append(fee_note)
+
     return notes
+
+
+def has_commercial_in_notes(notes: list[str]) -> bool:
+    text = " ".join(notes)
+    return any(kw in text for kw in ("закупка", "транспорт", "продажа", "fee", "поставщик", "root supplier"))
+
+
+def append_trouble_notes(qty_notes: list[str], commercial_notes: list[str], extra: list[str]) -> list[str]:
+    out = [*qty_notes]
+    if commercial_notes:
+        out.extend(commercial_notes)
+    elif not qty_notes:
+        out.append("коммерция без изменений")
+    out.extend(extra)
+    return out
+
+
+def meaningful_margin_delta(e: StatusChange) -> float | None:
+    txt, _ = fmt_margin_delta_cell(e)
+    return None if txt == "—" else e.margin_delta
+
+
+def sum_meaningful_margin(items: list[StatusChange]) -> float:
+    return sum(d for e in items if (d := meaningful_margin_delta(e)) is not None)
+
+
+def fmt_sale_cell(e: StatusChange) -> str:
+    if abs(e.sale_prev - e.sale_curr) < COMMERCIAL_EPS:
+        return fmt_money(e.sale_curr, 0)
+    return f"{fmt_money(e.sale_prev, 0)} → {fmt_money(e.sale_curr, 0)}"
 
 
 def fmt_margin_delta_cell(e: StatusChange) -> tuple[str, str]:
     """Δ маржа план = (продажа − закупка − транспорт − fee)_curr − _prev."""
     d = e.margin_delta
-    has_commercial = any(
-        kw in " ".join(e.notes)
-        for kw in ("закупка", "транспорт", "продажа", "fee", "поставщик", "root supplier")
-    )
-    if abs(d) < COMMERCIAL_EPS and not has_commercial:
+    if not has_commercial_in_notes(e.notes):
         return "—", ""
     css = "pos" if d > COMMERCIAL_EPS else ("neg" if d < -COMMERCIAL_EPS else "")
     return fmt_money(d, 0), css
@@ -312,7 +347,7 @@ def compare_snapshots(
         qty_curr = parse_numeric(curr.get(COL_QTY))
         category = str(prev.get(COL_CATEGORY) or curr.get(COL_CATEGORY) or "").strip()
         qty_notes = build_notes(category, qty_prev, qty_curr)
-        commercial_notes = build_commercial_notes(prev, curr)
+        commercial_notes = build_commercial_notes(prev, curr, qty_prev, qty_curr)
 
         base = StatusChange(
             key=key,
@@ -359,11 +394,11 @@ def compare_snapshots(
                     change_kind="entered",
                     trouble_min_days=0,
                     trouble_max_days=period_days,
-                    notes=[*qty_notes, *commercial_notes, "новый TROUBLE за период"],
+                    notes=append_trouble_notes(qty_notes, commercial_notes, ["новый TROUBLE за период"]),
                 )
             )
         elif ps == STATUS_TROUBLE and cs in RESOLVED_FROM_TROUBLE:
-            ev_notes = [*qty_notes, *commercial_notes]
+            ev_notes = append_trouble_notes(qty_notes, commercial_notes, [])
             dd = base.deadline_delta_days
             if dd is not None and dd != 0:
                 ev_notes.append(f"срок поставки сдвинут на {dd:+d} дн.")
@@ -371,8 +406,6 @@ def compare_snapshots(
             dtd_curr = base.days_to_deliver_curr
             if dtd_prev is not None and dtd_curr is not None and abs(dtd_prev - dtd_curr) > 0.1:
                 ev_notes.append(f"«дней на поставку» {dtd_prev:g} → {dtd_curr:g}")
-            if not commercial_notes:
-                ev_notes.append("коммерция без изменений")
             trouble.append(
                 replace(
                     base,
@@ -440,9 +473,9 @@ def trouble_kpis(events: list[StatusChange], period_days: int) -> dict[str, Any]
     cancel_rate = (len(cancelled) / at_start * 100) if at_start else None
 
     ongoing_days = [e.trouble_min_days for e in ongoing if e.trouble_min_days is not None]
-    resolved_margin = [e.margin_delta for e in resolved]
-    positive = sum(1 for d in resolved_margin if d > 1)
-    negative = sum(1 for d in resolved_margin if d < -1)
+    resolved_margin = [d for e in resolved if (d := meaningful_margin_delta(e)) is not None]
+    positive = sum(1 for d in resolved_margin if d > COMMERCIAL_EPS)
+    negative = sum(1 for d in resolved_margin if d < -COMMERCIAL_EPS)
 
     return {
         "entered": len(entered),
@@ -534,7 +567,7 @@ def render_trouble_table(items: list[StatusChange]) -> str:
   <td>{esc(e.supplier) or "—"}</td>
   <td>{root}</td>
   <td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>
-  <td class='num'>{fmt_money(e.sale_prev, 0)} → {fmt_money(e.sale_curr, 0)}</td>
+  <td class='num'>{fmt_sale_cell(e)}</td>
   <td class='num {margin_cls}'>{margin_txt}</td>
   <td class='num'>{dd_txt}</td>
   <td>{esc('; '.join(e.notes) or '—')}</td>
@@ -587,7 +620,8 @@ def render_client_groups(
     blocks = []
     for client, client_items in group_by_customer(items):
         sale = sum(e.sale_curr for e in client_items)
-        margin_d = sum(e.margin_delta for e in client_items)
+        margin_d = sum_meaningful_margin(client_items)
+        margin_pill = fmt_money(margin_d, 0) if margin_d else "—"
         blocks.append(
             f"""
 <details class="group client">
@@ -595,7 +629,7 @@ def render_client_groups(
     <span class="group-name">{esc(client)}</span>
     <span class="pill">{len(client_items)} поз.</span>
     <span class="pill">{fmt_money(sale, 0)} USD</span>
-    <span class="pill">Δ {fmt_money(margin_d, 0)}</span>
+    <span class="pill">Δ {margin_pill}</span>
   </summary>
   <div class="group-body">{table_fn(client_items)}</div>
 </details>"""
@@ -619,7 +653,8 @@ def render_section(
   <div class="group-body"><p class='muted'>Нет изменений за период.</p></div>
 </details>"""
     sale = sum(e.sale_curr for e in items)
-    margin_d = sum(e.margin_delta for e in items)
+    margin_d = sum_meaningful_margin(items)
+    margin_pill = fmt_money(margin_d, 0) if margin_d else "—"
     clients = len(group_by_customer(items))
     pill = f"pill {pill_class}".strip()
     inner = render_client_groups(items, table_fn)
@@ -630,7 +665,7 @@ def render_section(
     <span class="{pill}">{len(items)} поз.</span>
     <span class="pill">{clients} кли.</span>
     <span class="pill">продажа {fmt_money(sale, 0)} USD</span>
-    <span class="pill">Δ маржа {fmt_money(margin_d, 0)}</span>
+    <span class="pill">Δ маржа {margin_pill}</span>
   </summary>
   <div class="group-body">{inner}</div>
 </details>"""
@@ -668,6 +703,12 @@ def render_html_report(
     resolved_trouble = [e for e in trouble if e.change_kind == "resolved"]
     cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
+    resolved_margin_kpi = (
+        fmt_money(kpis["avg_margin_delta"], 0)
+        if kpis["avg_margin_delta"] is not None
+        else "—"
+    )
+
     sections = "\n".join([
         render_section("Новые TROUBLE", new_trouble, render_trouble_table, "warn"),
         render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table, "ok"),
@@ -694,7 +735,7 @@ def render_html_report(
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
       <div><div class="label">Всё ещё в TROUBLE</div><div class="value">{kpis['ongoing']}<div class="muted">без смены статуса за период</div></div></div>
-      <div><div class="label">Δ маржа (решённые)</div><div class="value">{fmt_money(kpis['avg_margin_delta'], 0)}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']}</div></div></div>
+      <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
     <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
