@@ -529,6 +529,29 @@ def compare_snapshots(
                 replace(base, change_kind="warranty", notes=[*qty_notes, *commercial_notes])
             )
 
+    # Строки, которых не было в прошлом снимке, но уже TROUBLE в текущем
+    for key in set(curr_rows) - set(prev_rows):
+        curr = curr_rows[key]
+        cs = str(curr.get(COL_STATUS) or "").strip()
+        if cs != STATUS_TROUBLE:
+            continue
+        trouble.append(
+            build_status_change(
+                key,
+                curr,
+                curr,
+                change_kind="entered",
+                prev_status="(нет в прошлом снимке)",
+                curr_status=cs,
+                trouble_min_days=0,
+                trouble_max_days=period_days,
+                notes=[
+                    "строки не было в ТАЗ на начало периода",
+                    "новый TROUBLE за период",
+                ],
+            )
+        )
+
     return trouble, cancellations, refunds, warranty
 
 
@@ -821,7 +844,7 @@ def render_html_report(
       <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
-    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса за период и строки, появившиеся в ТАЗ уже в TROUBLE. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
   {sections}
