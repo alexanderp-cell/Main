@@ -56,6 +56,8 @@ STATUS_SHIPPED = "3 SHIPPED"
 STATUS_FINISHED = "4 FINISHED"
 STATUSES_IN_WORK = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
 STATUSES_SHIPPED = {STATUS_SHIPPED, STATUS_FINISHED}
+# SHIPPED = still in work; only FINISHED counts as shipped (Aeroflot, S7 Engineering).
+CLIENTS_SHIPPED_COUNTS_AS_IN_WORK = {"Аэрофлот", "S7 Engineering"}
 CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari", "tropical_yacht", "bmw_night"}
 
 COLUMN_RENAME = {
@@ -1006,12 +1008,17 @@ def comment_has_ddp_mow(value: Any) -> bool:
     return bool(re.search(r"\bDDP\s*MOW\b", str(value or ""), flags=re.IGNORECASE))
 
 
+def client_shipped_counts_as_in_work(client: str) -> bool:
+    """AFL / S7: SHIPPED stays in «В работе» until FINISHED."""
+    return client in CLIENTS_SHIPPED_COUNTS_AS_IN_WORK
+
+
 def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
     """Utair: DDP MOW in SHIPPED stays in work until FINISHED.
-    Aeroflot: SHIPPED counts as in work; only FINISHED is shipped.
+    Aeroflot / S7: SHIPPED counts as in work; only FINISHED is shipped.
     """
     status = row.get(COL_STATUS)
-    if client == "Аэрофлот":
+    if client_shipped_counts_as_in_work(client):
         return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
     if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
         return True
@@ -1020,10 +1027,10 @@ def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
 
 def row_counts_as_shipped_status(row: pd.Series, client: str) -> bool:
     """Utair: SHIPPED+FINISHED are shipped, except DDP MOW which needs FINISHED.
-    Aeroflot: only FINISHED counts as shipped.
+    Aeroflot / S7: only FINISHED counts as shipped.
     """
     status = row.get(COL_STATUS)
-    if client == "Аэрофлот":
+    if client_shipped_counts_as_in_work(client):
         return status == STATUS_FINISHED
     if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
         return False
