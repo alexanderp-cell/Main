@@ -133,6 +133,9 @@ def add_row_key(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+COMMERCIAL_EPS = 1.0  # USD — ниже считаем «без изменений»
+
+
 def row_margin_plan(row: pd.Series) -> float:
     sale = parse_numeric(row.get(COL_SALE))
     purchase = parse_numeric(row.get(COL_PURCHASE))
@@ -217,7 +220,7 @@ class StatusChange:
         return None
 
 
-def build_notes(category: str, qty_prev: float, qty_curr: float, sale_delta: float) -> list[str]:
+def build_notes(category: str, qty_prev: float, qty_curr: float) -> list[str]:
     notes: list[str] = []
     cat = (category or "").upper()
     if qty_prev and qty_curr and abs(qty_prev - qty_curr) > 0.009:
@@ -226,9 +229,61 @@ def build_notes(category: str, qty_prev: float, qty_curr: float, sale_delta: flo
             notes.append("EXP: вероятно правка количества / ед. изм.")
         elif "ROT" in cat:
             notes.append("ROTABLE: проверьте замену юнита")
-    if abs(sale_delta) > 0.5:
-        notes.append(f"продажа Δ {sale_delta:+,.0f} USD".replace(",", " "))
     return notes
+
+
+def build_commercial_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
+    """Детализация изменений по коммерции между двумя снимками."""
+    notes: list[str] = []
+
+    def money_delta(label: str, prev_v: float, curr_v: float, up: str, down: str) -> str | None:
+        d = curr_v - prev_v
+        if abs(d) < COMMERCIAL_EPS:
+            return None
+        return f"{label} {up if d > 0 else down} на {fmt_money(abs(d), 0)} USD"
+
+    sale_p = parse_numeric(prev.get(COL_SALE))
+    sale_c = parse_numeric(curr.get(COL_SALE))
+    purch_p = parse_numeric(prev.get(COL_PURCHASE))
+    purch_c = parse_numeric(curr.get(COL_PURCHASE))
+    trans_p = parse_numeric(prev.get(COL_TRANSPORT_PLAN))
+    trans_c = parse_numeric(curr.get(COL_TRANSPORT_PLAN))
+    fee_p = parse_numeric(prev.get(COL_FEE))
+    fee_c = parse_numeric(curr.get(COL_FEE))
+
+    for part in (
+        money_delta("закупка", purch_p, purch_c, "увеличилась", "уменьшилась"),
+        money_delta("транспорт", trans_p, trans_c, "увеличился", "уменьшился"),
+        money_delta("продажа", sale_p, sale_c, "увеличилась", "уменьшилась"),
+        money_delta("fee", fee_p, fee_c, "увеличился", "уменьшился"),
+    ):
+        if part:
+            notes.append(part)
+
+    sup_p = str(prev.get(COL_SUPPLIER) or "").strip()
+    sup_c = str(curr.get(COL_SUPPLIER) or "").strip()
+    if sup_p.lower() != sup_c.lower() and (sup_p or sup_c):
+        notes.append(f"поставщик: {sup_p or '—'} → {sup_c or '—'}")
+
+    root_p = str(prev.get(COL_ROOT_SUPPLIER) or "").strip()
+    root_c = str(curr.get(COL_ROOT_SUPPLIER) or "").strip()
+    if root_p.lower() != root_c.lower() and (root_p or root_c):
+        notes.append(f"root supplier: {root_p or '—'} → {root_c or '—'}")
+
+    return notes
+
+
+def fmt_margin_delta_cell(e: StatusChange) -> tuple[str, str]:
+    """Δ маржа план = (продажа − закупка − транспорт − fee)_curr − _prev."""
+    d = e.margin_delta
+    has_commercial = any(
+        kw in " ".join(e.notes)
+        for kw in ("закупка", "транспорт", "продажа", "fee", "поставщик", "root supplier")
+    )
+    if abs(d) < COMMERCIAL_EPS and not has_commercial:
+        return "—", ""
+    css = "pos" if d > COMMERCIAL_EPS else ("neg" if d < -COMMERCIAL_EPS else "")
+    return fmt_money(d, 0), css
 
 
 def compare_snapshots(
@@ -256,7 +311,8 @@ def compare_snapshots(
         qty_prev = parse_numeric(prev.get(COL_QTY))
         qty_curr = parse_numeric(curr.get(COL_QTY))
         category = str(prev.get(COL_CATEGORY) or curr.get(COL_CATEGORY) or "").strip()
-        notes = build_notes(category, qty_prev, qty_curr, sale_curr - sale_prev)
+        qty_notes = build_notes(category, qty_prev, qty_curr)
+        commercial_notes = build_commercial_notes(prev, curr)
 
         base = StatusChange(
             key=key,
@@ -282,7 +338,7 @@ def compare_snapshots(
             deadline_curr=parse_date(curr.get(COL_DEADLINE)),
             days_to_deliver_prev=parse_numeric(prev.get(COL_DAYS_TO_DELIVER)) or None,
             days_to_deliver_curr=parse_numeric(curr.get(COL_DAYS_TO_DELIVER)) or None,
-            notes=notes,
+            notes=qty_notes,
         )
 
         # --- TROUBLE lifecycle ---
@@ -293,7 +349,7 @@ def compare_snapshots(
                     change_kind="ongoing",
                     trouble_min_days=period_days,
                     trouble_max_days=None,
-                    notes=[*notes, f"в TROUBLE минимум {period_days} дн. (оба снимка)"],
+                    notes=[*qty_notes, *commercial_notes, f"в TROUBLE минимум {period_days} дн. (оба снимка)"],
                 )
             )
         elif ps != STATUS_TROUBLE and cs == STATUS_TROUBLE:
@@ -303,11 +359,11 @@ def compare_snapshots(
                     change_kind="entered",
                     trouble_min_days=0,
                     trouble_max_days=period_days,
-                    notes=[*notes, "новый TROUBLE за период"],
+                    notes=[*qty_notes, *commercial_notes, "новый TROUBLE за период"],
                 )
             )
         elif ps == STATUS_TROUBLE and cs in RESOLVED_FROM_TROUBLE:
-            ev_notes = list(notes)
+            ev_notes = [*qty_notes, *commercial_notes]
             dd = base.deadline_delta_days
             if dd is not None and dd != 0:
                 ev_notes.append(f"срок поставки сдвинут на {dd:+d} дн.")
@@ -315,11 +371,8 @@ def compare_snapshots(
             dtd_curr = base.days_to_deliver_curr
             if dtd_prev is not None and dtd_curr is not None and abs(dtd_prev - dtd_curr) > 0.1:
                 ev_notes.append(f"«дней на поставку» {dtd_prev:g} → {dtd_curr:g}")
-            margin_delta = base.margin_curr - base.margin_prev
-            if margin_delta > 1:
-                ev_notes.append("маржа выросла после решения")
-            elif margin_delta < -1:
-                ev_notes.append("маржа упала после решения")
+            if not commercial_notes:
+                ev_notes.append("коммерция без изменений")
             trouble.append(
                 replace(
                     base,
@@ -336,7 +389,7 @@ def compare_snapshots(
                     change_kind="cancelled_from_trouble",
                     trouble_min_days=0,
                     trouble_max_days=period_days,
-                    notes=[*notes, "TROUBLE → отмена/возврат"],
+                    notes=[*qty_notes, *commercial_notes, "TROUBLE → отмена/возврат"],
                 )
             )
         elif ps == STATUS_TROUBLE and cs == STATUS_WARRANTY:
@@ -346,19 +399,25 @@ def compare_snapshots(
                     change_kind="warranty_from_trouble",
                     trouble_min_days=0,
                     trouble_max_days=period_days,
-                    notes=[*notes, "TROUBLE → гарантия"],
+                    notes=[*qty_notes, *commercial_notes, "TROUBLE → гарантия"],
                 )
             )
 
         # --- Cancellations / refunds (indirect date) ---
         if ps in CANCEL_SOURCE and cs == STATUS_CANCEL:
-            cancellations.append(replace(base, change_kind="cancelled"))
+            cancellations.append(
+                replace(base, change_kind="cancelled", notes=[*qty_notes, *commercial_notes])
+            )
         elif ps in CANCEL_SOURCE and cs == STATUS_REFUND:
-            refunds.append(replace(base, change_kind="refunded"))
+            refunds.append(
+                replace(base, change_kind="refunded", notes=[*qty_notes, *commercial_notes])
+            )
 
         # --- Warranty (active pipeline → warranty, same rule as cancellations) ---
         if ps in CANCEL_SOURCE and cs == STATUS_WARRANTY:
-            warranty.append(replace(base, change_kind="warranty"))
+            warranty.append(
+                replace(base, change_kind="warranty", notes=[*qty_notes, *commercial_notes])
+            )
 
     return trouble, cancellations, refunds, warranty
 
@@ -463,7 +522,7 @@ def render_trouble_table(items: list[StatusChange]) -> str:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
     for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
-        margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
+        margin_txt, margin_cls = fmt_margin_delta_cell(e)
         dd = e.deadline_delta_days
         dd_txt = f"{dd:+d}" if dd is not None else "—"
         root = esc(e.root_supplier) if e.root_supplier else "—"
@@ -476,7 +535,7 @@ def render_trouble_table(items: list[StatusChange]) -> str:
   <td>{root}</td>
   <td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>
   <td class='num'>{fmt_money(e.sale_prev, 0)} → {fmt_money(e.sale_curr, 0)}</td>
-  <td class='num {margin_cls}'>{fmt_money(e.margin_delta, 0)}</td>
+  <td class='num {margin_cls}'>{margin_txt}</td>
   <td class='num'>{dd_txt}</td>
   <td>{esc('; '.join(e.notes) or '—')}</td>
 </tr>"""
@@ -495,7 +554,7 @@ def render_cancel_table(items: list[StatusChange]) -> str:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
     for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
-        margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
+        margin_txt, margin_cls = fmt_margin_delta_cell(e)
         kind = "отмена" if e.curr_status == STATUS_CANCEL else "возврат"
         if e.change_kind == "cancelled_from_trouble":
             kind = "из TROUBLE → " + kind
@@ -506,7 +565,7 @@ def render_cancel_table(items: list[StatusChange]) -> str:
   <td>{esc(e.category)}</td>
   <td>{esc(kind)}</td>
   <td class='num'>{fmt_money(e.sale_prev, 0)}</td>
-  <td class='num {margin_cls}'>{fmt_money(e.margin_delta, 0)}</td>
+  <td class='num {margin_cls}'>{margin_txt}</td>
   <td>{esc('; '.join(e.notes) or '—')}</td>
 </tr>"""
         )
