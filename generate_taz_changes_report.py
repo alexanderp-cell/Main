@@ -530,11 +530,16 @@ def compare_snapshots(
             )
 
     # Строки, которых не было в прошлом снимке, но уже TROUBLE в текущем
+    # (заказ взят в работу в период и почти сразу попал в TROUBLE)
     for key in set(curr_rows) - set(prev_rows):
         curr = curr_rows[key]
         cs = str(curr.get(COL_STATUS) or "").strip()
         if cs != STATUS_TROUBLE:
             continue
+        order_date = parse_date(curr.get(COL_ORDER_DATE))
+        notes = ["строки не было в ТАЗ на начало периода", "новый TROUBLE за период"]
+        if order_date:
+            notes.insert(1, f"заказ взят в работу {order_date.strftime('%d.%m.%Y')}")
         trouble.append(
             build_status_change(
                 key,
@@ -545,10 +550,7 @@ def compare_snapshots(
                 curr_status=cs,
                 trouble_min_days=0,
                 trouble_max_days=period_days,
-                notes=[
-                    "строки не было в ТАЗ на начало периода",
-                    "новый TROUBLE за период",
-                ],
+                notes=notes,
             )
         )
 
@@ -844,7 +846,7 @@ def render_html_report(
       <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
-    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса за период и строки, появившиеся в ТАЗ уже в TROUBLE. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
   {sections}
