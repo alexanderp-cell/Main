@@ -7,6 +7,7 @@ import argparse
 import calendar
 import hashlib
 import json
+import zipfile
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -770,11 +771,24 @@ def main() -> None:
     print(f"Realized rows with dates: {len(rows)}")
     print(f"Attention (missing delivery / incomplete): {len(missing)}")
 
+    written: list[Path] = []
     for m in months:
         out = args.output_dir / f"realized_orders_{args.year}-{m:02d}.html"
         generate_month_report(rows, missing, args.year, m, out)
+        written.append(out)
         month_n = len(filter_month(rows, args.year, m))
         print(f"Saved {out} ({month_n} rows)")
+
+    if written:
+        if len(months) > 1:
+            zip_name = f"realized_orders_{args.year}_H1.zip" if months == list(range(1, 7)) else f"realized_orders_{args.year}.zip"
+        else:
+            zip_name = written[0].with_suffix(".zip").name
+        zip_path = args.output_dir / zip_name
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for path in written:
+                zf.write(path, path.name)
+        print(f"Saved {zip_path}  ← скачайте ZIP и откройте HTML из распакованной папки")
 
 
 if __name__ == "__main__":

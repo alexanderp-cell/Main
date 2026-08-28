@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import zipfile
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -599,7 +600,11 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(html_out, encoding="utf-8")
+    zip_path = args.output.with_suffix(".zip")
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(args.output, args.output.name)
     print(f"Saved {args.output}")
+    print(f"Saved {zip_path}  ← скачайте ZIP и откройте HTML из распакованной папки")
     print(
         f"TROUBLE events: {len(trouble)} | cancellations: {len(cancellations)} | "
         f"refunds: {len(refunds)} | warranty: {len(warranty)}"
