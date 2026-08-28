@@ -2767,7 +2767,7 @@ def _write_mood_card(
         cream = PatternFill("solid", fgColor="FBF3E0")
         body_font = Font(name="Calibri", size=10, color="0B3D4C")
         title_font = Font(name="Georgia", size=12, bold=True, color="E0F4F7")
-        img_size = 118
+        img_size = 150
         img_col = "T"
     elif theme_name == "bmw_night":
         title_fill = PatternFill("solid", fgColor="0D1B2A")
@@ -2822,7 +2822,10 @@ def _write_mood_card(
             _style_cell(ws.cell(r, c), fill=cream, border=BORDER_THIN)
         ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 20)
 
-    for letter, width in (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 18), ("U", 4)):
+    col_widths = (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 18), ("U", 4))
+    if theme_name == "tropical_yacht":
+        col_widths = (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 24), ("U", 4))
+    for letter, width in col_widths:
         ws.column_dimensions[letter].width = max(ws.column_dimensions[letter].width or 0, width)
 
     _add_image(ws, image_path, f"{img_col}{start_row}", width=img_size, height=img_size)
