@@ -812,7 +812,7 @@ def write_weekly_summary_sheet(
     elif cute_comments and theme_name == "como_prosecco":
         title.value = f"🥂 {sheet_title} — {client} · просекко на Комо"
     elif cute_comments and theme_name == "tropical_yacht":
-        title.value = f"⛵ {sheet_title} — {client} · яхта в тропической бухте"
+        title.value = f"⛵ {sheet_title} — {client} · яхта · тропический рай · отдых на богатом"
     elif cute_comments and theme_name == "bmw_night":
         title.value = f"🚗 {sheet_title} — {client} · BMW 8 · набережная Казани · кальянная"
     elif cute_comments:
@@ -853,10 +853,10 @@ def write_weekly_summary_sheet(
         subtitle.value = f"{subtitle.value}  ·  {epi}"
     elif cute_comments and theme_name == "tropical_yacht":
         epigraphs = [
-            "парусная яхта в лазурной бухте — и неделя, которая знает цену себе",
-            "фуршет на палубе, куча денег рядом, цифры без шторма",
-            "тропический остров не прощает суеты: считаем спокойно, как капитан",
-            "шампанское на борт, ветер в парусах, отчёт на высокой волне",
+            "парусная яхта в лазурной бухте — и неделя, которая отдыхает на богатом",
+            "фуршет на палубе, купюры рядом, цифры без шторма",
+            "тропический остров не торопит: считаем спокойно, как капитан в гамаке",
+            "шампанское на борт, бриз в парусах, отчёт на круиз-контроле",
             "богатый тон недели: бирюза, золото и лёгкий запах морского бриза",
         ]
         epi = epigraphs[
@@ -914,7 +914,7 @@ def write_weekly_summary_sheet(
                 "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
             }
         elif theme_name == "tropical_yacht":
-            mood_cards = build_yacht_mood_cards(summary)
+            mood_cards = build_yacht_mood_cards(summary, client)
             cycle = [YACHT_SAIL, YACHT_BUFFET, YACHT_MONEY, YACHT_BAY, YACHT_CHAMPAGNE]
             seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
             mood_images = {
@@ -1019,7 +1019,7 @@ def write_weekly_summary_sheet(
                 theme_name=theme_name,
             )
             row = max(row, section_start + 6)
-            if theme_name == "bmw_night":
+            if theme_name in {"bmw_night", "tropical_yacht"}:
                 row = max(row, section_start + 9)
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
@@ -1034,7 +1034,7 @@ def write_weekly_summary_sheet(
     elif cute_comments and theme_name == "como_prosecco":
         note.value += "  ·  справа — тост за неделю на набережной Комо 🥂"
     elif cute_comments and theme_name == "tropical_yacht":
-        note.value += "  ·  справа — тост за неделю на палубе яхты ⛵"
+        note.value += "  ·  справа — тост за неделю на палубе яхты в тропическом раю ⛵"
     elif cute_comments and theme_name == "bmw_night":
         note.value += "  ·  справа — тост за неделю: BMW на набережной Казани и кальянная 🚗"
     elif cute_comments:
@@ -2248,30 +2248,236 @@ def _remap_mood_cards(cards: dict[str, dict[str, str]], pairs: list[tuple[str, s
     return out
 
 
-def build_yacht_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
-    """Luxury yacht / tropical bay — narrative cards derived from Monte-Carlo set."""
-    pairs = [
-        ("♦", "⛵"),
-        ("Ferrari 250 GTO", "парусная яхта"),
-        ("250 GTO", "яхта"),
-        ("Monte-Carlo", "тропической бухте"),
-        ("Place du Casino", "лазурной бухте"),
-        ("казино", "палубе"),
-        ("Казино", "Палубе"),
-        ("рулетк", "фуршет"),
-        ("фишки", "купюры"),
-        ("Grand Prix", "Regatta"),
-        ("🏎️", "⛵"),
-        ("🔴", "🌊"),
-        ("асфальт", "палуба"),
-        ("капот", "шверт"),
-        ("блеф", "шторм"),
-        ("дилер", "капитан"),
-        ("♠️", "💰"),
-        ("банк", "касса"),
-        ("Банк", "Касса"),
-    ]
-    return _remap_mood_cards(build_montecarlo_mood_cards(summary), pairs)
+def build_yacht_mood_cards(summary: WeeklySummary, client: str = "Аэрофлот") -> dict[str, dict[str, str]]:
+    """Tropical yacht / paradise vacation on a budget of 'rich' — original weekly copy."""
+    cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
+    if new.count == 0:
+        options = [
+            (
+                "🌴 Тихая бухта",
+                f"За {period} новых заказов нет. Яхта покачивается на якоре, "
+                "фуршет накрыт на всякий случай — иногда роскошь в том, чтобы просто отдыхать ⛵",
+            ),
+            (
+                "🥂 Антракт между коктейлями",
+                "Продажи молчат, как лагуна в штиль. Не тревожим капитана — "
+                "ждём следующую волну с бирюзовой водой ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|sales|empty", options)
+    elif max_amount >= 30000 or new.total >= 150000:
+        options = [
+            (
+                "⛵ Regatta продаж!",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда вечера — «{top_desc}» на {max_m} USD. "
+                "Палуба аплодирует, шампанское уже открыто ✨⛵",
+            ),
+            (
+                "💰 Джекпот на богатом",
+                f"{new.count} заказов на {money} USD. Средний чек ~{avg_m}. "
+                "Это уже не аперитив у причала — это полный фуршет на борту 🥂",
+            ),
+            (
+                "🌊 Ключ от бухты",
+                f"Неделя класса regatta: {money} USD"
+                + (f", микс {mix}" if mix else "")
+                + f". «{top_desc}» сверкает, как лак на белом корпусе яхты ⛵",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|sales|big", options)
+    elif max_amount < 5000 and new.total < 25000:
+        options = [
+            (
+                "🍹 Лёгкий коктейль",
+                f"Аккуратные {new.count} поз. на {money} USD. "
+                "В тропическом раю уважают и скромный фуршет — если он без суеты ✨",
+            ),
+            (
+                "🌴 Яхта наполовину",
+                f"Чек скромный (~{avg_m} USD), зато живой. "
+                f"За {period} — {money} USD. Не regatta, а спокойный круиз вдоль рифа ⛵",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|sales|small", options)
+    else:
+        options = [
+            (
+                "🌊 Круиз вдоль рифа",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Ровный ход, золотой закат, без лишней волны ⛵",
+            ),
+            (
+                "🥂 Бокал на богатом",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · {mix}." if mix else ".")
+                + f" Не шторм и не штиль — уверенный круиз {client} ✨",
+            ),
+            (
+                "💙 Бирюза недели",
+                f"{new.count} заказов, {money} USD, средний чек ~{avg_m}. "
+                "Именно такой тон любит яхта в тропической бухте: богатство без крика ⛵",
+            ),
+            (
+                "✨ Парус на горизонте",
+                f"За неделю {money} USD. Самый яркий блик — «{top_desc}». "
+                f"{client} держит курс вдоль лазурной воды 💙",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
+    if shipped.count == 0:
+        options = [
+            (
+                "🛥️ Яхта ещё у причала",
+                "FINISHED-отгрузок за период нет. SHIPPED гуляет по лагуне как «в работе» — "
+                "по правилам круиза. Парус ждёт попутного ветра ✨",
+            ),
+            (
+                "🌙 Лагуна спокойна",
+                "Пока без finished-отгрузок. Тропический остров умеет ждать красиво — "
+                "фуршет накрыт, вода тёплая ⛵",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|ship|empty", options)
+    elif shipped.count and late / shipped.count >= 0.5:
+        options = [
+            (
+                "🌧️ Шторм подольше обычного",
+                f"Из {shipped.count} finished-отгрузок ({ship_money} USD) "
+                f"с опозданием {late}"
+                + (f", в среднем ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Даже яхта иногда стоит в штормовой бухте. "
+                "Главное — доплыть с достоинством 🫶",
+            ),
+            (
+                "🛟 Спокойно, капитан рядом",
+                f"{late} из {shipped.count} позже плана, на {ship_money} USD всё равно у клиента. "
+                "Не паникуем — поднимаем бокал за терпение 🥂",
+            ),
+            (
+                "🌊 Волна гуляет",
+                f"График плавает, но риф на месте: {shipped.count} поз. на {ship_money} USD. "
+                "Лучше опоздать роскошно, чем спешить дёшево ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|ship|late", options)
+    elif early > late:
+        options = [
+            (
+                "🏁 Быстрее ветра!",
+                f"Досрочно {early} из {shipped.count}, в срок {on_time}. "
+                "Неделя как утренний бриз в бухте: чистый кайф ☀️⛵",
+            ),
+            (
+                "⛵ Ранний заход в порт",
+                f"{early} позиций раньше срока, отгружено на {ship_money} USD. "
+                "Капитан кивает: красивая швартовка ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|ship|early", options)
+    else:
+        options = [
+            (
+                "🚶 Ровный круг по лагуне",
+                f"FINISHED: {shipped.count} поз. на {ship_money} USD "
+                f"(рано {early} / вовремя {on_time} / позже {late}). "
+                "Богатый, спокойный ритм — фирменный стиль тропического отдыха ⛵",
+            ),
+            (
+                "🥂 Тост за ровную логистику",
+                f"{shipped.count} отгрузок за {period} на {ship_money} USD. "
+                "Без драмы, с видом на бирюзу. Иногда лучший комментарий — «на богатом» ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
+
+    paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
+    if paid.count == 0 or paid.total <= 0:
+        options = [
+            (
+                "🫧 Касса на якоре",
+                "Платежей за период нет. Не грустим: даже на яхте "
+                "сначала накрывают фуршет, потом считают кассу 🥂",
+            ),
+            (
+                "🌙 Тишина в бухте",
+                "Пока без оплат. Смотрим на закат и верим, "
+                "что следующий перевод приедет на белой яхте ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|pay|empty", options)
+    elif paid.total >= 100000:
+        options = [
+            (
+                "💎 Касса как полный фуршет!",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший ~{_fmt_money(max_pay)}). "
+                "Это тот самый звон бокалов, когда вечер уже наш 🥂⛵",
+            ),
+            (
+                "⛵ Касса на попутном ветре",
+                f"{paid_money} USD — закат полностью наш. "
+                f"{paid.count} платежей, и каждый блестит как золото на палубе. Спасибо, {client} ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|pay|big", options)
+    else:
+        options = [
+            (
+                "🥂 Ещё по бокалу",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Не фейерверк — зато честный, солнечный приход. Касса довольна 💙",
+            ),
+            (
+                "💳 Мягкий приход к палубе",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Капитан кивает: движение есть ⛵",
+            ),
+            (
+                "🔑 Золотой ключ кассы",
+                f"Пришло {paid_money} USD. Самый заметный платёж: {_fmt_money(max_pay)} USD. "
+                f"Спасибо {client} — круиз сыграл красиво ✨",
+            ),
+            (
+                "💰 Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, яхта у рифа, шампанское холодное ⛵🥂",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|yacht|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
+    return cards
 
 
 def build_bmw_mood_cards(summary: WeeklySummary, client: str) -> dict[str, dict[str, str]]:
@@ -2561,8 +2767,8 @@ def _write_mood_card(
         cream = PatternFill("solid", fgColor="FBF3E0")
         body_font = Font(name="Calibri", size=10, color="0B3D4C")
         title_font = Font(name="Georgia", size=12, bold=True, color="E0F4F7")
-        img_size = 78
-        img_col = "S"
+        img_size = 118
+        img_col = "T"
     elif theme_name == "bmw_night":
         title_fill = PatternFill("solid", fgColor="0D1B2A")
         cream = PatternFill("solid", fgColor="E8EDFA")
@@ -2593,7 +2799,7 @@ def _write_mood_card(
         _style_cell(ws.cell(start_row, c), fill=title_fill, border=BORDER_THIN)
 
     body_row = start_row + 1
-    body_span = 6 if theme_name == "bmw_night" else 4
+    body_span = 6 if theme_name in {"bmw_night", "tropical_yacht"} else 4
     ws.merge_cells(
         start_row=body_row,
         start_column=col_start,
@@ -3043,12 +3249,12 @@ def write_yacht_cover_sheet(
         alignment=Alignment(horizontal="center", vertical="center"),
     )
 
-    _add_image(ws, YACHT_BANNER, "B6", width=720, height=400)
-    _add_image(ws, YACHT_SAIL, "L6", width=130, height=130)
-    _add_image(ws, YACHT_BUFFET, "L14", width=110, height=110)
-    _add_image(ws, YACHT_BAY, "B24", width=520, height=280)
-    _add_image(ws, YACHT_MONEY, "J24", width=120, height=120)
-    _add_image(ws, YACHT_CHAMPAGNE, "L24", width=120, height=120)
+    _add_image(ws, YACHT_BANNER, "B6", width=720, height=405)
+    _add_image(ws, YACHT_SAIL, "L6", width=140, height=140)
+    _add_image(ws, YACHT_BUFFET, "L14", width=120, height=120)
+    _add_image(ws, YACHT_BAY, "B24", width=520, height=300)
+    _add_image(ws, YACHT_MONEY, "J24", width=130, height=130)
+    _add_image(ws, YACHT_CHAMPAGNE, "L24", width=130, height=130)
 
     ws.merge_cells("A38:I41")
     note = ws["A38"]
@@ -3065,23 +3271,15 @@ def write_yacht_cover_sheet(
 
 def decorate_yacht_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
     if "Total" in wb.sheetnames:
-        _add_image(wb["Total"], YACHT_SAIL, "I1", width=110, height=110)
-        _add_image(wb["Total"], YACHT_MONEY, "K1", width=72, height=72)
-    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
-        ws = wb[summary_sheet_name]
-        _add_image(ws, YACHT_SAIL, "L1", width=92, height=92)
-        _add_image(ws, YACHT_BUFFET, "M1", width=72, height=72)
-        _add_image(ws, YACHT_MONEY, "T4", width=88, height=88)
-        _add_image(ws, YACHT_BAY, "T20", width=88, height=88)
-        _add_image(ws, YACHT_CHAMPAGNE, "T36", width=80, height=80)
-        ws.column_dimensions["T"].width = 14
-        ws.column_dimensions["U"].width = 12
+        _add_image(wb["Total"], YACHT_SAIL, "I1", width=120, height=120)
+        _add_image(wb["Total"], YACHT_MONEY, "K1", width=88, height=88)
+    # Summary: do not pin extra images to T-column — mood cards already live there.
     if "В работе" in wb.sheetnames:
-        _add_image(wb["В работе"], YACHT_BUFFET, "AT1", width=78, height=78)
-        _add_image(wb["В работе"], YACHT_MONEY, "AV1", width=64, height=64)
+        _add_image(wb["В работе"], YACHT_BUFFET, "AT1", width=96, height=96)
+        _add_image(wb["В работе"], YACHT_MONEY, "AV1", width=80, height=80)
     if "Отгружено" in wb.sheetnames:
-        _add_image(wb["Отгружено"], YACHT_SAIL, "AT1", width=78, height=78)
-        _add_image(wb["Отгружено"], YACHT_CHAMPAGNE, "AV1", width=64, height=64)
+        _add_image(wb["Отгружено"], YACHT_SAIL, "AT1", width=96, height=96)
+        _add_image(wb["Отгружено"], YACHT_CHAMPAGNE, "AV1", width=80, height=80)
 
 
 def bmw_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
