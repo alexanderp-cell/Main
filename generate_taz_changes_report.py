@@ -23,6 +23,7 @@ COL_PN = "p/n"
 COL_DESC = "DESCRIPTION"
 COL_SUPPLIER = "Поставщик"
 COL_ROOT_SUPPLIER = "Root supplier"
+COL_UNIQUE_UNIT = "UNIQUE UNIT CODE"
 COL_CATEGORY = "Category"
 COL_QTY = "QTY IN PO"
 COL_SALE = "Продажная, итого"
@@ -116,6 +117,8 @@ def load_taz(path: Path) -> pd.DataFrame:
     for c in df.columns:
         if isinstance(c, str) and c.startswith("Стоимость доставки ПЛАН"):
             rename[c] = COL_TRANSPORT_PLAN
+        if isinstance(c, str) and "UNIQUE" in c.upper() and "UNIT" in c.upper():
+            rename[c] = COL_UNIQUE_UNIT
     if rename:
         df = df.rename(columns=rename)
     return df
@@ -203,6 +206,7 @@ class StatusChange:
     days_to_deliver_curr: float | None
     trouble_min_days: int | None = None
     trouble_max_days: int | None = None
+    unique_unit_code: str = ""
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -218,6 +222,82 @@ class StatusChange:
         if self.deadline_prev and self.deadline_curr:
             return (self.deadline_curr - self.deadline_prev).days
         return None
+
+    @property
+    def supplier_display(self) -> str:
+        return format_supplier_display(self.supplier, self.root_supplier, self.unique_unit_code)
+
+
+def normalize_unique_unit(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text or text.lower() in {"nan", "none", "nat", "-"}:
+        return ""
+    return text
+
+
+def format_supplier_display(supplier: str, root_supplier: str, unique_unit: str = "") -> str:
+    """JET/IBERIA → root supplier; Lufthansa/Blue Ocean/Avitrue → supplier (+ unit code)."""
+    sup_u = (supplier or "").upper()
+    root = (root_supplier or "").strip()
+    if "JET" in sup_u or "IBERIA" in sup_u:
+        return root or supplier or "—"
+    if any(x in sup_u for x in ("LUFTHANSA", "BLUE OCEAN", "AVITRUE")):
+        name = supplier or "—"
+        unit = normalize_unique_unit(unique_unit)
+        return f"{name} · {unit}" if unit else name
+    return root or supplier or "—"
+
+
+def row_str(row: pd.Series, col: str) -> str:
+    value = row.get(col)
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value).strip()
+
+
+def build_status_change(
+    key: str,
+    prev: pd.Series,
+    curr: pd.Series,
+    *,
+    change_kind: str,
+    prev_status: str,
+    curr_status: str,
+    notes: list[str],
+    trouble_min_days: int | None = None,
+    trouble_max_days: int | None = None,
+) -> StatusChange:
+    sale_prev = parse_numeric(prev.get(COL_SALE))
+    sale_curr = parse_numeric(curr.get(COL_SALE))
+    qty_prev = parse_numeric(prev.get(COL_QTY))
+    qty_curr = parse_numeric(curr.get(COL_QTY))
+    return StatusChange(
+        key=key,
+        invoice=normalize_invoice(prev.get(COL_INVOICE) or curr.get(COL_INVOICE)),
+        customer=row_str(curr, COL_CUSTOMER) or row_str(prev, COL_CUSTOMER),
+        pn=row_str(prev, COL_PN) or row_str(curr, COL_PN),
+        description=row_str(prev, COL_DESC) or row_str(curr, COL_DESC),
+        category=row_str(prev, COL_CATEGORY) or row_str(curr, COL_CATEGORY),
+        supplier=row_str(curr, COL_SUPPLIER) or row_str(prev, COL_SUPPLIER),
+        root_supplier=row_str(curr, COL_ROOT_SUPPLIER) or row_str(prev, COL_ROOT_SUPPLIER),
+        unique_unit_code=normalize_unique_unit(curr.get(COL_UNIQUE_UNIT) or prev.get(COL_UNIQUE_UNIT)),
+        prev_status=prev_status,
+        curr_status=curr_status,
+        change_kind=change_kind,
+        sale_prev=sale_prev,
+        sale_curr=sale_curr,
+        margin_prev=row_margin_plan(prev),
+        margin_curr=row_margin_plan(curr),
+        qty_prev=qty_prev,
+        qty_curr=qty_curr,
+        deadline_prev=parse_date(prev.get(COL_DEADLINE)),
+        deadline_curr=parse_date(curr.get(COL_DEADLINE)),
+        days_to_deliver_prev=parse_numeric(prev.get(COL_DAYS_TO_DELIVER)) or None,
+        days_to_deliver_curr=parse_numeric(curr.get(COL_DAYS_TO_DELIVER)) or None,
+        trouble_min_days=trouble_min_days,
+        trouble_max_days=trouble_max_days,
+        notes=notes,
+    )
 
 
 def build_notes(category: str, qty_prev: float, qty_curr: float) -> list[str]:
@@ -338,56 +418,53 @@ def compare_snapshots(
         curr = curr_rows[key]
         ps = str(prev.get(COL_STATUS) or "").strip()
         cs = str(curr.get(COL_STATUS) or "").strip()
+
         if ps == cs:
+            if ps == STATUS_TROUBLE:
+                qty_prev = parse_numeric(prev.get(COL_QTY))
+                qty_curr = parse_numeric(curr.get(COL_QTY))
+                category = row_str(prev, COL_CATEGORY) or row_str(curr, COL_CATEGORY)
+                qty_notes = build_notes(category, qty_prev, qty_curr)
+                commercial_notes = build_commercial_notes(prev, curr, qty_prev, qty_curr)
+                trouble.append(
+                    build_status_change(
+                        key,
+                        prev,
+                        curr,
+                        change_kind="ongoing",
+                        prev_status=ps,
+                        curr_status=cs,
+                        trouble_min_days=period_days,
+                        trouble_max_days=None,
+                        notes=append_trouble_notes(
+                            qty_notes,
+                            commercial_notes,
+                            [f"в TROUBLE ≥{period_days} дн. без решения (оба снимка)"],
+                        ),
+                    )
+                )
             continue
 
         sale_prev = parse_numeric(prev.get(COL_SALE))
         sale_curr = parse_numeric(curr.get(COL_SALE))
         qty_prev = parse_numeric(prev.get(COL_QTY))
         qty_curr = parse_numeric(curr.get(COL_QTY))
-        category = str(prev.get(COL_CATEGORY) or curr.get(COL_CATEGORY) or "").strip()
+        category = row_str(prev, COL_CATEGORY) or row_str(curr, COL_CATEGORY)
         qty_notes = build_notes(category, qty_prev, qty_curr)
         commercial_notes = build_commercial_notes(prev, curr, qty_prev, qty_curr)
 
-        base = StatusChange(
-            key=key,
-            invoice=normalize_invoice(prev.get(COL_INVOICE)),
-            customer=str(prev.get(COL_CUSTOMER) or curr.get(COL_CUSTOMER) or "").strip(),
-            pn=str(prev.get(COL_PN) or "").strip(),
-            description=str(prev.get(COL_DESC) or "").strip(),
-            category=category,
-            supplier=str(prev.get(COL_SUPPLIER) or curr.get(COL_SUPPLIER) or "").strip(),
-            root_supplier=str(
-                prev.get(COL_ROOT_SUPPLIER) or curr.get(COL_ROOT_SUPPLIER) or ""
-            ).strip(),
+        base = build_status_change(
+            key,
+            prev,
+            curr,
+            change_kind="",
             prev_status=ps,
             curr_status=cs,
-            change_kind="",
-            sale_prev=sale_prev,
-            sale_curr=sale_curr,
-            margin_prev=row_margin_plan(prev),
-            margin_curr=row_margin_plan(curr),
-            qty_prev=qty_prev,
-            qty_curr=qty_curr,
-            deadline_prev=parse_date(prev.get(COL_DEADLINE)),
-            deadline_curr=parse_date(curr.get(COL_DEADLINE)),
-            days_to_deliver_prev=parse_numeric(prev.get(COL_DAYS_TO_DELIVER)) or None,
-            days_to_deliver_curr=parse_numeric(curr.get(COL_DAYS_TO_DELIVER)) or None,
             notes=qty_notes,
         )
 
         # --- TROUBLE lifecycle ---
-        if ps == STATUS_TROUBLE and cs == STATUS_TROUBLE:
-            trouble.append(
-                replace(
-                    base,
-                    change_kind="ongoing",
-                    trouble_min_days=period_days,
-                    trouble_max_days=None,
-                    notes=[*qty_notes, *commercial_notes, f"в TROUBLE минимум {period_days} дн. (оба снимка)"],
-                )
-            )
-        elif ps != STATUS_TROUBLE and cs == STATUS_TROUBLE:
+        if ps != STATUS_TROUBLE and cs == STATUS_TROUBLE:
             trouble.append(
                 replace(
                     base,
@@ -554,18 +631,22 @@ def render_trouble_table(items: list[StatusChange]) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
-    for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
+    sort_key = (
+        (lambda x: (-(x.trouble_min_days or 0), x.invoice, x.pn))
+        if items and items[0].change_kind == "ongoing"
+        else (lambda x: (x.invoice, x.pn))
+    )
+    for e in sorted(items, key=sort_key):
         margin_txt, margin_cls = fmt_margin_delta_cell(e)
         dd = e.deadline_delta_days
         dd_txt = f"{dd:+d}" if dd is not None else "—"
-        root = esc(e.root_supplier) if e.root_supplier else "—"
+        supplier_txt = esc(e.supplier_display)
         rows.append(
             f"""<tr>
   <td>{esc(e.invoice)}</td>
   <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
   <td>{esc(e.category)}</td>
-  <td>{esc(e.supplier) or "—"}</td>
-  <td>{root}</td>
+  <td>{supplier_txt}</td>
   <td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>
   <td class='num'>{fmt_sale_cell(e)}</td>
   <td class='num {margin_cls}'>{margin_txt}</td>
@@ -575,7 +656,7 @@ def render_trouble_table(items: list[StatusChange]) -> str:
         )
     return f"""<table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th><th>Root supplier</th>
+    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
     <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
   </tr></thead>
   <tbody>{''.join(rows)}</tbody>
@@ -700,6 +781,7 @@ def render_html_report(
     period = f"{prev_date.strftime('%d.%m.%Y')} → {curr_date.strftime('%d.%m.%Y')} ({period_days} дн.)"
 
     new_trouble = [e for e in trouble if e.change_kind == "entered"]
+    unresolved_trouble = [e for e in trouble if e.change_kind == "ongoing"]
     resolved_trouble = [e for e in trouble if e.change_kind == "resolved"]
     cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
@@ -711,6 +793,7 @@ def render_html_report(
 
     sections = "\n".join([
         render_section("Новые TROUBLE", new_trouble, render_trouble_table, "warn"),
+        render_section("Нерешённые TROUBLE", unresolved_trouble, render_trouble_table, "warn"),
         render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table, "ok"),
         render_section("Отмены и возвраты", cancel_refund, render_cancel_table, "warn"),
     ])
@@ -732,9 +815,9 @@ def render_html_report(
     <h2 style="margin-top:0">Сводка</h2>
     <div class="kpi-grid">
       <div><div class="label">Новые TROUBLE</div><div class="value">{len(new_trouble)}</div></div>
+      <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">≥{period_days} дн. в обоих снимках</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
-      <div><div class="label">Всё ещё в TROUBLE</div><div class="value">{kpis['ongoing']}<div class="muted">без смены статуса за период</div></div></div>
       <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
