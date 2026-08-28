@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import html
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from statistics import mean
@@ -21,6 +21,7 @@ COL_CUSTOMER = "Customer"
 COL_PN = "p/n"
 COL_DESC = "DESCRIPTION"
 COL_SUPPLIER = "Поставщик"
+COL_ROOT_SUPPLIER = "Root supplier"
 COL_CATEGORY = "Category"
 COL_QTY = "QTY IN PO"
 COL_SALE = "Продажная, итого"
@@ -168,7 +169,8 @@ def esc(text: Any) -> str:
 
 
 def index_rows(df: pd.DataFrame) -> dict[str, pd.Series]:
-    keyed = add_row_key(df).drop_duplicates(subset="_key", keep="last")
+    keyed = add_row_key(df).drop_duplicates(subset="_key", keep="first")
+    keyed = keyed.set_index("_key", drop=False)
     return {str(k): keyed.loc[k] for k in keyed.index}
 
 
@@ -181,6 +183,7 @@ class StatusChange:
     description: str
     category: str
     supplier: str
+    root_supplier: str
     prev_status: str
     curr_status: str
     change_kind: str
@@ -262,6 +265,9 @@ def compare_snapshots(
             description=str(prev.get(COL_DESC) or "").strip(),
             category=category,
             supplier=str(prev.get(COL_SUPPLIER) or curr.get(COL_SUPPLIER) or "").strip(),
+            root_supplier=str(
+                prev.get(COL_ROOT_SUPPLIER) or curr.get(COL_ROOT_SUPPLIER) or ""
+            ).strip(),
             prev_status=ps,
             curr_status=cs,
             change_kind="",
@@ -280,66 +286,78 @@ def compare_snapshots(
 
         # --- TROUBLE lifecycle ---
         if ps == STATUS_TROUBLE and cs == STATUS_TROUBLE:
-            ev = base
-            ev.change_kind = "ongoing"
-            ev.trouble_min_days = period_days
-            ev.trouble_max_days = None
-            ev.notes = [*notes, f"в TROUBLE минимум {period_days} дн. (оба снимка)"]
-            trouble.append(ev)
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="ongoing",
+                    trouble_min_days=period_days,
+                    trouble_max_days=None,
+                    notes=[*notes, f"в TROUBLE минимум {period_days} дн. (оба снимка)"],
+                )
+            )
         elif ps != STATUS_TROUBLE and cs == STATUS_TROUBLE:
-            ev = base
-            ev.change_kind = "entered"
-            ev.trouble_min_days = 0
-            ev.trouble_max_days = period_days
-            ev.notes = [*notes, "новый TROUBLE за период"]
-            trouble.append(ev)
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="entered",
+                    trouble_min_days=0,
+                    trouble_max_days=period_days,
+                    notes=[*notes, "новый TROUBLE за период"],
+                )
+            )
         elif ps == STATUS_TROUBLE and cs in RESOLVED_FROM_TROUBLE:
-            ev = base
-            ev.change_kind = "resolved"
-            ev.trouble_min_days = 0
-            ev.trouble_max_days = period_days
-            dd = ev.deadline_delta_days
+            ev_notes = list(notes)
+            dd = base.deadline_delta_days
             if dd is not None and dd != 0:
-                ev.notes.append(f"срок поставки сдвинут на {dd:+d} дн.")
+                ev_notes.append(f"срок поставки сдвинут на {dd:+d} дн.")
             dtd_prev = base.days_to_deliver_prev
             dtd_curr = base.days_to_deliver_curr
             if dtd_prev is not None and dtd_curr is not None and abs(dtd_prev - dtd_curr) > 0.1:
-                ev.notes.append(f"«дней на поставку» {dtd_prev:g} → {dtd_curr:g}")
-            if ev.margin_delta > 1:
-                ev.notes.append("маржа выросла после решения")
-            elif ev.margin_delta < -1:
-                ev.notes.append("маржа упала после решения")
-            trouble.append(ev)
+                ev_notes.append(f"«дней на поставку» {dtd_prev:g} → {dtd_curr:g}")
+            margin_delta = base.margin_curr - base.margin_prev
+            if margin_delta > 1:
+                ev_notes.append("маржа выросла после решения")
+            elif margin_delta < -1:
+                ev_notes.append("маржа упала после решения")
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="resolved",
+                    trouble_min_days=0,
+                    trouble_max_days=period_days,
+                    notes=ev_notes,
+                )
+            )
         elif ps == STATUS_TROUBLE and cs in TERMINAL_BAD:
-            ev = base
-            ev.change_kind = "cancelled_from_trouble"
-            ev.trouble_min_days = 0
-            ev.trouble_max_days = period_days
-            ev.notes = [*notes, "TROUBLE → отмена/возврат"]
-            trouble.append(ev)
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="cancelled_from_trouble",
+                    trouble_min_days=0,
+                    trouble_max_days=period_days,
+                    notes=[*notes, "TROUBLE → отмена/возврат"],
+                )
+            )
         elif ps == STATUS_TROUBLE and cs == STATUS_WARRANTY:
-            ev = base
-            ev.change_kind = "warranty_from_trouble"
-            ev.trouble_min_days = 0
-            ev.trouble_max_days = period_days
-            ev.notes = [*notes, "TROUBLE → гарантия"]
-            trouble.append(ev)
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="warranty_from_trouble",
+                    trouble_min_days=0,
+                    trouble_max_days=period_days,
+                    notes=[*notes, "TROUBLE → гарантия"],
+                )
+            )
 
         # --- Cancellations / refunds (indirect date) ---
         if ps in CANCEL_SOURCE and cs == STATUS_CANCEL:
-            ev = base
-            ev.change_kind = "cancelled"
-            cancellations.append(ev)
+            cancellations.append(replace(base, change_kind="cancelled"))
         elif ps in CANCEL_SOURCE and cs == STATUS_REFUND:
-            ev = base
-            ev.change_kind = "refunded"
-            refunds.append(ev)
+            refunds.append(replace(base, change_kind="refunded"))
 
         # --- Warranty (active pipeline → warranty, same rule as cancellations) ---
         if ps in CANCEL_SOURCE and cs == STATUS_WARRANTY:
-            ev = base
-            ev.change_kind = "warranty"
-            warranty.append(ev)
+            warranty.append(replace(base, change_kind="warranty"))
 
     return trouble, cancellations, refunds, warranty
 
@@ -427,7 +445,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap
 """
 
 
-def render_change_table(items: list[StatusChange], *, show_trouble_days: bool = False) -> str:
+def render_trouble_table(items: list[StatusChange]) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
@@ -435,49 +453,100 @@ def render_change_table(items: list[StatusChange], *, show_trouble_days: bool = 
         margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
         dd = e.deadline_delta_days
         dd_txt = f"{dd:+d}" if dd is not None else "—"
-        trouble_col = ""
-        if show_trouble_days:
-            trouble_col = f"<td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>"
+        root = esc(e.root_supplier) if e.root_supplier else "—"
         rows.append(
             f"""<tr>
   <td>{esc(e.customer)}</td>
   <td>{esc(e.invoice)}</td>
   <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
   <td>{esc(e.category)}</td>
-  <td>{esc(e.prev_status)} → {esc(e.curr_status)}</td>
-  {trouble_col}
+  <td>{esc(e.supplier) or "—"}</td>
+  <td>{root}</td>
+  <td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>
   <td class='num'>{fmt_money(e.sale_prev, 0)} → {fmt_money(e.sale_curr, 0)}</td>
   <td class='num {margin_cls}'>{fmt_money(e.margin_delta, 0)}</td>
   <td class='num'>{dd_txt}</td>
   <td>{esc('; '.join(e.notes) or '—')}</td>
 </tr>"""
         )
-    trouble_th = "<th>В TROUBLE</th>" if show_trouble_days else ""
     return f"""<table>
   <thead><tr>
-    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Статус</th>{trouble_th}
-    <th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th><th>Root supplier</th>
+    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
   </tr></thead>
   <tbody>{''.join(rows)}</tbody>
 </table>"""
 
 
-def render_trouble_subsection(title: str, items: list[StatusChange], pill_class: str = "") -> str:
+def render_cancel_table(items: list[StatusChange]) -> str:
     if not items:
-        return ""
+        return "<p class='muted'>Нет изменений за период.</p>"
+    rows = []
+    for e in sorted(items, key=lambda x: (x.customer, x.invoice, x.pn)):
+        margin_cls = "pos" if e.margin_delta > 1 else ("neg" if e.margin_delta < -1 else "")
+        kind = "отмена" if e.curr_status == STATUS_CANCEL else "возврат"
+        if e.change_kind == "cancelled_from_trouble":
+            kind = "из TROUBLE → " + kind
+        rows.append(
+            f"""<tr>
+  <td>{esc(e.customer)}</td>
+  <td>{esc(e.invoice)}</td>
+  <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
+  <td>{esc(e.category)}</td>
+  <td>{esc(kind)}</td>
+  <td class='num'>{fmt_money(e.sale_prev, 0)}</td>
+  <td class='num {margin_cls}'>{fmt_money(e.margin_delta, 0)}</td>
+  <td>{esc('; '.join(e.notes) or '—')}</td>
+</tr>"""
+        )
+    return f"""<table>
+  <thead><tr>
+    <th>Клиент</th><th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
+  </tr></thead>
+  <tbody>{''.join(rows)}</tbody>
+</table>"""
+
+
+def render_section(title: str, items: list[StatusChange], table_html: str, pill_class: str = "") -> str:
+    if not items:
+        return f"""
+<details class="group">
+  <summary>
+    <span class="group-name">{esc(title)}</span>
+    <span class="pill">0 поз.</span>
+  </summary>
+  <div class="group-body"><p class='muted'>Нет изменений за период.</p></div>
+</details>"""
     sale = sum(e.sale_curr for e in items)
     margin_d = sum(e.margin_delta for e in items)
     pill = f"pill {pill_class}".strip()
     return f"""
-<details class="group" open>
+<details class="group">
   <summary>
     <span class="group-name">{esc(title)}</span>
     <span class="{pill}">{len(items)} поз.</span>
     <span class="pill">продажа {fmt_money(sale, 0)} USD</span>
     <span class="pill">Δ маржа {fmt_money(margin_d, 0)}</span>
   </summary>
-  <div class="group-body">{render_change_table(items, show_trouble_days=True)}</div>
+  <div class="group-body">{table_html}</div>
 </details>"""
+
+
+def merge_cancel_refund(
+    cancellations: list[StatusChange],
+    refunds: list[StatusChange],
+    trouble: list[StatusChange],
+) -> list[StatusChange]:
+    """Combine cancel/refund events, dedupe by row key."""
+    by_key: dict[str, StatusChange] = {}
+    for items in (cancellations, refunds):
+        for e in items:
+            by_key[e.key] = e
+    for e in trouble:
+        if e.change_kind == "cancelled_from_trouble":
+            by_key[e.key] = e
+    return list(by_key.values())
 
 
 def render_html_report(
@@ -492,80 +561,47 @@ def render_html_report(
     kpis = trouble_kpis(trouble, period_days)
     period = f"{prev_date.strftime('%d.%m.%Y')} → {curr_date.strftime('%d.%m.%Y')} ({period_days} дн.)"
 
-    entered = [e for e in trouble if e.change_kind == "entered"]
-    ongoing = [e for e in trouble if e.change_kind == "ongoing"]
-    resolved = [e for e in trouble if e.change_kind == "resolved"]
-    cancelled_ft = [e for e in trouble if e.change_kind == "cancelled_from_trouble"]
-    warranty_ft = [e for e in trouble if e.change_kind == "warranty_from_trouble"]
+    new_trouble = [e for e in trouble if e.change_kind == "entered"]
+    resolved_trouble = [e for e in trouble if e.change_kind == "resolved"]
+    cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
-    trouble_sections = "\n".join(
-        s
-        for s in [
-            render_trouble_subsection("Новые TROUBLE за период", entered, "warn"),
-            render_trouble_subsection(
-                f"Всё ещё в TROUBLE (≥{period_days} дн. с прошлого снимка)", ongoing, "warn"
-            ),
-            render_trouble_subsection("Решены (TROUBLE → рабочий статус)", resolved, "ok"),
-            render_trouble_subsection("Отмена / возврат из TROUBLE", cancelled_ft, "warn"),
-            render_trouble_subsection("Гарантия из TROUBLE", warranty_ft),
-        ]
-        if s
-    )
+    sections = "\n".join([
+        render_section("Новые TROUBLE", new_trouble, render_trouble_table(new_trouble), "warn"),
+        render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table(resolved_trouble), "ok"),
+        render_section("Отмены и возвраты", cancel_refund, render_cancel_table(cancel_refund), "warn"),
+    ])
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8"/>
-<title>Изменения ТАЗ — {curr_date.strftime('%d.%m.%Y')}</title>
+<title>TROUBLE / CANCEL — {curr_date.strftime('%d.%m.%Y')}</title>
 <style>{FASTAIR_CSS}</style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">TAZ changes report</div></div>
-  <h1>Изменения статусов ТАЗ</h1>
-  <div class="sub">Период {period} · сравнение двух выгрузок · даты отмены/гарантии/TROUBLE — по косвенным признакам</div>
+  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">TROUBLE / CANCEL</div></div>
+  <h1>TROUBLE / CANCEL</h1>
+  <div class="sub">Период {period} · сравнение двух выгрузок ТАЗ</div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка периода</h2>
+    <h2 style="margin-top:0">Сводка</h2>
     <div class="kpi-grid">
-      <div><div class="label">Отмены</div><div class="value">{len(cancellations)}</div></div>
-      <div><div class="label">Возвраты</div><div class="value">{len(refunds)}</div></div>
+      <div><div class="label">Новые TROUBLE</div><div class="value">{len(new_trouble)}</div></div>
+      <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
+      <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
+      <div><div class="label">Всё ещё в TROUBLE</div><div class="value">{kpis['ongoing']}<div class="muted">без смены статуса за период</div></div></div>
+      <div><div class="label">Δ маржа (решённые)</div><div class="value">{fmt_money(kpis['avg_margin_delta'], 0)}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']}</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
-      <div><div class="label">TROUBLE сейчас / события</div><div class="value">{len(trouble)}</div></div>
     </div>
-    <p class="muted">Отмена за период: было NOT PAID / PAID / TROUBLE → стало CANCELLED или REFUND.
-    Гарантия: те же исходные статусы → WARRANTY.
-    Точной даты в ТАЗ нет — фиксируем факт между двумя снимками.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
-  <section class="trouble-block">
-    <h2>TROUBLE — проблемные заказы</h2>
-    <p class="muted">TROUBLE ставится при сбое по заказу (EXP: кол-во/ед. изм.; ROTABLE: замена юнита).
-    Длительность считается по разнице снимков: если в обоих TROUBLE — минимум {period_days} дн.;
-    если вошёл/вышел за период — от 0 до {period_days} дн.</p>
-    <div class="kpi-grid">
-      <div><div class="label">Было TROUBLE на {prev_date.strftime('%d.%m')}</div><div class="value">{kpis['at_start']}</div></div>
-      <div><div class="label">Решено за период</div><div class="value">{kpis['resolved']}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
-      <div><div class="label">→ отмена / возврат</div><div class="value">{kpis['cancelled']}<div class="muted">{fmt_pct(kpis['cancel_rate'])} от стартовых</div></div></div>
-      <div><div class="label">Новых TROUBLE</div><div class="value">{kpis['entered']}</div></div>
-      <div><div class="label">Всё ещё TROUBLE</div><div class="value">{kpis['ongoing']}<div class="muted">ср. ≥{fmt_days_range(int(kpis['avg_ongoing_days'] or 0), None)}</div></div></div>
-      <div><div class="label">Δ маржа (решённые)</div><div class="value">{fmt_money(kpis['avg_margin_delta'], 0)}<div class="muted">в плюс {kpis['resolved_positive']} · в минус {kpis['resolved_negative']}</div></div></div>
-    </div>
-    {trouble_sections or "<p>Изменений по TROUBLE за период нет.</p>"}
-  </section>
-
-  <h2>Отмены (CANCELLED)</h2>
-  <section class="card">{render_change_table(cancellations)}</section>
-
-  <h2>Возвраты (REFUND)</h2>
-  <section class="card">{render_change_table(refunds)}</section>
-
-  <h2>Гарантия (WARRANTY)</h2>
-  <section class="card">{render_change_table(warranty)}</section>
+  {sections}
 
   <div class="footer">
-    FASTAIR · источник ТАЗ · сравнение снимков {esc(prev_date.isoformat())} и {esc(curr_date.isoformat())} ·
-    ключ строки: счёт + P/N + описание. Для точной длительности TROUBLE нужна цепочка еженедельных выгрузок.
+    FASTAIR · источник ТАЗ · {esc(prev_date.isoformat())} → {esc(curr_date.isoformat())} ·
+    ключ строки: счёт + P/N + описание
   </div>
 </div>
 </body>
@@ -579,7 +615,7 @@ def main() -> None:
     parser.add_argument("--current", "-c", type=Path, required=True, help="Later TAZ snapshot")
     parser.add_argument("--previous-date", type=str, help="Date of previous snapshot DD.MM.YYYY")
     parser.add_argument("--current-date", type=str, help="Date of current snapshot DD.MM.YYYY")
-    parser.add_argument("--output", "-o", type=Path, default=Path("output/changes/taz_changes.html"))
+    parser.add_argument("--output", "-o", type=Path, default=Path("output/changes/trouble_cancel.html"))
     args = parser.parse_args()
 
     prev_date = parse_report_date(args.previous_date) if args.previous_date else None
