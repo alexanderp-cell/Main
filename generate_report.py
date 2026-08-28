@@ -56,7 +56,7 @@ STATUS_SHIPPED = "3 SHIPPED"
 STATUS_FINISHED = "4 FINISHED"
 STATUSES_IN_WORK = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
 STATUSES_SHIPPED = {STATUS_SHIPPED, STATUS_FINISHED}
-CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari"}
+CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari", "tropical_yacht", "bmw_night"}
 
 COLUMN_RENAME = {
     COL_INVOICE: "№ счета",
@@ -199,6 +199,44 @@ THEMES = {
         tab_summary="3B0A14",
         title_font="Georgia",
     ),
+    # Luxury sailing yacht in a tropical bay — Aeroflot weekly theme.
+    "tropical_yacht": ReportTheme(
+        name="tropical_yacht",
+        navy="0B3D4C",
+        blue="1A7A8C",
+        light_blue="E0F4F7",
+        green="2E8B6E",
+        light_green="E8F6F0",
+        orange="D4A017",
+        light_orange="FBF3E0",
+        zebra="F5FAFB",
+        subtotal="E8F2E8",
+        border="B8D4D9",
+        tab_total="1A7A8C",
+        tab_shipped="2E8B6E",
+        tab_in_work="D4A017",
+        tab_summary="0B3D4C",
+        title_font="Georgia",
+    ),
+    # BMW 8 Series at night by the river — S7 / AK Sibir weekly theme.
+    "bmw_night": ReportTheme(
+        name="bmw_night",
+        navy="0D1B2A",
+        blue="1B3A5C",
+        light_blue="E8EEF4",
+        green="3D5A80",
+        light_green="EDF1F7",
+        orange="5C7AEA",
+        light_orange="E8EDFA",
+        zebra="F4F6FA",
+        subtotal="DDE4F0",
+        border="A8B8CC",
+        tab_total="1B3A5C",
+        tab_shipped="3D5A80",
+        tab_in_work="5C7AEA",
+        tab_summary="0D1B2A",
+        title_font="Georgia",
+    ),
 }
 
 
@@ -225,6 +263,8 @@ def activate_theme(theme: ReportTheme) -> None:
         "lavender_raf": "6B5B73",
         "como_prosecco": "6A7B78",
         "montecarlo_ferrari": "5C3B2E",
+        "tropical_yacht": "2E6B7A",
+        "bmw_night": "4A6080",
     }.get(theme.name, "595959")
     FONT_SUBTITLE = Font(name="Calibri", size=11, color=subtitle_color)
     FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
@@ -733,6 +773,10 @@ def write_weekly_summary_sheet(
         title.value = f"♦ {sheet_title} — {client} · Monte-Carlo · Ferrari 250 GTO"
     elif cute_comments and theme_name == "como_prosecco":
         title.value = f"🥂 {sheet_title} — {client} · просекко на Комо"
+    elif cute_comments and theme_name == "tropical_yacht":
+        title.value = f"⛵ {sheet_title} — {client} · яхта в тропической бухте"
+    elif cute_comments and theme_name == "bmw_night":
+        title.value = f"🚗 {sheet_title} — {client} · BMW 8 Series · ночной город"
     elif cute_comments:
         title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
@@ -769,6 +813,32 @@ def write_weekly_summary_sheet(
             % len(epigraphs)
         ]
         subtitle.value = f"{subtitle.value}  ·  {epi}"
+    elif cute_comments and theme_name == "tropical_yacht":
+        epigraphs = [
+            "парусная яхта в лазурной бухте — и неделя, которая знает цену себе",
+            "фуршет на палубе, куча денег рядом, цифры без шторма",
+            "тропический остров не прощает суеты: считаем спокойно, как капитан",
+            "шампанское на борт, ветер в парусах, отчёт на высокой волне",
+            "богатый тон недели: бирюза, золото и лёгкий запах морского бриза",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
+    elif cute_comments and theme_name == "bmw_night":
+        epigraphs = [
+            "BMW 8 Series у реки — и неделя, которая едет на высокой передаче",
+            "огни города в лужах, фары в ночи, цифры без пробок",
+            "ночной город не прощает суеты: считаем спокойно, как шофёр класса люкс",
+            "сапфировый кузов, отражения в воде, отчёт на cruise control",
+            "богатый тон недели: тёмно-синий, неон и лёгкий запах ночного асфальта",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
     elif cute_comments:
         epigraphs = [
             "сегодняшний раф — с ноткой перрона и терпения",
@@ -799,6 +869,24 @@ def write_weekly_summary_sheet(
         elif theme_name == "como_prosecco":
             mood_cards = build_como_mood_cards(summary)
             cycle = [COMO_GLASS, COMO_LAKE, COMO_LEMON, COMO_VILLA, COMO_TERRACE]
+            seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            mood_images = {
+                "Новые заказы": cycle[seed % len(cycle)],
+                "Отгруженные заказы": cycle[(seed + 1) % len(cycle)],
+                "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
+            }
+        elif theme_name == "tropical_yacht":
+            mood_cards = build_yacht_mood_cards(summary)
+            cycle = [YACHT_SAIL, YACHT_BUFFET, YACHT_MONEY, YACHT_BAY, YACHT_CHAMPAGNE]
+            seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            mood_images = {
+                "Новые заказы": cycle[seed % len(cycle)],
+                "Отгруженные заказы": cycle[(seed + 1) % len(cycle)],
+                "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
+            }
+        elif theme_name == "bmw_night":
+            mood_cards = build_bmw_mood_cards(summary, client)
+            cycle = [BMW8, BMW_RIVER, BMW_LIGHTS]
             seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
             mood_images = {
                 "Новые заказы": cycle[seed % len(cycle)],
@@ -882,6 +970,8 @@ def write_weekly_summary_sheet(
             default_img = {
                 "montecarlo_ferrari": MONTE_FERRARI,
                 "como_prosecco": COMO_GLASS,
+                "tropical_yacht": YACHT_SAIL,
+                "bmw_night": BMW8,
             }.get(theme_name, LAVENDER_HEART)
             _write_mood_card(
                 ws,
@@ -890,6 +980,7 @@ def write_weekly_summary_sheet(
                 mood_images.get(section.title, default_img),
                 theme_name=theme_name,
             )
+            row = max(row, section_start + 6)
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
     note = ws.cell(row, 1)
@@ -902,6 +993,10 @@ def write_weekly_summary_sheet(
         note.value += "  ·  справа — тост за неделю у казино Монте-Карло ♦"
     elif cute_comments and theme_name == "como_prosecco":
         note.value += "  ·  справа — тост за неделю на набережной Комо 🥂"
+    elif cute_comments and theme_name == "tropical_yacht":
+        note.value += "  ·  справа — тост за неделю на палубе яхты ⛵"
+    elif cute_comments and theme_name == "bmw_night":
+        note.value += "  ·  справа — тост за неделю у ночной реки 🚗"
     elif cute_comments:
         note.value += "  ·  комментарии справа — нежное резюме недели ♡"
     _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
@@ -1261,6 +1356,16 @@ MONTE_CASINO = ASSETS_DIR / "montecarlo-casino-small.jpg"
 MONTE_CHAMPAGNE = ASSETS_DIR / "montecarlo-champagne-small.jpg"
 MONTE_ROULETTE = ASSETS_DIR / "montecarlo-roulette-small.jpg"
 MONTE_GOLD = ASSETS_DIR / "montecarlo-gold-small.jpg"
+YACHT_BANNER = ASSETS_DIR / "yacht-banner-wide.jpg"
+YACHT_SAIL = ASSETS_DIR / "yacht-sail-small.jpg"
+YACHT_BUFFET = ASSETS_DIR / "yacht-buffet-small.jpg"
+YACHT_MONEY = ASSETS_DIR / "yacht-money-small.jpg"
+YACHT_BAY = ASSETS_DIR / "yacht-bay-small.jpg"
+YACHT_CHAMPAGNE = ASSETS_DIR / "yacht-champagne-small.jpg"
+BMW_BANNER = ASSETS_DIR / "bmw-banner-wide.jpg"
+BMW8 = ASSETS_DIR / "bmw8-small.jpg"
+BMW_RIVER = ASSETS_DIR / "bmw-river-small.jpg"
+BMW_LIGHTS = ASSETS_DIR / "bmw-lights-small.jpg"
 
 
 def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
@@ -2055,6 +2160,65 @@ def build_montecarlo_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, s
     return cards
 
 
+def _remap_mood_cards(cards: dict[str, dict[str, str]], pairs: list[tuple[str, str]]) -> dict[str, dict[str, str]]:
+    out: dict[str, dict[str, str]] = {}
+    for key, card in cards.items():
+        title, body = card["title"], card["body"]
+        for old, new in pairs:
+            title = title.replace(old, new)
+            body = body.replace(old, new)
+        out[key] = {"title": title, "body": body}
+    return out
+
+
+def build_yacht_mood_cards(summary: WeeklySummary) -> dict[str, dict[str, str]]:
+    """Luxury yacht / tropical bay — narrative cards derived from Monte-Carlo set."""
+    pairs = [
+        ("♦", "⛵"),
+        ("Ferrari 250 GTO", "парусная яхта"),
+        ("250 GTO", "яхта"),
+        ("Monte-Carlo", "тропической бухте"),
+        ("Place du Casino", "лазурной бухте"),
+        ("казино", "палубе"),
+        ("Казино", "Палубе"),
+        ("рулетк", "фуршет"),
+        ("фишки", "купюры"),
+        ("Grand Prix", "Regatta"),
+        ("🏎️", "⛵"),
+        ("🔴", "🌊"),
+        ("асфальт", "палуба"),
+        ("капот", "шверт"),
+        ("блеф", "шторм"),
+        ("дилер", "капитан"),
+        ("♠️", "💰"),
+        ("банк", "касса"),
+        ("Банк", "Касса"),
+    ]
+    return _remap_mood_cards(build_montecarlo_mood_cards(summary), pairs)
+
+
+def build_bmw_mood_cards(summary: WeeklySummary, client: str) -> dict[str, dict[str, str]]:
+    """BMW 8 Series / night city by the river — narrative cards."""
+    pairs = [
+        ("♦", "🚗"),
+        ("Ferrari 250 GTO", "BMW 8 Series"),
+        ("250 GTO", "восьмёрка"),
+        ("Monte-Carlo", "ночном городе"),
+        ("Place du Casino", "набережной у реки"),
+        ("казино", "набережной"),
+        ("Казино", "Набережной"),
+        ("рулетк", "поворот"),
+        ("Grand Prix", "Night Drive"),
+        ("🏎️", "🚗"),
+        ("🔴", "💙"),
+        ("блеф", "пробка"),
+        ("дилер", "шофёр"),
+        ("♠️", "🌃"),
+        ("Аэрофлот", client),
+    ]
+    return _remap_mood_cards(build_montecarlo_mood_cards(summary), pairs)
+
+
 def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
     options = [
         (
@@ -2101,6 +2265,16 @@ def _write_mood_card(
         cream = PatternFill("solid", fgColor="FBF4EA")
         body_font = Font(name="Calibri", size=10, color="4A5D6A")
         title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
+    elif theme_name == "tropical_yacht":
+        title_fill = PatternFill("solid", fgColor="0B3D4C")
+        cream = PatternFill("solid", fgColor="FBF3E0")
+        body_font = Font(name="Calibri", size=10, color="0B3D4C")
+        title_font = Font(name="Georgia", size=12, bold=True, color="E0F4F7")
+    elif theme_name == "bmw_night":
+        title_fill = PatternFill("solid", fgColor="0D1B2A")
+        cream = PatternFill("solid", fgColor="E8EDFA")
+        body_font = Font(name="Calibri", size=10, color="0D1B2A")
+        title_font = Font(name="Georgia", size=12, bold=True, color="E8EEF4")
     else:
         title_fill = PatternFill("solid", fgColor="F3EAF8")
         cream = PatternFill("solid", fgColor="FFF8F2")
@@ -2108,8 +2282,9 @@ def _write_mood_card(
         title_font = Font(name="Georgia", size=12, bold=True, color=COLOR_NAVY)
 
     title_cell = ws.cell(start_row, col_start)
-    ws.merge_cells(start_row=start_row, start_column=col_start, end_row=start_row, end_column=col_start + 3)
     title_cell.value = card["title"]
+    ws.merge_cells(start_row=start_row, start_column=col_start, end_row=start_row, end_column=col_start + 3)
+    title_cell = ws.cell(start_row, col_start)
     _style_cell(
         title_cell,
         font=title_font,
@@ -2476,6 +2651,253 @@ def decorate_montecarlo_sheets(wb: Workbook, summary_sheet_name: str | None) -> 
         _add_image(wb["Отгружено"], MONTE_GOLD, "AV1", width=64, height=64)
 
 
+def yacht_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "парусная яхта в тропической бухте: бирюза, золото и лёгкий бриз — "
+            "та же роскошь, только в отчёте по заказам ⛵"
+        ),
+        (
+            f"сегодня на палубе — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. касса открыта 💰"
+        ),
+        (
+            "не штормим цифрами — держим курс на ясность, терпение и высокий стиль ⛵"
+        ),
+        (
+            "SHIPPED гуляет по заливу как «в работе»; FINISHED — уже фуршет на борт 🥂"
+        ),
+        (
+            "инструкция капитана: смотреть кассу без суеты, "
+            "хвалить команду, не расплёскивать шампанское на палубе 💰"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
+
+
+def write_yacht_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    sand = PatternFill("solid", fgColor="FBF3E0")
+    teal = PatternFill("solid", fgColor="0B3D4C")
+    aqua = PatternFill("solid", fgColor="E0F4F7")
+    for row in range(1, 44):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 15):
+            cell = ws.cell(row, col)
+            if row < 6:
+                cell.fill = sand
+            elif row < 23:
+                cell.fill = teal
+            else:
+                cell.fill = aqua
+    for col in range(1, 15):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:N2")
+    title = ws["A2"]
+    title.value = f"⛵  {client}  ⛵"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="0B3D4C"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 42
+
+    ws.merge_cells("A3:N3")
+    subtitle = ws["A3"]
+    subtitle.value = "парусная яхта · тропическая бухта · фуршет на богатом · weekly regatta status"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=13, italic=True, color="1A7A8C"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:N4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено (FINISHED) {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="2E6B7A"),
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, YACHT_BANNER, "B6", width=720, height=400)
+    _add_image(ws, YACHT_SAIL, "L6", width=130, height=130)
+    _add_image(ws, YACHT_BUFFET, "L14", width=110, height=110)
+    _add_image(ws, YACHT_BAY, "B24", width=520, height=280)
+    _add_image(ws, YACHT_MONEY, "J24", width=120, height=120)
+    _add_image(ws, YACHT_CHAMPAGNE, "L24", width=120, height=120)
+
+    ws.merge_cells("A38:I41")
+    note = ws["A38"]
+    note.value = yacht_cover_epigraph(report_date, in_work_count, shipped_count)
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="E0F4F7"),
+        fill=PatternFill("solid", fgColor="0B3D4C"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+    for r in (38, 39, 40, 41):
+        ws.row_dimensions[r].height = 20
+
+
+def decorate_yacht_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], YACHT_SAIL, "I1", width=110, height=110)
+        _add_image(wb["Total"], YACHT_MONEY, "K1", width=72, height=72)
+    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
+        ws = wb[summary_sheet_name]
+        _add_image(ws, YACHT_SAIL, "L1", width=92, height=92)
+        _add_image(ws, YACHT_BUFFET, "M1", width=72, height=72)
+        _add_image(ws, YACHT_MONEY, "T4", width=88, height=88)
+        _add_image(ws, YACHT_BAY, "T20", width=88, height=88)
+        _add_image(ws, YACHT_CHAMPAGNE, "T36", width=80, height=80)
+        ws.column_dimensions["T"].width = 14
+        ws.column_dimensions["U"].width = 12
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], YACHT_BUFFET, "AT1", width=78, height=78)
+        _add_image(wb["В работе"], YACHT_MONEY, "AV1", width=64, height=64)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], YACHT_SAIL, "AT1", width=78, height=78)
+        _add_image(wb["Отгружено"], YACHT_CHAMPAGNE, "AV1", width=64, height=64)
+
+
+def bmw_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "BMW 8 Series у ночной реки: сапфир, неон и отражения в воде — "
+            "тот же люкс, только в отчёте по заказам 🚗"
+        ),
+        (
+            f"сегодня на набережной — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. круиз-контроль включён ✨"
+        ),
+        (
+            "не тормозим на цифрах — держим курс на ясность, терпение и ночной стиль 🌃"
+        ),
+        (
+            "SHIPPED едет по городу как «в работе»; FINISHED — уже на парковке у реки 🚗"
+        ),
+        (
+            "инструкция шофёра: смотреть кассу без суеты, "
+            "хвалить команду, не терять блеск фар в лужах ✨"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
+
+
+def write_bmw_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    silver = PatternFill("solid", fgColor="E8EDFA")
+    navy = PatternFill("solid", fgColor="0D1B2A")
+    mist = PatternFill("solid", fgColor="E8EEF4")
+    for row in range(1, 44):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 15):
+            cell = ws.cell(row, col)
+            if row < 6:
+                cell.fill = silver
+            elif row < 23:
+                cell.fill = navy
+            else:
+                cell.fill = mist
+    for col in range(1, 15):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:N2")
+    title = ws["A2"]
+    title.value = f"🚗  {client}  🚗"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="E8EEF4"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 42
+
+    ws.merge_cells("A3:N3")
+    subtitle = ws["A3"]
+    subtitle.value = "BMW 8 Series · ночной город · река · weekly night drive status"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=13, italic=True, color="5C7AEA"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:N4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено (FINISHED) {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="A8B8CC"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, BMW_BANNER, "B6", width=720, height=400)
+    _add_image(ws, BMW8, "L6", width=130, height=130)
+    _add_image(ws, BMW_LIGHTS, "L14", width=110, height=110)
+    _add_image(ws, BMW_RIVER, "B24", width=520, height=280)
+    _add_image(ws, BMW8, "J24", width=120, height=120)
+    _add_image(ws, BMW_LIGHTS, "L24", width=120, height=120)
+
+    ws.merge_cells("A38:I41")
+    note = ws["A38"]
+    note.value = bmw_cover_epigraph(report_date, in_work_count, shipped_count)
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="E8EEF4"),
+        fill=PatternFill("solid", fgColor="1B3A5C"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+    for r in (38, 39, 40, 41):
+        ws.row_dimensions[r].height = 20
+
+
+def decorate_bmw_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], BMW8, "I1", width=110, height=110)
+        _add_image(wb["Total"], BMW_LIGHTS, "K1", width=72, height=72)
+    if summary_sheet_name and summary_sheet_name in wb.sheetnames:
+        ws = wb[summary_sheet_name]
+        _add_image(ws, BMW8, "L1", width=92, height=92)
+        _add_image(ws, BMW_RIVER, "M1", width=72, height=72)
+        _add_image(ws, BMW_LIGHTS, "T4", width=88, height=88)
+        _add_image(ws, BMW8, "T20", width=88, height=88)
+        _add_image(ws, BMW_RIVER, "T36", width=80, height=80)
+        ws.column_dimensions["T"].width = 14
+        ws.column_dimensions["U"].width = 12
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], BMW_RIVER, "AT1", width=78, height=78)
+        _add_image(wb["В работе"], BMW_LIGHTS, "AV1", width=64, height=64)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], BMW8, "AT1", width=78, height=78)
+        _add_image(wb["Отгружено"], BMW_LIGHTS, "AV1", width=64, height=64)
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
@@ -2525,6 +2947,32 @@ def generate_report(
         cover.title = "Обложка 🥂"
         cover.sheet_properties.tabColor = "E5D5B8"
         write_como_cover_sheet(
+            cover,
+            client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
+    elif theme.name == "tropical_yacht":
+        cover = wb.active
+        cover.title = "Обложка ⛵"
+        cover.sheet_properties.tabColor = "1A7A8C"
+        write_yacht_cover_sheet(
+            cover,
+            client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
+    elif theme.name == "bmw_night":
+        cover = wb.active
+        cover.title = "Обложка 🚗"
+        cover.sheet_properties.tabColor = "1B3A5C"
+        write_bmw_cover_sheet(
             cover,
             client,
             report_date,
@@ -2599,6 +3047,10 @@ def generate_report(
         decorate_como_sheets(wb, summary_sheet_name)
     elif theme.name == "lavender_raf":
         decorate_lavender_sheets(wb, summary_sheet_name)
+    elif theme.name == "tropical_yacht":
+        decorate_yacht_sheets(wb, summary_sheet_name)
+    elif theme.name == "bmw_night":
+        decorate_bmw_sheets(wb, summary_sheet_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_path)
@@ -2661,7 +3113,7 @@ def main() -> None:
         "--theme",
         choices=sorted(THEMES.keys()),
         default="default",
-        help="Visual theme (montecarlo_ferrari / como_prosecco for Aeroflot)",
+        help="Visual theme (tropical_yacht / bmw_night / montecarlo_ferrari / como_prosecco for Aeroflot)",
     )
     parser.add_argument(
         "--summary-title",
