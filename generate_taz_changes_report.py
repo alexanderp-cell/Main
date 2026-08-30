@@ -746,29 +746,51 @@ def _status_of(rows: dict[str, pd.Series], key: str) -> str | None:
 def duration_in_trouble(
     key: str,
     history: list[tuple[date, dict[str, pd.Series]]],
-) -> tuple[int, int | None, date | None]:
-    """Continuous TROUBLE streak ending at the last snapshot.
+) -> tuple[int, int | None, date | None, date | None]:
+    """Continuous TROUBLE streak visible in snapshots.
 
-    Returns (min_days, max_days, first_known_trouble_date).
-    max_days is None when the row is TROUBLE already in the oldest snapshot (≥ min_days).
+    Returns (min_days, max_days, first_trouble_date, closed_by).
+    closed_by is the first snapshot where the row is no longer TROUBLE, or None if still open.
+    max_days is None when the streak already exists in the oldest snapshot (unknown start).
     """
     if not history:
-        return 0, None, None
-    curr_date, _ = history[-1]
-    first_idx = len(history) - 1
+        return 0, None, None, None
+
+    last_t_idx: int | None = None
     for i in range(len(history) - 1, -1, -1):
-        st = _status_of(history[i][1], key)
-        if st == STATUS_TROUBLE:
-            first_idx = i
+        if _status_of(history[i][1], key) == STATUS_TROUBLE:
+            last_t_idx = i
+            break
+    if last_t_idx is None:
+        return 0, None, None, None
+
+    first_t_idx = last_t_idx
+    for i in range(last_t_idx, -1, -1):
+        if _status_of(history[i][1], key) == STATUS_TROUBLE:
+            first_t_idx = i
             continue
-        first_date = history[first_idx][0]
-        after_date = history[i][0]
-        min_d = max(0, (curr_date - first_date).days)
-        max_d = max(min_d, (curr_date - after_date).days)
-        return min_d, max_d, first_date
-    first_date = history[0][0]
-    min_d = max(0, (curr_date - first_date).days)
-    return min_d, None, first_date
+        break
+
+    first_date = history[first_t_idx][0]
+    last_t_date = history[last_t_idx][0]
+    still_open = last_t_idx == len(history) - 1
+    closed_by = None if still_open else history[last_t_idx + 1][0]
+    started_at_oldest = first_t_idx == 0
+
+    if still_open:
+        min_d = max(0, (last_t_date - first_date).days)
+        if started_at_oldest:
+            return min_d, None, first_date, None
+        before_date = history[first_t_idx - 1][0]
+        return min_d, max(min_d, (last_t_date - before_date).days), first_date, None
+
+    min_d = max(0, (last_t_date - first_date).days)
+    if started_at_oldest:
+        # Start may be earlier than the first snapshot; only the close date is known.
+        return min_d, None, first_date, closed_by
+    before_date = history[first_t_idx - 1][0]
+    max_d = max(min_d, (closed_by - before_date).days)
+    return min_d, max_d, first_date, closed_by
 
 
 def _apply_history_duration(
@@ -783,14 +805,19 @@ def _apply_history_duration(
             "warranty_from_trouble",
         }:
             continue
-        min_d, max_d, first_date = duration_in_trouble(e.key, history)
+        min_d, max_d, first_date, closed_by = duration_in_trouble(e.key, history)
         e.trouble_min_days = min_d
         e.trouble_max_days = max_d
-        if e.change_kind != "ongoing":
-            continue
         e.notes = [n for n in e.notes if not n.startswith("в TROUBLE")]
-        stamp = f" (с {first_date.strftime('%d.%m')})" if first_date else ""
-        e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}{stamp}")
+        stamp = f"с {first_date.strftime('%d.%m')}" if first_date else ""
+        if closed_by:
+            closed = f"закрыт к {closed_by.strftime('%d.%m')}"
+            extra = ", ".join(part for part in (stamp, closed) if part)
+            e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}" + (f" ({extra})" if extra else ""))
+        elif stamp:
+            e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)} ({stamp})")
+        else:
+            e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}")
 
 
 def _series_for(
@@ -1089,7 +1116,7 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     kind = section or items[0].change_kind
-    show_days = kind == "ongoing"
+    show_days = kind in {"ongoing", "resolved"}
     show_margin = kind == "resolved"
     sort_key = (
         (lambda x: (-(x.trouble_min_days or 0), x.pn, x.description))

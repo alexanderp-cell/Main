@@ -180,7 +180,7 @@ def test_resolved_shows_margin_not_days() -> None:
     assert "маржа было" in html
     assert "маржа стало" in html
     assert "Δ маржа" not in html
-    assert "В TROUBLE" not in html
+    assert "В TROUBLE" in html
     assert "Δ срок" not in html
     assert "Счёт" not in html
 
@@ -262,19 +262,20 @@ def test_duration_in_trouble_from_history() -> None:
     d1, d2, d3 = date(2026, 8, 14), date(2026, 8, 21), date(2026, 8, 28)
     row_t = taz_row()
     row_p = taz_row(**{COL_STATUS: STATUS_PAID})
-    min_d, max_d, first = duration_in_trouble(
+    min_d, max_d, first, closed = duration_in_trouble(
         "k",
         [(d1, {"k": row_t}), (d2, {"k": row_t}), (d3, {"k": row_t})],
     )
-    assert (min_d, max_d, first) == (14, None, d1)
+    assert (min_d, max_d, first, closed) == (14, None, d1, None)
 
-    min_d, max_d, first = duration_in_trouble(
+    min_d, max_d, first, closed = duration_in_trouble(
         "k",
         [(d1, {"k": row_p}), (d2, {"k": row_t}), (d3, {"k": row_t})],
     )
     assert min_d == 7
     assert max_d == 14
     assert first == d2
+    assert closed is None
 
 
 def test_weekly_ongoing_uses_history_days() -> None:
@@ -290,6 +291,30 @@ def test_weekly_ongoing_uses_history_days() -> None:
     assert trouble[0].trouble_min_days == 14
     html = render_trouble_table(trouble, section="ongoing")
     assert "≥14 дн." in html
+
+
+def test_resolved_duration_from_history() -> None:
+    d1, d2, d3 = date(2026, 8, 14), date(2026, 8, 21), date(2026, 8, 28)
+    row_t = taz_row()
+    row_done = taz_row(**{COL_STATUS: STATUS_FINISHED, COL_PURCHASE: 500})
+    hist = [
+        (d1, {"k": row_t}),
+        (d2, {"k": row_t}),
+        (d3, {"k": row_done}),
+    ]
+    min_d, max_d, first, closed = duration_in_trouble("k", hist)
+    assert first == d1
+    assert closed == d3
+    assert min_d == 7
+    assert max_d is None
+    trouble, *_ = compare_snapshots(hist[1][1], hist[2][1], 7, history=hist)
+    ev = trouble[0]
+    assert ev.change_kind == "resolved"
+    assert ev.trouble_min_days == 7
+    html = render_trouble_table(trouble, section="resolved")
+    assert "В TROUBLE" in html
+    assert "≥7 дн." in html
+    assert "закрыт к 28.08" in html
 
 
 def test_full_period_classifies_mid_resolved() -> None:
