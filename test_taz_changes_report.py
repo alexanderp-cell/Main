@@ -177,7 +177,9 @@ def test_resolved_shows_margin_not_days() -> None:
     assert css == "pos"
     assert txt != "0"
     html = render_trouble_table(trouble, section="resolved")
-    assert "Δ маржа" in html
+    assert "маржа было" in html
+    assert "маржа стало" in html
+    assert "Δ маржа" not in html
     assert "В TROUBLE" not in html
     assert "Δ срок" not in html
     assert "Счёт" not in html
@@ -241,16 +243,17 @@ def test_section_headers_show_plan_or_delta_margin() -> None:
     assert "Δ срок" not in html
     assert "В TROUBLE" in html
     resolved_block = html.split("Решённые TROUBLE", 1)[1].split("Отмены и возвраты", 1)[0]
-    assert "Δ маржа" in resolved_block
-    # Summary KPI uses the same SUM as the resolved header, not the average.
-    from generate_taz_changes_report import fmt_money, sum_meaningful_margin
+    assert "маржа было" in resolved_block
+    assert "маржа стало" in resolved_block
+    assert "Δ маржа" not in resolved_block
+    from generate_taz_changes_report import fmt_money, sum_margin_prev, sum_plan_margin
 
     resolved = [e for e in trouble if e.change_kind == "resolved"]
-    summed = fmt_money(sum_meaningful_margin(resolved), 0)
-    kpis_chunk = html.split("Δ маржа (решённые)", 1)[1][:400]
-    assert "сумма Δ" in html
-    assert summed in kpis_chunk
-    assert f"Δ маржа {summed}" in resolved_block
+    was = fmt_money(sum_margin_prev(resolved), 0)
+    became = fmt_money(sum_plan_margin(resolved), 0)
+    assert f"маржа было {was} USD" in resolved_block
+    assert f"маржа стало {became} USD" in resolved_block
+    assert "маржа было (решённые)" in html
     assert 'class="period"' in html
     assert "font-weight:700" in html
 

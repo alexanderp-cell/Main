@@ -1060,6 +1060,10 @@ def sum_plan_margin(items: list[StatusChange]) -> float:
     return sum(e.margin_curr for e in items)
 
 
+def sum_margin_prev(items: list[StatusChange]) -> float:
+    return sum(e.margin_prev for e in items)
+
+
 def header_metric_pills(
     items: list[StatusChange],
     *,
@@ -1067,14 +1071,15 @@ def header_metric_pills(
     pill_class: str = "",
     include_clients: bool = True,
 ) -> str:
-    """Dropdown header: rows, clients, line-total sale, plan/Δ margin."""
+    """Dropdown header: rows, clients, line-total sale, plan margin or was/became."""
     count_class = f"pill {pill_class}".strip()
     pills = [f'<span class="{count_class}">{len(items)} поз.</span>']
     if include_clients:
         pills.append(f'<span class="pill">{len(group_by_customer(items))} кли.</span>')
     pills.append(f'<span class="pill">продажная итого {fmt_money(sum_plan_sale(items), 0)} USD</span>')
-    if margin_mode == "delta":
-        pills.append(f'<span class="pill">Δ маржа {fmt_money(sum_meaningful_margin(items), 0)}</span>')
+    if margin_mode == "before_after":
+        pills.append(f'<span class="pill">маржа было {fmt_money(sum_margin_prev(items), 0)} USD</span>')
+        pills.append(f'<span class="pill">маржа стало {fmt_money(sum_plan_margin(items), 0)} USD</span>')
     else:
         pills.append(f'<span class="pill">маржа {fmt_money(sum_plan_margin(items), 0)} USD</span>')
     return "".join(pills)
@@ -1096,7 +1101,7 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
         headers.append("В TROUBLE")
     headers.append("Продажа USD")
     if show_margin:
-        headers.append("Δ маржа")
+        headers.extend(["маржа было", "маржа стало"])
     headers.append("Комментарий")
 
     rows = []
@@ -1113,8 +1118,10 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
             )
         cells.append(f"<td class='num'>{fmt_sale_cell(e)}</td>")
         if show_margin:
-            margin_txt, margin_cls = fmt_margin_delta_cell(e)
-            cells.append(f"<td class='num {margin_cls}'>{margin_txt}</td>")
+            d = e.margin_curr - e.margin_prev
+            css = "pos" if d > COMMERCIAL_EPS else ("neg" if d < -COMMERCIAL_EPS else "")
+            cells.append(f"<td class='num'>{fmt_money(e.margin_prev, 0)}</td>")
+            cells.append(f"<td class='num {css}'>{fmt_money(e.margin_curr, 0)}</td>")
         cells.append(f"<td>{fmt_comment_cell(e)}</td>")
         rows.append("<tr>" + "".join(cells) + "</tr>")
     header_html = "".join(f"<th>{h}</th>" for h in headers)
@@ -1242,8 +1249,6 @@ def render_html_report(
     resolved_trouble = [e for e in trouble if e.change_kind == "resolved"]
     cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
-    resolved_margin_kpi = fmt_money(kpis["sum_margin_delta"], 0)
-
     sections = "\n".join([
         render_section(
             "Новые TROUBLE",
@@ -1264,7 +1269,7 @@ def render_html_report(
             resolved_trouble,
             lambda xs: render_trouble_table(xs, section="resolved"),
             "ok",
-            margin_mode="delta",
+            margin_mode="before_after",
         ),
         render_section(
             "Отмены и возвраты",
@@ -1296,7 +1301,8 @@ def render_html_report(
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">{'по истории с ' + history_start.strftime('%d.%m') if history_start else f'≥{period_days} дн. в обоих снимках'}</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
-      <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">сумма Δ · +{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
+      <div><div class="label">маржа было (решённые)</div><div class="value">{fmt_money(sum_margin_prev(resolved_trouble), 0)}</div></div>
+      <div><div class="label">маржа стало (решённые)</div><div class="value">{fmt_money(sum_plan_margin(resolved_trouble), 0)}</div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
     <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
