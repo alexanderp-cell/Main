@@ -66,12 +66,13 @@ td.desc { max-width:280px; }
       <div><div class="label">Новые TROUBLE</div><div class="value">7</div></div>
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">42<div class="muted">по истории с 17.07</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">9<div class="muted">17.0% от стартовых</div></div></div>
+      <div><div class="label">Решённые висели</div><div class="value">~13 дн.<div class="muted">ср. от первой TROUBLE до последней в снимках</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">4</div></div>
       <div><div class="label">маржа было (решённые)</div><div class="value">7 179</div></div>
       <div><div class="label">маржа стало (решённые)</div><div class="value">6 807</div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">0</div></div>
     </div>
-    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Решённые: сколько дней строка висела в TROUBLE по снимкам (первая TROUBLE → последняя TROUBLE; если уже TROUBLE в самом старом файле — «≥»). Погрешность около недели. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
   
@@ -318,39 +319,39 @@ ANTI-ICING</td><td>ROTABLE</td><td>DUNAMIS AERO</td><td class='num'>≥35 дн.<
 <details class="group">
   <summary>
     <span class="group-name">Решённые TROUBLE</span>
-    <span class="pill ok">9 поз.</span><span class="pill">3 кли.</span><span class="pill">продажная итого 53 860 USD</span><span class="pill">маржа было 7 179 USD</span><span class="pill">маржа стало 6 807 USD</span>
+    <span class="pill ok">9 поз.</span><span class="pill">3 кли.</span><span class="pill">продажная итого 53 860 USD</span><span class="pill">маржа было 7 179 USD</span><span class="pill">маржа стало 6 807 USD</span><span class="pill">висели ~13 дн. ср.</span>
   </summary>
   <div class="group-body">
 <details class="group client">
   <summary>
     <span class="group-name">Utair</span>
-    <span class="pill">4 поз.</span><span class="pill">продажная итого 34 720 USD</span><span class="pill">маржа было 4 678 USD</span><span class="pill">маржа стало 4 717 USD</span>
+    <span class="pill">4 поз.</span><span class="pill">продажная итого 34 720 USD</span><span class="pill">маржа было 4 678 USD</span><span class="pill">маржа стало 4 717 USD</span><span class="pill">висели ~12 дн. ср.</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>маржа было</th><th>маржа стало</th><th>Комментарий</th></tr></thead>
-  <tbody><tr><td>3601193-8</td><td class='desc'>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td>GSE/TOOL</td><td>LUFTHANSA · #5864</td><td class='num'>0–14 дн.</td><td class='num'>8 500</td><td class='num'>1 356</td><td class='num '>1 356</td><td><div class='problem'>VELO AVIATION - canceled</div>коммерция без изменений; в TROUBLE 0–14 дн. (с 14.08, закрыт к 21.08)</td></tr><tr><td>48559Y</td><td class='desc'>NAMEPLATE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2132</td><td class='num'>≥28 дн.</td><td class='num'>360 → 520</td><td class='num'>169</td><td class='num pos'>208</td><td>закупка увеличилась на 116 USD; продажа увеличилась на 160 USD; fee увеличился на 5 USD; в TROUBLE ≥28 дн. (с 17.07, закрыт к 21.08)</td></tr><tr><td>69-37325-135</td><td class='desc'>MODULE ASSY</td><td>ROTABLE</td><td>LUFTHANSA · #5848</td><td class='num'>0–14 дн.</td><td class='num'>3 200</td><td class='num'>1 101</td><td class='num '>1 101</td><td>коммерция без изменений; в TROUBLE 0–14 дн. (с 14.08, закрыт к 21.08)</td></tr><tr><td>7123-19973-02AB</td><td class='desc'>PRESSURE
-CONTROL PANEL</td><td>ROTABLE</td><td>LUFTHANSA · #5991</td><td class='num'>0–14 дн.</td><td class='num'>22 500</td><td class='num'>2 052</td><td class='num '>2 052</td><td>коммерция без изменений; в TROUBLE 0–14 дн. (с 14.08, закрыт к 21.08)</td></tr></tbody>
+  <tbody><tr><td>48559Y</td><td class='desc'>NAMEPLATE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2132</td><td class='num'>≥28 дн.</td><td class='num'>360 → 520</td><td class='num'>169</td><td class='num pos'>208</td><td>закупка увеличилась на 116 USD; продажа увеличилась на 160 USD; fee увеличился на 5 USD; висела с 17.07 (или раньше) по 14.08, в отчёте 21.08 уже не TROUBLE (≥28 дн.)</td></tr><tr><td>3601193-8</td><td class='desc'>ATOMIZER ASSY -
+FUEL REPAIR PART</td><td>GSE/TOOL</td><td>LUFTHANSA · #5864</td><td class='num'>~7 дн.</td><td class='num'>8 500</td><td class='num'>1 356</td><td class='num '>1 356</td><td><div class='problem'>VELO AVIATION - canceled</div>коммерция без изменений; висела с 14.08, в отчёте 21.08 уже не TROUBLE (~7 дн.)</td></tr><tr><td>69-37325-135</td><td class='desc'>MODULE ASSY</td><td>ROTABLE</td><td>LUFTHANSA · #5848</td><td class='num'>~7 дн.</td><td class='num'>3 200</td><td class='num'>1 101</td><td class='num '>1 101</td><td>коммерция без изменений; висела с 14.08, в отчёте 21.08 уже не TROUBLE (~7 дн.)</td></tr><tr><td>7123-19973-02AB</td><td class='desc'>PRESSURE
+CONTROL PANEL</td><td>ROTABLE</td><td>LUFTHANSA · #5991</td><td class='num'>~7 дн.</td><td class='num'>22 500</td><td class='num'>2 052</td><td class='num '>2 052</td><td>коммерция без изменений; висела с 14.08, в отчёте 21.08 уже не TROUBLE (~7 дн.)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Смартавиа</span>
-    <span class="pill">3 поз.</span><span class="pill">продажная итого 13 750 USD</span><span class="pill">маржа было 1 728 USD</span><span class="pill">маржа стало 1 728 USD</span>
+    <span class="pill">3 поз.</span><span class="pill">продажная итого 13 750 USD</span><span class="pill">маржа было 1 728 USD</span><span class="pill">маржа стало 1 728 USD</span><span class="pill">висели ~18 дн. ср.</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>маржа было</th><th>маржа стало</th><th>Комментарий</th></tr></thead>
-  <tbody><tr><td>146A1300-13</td><td class='desc'>FRAME SPLICE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2036</td><td class='num'>18–35 дн.</td><td class='num'>4 450</td><td class='num'>706</td><td class='num '>706</td><td><div class='problem'>PO-0015415 ждем серт от бос</div>коммерция без изменений; в TROUBLE 18–35 дн. (с 27.07, закрыт к 21.08)</td></tr><tr><td>146A1300-16</td><td class='desc'>FRAME SPLICE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2035</td><td class='num'>18–35 дн.</td><td class='num'>4 500</td><td class='num'>590</td><td class='num '>590</td><td><div class='problem'>PO-0015415 ждем серт от бос</div>коммерция без изменений; в TROUBLE 18–35 дн. (с 27.07, закрыт к 21.08)</td></tr><tr><td>147A3215-24</td><td class='desc'>Section 47, from STA887 to STA1016</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2034</td><td class='num'>18–35 дн.</td><td class='num'>4 800</td><td class='num'>432</td><td class='num '>432</td><td><div class='problem'>PO-0015415 пришел покоцанный, уточнить у маши</div>коммерция без изменений; в TROUBLE 18–35 дн. (с 27.07, закрыт к 21.08)</td></tr></tbody>
+  <tbody><tr><td>146A1300-13</td><td class='desc'>FRAME SPLICE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2036</td><td class='num'>~18 дн.</td><td class='num'>4 450</td><td class='num'>706</td><td class='num '>706</td><td><div class='problem'>PO-0015415 ждем серт от бос</div>коммерция без изменений; висела с 27.07 по 14.08, в отчёте 21.08 уже не TROUBLE (~18 дн.)</td></tr><tr><td>146A1300-16</td><td class='desc'>FRAME SPLICE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2035</td><td class='num'>~18 дн.</td><td class='num'>4 500</td><td class='num'>590</td><td class='num '>590</td><td><div class='problem'>PO-0015415 ждем серт от бос</div>коммерция без изменений; висела с 27.07 по 14.08, в отчёте 21.08 уже не TROUBLE (~18 дн.)</td></tr><tr><td>147A3215-24</td><td class='desc'>Section 47, from STA887 to STA1016</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2034</td><td class='num'>~18 дн.</td><td class='num'>4 800</td><td class='num'>432</td><td class='num '>432</td><td><div class='problem'>PO-0015415 пришел покоцанный, уточнить у маши</div>коммерция без изменений; висела с 27.07 по 14.08, в отчёте 21.08 уже не TROUBLE (~18 дн.)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Ямал</span>
-    <span class="pill">2 поз.</span><span class="pill">продажная итого 5 390 USD</span><span class="pill">маржа было 774 USD</span><span class="pill">маржа стало 363 USD</span>
+    <span class="pill">2 поз.</span><span class="pill">продажная итого 5 390 USD</span><span class="pill">маржа было 774 USD</span><span class="pill">маржа стало 363 USD</span><span class="pill">висели ~7 дн. ср.</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>маржа было</th><th>маржа стало</th><th>Комментарий</th></tr></thead>
-  <tbody><tr><td>3530-0121-01</td><td class='desc'>BOARD PRINTED CIRCUIT</td><td>ROTABLE</td><td>AASI</td><td class='num'>7–21 дн.</td><td class='num'>4 400</td><td class='num'>460</td><td class='num neg'>49</td><td><div class='problem'>YML-8353 Везем в 0 (траблс)</div>закупка уменьшилась на 85 USD; транспорт увеличился на 500 USD; поставщик: JET TECHNIC → IBERIA; root supplier: STELLARAIR → AASI; fee уменьшился на 3 USD; срок поставки сдвинут на +63 дн.; в TROUBLE 7–21 дн. (с 07.08, закрыт к 21.08)</td></tr><tr><td>MS21225-6</td><td class='desc'>SCREW</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2192</td><td class='num'>0–14 дн.</td><td class='num'>990</td><td class='num'>314</td><td class='num '>314</td><td>коммерция без изменений; в TROUBLE 0–14 дн. (с 14.08, закрыт к 21.08)</td></tr></tbody>
+  <tbody><tr><td>3530-0121-01</td><td class='desc'>BOARD PRINTED CIRCUIT</td><td>ROTABLE</td><td>AASI</td><td class='num'>~7 дн.</td><td class='num'>4 400</td><td class='num'>460</td><td class='num neg'>49</td><td><div class='problem'>YML-8353 Везем в 0 (траблс)</div>закупка уменьшилась на 85 USD; транспорт увеличился на 500 USD; поставщик: JET TECHNIC → IBERIA; root supplier: STELLARAIR → AASI; fee уменьшился на 3 USD; срок поставки сдвинут на +63 дн.; висела с 07.08 по 14.08, в отчёте 21.08 уже не TROUBLE (~7 дн.)</td></tr><tr><td>MS21225-6</td><td class='desc'>SCREW</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2192</td><td class='num'>~7 дн.</td><td class='num'>990</td><td class='num'>314</td><td class='num '>314</td><td>коммерция без изменений; висела с 14.08, в отчёте 21.08 уже не TROUBLE (~7 дн.)</td></tr></tbody>
 </table></div>
 </details></div>
 </details>
@@ -399,7 +400,7 @@ CONTROL PANEL</td><td>ROTABLE</td><td>LUFTHANSA · #5991</td><td class='num'>0�
   <td>из TROUBLE → возврат</td>
   <td class='num'>2 800</td>
   <td class='num '>—</td>
-  <td><div class='problem'>P3541626 ждем документы по взаимозаменяемости от оманца 30.07 документы плохие, уточняем пригодность у клиента 11.08</div>TROUBLE → отмена/возврат; в TROUBLE 18–35 дн. (с 27.07, закрыт к 21.08)</td>
+  <td><div class='problem'>P3541626 ждем документы по взаимозаменяемости от оманца 30.07 документы плохие, уточняем пригодность у клиента 11.08</div>TROUBLE → отмена/возврат; висела с 27.07 по 14.08, в отчёте 21.08 уже не TROUBLE (~18 дн.)</td>
 </tr></tbody>
 </table></div>
 </details>
@@ -441,7 +442,7 @@ CONTROL PANEL</td><td>ROTABLE</td><td>LUFTHANSA · #5991</td><td class='num'>0�
   <td>из TROUBLE → отмена</td>
   <td class='num'>290</td>
   <td class='num '>—</td>
-  <td><div class='problem'>cancel</div>TROUBLE → отмена/возврат; в TROUBLE ≥28 дн. (с 17.07, закрыт к 21.08)</td>
+  <td><div class='problem'>cancel</div>TROUBLE → отмена/возврат; висела с 17.07 (или раньше) по 14.08, в отчёте 21.08 уже не TROUBLE (≥28 дн.)</td>
 </tr></tbody>
 </table></div>
 </details></div>
