@@ -180,11 +180,12 @@ def fmt_days_range(min_d: int | None, max_d: int | None) -> str:
 
 
 def fmt_hung_days(days: int | None, *, unknown_start: bool) -> str:
-    """Single estimate of how long a resolved row hung in TROUBLE."""
+    """Approximate days a resolved row spent in TROUBLE."""
     if days is None:
         return "—"
-    prefix = "≥" if unknown_start else "~"
-    return f"{prefix}{days} дн."
+    if unknown_start:
+        return f"≥{days} дн."
+    return f"примерно {days} дн."
 
 
 def esc(text: Any) -> str:
@@ -807,30 +808,43 @@ def duration_in_trouble(
     return hung, hung, first_date, last_t_date, closed_by
 
 
+def _closed_trouble_span(
+    first_date: date | None,
+    last_t_date: date | None,
+    *,
+    unknown_start: bool,
+) -> str:
+    if not first_date:
+        return ""
+    start = f"с {first_date.strftime('%d.%m')}"
+    if unknown_start:
+        start += " (или раньше)"
+    if last_t_date and last_t_date != first_date:
+        return f"{start} по {last_t_date.strftime('%d.%m')}"
+    return start
+
+
 def _hung_comment(
     hung_days: int,
     max_days: int | None,
     first_date: date | None,
     last_t_date: date | None,
     closed_by: date | None,
+    *,
+    resolved: bool = False,
 ) -> str:
     unknown_start = max_days is None
     days_txt = fmt_hung_days(hung_days, unknown_start=unknown_start)
-    if not first_date:
-        return f"висела {days_txt}"
-    start = f"с {first_date.strftime('%d.%m')}"
-    if unknown_start:
-        start += " (или раньше)"
-    if last_t_date and last_t_date != first_date:
-        span = f"{start} по {last_t_date.strftime('%d.%m')}"
-    else:
-        span = start
+    lead = f"решили за {days_txt}" if resolved else f"висела {days_txt}"
+    span = _closed_trouble_span(first_date, last_t_date, unknown_start=unknown_start)
+    parts = [lead]
+    if span:
+        parts.append(span)
     if closed_by:
-        return (
-            f"висела {span}, в отчёте {closed_by.strftime('%d.%m')} "
-            f"уже не TROUBLE ({days_txt})"
-        )
-    return f"висела {span} ({days_txt})"
+        parts.append(f"в отчёте {closed_by.strftime('%d.%m')} уже не TROUBLE")
+    if len(parts) == 1:
+        return lead
+    return f"{parts[0]} ({', '.join(parts[1:])})"
 
 
 def _apply_history_duration(
@@ -847,10 +861,21 @@ def _apply_history_duration(
         e.notes = [
             n
             for n in e.notes
-            if not n.startswith("в TROUBLE") and not n.startswith("висела")
+            if not n.startswith("в TROUBLE")
+            and not n.startswith("висела")
+            and not n.startswith("решили за")
         ]
         if e.change_kind in closed_kinds:
-            e.notes.append(_hung_comment(min_d, max_d, first_date, last_t_date, closed_by))
+            e.notes.append(
+                _hung_comment(
+                    min_d,
+                    max_d,
+                    first_date,
+                    last_t_date,
+                    closed_by,
+                    resolved=e.change_kind == "resolved",
+                )
+            )
             continue
         stamp = f"с {first_date.strftime('%d.%m')}" if first_date else ""
         if stamp:
@@ -1161,7 +1186,9 @@ def header_metric_pills(
             and (e.trouble_max_days is None or e.trouble_max_days == e.trouble_min_days)
         ]
         if hung:
-            pills.append(f'<span class="pill">висели ~{round(mean(hung))} дн. ср.</span>')
+            pills.append(
+                f'<span class="pill">решили за примерно {round(mean(hung))} дн. ср.</span>'
+            )
     else:
         pills.append(f'<span class="pill">маржа {fmt_money(sum_plan_margin(items), 0)} USD</span>')
     if extra_pills:
@@ -1182,7 +1209,7 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
     )
     headers = ["P/N", "Описание", "Cat.", "Поставщик"]
     if show_days:
-        headers.append("В TROUBLE")
+        headers.append("Решили за" if kind == "resolved" else "В TROUBLE")
     headers.append("Продажа USD")
     if show_margin:
         headers.extend(["маржа было", "маржа стало"])
@@ -1391,13 +1418,13 @@ def render_html_report(
       <div><div class="label">Новые TROUBLE</div><div class="value">{len(new_trouble)}</div></div>
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">{'по истории с ' + history_start.strftime('%d.%m') if history_start else f'≥{period_days} дн. в обоих снимках'}</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
-      <div><div class="label">Решённые висели</div><div class="value">{fmt_hung_days(round(kpis['avg_resolved_days']) if kpis['avg_resolved_days'] is not None else None, unknown_start=False)}<div class="muted">ср. от первой TROUBLE до последней в снимках</div></div></div>
+      <div><div class="label">Решили за</div><div class="value">{fmt_hung_days(round(kpis['avg_resolved_days']) if kpis['avg_resolved_days'] is not None else None, unknown_start=False)}<div class="muted">в среднем по решённым · погрешность ~неделя</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
       <div><div class="label">маржа было (решённые)</div><div class="value">{fmt_money(sum_margin_prev(resolved_trouble), 0)}</div></div>
       <div><div class="label">маржа стало (решённые)</div><div class="value">{fmt_money(sum_plan_margin(resolved_trouble), 0)}</div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
-    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Решённые: сколько дней строка висела в TROUBLE по снимкам (первая TROUBLE → последняя TROUBLE; если уже TROUBLE в самом старом файле — «≥»). Погрешность около недели. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Решённые: «решили за примерно N дн.» — от первой TROUBLE до последней в снимках (если уже TROUBLE в самом старом файле — «≥»). Погрешность около недели. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
   {sections}

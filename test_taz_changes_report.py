@@ -181,7 +181,8 @@ def test_resolved_shows_margin_not_days() -> None:
     assert "маржа было" in html
     assert "маржа стало" in html
     assert "Δ маржа" not in html
-    assert "В TROUBLE" in html
+    assert "Решили за" in html
+    assert "В TROUBLE" not in html
     assert "Δ срок" not in html
     assert "Счёт" not in html
 
@@ -315,9 +316,11 @@ def test_resolved_duration_from_history() -> None:
     assert ev.change_kind == "resolved"
     assert ev.trouble_min_days == 7
     html = render_trouble_table(trouble, section="resolved")
-    assert "В TROUBLE" in html
+    assert "Решили за" in html
+    assert "В TROUBLE" not in html
     assert "≥7 дн." in html
-    assert "висела с 14.08 (или раньше) по 21.08" in html
+    assert "решили за ≥7 дн." in html
+    assert "с 14.08 (или раньше) по 21.08" in html
     assert "в отчёте 28.08 уже не TROUBLE" in html
 
 
@@ -344,15 +347,17 @@ def test_resolved_hung_from_first_to_last_trouble() -> None:
     assert closed == d_closed
     assert hung == (d_last - d_first).days  # 18
     assert max_d == hung
-    assert fmt_hung_days(hung, unknown_start=False) == "~18 дн."
+    assert fmt_hung_days(hung, unknown_start=False) == "примерно 18 дн."
 
     trouble, *_ = compare_snapshots(hist[-2][1], hist[-1][1], 7, history=hist)
     ev = trouble[0]
     assert ev.change_kind == "resolved"
     assert ev.trouble_min_days == 18
     html = render_trouble_table(trouble, section="resolved")
-    assert "~18 дн." in html
-    assert "висела с 27.07 по 14.08" in html
+    assert "Решили за" in html
+    assert "примерно 18 дн." in html
+    assert "решили за примерно 18 дн." in html
+    assert "с 27.07 по 14.08" in html
     assert "в отчёте 21.08 уже не TROUBLE" in html
 
 
@@ -374,8 +379,10 @@ def test_resolved_single_snapshot_uses_close_date() -> None:
         compare_snapshots(hist[-2][1], hist[-1][1], 7, history=hist)[0],
         section="resolved",
     )
-    assert "~7 дн." in html
-    assert "висела с 14.08, в отчёте 21.08 уже не TROUBLE" in html
+    assert "~7 дн." not in html
+    assert "примерно 7 дн." in html
+    assert "решили за примерно 7 дн." in html
+    assert "с 14.08, в отчёте 21.08 уже не TROUBLE" in html
 
 
 def test_full_period_classifies_mid_resolved() -> None:
