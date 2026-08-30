@@ -28,7 +28,9 @@ from generate_taz_changes_report import (
     COL_UNIQUE_UNIT,
     STATUS_FINISHED,
     STATUS_TROUBLE,
+    compare_full_period,
     compare_snapshots,
+    duration_in_trouble,
     extract_problem_notes,
     format_supplier_display,
     fmt_margin_delta_cell,
@@ -249,6 +251,58 @@ def test_section_headers_show_plan_or_delta_margin() -> None:
     assert "сумма Δ" in html
     assert summed in kpis_chunk
     assert f"Δ маржа {summed}" in resolved_block
+    assert 'class="period"' in html
+    assert "font-weight:700" in html
+
+
+def test_duration_in_trouble_from_history() -> None:
+    d1, d2, d3 = date(2026, 8, 14), date(2026, 8, 21), date(2026, 8, 28)
+    row_t = taz_row()
+    row_p = taz_row(**{COL_STATUS: STATUS_PAID})
+    min_d, max_d, first = duration_in_trouble(
+        "k",
+        [(d1, {"k": row_t}), (d2, {"k": row_t}), (d3, {"k": row_t})],
+    )
+    assert (min_d, max_d, first) == (14, None, d1)
+
+    min_d, max_d, first = duration_in_trouble(
+        "k",
+        [(d1, {"k": row_p}), (d2, {"k": row_t}), (d3, {"k": row_t})],
+    )
+    assert min_d == 7
+    assert max_d == 14
+    assert first == d2
+
+
+def test_weekly_ongoing_uses_history_days() -> None:
+    d1, d2, d3 = date(2026, 8, 14), date(2026, 8, 21), date(2026, 8, 28)
+    row_t = taz_row()
+    hist = [
+        (d1, {"k": row_t}),
+        (d2, {"k": row_t}),
+        (d3, {"k": row_t}),
+    ]
+    trouble, *_ = compare_snapshots(hist[1][1], hist[2][1], 7, history=hist)
+    assert trouble[0].change_kind == "ongoing"
+    assert trouble[0].trouble_min_days == 14
+    html = render_trouble_table(trouble, section="ongoing")
+    assert "≥14 дн." in html
+
+
+def test_full_period_classifies_mid_resolved() -> None:
+    d1, d2, d3 = date(2026, 7, 17), date(2026, 8, 7), date(2026, 8, 28)
+    snaps = [
+        (d1, {"open": taz_row(), "mid": taz_row(**{COL_STATUS: STATUS_PAID, COL_PN: "MID"})}),
+        (d2, {"open": taz_row(), "mid": taz_row(**{COL_PN: "MID"})}),
+        (d3, {
+            "open": taz_row(),
+            "mid": taz_row(**{COL_STATUS: STATUS_FINISHED, COL_PN: "MID"}),
+        }),
+    ]
+    trouble, *_ = compare_full_period(snaps)
+    kinds = {e.pn: e.change_kind for e in trouble}
+    assert kinds["PN-1"] == "ongoing"
+    assert kinds["MID"] == "resolved"
 
 
 if __name__ == "__main__":

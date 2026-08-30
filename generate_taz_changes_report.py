@@ -120,8 +120,15 @@ def load_taz(path: Path) -> pd.DataFrame:
             rename[c] = COL_TRANSPORT_PLAN
         if isinstance(c, str) and "UNIQUE" in c.upper() and "UNIT" in c.upper():
             rename[c] = COL_UNIQUE_UNIT
+    if COL_INVOICE not in df.columns:
+        for alt in ("счет", "№ счета"):
+            if alt in df.columns:
+                rename[alt] = COL_INVOICE
+                break
     if rename:
         df = df.rename(columns=rename)
+    if COL_INVOICE not in df.columns:
+        raise KeyError(f"Invoice column not found. Columns: {list(df.columns)[:10]}")
     return df
 
 
@@ -574,6 +581,7 @@ def compare_snapshots(
     prev_rows: dict[str, pd.Series],
     curr_rows: dict[str, pd.Series],
     period_days: int,
+    history: list[tuple[date, dict[str, pd.Series]]] | None = None,
 ) -> tuple[list[StatusChange], list[StatusChange], list[StatusChange], list[StatusChange]]:
     """Return trouble_events, cancellations, refunds, warranty_transitions."""
     trouble: list[StatusChange] = []
@@ -723,6 +731,213 @@ def compare_snapshots(
             )
         )
 
+    if history:
+        _apply_history_duration(trouble, history)
+
+    return trouble, cancellations, refunds, warranty
+
+
+def _status_of(rows: dict[str, pd.Series], key: str) -> str | None:
+    if key not in rows:
+        return None
+    return str(rows[key].get(COL_STATUS) or "").strip() or None
+
+
+def duration_in_trouble(
+    key: str,
+    history: list[tuple[date, dict[str, pd.Series]]],
+) -> tuple[int, int | None, date | None]:
+    """Continuous TROUBLE streak ending at the last snapshot.
+
+    Returns (min_days, max_days, first_known_trouble_date).
+    max_days is None when the row is TROUBLE already in the oldest snapshot (≥ min_days).
+    """
+    if not history:
+        return 0, None, None
+    curr_date, _ = history[-1]
+    first_idx = len(history) - 1
+    for i in range(len(history) - 1, -1, -1):
+        st = _status_of(history[i][1], key)
+        if st == STATUS_TROUBLE:
+            first_idx = i
+            continue
+        first_date = history[first_idx][0]
+        after_date = history[i][0]
+        min_d = max(0, (curr_date - first_date).days)
+        max_d = max(min_d, (curr_date - after_date).days)
+        return min_d, max_d, first_date
+    first_date = history[0][0]
+    min_d = max(0, (curr_date - first_date).days)
+    return min_d, None, first_date
+
+
+def _apply_history_duration(
+    events: list[StatusChange],
+    history: list[tuple[date, dict[str, pd.Series]]],
+) -> None:
+    for e in events:
+        if e.change_kind not in {
+            "ongoing",
+            "resolved",
+            "cancelled_from_trouble",
+            "warranty_from_trouble",
+        }:
+            continue
+        min_d, max_d, first_date = duration_in_trouble(e.key, history)
+        e.trouble_min_days = min_d
+        e.trouble_max_days = max_d
+        if e.change_kind != "ongoing":
+            continue
+        e.notes = [n for n in e.notes if not n.startswith("в TROUBLE")]
+        stamp = f" (с {first_date.strftime('%d.%m')})" if first_date else ""
+        e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}{stamp}")
+
+
+def _series_for(
+    snapshots: list[tuple[date, dict[str, pd.Series]]],
+    key: str,
+    *,
+    last: bool,
+) -> pd.Series | None:
+    seq = snapshots if not last else list(reversed(snapshots))
+    for _, rows in seq:
+        if key in rows:
+            return rows[key]
+    return None
+
+
+def compare_full_period(
+    snapshots: list[tuple[date, dict[str, pd.Series]]],
+) -> tuple[list[StatusChange], list[StatusChange], list[StatusChange], list[StatusChange]]:
+    """Classify TROUBLE/cancel across the whole snapshot chain (oldest → newest)."""
+    if len(snapshots) < 2:
+        raise ValueError("Need at least two snapshots")
+    oldest = snapshots[0][1]
+    newest = snapshots[-1][1]
+
+    keys: set[str] = set()
+    for _, rows in snapshots:
+        keys |= set(rows)
+
+    trouble: list[StatusChange] = []
+    cancellations: list[StatusChange] = []
+    refunds: list[StatusChange] = []
+    warranty: list[StatusChange] = []
+
+    def was_trouble_mid(key: str) -> bool:
+        return any(_status_of(rows, key) == STATUS_TROUBLE for _, rows in snapshots)
+
+    for key in keys:
+        s0 = _status_of(oldest, key)
+        sn = _status_of(newest, key)
+        prev = oldest.get(key)
+        curr = newest.get(key)
+        if prev is None:
+            prev = _series_for(snapshots, key, last=False)
+        if curr is None:
+            curr = _series_for(snapshots, key, last=True)
+        if prev is None or curr is None:
+            continue
+
+        qty_prev = parse_numeric(prev.get(COL_QTY))
+        qty_curr = parse_numeric(curr.get(COL_QTY))
+        category = row_str(prev, COL_CATEGORY) or row_str(curr, COL_CATEGORY)
+        qty_notes = build_notes(category, qty_prev, qty_curr)
+        commercial_notes = build_commercial_notes(prev, curr, qty_prev, qty_curr)
+        base = build_status_change(
+            key,
+            prev,
+            curr,
+            change_kind="",
+            prev_status=s0 or "(нет в первом снимке)",
+            curr_status=sn or "(нет в последнем снимке)",
+            notes=qty_notes,
+        )
+
+        if sn == STATUS_TROUBLE:
+            kind = "ongoing" if s0 == STATUS_TROUBLE else "entered"
+            extra = (
+                ["в TROUBLE оба конца периода"]
+                if kind == "ongoing"
+                else ["новый TROUBLE за период (ещё открыт)"]
+            )
+            trouble.append(
+                replace(
+                    base,
+                    change_kind=kind,
+                    notes=append_trouble_notes(qty_notes, commercial_notes, extra),
+                )
+            )
+        elif s0 == STATUS_TROUBLE and sn in RESOLVED_FROM_TROUBLE:
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="resolved",
+                    notes=append_trouble_notes(qty_notes, commercial_notes, []),
+                )
+            )
+        elif s0 == STATUS_TROUBLE and sn in TERMINAL_BAD:
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="cancelled_from_trouble",
+                    notes=[*qty_notes, *commercial_notes, "TROUBLE → отмена/возврат"],
+                )
+            )
+        elif s0 == STATUS_TROUBLE and sn == STATUS_WARRANTY:
+            trouble.append(
+                replace(
+                    base,
+                    change_kind="warranty_from_trouble",
+                    notes=[*qty_notes, *commercial_notes, "TROUBLE → гарантия"],
+                )
+            )
+        elif s0 != STATUS_TROUBLE and was_trouble_mid(key):
+            if sn in RESOLVED_FROM_TROUBLE:
+                trouble.append(
+                    replace(
+                        base,
+                        change_kind="resolved",
+                        notes=append_trouble_notes(
+                            qty_notes, commercial_notes, ["вошёл и закрыт внутри периода"]
+                        ),
+                    )
+                )
+            elif sn in TERMINAL_BAD:
+                trouble.append(
+                    replace(
+                        base,
+                        change_kind="cancelled_from_trouble",
+                        notes=[
+                            *qty_notes,
+                            *commercial_notes,
+                            "TROUBLE → отмена/возврат внутри периода",
+                        ],
+                    )
+                )
+            elif sn == STATUS_WARRANTY:
+                trouble.append(
+                    replace(
+                        base,
+                        change_kind="warranty_from_trouble",
+                        notes=[*qty_notes, *commercial_notes, "TROUBLE → гарантия внутри периода"],
+                    )
+                )
+
+        if (s0 in CANCEL_SOURCE or s0 is None) and sn == STATUS_CANCEL:
+            cancellations.append(
+                replace(base, change_kind="cancelled", notes=[*qty_notes, *commercial_notes])
+            )
+        elif (s0 in CANCEL_SOURCE or s0 is None) and sn == STATUS_REFUND:
+            refunds.append(
+                replace(base, change_kind="refunded", notes=[*qty_notes, *commercial_notes])
+            )
+        if (s0 in CANCEL_SOURCE or s0 is None) and sn == STATUS_WARRANTY:
+            warranty.append(
+                replace(base, change_kind="warranty", notes=[*qty_notes, *commercial_notes])
+            )
+
+    _apply_history_duration(trouble, snapshots)
     return trouble, cancellations, refunds, warranty
 
 
@@ -780,7 +995,8 @@ body {
 .wrap { max-width:1200px; margin:0 auto; padding:28px 20px 64px; }
 .brand { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff; margin-bottom:18px; }
 .brand-mark { font-size:13px; letter-spacing:.12em; text-transform:uppercase; background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700; }
-h1 { font-size:30px; margin:0 0 6px; color:#fff; font-weight:700; }
+h1 { font-size:30px; margin:0 0 4px; color:#fff; font-weight:700; }
+.period { color:#fff; font-size:30px; font-weight:700; margin:0 0 8px; }
 .sub { color:#d5fbff; margin-bottom:18px; font-size:14px; }
 h2 { font-size:20px; margin:28px 0 12px; color:var(--navy); }
 h3 { font-size:16px; margin:18px 0 10px; color:var(--navy); }
@@ -1011,10 +1227,15 @@ def render_html_report(
     cancellations: list[StatusChange],
     refunds: list[StatusChange],
     warranty: list[StatusChange],
+    *,
+    history_start: date | None = None,
 ) -> str:
+    period = f"{prev_date.strftime('%d.%m.%Y')} → {curr_date.strftime('%d.%m.%Y')}"
     period_days = max(1, (curr_date - prev_date).days)
     kpis = trouble_kpis(trouble, period_days)
-    period = f"{prev_date.strftime('%d.%m.%Y')} → {curr_date.strftime('%d.%m.%Y')} ({period_days} дн.)"
+    history_note = ""
+    if history_start and history_start < prev_date:
+        history_note = f" · история нерешённых с {history_start.strftime('%d.%m.%Y')}"
 
     new_trouble = [e for e in trouble if e.change_kind == "entered"]
     unresolved_trouble = [e for e in trouble if e.change_kind == "ongoing"]
@@ -1065,13 +1286,14 @@ def render_html_report(
 <div class="wrap">
   <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">TROUBLE / CANCEL</div></div>
   <h1>TROUBLE / CANCEL</h1>
-  <div class="sub">Период {period} · сравнение двух выгрузок ТАЗ</div>
+  <div class="period">{period}</div>
+  <div class="sub">{period_days} дн. · сравнение выгрузок ТАЗ{history_note}</div>
 
   <section class="card">
     <h2 style="margin-top:0">Сводка</h2>
     <div class="kpi-grid">
       <div><div class="label">Новые TROUBLE</div><div class="value">{len(new_trouble)}</div></div>
-      <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">≥{period_days} дн. в обоих снимках</div></div></div>
+      <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">{'по истории с ' + history_start.strftime('%d.%m') if history_start else f'≥{period_days} дн. в обоих снимках'}</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
       <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">сумма Δ · +{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
@@ -1092,14 +1314,126 @@ def render_html_report(
 """
 
 
+def save_html_report(path: Path, html_out: str) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(html_out, encoding="utf-8")
+    zip_path = path.with_suffix(".zip")
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(path, path.name)
+    print(f"Saved {path}")
+    print(f"Saved {zip_path}")
+    return zip_path
+
+
+def report_filename(prev: date, curr: date, *, full: bool = False) -> str:
+    if full:
+        return f"trouble_cancel_{prev.strftime('%d_%m')}-{curr.strftime('%d_%m_%Y')}_full.html"
+    if prev.month == curr.month and prev.year == curr.year:
+        return f"trouble_cancel_{prev.strftime('%d')}-{curr.strftime('%d_%m_%Y')}.html"
+    return f"trouble_cancel_{prev.strftime('%d_%m')}-{curr.strftime('%d_%m_%Y')}.html"
+
+
+def parse_snapshot_arg(text: str) -> tuple[date, Path]:
+    if "=" not in text:
+        raise ValueError(f"Expected DATE=PATH, got {text!r}")
+    date_s, path_s = text.split("=", 1)
+    return parse_report_date(date_s), Path(path_s)
+
+
+def generate_from_chain(
+    snapshots: list[tuple[date, dict[str, pd.Series]]],
+    output_dir: Path,
+    *,
+    weekly: bool = True,
+    full: bool = True,
+) -> list[Path]:
+    """Write weekly consecutive reports (+ optional full-period) from a dated chain."""
+    snapshots = sorted(snapshots, key=lambda x: x[0])
+    written: list[Path] = []
+    history_start = snapshots[0][0]
+
+    if weekly:
+        for i in range(1, len(snapshots)):
+            prev_date, prev_rows = snapshots[i - 1]
+            curr_date, curr_rows = snapshots[i]
+            period_days = max(1, (curr_date - prev_date).days)
+            history = snapshots[: i + 1]
+            trouble, cancellations, refunds, warranty = compare_snapshots(
+                prev_rows, curr_rows, period_days, history=history
+            )
+            html_out = render_html_report(
+                prev_date,
+                curr_date,
+                trouble,
+                cancellations,
+                refunds,
+                warranty,
+                history_start=history_start if history_start < prev_date else None,
+            )
+            out = output_dir / report_filename(prev_date, curr_date)
+            save_html_report(out, html_out)
+            written.append(out)
+            print(
+                f"  week {prev_date:%d.%m}→{curr_date:%d.%m}: "
+                f"TROUBLE {len(trouble)} | cancel {len(cancellations)} | refund {len(refunds)}"
+            )
+
+    if full and len(snapshots) >= 2:
+        prev_date, curr_date = snapshots[0][0], snapshots[-1][0]
+        trouble, cancellations, refunds, warranty = compare_full_period(snapshots)
+        html_out = render_html_report(
+            prev_date,
+            curr_date,
+            trouble,
+            cancellations,
+            refunds,
+            warranty,
+            history_start=prev_date,
+        )
+        out = output_dir / report_filename(prev_date, curr_date, full=True)
+        save_html_report(out, html_out)
+        written.append(out)
+        print(
+            f"  full {prev_date:%d.%m}→{curr_date:%d.%m}: "
+            f"TROUBLE {len(trouble)} | cancel {len(cancellations)} | refund {len(refunds)}"
+        )
+
+    if written:
+        bundle = output_dir / "trouble_cancel_all.zip"
+        with zipfile.ZipFile(bundle, "w", zipfile.ZIP_DEFLATED) as zf:
+            for path in written:
+                zf.write(path, path.name)
+        print(f"Saved {bundle}")
+    return written
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="HTML report: TAZ diff (TROUBLE, cancel, warranty)")
-    parser.add_argument("--previous", "-p", type=Path, required=True, help="Earlier TAZ snapshot")
-    parser.add_argument("--current", "-c", type=Path, required=True, help="Later TAZ snapshot")
+    parser.add_argument("--previous", "-p", type=Path, help="Earlier TAZ snapshot")
+    parser.add_argument("--current", "-c", type=Path, help="Later TAZ snapshot")
     parser.add_argument("--previous-date", type=str, help="Date of previous snapshot DD.MM.YYYY")
     parser.add_argument("--current-date", type=str, help="Date of current snapshot DD.MM.YYYY")
     parser.add_argument("--output", "-o", type=Path, default=Path("output/changes/trouble_cancel.html"))
+    parser.add_argument(
+        "--snapshots",
+        nargs="+",
+        help="Chain of DATE=PATH snapshots (oldest first). Writes weekly reports + full period.",
+    )
+    parser.add_argument("--output-dir", type=Path, default=Path("output/changes"))
     args = parser.parse_args()
+
+    if args.snapshots:
+        dated_paths = [parse_snapshot_arg(item) for item in args.snapshots]
+        dated_paths.sort(key=lambda x: x[0])
+        loaded: list[tuple[date, dict[str, pd.Series]]] = []
+        for snap_date, path in dated_paths:
+            print(f"Loading TAZ {snap_date:%d.%m.%Y}: {path}")
+            loaded.append((snap_date, index_rows(load_taz(path))))
+        generate_from_chain(loaded, args.output_dir)
+        return
+
+    if not args.previous or not args.current:
+        parser.error("Provide --previous and --current, or --snapshots DATE=PATH ...")
 
     prev_date = parse_report_date(args.previous_date) if args.previous_date else None
     curr_date = parse_report_date(args.current_date) if args.current_date else None
@@ -1116,14 +1450,7 @@ def main() -> None:
 
     trouble, cancellations, refunds, warranty = compare_snapshots(prev_rows, curr_rows, period_days)
     html_out = render_html_report(prev_date, curr_date, trouble, cancellations, refunds, warranty)
-
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(html_out, encoding="utf-8")
-    zip_path = args.output.with_suffix(".zip")
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.write(args.output, args.output.name)
-    print(f"Saved {args.output}")
-    print(f"Saved {zip_path}  ← скачайте ZIP и откройте HTML из распакованной папки")
+    save_html_report(args.output, html_out)
     print(
         f"TROUBLE events: {len(trouble)} | cancellations: {len(cancellations)} | "
         f"refunds: {len(refunds)} | warranty: {len(warranty)}"
