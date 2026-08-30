@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import re
 import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
@@ -208,6 +209,7 @@ class StatusChange:
     trouble_max_days: int | None = None
     unique_unit_code: str = ""
     notes: list[str] = field(default_factory=list)
+    problem_notes: list[str] = field(default_factory=list)
 
     @property
     def margin_delta(self) -> float:
@@ -235,16 +237,32 @@ def normalize_unique_unit(value: Any) -> str:
     return text
 
 
+def split_unit_code(value: Any) -> tuple[str, str]:
+    """Split BOS/LH unique unit into reference (#/№) and trailing problem text."""
+    text = normalize_unique_unit(value)
+    if not text:
+        return "", ""
+    match = re.match(
+        r"^(?P<ref>(?:#|№)\s*[\w./-]+)\s+(?:[-–—:]\s*)?(?P<extra>[A-Za-zА-Яа-яЁё].+)$",
+        text,
+    )
+    if match:
+        ref = re.sub(r"\s+", "", match.group("ref"))
+        extra = match.group("extra").strip()
+        return ref, extra
+    return re.sub(r"\s+", "", text), ""
+
+
 def format_supplier_display(supplier: str, root_supplier: str, unique_unit: str = "") -> str:
-    """JET/IBERIA → root supplier; Lufthansa/Blue Ocean/Avitrue → supplier (+ unit code)."""
+    """JET/IBERIA → root supplier; Lufthansa/Blue Ocean/Avitrue → supplier (+ #/№ reference)."""
     sup_u = (supplier or "").upper()
     root = (root_supplier or "").strip()
     if "JET" in sup_u or "IBERIA" in sup_u:
         return root or supplier or "—"
     if any(x in sup_u for x in ("LUFTHANSA", "BLUE OCEAN", "AVITRUE")):
         name = supplier or "—"
-        unit = normalize_unique_unit(unique_unit)
-        return f"{name} · {unit}" if unit else name
+        unit_ref, _ = split_unit_code(unique_unit)
+        return f"{name} · {unit_ref}" if unit_ref else name
     return root or supplier or "—"
 
 
@@ -253,6 +271,130 @@ def row_str(row: pd.Series, col: str) -> str:
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return ""
     return str(value).strip()
+
+
+_NOISE_TEXT = {
+    "",
+    "-",
+    "—",
+    "nan",
+    "none",
+    "nat",
+    "n/a",
+    "na",
+    "sample",
+    "#n/a",
+    "пусто",
+    "нет",
+    "ok",
+    "ок",
+}
+
+_PROBLEM_RE = re.compile(
+    r"(?i)(?:"
+    r"\bcancell?ed?\b|\bdelay(?:ed|s)?\b|\baog\b|\bnff\b|\breject(?:ed|ion)?\b|"
+    r"\bshortage\b|\bbackorder\b|\bawait(?:ing)?\b|\bfail(?:ed|ure)?\b|"
+    r"\bmissing\b|\bwrong\b|\bdamag(?:e|ed)\b|\bscrap\b|\bber\b|"
+    r"\bobsolete\b|\bunservice(?:able)?\b|\bno stock\b|\bnot available\b|"
+    r"\bon hold\b|\bunable\b|\bcannot\b|\bcan't\b|\bproblem\b|\bissue\b|"
+    r"\bdiscontinu(?:ed|e)\b|\bhold\b|\berror\b|\btrouble\b|\bquote\b|"
+    r"отмен|срыв|сорван|брак|проблем|задержк|не найден|нет в наличии|"
+    r"отказ|ожидан|слом|поломк|рекламац|не постав|ждём|ждем|"
+    r"не можем|ошибк|нелетн|гарант|нет поставщик"
+    r")"
+)
+
+_SKIP_PROBLEM_COLS = {
+    COL_INVOICE,
+    COL_STATUS,
+    COL_CUSTOMER,
+    COL_PN,
+    COL_DESC,
+    COL_SUPPLIER,
+    COL_ROOT_SUPPLIER,
+    COL_UNIQUE_UNIT,
+    COL_CATEGORY,
+    COL_QTY,
+    COL_SALE,
+    COL_PURCHASE,
+    COL_TRANSPORT_PLAN,
+    COL_FEE,
+    COL_DEADLINE,
+    COL_DAYS_TO_DELIVER,
+    COL_ORDER_DATE,
+    COL_DELIVERY,
+    "_key",
+}
+
+_SKIP_PROBLEM_COL_RE = re.compile(
+    r"(?i)дата|usd|стоим|оплач|закуп|продаж|qty|price|fee|баланс|"
+    r"invoice|счет|customer|status|p/n|descrip|supplier|category|"
+    r"invoicer|sgmt|uom|lead time|qty"
+)
+_COMMENT_COL_RE = re.compile(r"(?i)коммент|примечан|problem|причин")
+
+
+def _clean_text_cell(value: Any) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    if isinstance(value, (datetime, date)):
+        return ""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return ""
+    text = str(value).strip()
+    if text.lower() in _NOISE_TEXT:
+        return ""
+    return " ".join(text.split())
+
+
+def looks_like_problem(text: str) -> bool:
+    cleaned = _clean_text_cell(text)
+    if len(cleaned) < 3:
+        return False
+    return bool(_PROBLEM_RE.search(cleaned))
+
+
+def _add_problem_note(notes: list[str], seen: set[str], text: str) -> None:
+    cleaned = _clean_text_cell(text)
+    if not cleaned:
+        return
+    key = cleaned.lower()
+    if key in seen:
+        return
+    seen.add(key)
+    notes.append(cleaned)
+
+
+def extract_problem_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
+    """Pull English/Russian trouble descriptions from TAZ row text fields."""
+    notes: list[str] = []
+    seen: set[str] = set()
+
+    for row in (curr, prev):
+        for col, value in row.items():
+            col_name = str(col)
+            if col_name == COL_COMMENT or _COMMENT_COL_RE.search(col_name):
+                comment = _clean_text_cell(value)
+                if comment:
+                    _add_problem_note(notes, seen, comment)
+
+    for row in (curr, prev):
+        _, extra = split_unit_code(row.get(COL_UNIQUE_UNIT) if COL_UNIQUE_UNIT in row.index else None)
+        if extra:
+            _add_problem_note(notes, seen, extra)
+
+    for row in (curr, prev):
+        for col, value in row.items():
+            col_name = str(col)
+            if col_name in _SKIP_PROBLEM_COLS or col_name == COL_COMMENT:
+                continue
+            if _SKIP_PROBLEM_COL_RE.search(col_name):
+                continue
+            text = _clean_text_cell(value)
+            if text and looks_like_problem(text):
+                _add_problem_note(notes, seen, text)
+
+    return notes
 
 
 def build_status_change(
@@ -271,6 +413,8 @@ def build_status_change(
     sale_curr = parse_numeric(curr.get(COL_SALE))
     qty_prev = parse_numeric(prev.get(COL_QTY))
     qty_curr = parse_numeric(curr.get(COL_QTY))
+    curr_unit_ref, _ = split_unit_code(curr.get(COL_UNIQUE_UNIT) if COL_UNIQUE_UNIT in curr.index else None)
+    prev_unit_ref, _ = split_unit_code(prev.get(COL_UNIQUE_UNIT) if COL_UNIQUE_UNIT in prev.index else None)
     return StatusChange(
         key=key,
         invoice=normalize_invoice(prev.get(COL_INVOICE) or curr.get(COL_INVOICE)),
@@ -280,7 +424,7 @@ def build_status_change(
         category=row_str(prev, COL_CATEGORY) or row_str(curr, COL_CATEGORY),
         supplier=row_str(curr, COL_SUPPLIER) or row_str(prev, COL_SUPPLIER),
         root_supplier=row_str(curr, COL_ROOT_SUPPLIER) or row_str(prev, COL_ROOT_SUPPLIER),
-        unique_unit_code=normalize_unique_unit(curr.get(COL_UNIQUE_UNIT) or prev.get(COL_UNIQUE_UNIT)),
+        unique_unit_code=curr_unit_ref or prev_unit_ref,
         prev_status=prev_status,
         curr_status=curr_status,
         change_kind=change_kind,
@@ -297,6 +441,7 @@ def build_status_change(
         trouble_min_days=trouble_min_days,
         trouble_max_days=trouble_max_days,
         notes=notes,
+        problem_notes=extract_problem_notes(prev, curr),
     )
 
 
@@ -378,8 +523,10 @@ def append_trouble_notes(qty_notes: list[str], commercial_notes: list[str], extr
 
 
 def meaningful_margin_delta(e: StatusChange) -> float | None:
+    if e.change_kind in {"entered", "ongoing"}:
+        return None
     txt, _ = fmt_margin_delta_cell(e)
-    return None if txt == "—" else e.margin_delta
+    return None if txt in {"—", "0"} else e.margin_delta
 
 
 def sum_meaningful_margin(items: list[StatusChange]) -> float:
@@ -393,7 +540,12 @@ def fmt_sale_cell(e: StatusChange) -> str:
 
 
 def fmt_margin_delta_cell(e: StatusChange) -> tuple[str, str]:
-    """Δ маржа план = (продажа − закупка − транспорт − fee)_curr − _prev."""
+    """Δ маржа план = (продажа − закупка − транспорт − fee)_curr − _prev.
+
+    For new/unresolved TROUBLE the new supplier is not yet found, so Δ is always 0.
+    """
+    if e.change_kind in {"entered", "ongoing"}:
+        return "0", ""
     d = e.margin_delta
     if not has_commercial_in_notes(e.notes):
         return "—", ""
@@ -638,6 +790,8 @@ table { width:100%; border-collapse:collapse; font-size:13px; }
 th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
 th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
 td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.desc { max-width:280px; }
+.problem { color:#b3470f; font-weight:600; margin-bottom:4px; }
 .pos { color:#1f6b32; } .neg { color:#c0392b; }
 .footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
 @media (max-width:900px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -652,38 +806,63 @@ def group_by_customer(items: list[StatusChange]) -> list[tuple[str, list[StatusC
     return sorted(by_client.items(), key=lambda x: (-sum(i.sale_curr for i in x[1]), x[0]))
 
 
-def render_trouble_table(items: list[StatusChange]) -> str:
+def fmt_comment_cell(e: StatusChange) -> str:
+    parts: list[str] = []
+    if e.problem_notes:
+        parts.append(f"<div class='problem'>{esc('; '.join(e.problem_notes))}</div>")
+    notes = "; ".join(e.notes)
+    if notes:
+        parts.append(esc(notes))
+    elif not e.problem_notes:
+        parts.append("—")
+    return "".join(parts)
+
+
+def _show_margin_pill(items: list[StatusChange]) -> bool:
+    kinds = {e.change_kind for e in items}
+    return bool(kinds - {"entered", "ongoing"})
+
+
+def render_trouble_table(items: list[StatusChange], *, section: str | None = None) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
-    rows = []
+    kind = section or items[0].change_kind
+    show_days = kind == "ongoing"
+    show_margin = kind == "resolved"
     sort_key = (
-        (lambda x: (-(x.trouble_min_days or 0), x.invoice, x.pn))
-        if items and items[0].change_kind == "ongoing"
-        else (lambda x: (x.invoice, x.pn))
+        (lambda x: (-(x.trouble_min_days or 0), x.pn, x.description))
+        if kind == "ongoing"
+        else (lambda x: (x.pn, x.description))
     )
+    headers = ["P/N", "Описание", "Cat.", "Поставщик"]
+    if show_days:
+        headers.append("В TROUBLE")
+    headers.append("Продажа USD")
+    if show_margin:
+        headers.append("Δ маржа")
+    headers.append("Комментарий")
+
+    rows = []
     for e in sorted(items, key=sort_key):
-        margin_txt, margin_cls = fmt_margin_delta_cell(e)
-        dd = e.deadline_delta_days
-        dd_txt = f"{dd:+d}" if dd is not None else "—"
-        supplier_txt = esc(e.supplier_display)
-        rows.append(
-            f"""<tr>
-  <td>{esc(e.invoice)}</td>
-  <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
-  <td>{esc(e.category)}</td>
-  <td>{supplier_txt}</td>
-  <td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>
-  <td class='num'>{fmt_sale_cell(e)}</td>
-  <td class='num {margin_cls}'>{margin_txt}</td>
-  <td class='num'>{dd_txt}</td>
-  <td>{esc('; '.join(e.notes) or '—')}</td>
-</tr>"""
-        )
+        cells = [
+            f"<td>{esc(e.pn)}</td>",
+            f"<td class='desc'>{esc(e.description) or '—'}</td>",
+            f"<td>{esc(e.category)}</td>",
+            f"<td>{esc(e.supplier_display)}</td>",
+        ]
+        if show_days:
+            cells.append(
+                f"<td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>"
+            )
+        cells.append(f"<td class='num'>{fmt_sale_cell(e)}</td>")
+        if show_margin:
+            margin_txt, margin_cls = fmt_margin_delta_cell(e)
+            cells.append(f"<td class='num {margin_cls}'>{margin_txt}</td>")
+        cells.append(f"<td>{fmt_comment_cell(e)}</td>")
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    header_html = "".join(f"<th>{h}</th>" for h in headers)
     return f"""<table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
+  <thead><tr>{header_html}</tr></thead>
   <tbody>{''.join(rows)}</tbody>
 </table>"""
 
@@ -692,25 +871,25 @@ def render_cancel_table(items: list[StatusChange]) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     rows = []
-    for e in sorted(items, key=lambda x: (x.invoice, x.pn)):
+    for e in sorted(items, key=lambda x: (x.pn, x.description)):
         margin_txt, margin_cls = fmt_margin_delta_cell(e)
         kind = "отмена" if e.curr_status == STATUS_CANCEL else "возврат"
         if e.change_kind == "cancelled_from_trouble":
             kind = "из TROUBLE → " + kind
         rows.append(
             f"""<tr>
-  <td>{esc(e.invoice)}</td>
-  <td>{esc(e.pn)}<div class='muted'>{esc(e.description[:50])}</div></td>
+  <td>{esc(e.pn)}</td>
+  <td class='desc'>{esc(e.description) or '—'}</td>
   <td>{esc(e.category)}</td>
   <td>{esc(kind)}</td>
   <td class='num'>{fmt_money(e.sale_prev, 0)}</td>
   <td class='num {margin_cls}'>{margin_txt}</td>
-  <td>{esc('; '.join(e.notes) or '—')}</td>
+  <td>{fmt_comment_cell(e)}</td>
 </tr>"""
         )
     return f"""<table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody>{''.join(rows)}</tbody>
@@ -726,8 +905,11 @@ def render_client_groups(
     blocks = []
     for client, client_items in group_by_customer(items):
         sale = sum(e.sale_curr for e in client_items)
-        margin_d = sum_meaningful_margin(client_items)
-        margin_pill = fmt_money(margin_d, 0) if margin_d else "—"
+        margin_pill = ""
+        if _show_margin_pill(client_items):
+            margin_d = sum_meaningful_margin(client_items)
+            margin_txt = fmt_money(margin_d, 0) if margin_d else "—"
+            margin_pill = f'<span class="pill">Δ {margin_txt}</span>'
         blocks.append(
             f"""
 <details class="group client">
@@ -735,7 +917,7 @@ def render_client_groups(
     <span class="group-name">{esc(client)}</span>
     <span class="pill">{len(client_items)} поз.</span>
     <span class="pill">{fmt_money(sale, 0)} USD</span>
-    <span class="pill">Δ {margin_pill}</span>
+    {margin_pill}
   </summary>
   <div class="group-body">{table_fn(client_items)}</div>
 </details>"""
@@ -759,11 +941,14 @@ def render_section(
   <div class="group-body"><p class='muted'>Нет изменений за период.</p></div>
 </details>"""
     sale = sum(e.sale_curr for e in items)
-    margin_d = sum_meaningful_margin(items)
-    margin_pill = fmt_money(margin_d, 0) if margin_d else "—"
     clients = len(group_by_customer(items))
     pill = f"pill {pill_class}".strip()
     inner = render_client_groups(items, table_fn)
+    margin_pill = ""
+    if _show_margin_pill(items):
+        margin_d = sum_meaningful_margin(items)
+        margin_txt = fmt_money(margin_d, 0) if margin_d else "—"
+        margin_pill = f'<span class="pill">Δ маржа {margin_txt}</span>'
     return f"""
 <details class="group">
   <summary>
@@ -771,7 +956,7 @@ def render_section(
     <span class="{pill}">{len(items)} поз.</span>
     <span class="pill">{clients} кли.</span>
     <span class="pill">продажа {fmt_money(sale, 0)} USD</span>
-    <span class="pill">Δ маржа {margin_pill}</span>
+    {margin_pill}
   </summary>
   <div class="group-body">{inner}</div>
 </details>"""
@@ -817,9 +1002,24 @@ def render_html_report(
     )
 
     sections = "\n".join([
-        render_section("Новые TROUBLE", new_trouble, render_trouble_table, "warn"),
-        render_section("Нерешённые TROUBLE", unresolved_trouble, render_trouble_table, "warn"),
-        render_section("Решённые TROUBLE", resolved_trouble, render_trouble_table, "ok"),
+        render_section(
+            "Новые TROUBLE",
+            new_trouble,
+            lambda xs: render_trouble_table(xs, section="entered"),
+            "warn",
+        ),
+        render_section(
+            "Нерешённые TROUBLE",
+            unresolved_trouble,
+            lambda xs: render_trouble_table(xs, section="ongoing"),
+            "warn",
+        ),
+        render_section(
+            "Решённые TROUBLE",
+            resolved_trouble,
+            lambda xs: render_trouble_table(xs, section="resolved"),
+            "ok",
+        ),
         render_section("Отмены и возвраты", cancel_refund, render_cancel_table, "warn"),
     ])
 
