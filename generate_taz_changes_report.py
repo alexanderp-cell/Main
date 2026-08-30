@@ -179,6 +179,14 @@ def fmt_days_range(min_d: int | None, max_d: int | None) -> str:
     return f"≤{max_d} дн."
 
 
+def fmt_hung_days(days: int | None, *, unknown_start: bool) -> str:
+    """Single estimate of how long a resolved row hung in TROUBLE."""
+    if days is None:
+        return "—"
+    prefix = "≥" if unknown_start else "~"
+    return f"{prefix}{days} дн."
+
+
 def esc(text: Any) -> str:
     return html.escape(str(text or ""), quote=True)
 
@@ -746,15 +754,22 @@ def _status_of(rows: dict[str, pd.Series], key: str) -> str | None:
 def duration_in_trouble(
     key: str,
     history: list[tuple[date, dict[str, pd.Series]]],
-) -> tuple[int, int | None, date | None, date | None]:
-    """Continuous TROUBLE streak visible in snapshots.
+) -> tuple[int, int | None, date | None, date | None, date | None]:
+    """Continuous TROUBLE streak ending at the latest TROUBLE snapshot.
 
-    Returns (min_days, max_days, first_trouble_date, closed_by).
-    closed_by is the first snapshot where the row is no longer TROUBLE, or None if still open.
-    max_days is None when the streak already exists in the oldest snapshot (unknown start).
+    Returns (hung_days, max_days, first_trouble_date, last_trouble_date, closed_by).
+
+    For a closed streak hung_days is how long the row was seen in TROUBLE:
+    last TROUBLE snapshot minus first TROUBLE snapshot. If it was TROUBLE in
+    only one file and gone in the next, hung_days is until that next file.
+
+    max_days is None when the streak already exists in the oldest snapshot
+    (start may be earlier). For an open streak with a known start, max_days is
+    the upper bound using the snapshot before the first TROUBLE.
     """
+    empty = (0, None, None, None, None)
     if not history:
-        return 0, None, None, None
+        return empty
 
     last_t_idx: int | None = None
     for i in range(len(history) - 1, -1, -1):
@@ -762,14 +777,14 @@ def duration_in_trouble(
             last_t_idx = i
             break
     if last_t_idx is None:
-        return 0, None, None, None
+        return empty
 
     first_t_idx = last_t_idx
-    for i in range(last_t_idx, -1, -1):
+    for i in range(last_t_idx - 1, -1, -1):
         if _status_of(history[i][1], key) == STATUS_TROUBLE:
             first_t_idx = i
-            continue
-        break
+        else:
+            break
 
     first_date = history[first_t_idx][0]
     last_t_date = history[last_t_idx][0]
@@ -780,41 +795,65 @@ def duration_in_trouble(
     if still_open:
         min_d = max(0, (last_t_date - first_date).days)
         if started_at_oldest:
-            return min_d, None, first_date, None
+            return min_d, None, first_date, last_t_date, None
         before_date = history[first_t_idx - 1][0]
-        return min_d, max(min_d, (last_t_date - before_date).days), first_date, None
+        return min_d, max(min_d, (last_t_date - before_date).days), first_date, last_t_date, None
 
-    min_d = max(0, (last_t_date - first_date).days)
+    hung = max(0, (last_t_date - first_date).days)
+    if hung == 0 and closed_by is not None:
+        hung = (closed_by - first_date).days
     if started_at_oldest:
-        # Start may be earlier than the first snapshot; only the close date is known.
-        return min_d, None, first_date, closed_by
-    before_date = history[first_t_idx - 1][0]
-    max_d = max(min_d, (closed_by - before_date).days)
-    return min_d, max_d, first_date, closed_by
+        return hung, None, first_date, last_t_date, closed_by
+    return hung, hung, first_date, last_t_date, closed_by
+
+
+def _hung_comment(
+    hung_days: int,
+    max_days: int | None,
+    first_date: date | None,
+    last_t_date: date | None,
+    closed_by: date | None,
+) -> str:
+    unknown_start = max_days is None
+    days_txt = fmt_hung_days(hung_days, unknown_start=unknown_start)
+    if not first_date:
+        return f"висела {days_txt}"
+    start = f"с {first_date.strftime('%d.%m')}"
+    if unknown_start:
+        start += " (или раньше)"
+    if last_t_date and last_t_date != first_date:
+        span = f"{start} по {last_t_date.strftime('%d.%m')}"
+    else:
+        span = start
+    if closed_by:
+        return (
+            f"висела {span}, в отчёте {closed_by.strftime('%d.%m')} "
+            f"уже не TROUBLE ({days_txt})"
+        )
+    return f"висела {span} ({days_txt})"
 
 
 def _apply_history_duration(
     events: list[StatusChange],
     history: list[tuple[date, dict[str, pd.Series]]],
 ) -> None:
+    closed_kinds = {"resolved", "cancelled_from_trouble", "warranty_from_trouble"}
     for e in events:
-        if e.change_kind not in {
-            "ongoing",
-            "resolved",
-            "cancelled_from_trouble",
-            "warranty_from_trouble",
-        }:
+        if e.change_kind not in {"ongoing"} | closed_kinds:
             continue
-        min_d, max_d, first_date, closed_by = duration_in_trouble(e.key, history)
+        min_d, max_d, first_date, last_t_date, closed_by = duration_in_trouble(e.key, history)
         e.trouble_min_days = min_d
         e.trouble_max_days = max_d
-        e.notes = [n for n in e.notes if not n.startswith("в TROUBLE")]
+        e.notes = [
+            n
+            for n in e.notes
+            if not n.startswith("в TROUBLE") and not n.startswith("висела")
+        ]
+        if e.change_kind in closed_kinds:
+            e.notes.append(_hung_comment(min_d, max_d, first_date, last_t_date, closed_by))
+            continue
         stamp = f"с {first_date.strftime('%d.%m')}" if first_date else ""
-        if closed_by:
-            closed = f"закрыт к {closed_by.strftime('%d.%m')}"
-            extra = ", ".join(part for part in (stamp, closed) if part)
-            e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}" + (f" ({extra})" if extra else ""))
-        elif stamp:
+        if stamp:
             e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)} ({stamp})")
         else:
             e.notes.append(f"в TROUBLE {fmt_days_range(min_d, max_d)}")
@@ -986,6 +1025,12 @@ def trouble_kpis(events: list[StatusChange], period_days: int) -> dict[str, Any]
     cancel_rate = (len(cancelled) / at_start * 100) if at_start else None
 
     ongoing_days = [e.trouble_min_days for e in ongoing if e.trouble_min_days is not None]
+    resolved_days = [
+        e.trouble_min_days
+        for e in resolved
+        if e.trouble_min_days is not None
+        and (e.trouble_max_days is None or e.trouble_max_days == e.trouble_min_days)
+    ]
     resolved_margin = [d for e in resolved if (d := meaningful_margin_delta(e)) is not None]
     positive = sum(1 for d in resolved_margin if d > COMMERCIAL_EPS)
     negative = sum(1 for d in resolved_margin if d < -COMMERCIAL_EPS)
@@ -1000,6 +1045,7 @@ def trouble_kpis(events: list[StatusChange], period_days: int) -> dict[str, Any]
         "resolve_rate": resolve_rate,
         "cancel_rate": cancel_rate,
         "avg_ongoing_days": avg(ongoing_days),
+        "avg_resolved_days": avg(resolved_days),
         "avg_margin_delta": avg(resolved_margin),
         "sum_margin_delta": sum(resolved_margin) if resolved_margin else 0.0,
         "resolved_positive": positive,
@@ -1097,6 +1143,7 @@ def header_metric_pills(
     margin_mode: str,
     pill_class: str = "",
     include_clients: bool = True,
+    extra_pills: list[str] | None = None,
 ) -> str:
     """Dropdown header: rows, clients, line-total sale, plan margin or was/became."""
     count_class = f"pill {pill_class}".strip()
@@ -1107,8 +1154,18 @@ def header_metric_pills(
     if margin_mode == "before_after":
         pills.append(f'<span class="pill">маржа было {fmt_money(sum_margin_prev(items), 0)} USD</span>')
         pills.append(f'<span class="pill">маржа стало {fmt_money(sum_plan_margin(items), 0)} USD</span>')
+        hung = [
+            e.trouble_min_days
+            for e in items
+            if e.trouble_min_days
+            and (e.trouble_max_days is None or e.trouble_max_days == e.trouble_min_days)
+        ]
+        if hung:
+            pills.append(f'<span class="pill">висели ~{round(mean(hung))} дн. ср.</span>')
     else:
         pills.append(f'<span class="pill">маржа {fmt_money(sum_plan_margin(items), 0)} USD</span>')
+    if extra_pills:
+        pills.extend(extra_pills)
     return "".join(pills)
 
 
@@ -1120,7 +1177,7 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
     show_margin = kind == "resolved"
     sort_key = (
         (lambda x: (-(x.trouble_min_days or 0), x.pn, x.description))
-        if kind == "ongoing"
+        if kind in {"ongoing", "resolved"}
         else (lambda x: (x.pn, x.description))
     )
     headers = ["P/N", "Описание", "Cat.", "Поставщик"]
@@ -1140,9 +1197,16 @@ def render_trouble_table(items: list[StatusChange], *, section: str | None = Non
             f"<td>{esc(e.supplier_display)}</td>",
         ]
         if show_days:
-            cells.append(
-                f"<td class='num'>{fmt_days_range(e.trouble_min_days, e.trouble_max_days)}</td>"
-            )
+            if kind == "resolved":
+                if e.trouble_max_days is None:
+                    days_txt = fmt_hung_days(e.trouble_min_days, unknown_start=True)
+                elif e.trouble_max_days == e.trouble_min_days:
+                    days_txt = fmt_hung_days(e.trouble_min_days, unknown_start=False)
+                else:
+                    days_txt = fmt_days_range(e.trouble_min_days, e.trouble_max_days)
+            else:
+                days_txt = fmt_days_range(e.trouble_min_days, e.trouble_max_days)
+            cells.append(f"<td class='num'>{days_txt}</td>")
         cells.append(f"<td class='num'>{fmt_sale_cell(e)}</td>")
         if show_margin:
             d = e.margin_curr - e.margin_prev
@@ -1327,12 +1391,13 @@ def render_html_report(
       <div><div class="label">Новые TROUBLE</div><div class="value">{len(new_trouble)}</div></div>
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">{'по истории с ' + history_start.strftime('%d.%m') if history_start else f'≥{period_days} дн. в обоих снимках'}</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
+      <div><div class="label">Решённые висели</div><div class="value">{fmt_hung_days(round(kpis['avg_resolved_days']) if kpis['avg_resolved_days'] is not None else None, unknown_start=False)}<div class="muted">ср. от первой TROUBLE до последней в снимках</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
       <div><div class="label">маржа было (решённые)</div><div class="value">{fmt_money(sum_margin_prev(resolved_trouble), 0)}</div></div>
       <div><div class="label">маржа стало (решённые)</div><div class="value">{fmt_money(sum_plan_margin(resolved_trouble), 0)}</div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
-    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
+    <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Решённые: сколько дней строка висела в TROUBLE по снимкам (первая TROUBLE → последняя TROUBLE; если уже TROUBLE в самом старом файле — «≥»). Погрешность около недели. Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
   </section>
 
   {sections}

@@ -33,6 +33,7 @@ from generate_taz_changes_report import (
     duration_in_trouble,
     extract_problem_notes,
     format_supplier_display,
+    fmt_hung_days,
     fmt_margin_delta_cell,
     render_html_report,
     render_trouble_table,
@@ -262,19 +263,20 @@ def test_duration_in_trouble_from_history() -> None:
     d1, d2, d3 = date(2026, 8, 14), date(2026, 8, 21), date(2026, 8, 28)
     row_t = taz_row()
     row_p = taz_row(**{COL_STATUS: STATUS_PAID})
-    min_d, max_d, first, closed = duration_in_trouble(
+    min_d, max_d, first, last_t, closed = duration_in_trouble(
         "k",
         [(d1, {"k": row_t}), (d2, {"k": row_t}), (d3, {"k": row_t})],
     )
-    assert (min_d, max_d, first, closed) == (14, None, d1, None)
+    assert (min_d, max_d, first, last_t, closed) == (14, None, d1, d3, None)
 
-    min_d, max_d, first, closed = duration_in_trouble(
+    min_d, max_d, first, last_t, closed = duration_in_trouble(
         "k",
         [(d1, {"k": row_p}), (d2, {"k": row_t}), (d3, {"k": row_t})],
     )
     assert min_d == 7
     assert max_d == 14
     assert first == d2
+    assert last_t == d3
     assert closed is None
 
 
@@ -302,8 +304,9 @@ def test_resolved_duration_from_history() -> None:
         (d2, {"k": row_t}),
         (d3, {"k": row_done}),
     ]
-    min_d, max_d, first, closed = duration_in_trouble("k", hist)
+    min_d, max_d, first, last_t, closed = duration_in_trouble("k", hist)
     assert first == d1
+    assert last_t == d2
     assert closed == d3
     assert min_d == 7
     assert max_d is None
@@ -314,7 +317,65 @@ def test_resolved_duration_from_history() -> None:
     html = render_trouble_table(trouble, section="resolved")
     assert "В TROUBLE" in html
     assert "≥7 дн." in html
-    assert "закрыт к 28.08" in html
+    assert "висела с 14.08 (или раньше) по 21.08" in html
+    assert "в отчёте 28.08 уже не TROUBLE" in html
+
+
+def test_resolved_hung_from_first_to_last_trouble() -> None:
+    """User example: TROUBLE from ~25.07 through 15.08, gone in 21.08 → ~18–20 days."""
+    d_before = date(2026, 7, 17)
+    d_first = date(2026, 7, 27)
+    d_mid = date(2026, 8, 7)
+    d_last = date(2026, 8, 14)
+    d_closed = date(2026, 8, 21)
+    row_ok = taz_row(**{COL_STATUS: STATUS_PAID})
+    row_t = taz_row()
+    row_done = taz_row(**{COL_STATUS: STATUS_FINISHED, COL_PURCHASE: 500})
+    hist = [
+        (d_before, {"k": row_ok}),
+        (d_first, {"k": row_t}),
+        (d_mid, {"k": row_t}),
+        (d_last, {"k": row_t}),
+        (d_closed, {"k": row_done}),
+    ]
+    hung, max_d, first, last_t, closed = duration_in_trouble("k", hist)
+    assert first == d_first
+    assert last_t == d_last
+    assert closed == d_closed
+    assert hung == (d_last - d_first).days  # 18
+    assert max_d == hung
+    assert fmt_hung_days(hung, unknown_start=False) == "~18 дн."
+
+    trouble, *_ = compare_snapshots(hist[-2][1], hist[-1][1], 7, history=hist)
+    ev = trouble[0]
+    assert ev.change_kind == "resolved"
+    assert ev.trouble_min_days == 18
+    html = render_trouble_table(trouble, section="resolved")
+    assert "~18 дн." in html
+    assert "висела с 27.07 по 14.08" in html
+    assert "в отчёте 21.08 уже не TROUBLE" in html
+
+
+def test_resolved_single_snapshot_uses_close_date() -> None:
+    d1, d2, d3 = date(2026, 8, 7), date(2026, 8, 14), date(2026, 8, 21)
+    row_ok = taz_row(**{COL_STATUS: STATUS_PAID})
+    row_t = taz_row()
+    row_done = taz_row(**{COL_STATUS: STATUS_FINISHED, COL_PURCHASE: 500})
+    hist = [
+        (d1, {"k": row_ok}),
+        (d2, {"k": row_t}),
+        (d3, {"k": row_done}),
+    ]
+    hung, max_d, first, last_t, closed = duration_in_trouble("k", hist)
+    assert (first, last_t, closed) == (d2, d2, d3)
+    assert hung == 7
+    assert max_d == 7
+    html = render_trouble_table(
+        compare_snapshots(hist[-2][1], hist[-1][1], 7, history=hist)[0],
+        section="resolved",
+    )
+    assert "~7 дн." in html
+    assert "висела с 14.08, в отчёте 21.08 уже не TROUBLE" in html
 
 
 def test_full_period_classifies_mid_resolved() -> None:
