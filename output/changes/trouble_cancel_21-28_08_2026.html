@@ -45,6 +45,8 @@ table { width:100%; border-collapse:collapse; font-size:13px; }
 th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
 th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
 td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.desc { max-width:280px; }
+.problem { color:#b3470f; font-weight:600; margin-bottom:4px; }
 .pos { color:#1f6b32; } .neg { color:#c0392b; }
 .footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
 @media (max-width:900px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -63,7 +65,7 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">37<div class="muted">≥7 дн. в обоих снимках</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">7<div class="muted">14.3% от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">10</div></div>
-      <div><div class="label">Δ маржа (решённые)</div><div class="value">88<div class="muted">+1 / −4 с Δ</div></div></div>
+      <div><div class="label">Δ маржа (решённые)</div><div class="value">440<div class="muted">сумма Δ · +1 / −4 с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">0</div></div>
     </div>
     <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>
@@ -73,307 +75,99 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap
 <details class="group">
   <summary>
     <span class="group-name">Новые TROUBLE</span>
-    <span class="pill warn">16 поз.</span>
-    <span class="pill">9 кли.</span>
-    <span class="pill">продажа 497 863 USD</span>
-    <span class="pill">Δ маржа -6 363</span>
+    <span class="pill warn">16 поз.</span><span class="pill">9 кли.</span><span class="pill">продажа 497 863 USD</span><span class="pill">маржа 116 671 USD</span>
   </summary>
   <div class="group-body">
 <details class="group client">
   <summary>
     <span class="group-name">Северо-Запад</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">230 000 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 230 000 USD</span><span class="pill">маржа 64 275 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>14082612055</td>
-  <td>GC331-0001-15<div class='muted'>WINDSHIELD LH</div></td>
-  <td>ROTABLE</td>
-  <td>C8AV</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>230 000</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>GC331-0001-15</td><td class='desc'>WINDSHIELD LH</td><td>ROTABLE</td><td>C8AV</td><td class='num'>230 000</td><td><div class='problem'>Тут ждем денег за другие заказы Деопзит внести не сможем</div>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Utair</span>
-    <span class="pill">3 поз.</span>
-    <span class="pill">109 600 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">3 поз.</span><span class="pill">продажа 109 600 USD</span><span class="pill">маржа 23 372 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>12082610355</td>
-  <td>CF2051<div class='muted'>CAM FOLLOWER</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2248</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>7 700</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>27072619105</td>
-  <td>C20633000<div class='muted'>BRAKE ASSY - CARBON MESSIER-BUGATTI</div></td>
-  <td>ROTABLE</td>
-  <td>53 NORTH AVIATION</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>53 000</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>27082616305</td>
-  <td>82425-00-0060<div class='muted'>NAVIGATION
-PROCESSOR UNIT</div></td>
-  <td>ROTABLE</td>
-  <td>COLOSSUS AIR</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>48 900</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>строки не было в ТАЗ на начало периода; заказ взят в работу 27.08.2026; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>82425-00-0060</td><td class='desc'>NAVIGATION
+PROCESSOR UNIT</td><td>ROTABLE</td><td>COLOSSUS AIR</td><td class='num'>48 900</td><td>строки не было в ТАЗ на начало периода; заказ взят в работу 27.08.2026; новый TROUBLE за период</td></tr><tr><td>C20633000</td><td class='desc'>BRAKE ASSY - CARBON MESSIER-BUGATTI</td><td>ROTABLE</td><td>53 NORTH AVIATION</td><td class='num'>53 000</td><td>коммерция без изменений; новый TROUBLE за период</td></tr><tr><td>CF2051</td><td class='desc'>CAM FOLLOWER</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2248</td><td class='num'>7 700</td><td>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">S7 Engineering</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">73 750 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 73 750 USD</span><span class="pill">маржа 10 866 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17072611006</td>
-  <td>340-256-352-0<div class='muted'>NOZZLE-SEGMENT
-STG 1</div></td>
-  <td>ROTABLE</td>
-  <td>AVBAY TECHNOLOGY</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>73 750</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>340-256-352-0</td><td class='desc'>NOZZLE-SEGMENT
+STG 1</td><td>ROTABLE</td><td>AVBAY TECHNOLOGY</td><td class='num'>73 750</td><td><div class='problem'>sold, ищем опции P22620326 ШРМ</div>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Уральские Авиалинии</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">46 000 USD</span>
-    <span class="pill">Δ -2 449</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 46 000 USD</span><span class="pill">маржа 9 114 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>13082610195</td>
-  <td>071-50026-0400<div class='muted'>ANTENNA-RADIO ALTIMETER</div></td>
-  <td>ROTABLE</td>
-  <td>SETEC AERO</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>16 500 → 11 000</td>
-  <td class='num neg'>-2 449</td>
-  <td class='num'>+0</td>
-  <td>кол-во 3 → 2; ROTABLE: проверьте замену юнита; закупка уменьшилась на 3 000 USD; продажа уменьшилась на 5 500 USD; fee уменьшился на 51 USD; новый TROUBLE за период</td>
-</tr><tr>
-  <td>24082614393</td>
-  <td>3222KGBA5<div class='muted'>SENSOR N1</div></td>
-  <td>ROTABLE</td>
-  <td>JIUYUAN AERO CO., LIMITED</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>35 000</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>строки не было в ТАЗ на начало периода; заказ взят в работу 24.08.2026; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>071-50026-0400</td><td class='desc'>ANTENNA-RADIO ALTIMETER</td><td>ROTABLE</td><td>SETEC AERO</td><td class='num'>16 500 → 11 000</td><td>кол-во 3 → 2; ROTABLE: проверьте замену юнита; закупка уменьшилась на 3 000 USD; продажа уменьшилась на 5 500 USD; fee уменьшился на 51 USD; новый TROUBLE за период</td></tr><tr><td>3222KGBA5</td><td class='desc'>SENSOR N1</td><td>ROTABLE</td><td>JIUYUAN AERO CO., LIMITED</td><td class='num'>35 000</td><td>строки не было в ТАЗ на начало периода; заказ взят в работу 24.08.2026; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">27 500 USD</span>
-    <span class="pill">Δ -3 914</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 27 500 USD</span><span class="pill">маржа 6 679 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>21082610590-4</td>
-  <td>9999M35P06<div class='muted'>BUSHING - STG 2 AND STG 3</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #6047</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>27 500</td>
-  <td class='num neg'>-3 914</td>
-  <td class='num'>+0</td>
-  <td>закупка увеличилась на 3 548 USD; fee увеличился на 367 USD; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>9999M35P06</td><td class='desc'>BUSHING - STG 2 AND STG 3</td><td>EXPENDABLE</td><td>LUFTHANSA · #6047</td><td class='num'>27 500</td><td><div class='problem'>B0731426 \ будем пересогласовывать удорожание</div>закупка увеличилась на 3 548 USD; fee увеличился на 367 USD; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Ямал</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">4 400 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 4 400 USD</span><span class="pill">маржа 9 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>19062610563</td>
-  <td>3530-0121-01<div class='muted'>BOARD PRINTED CIRCUIT</div></td>
-  <td>ROTABLE</td>
-  <td>AASI</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>4 400</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>3530-0121-01</td><td class='desc'>BOARD PRINTED CIRCUIT</td><td>ROTABLE</td><td>AASI</td><td class='num'>4 400</td><td><div class='problem'>YML-8353 Везем в 0 (траблс)</div>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">VDT</span>
-    <span class="pill">4 поз.</span>
-    <span class="pill">4 280 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">4 поз.</span><span class="pill">продажа 4 280 USD</span><span class="pill">маржа 1 578 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17082617400-4</td>
-  <td>491B1330036-001<div class='muted'>RETAINER</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2277</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>1 330</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>17082617400-4</td>
-  <td>9017M97P01<div class='muted'>CLIP,ACTUATOR</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2276</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>250</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>6082616500-4</td>
-  <td>03DU03<div class='muted'>BEARING SLEEVE</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #5929</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>900</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>6082616500-4</td>
-  <td>AXCL01<div class='muted'>CLAMP</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2223</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>1 800</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>03DU03</td><td class='desc'>BEARING SLEEVE</td><td>EXPENDABLE</td><td>LUFTHANSA · #5929</td><td class='num'>900</td><td>коммерция без изменений; новый TROUBLE за период</td></tr><tr><td>491B1330036-001</td><td class='desc'>RETAINER</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2277</td><td class='num'>1 330</td><td>коммерция без изменений; новый TROUBLE за период</td></tr><tr><td>9017M97P01</td><td class='desc'>CLIP,ACTUATOR</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2276</td><td class='num'>250</td><td><div class='problem'>PO108750 \ доки на одобрение в чате</div>коммерция без изменений; новый TROUBLE за период</td></tr><tr><td>AXCL01</td><td class='desc'>CLAMP</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2223</td><td class='num'>1 800</td><td>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Ираэро</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">2 330 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 2 330 USD</span><span class="pill">маржа 777 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17082615400-3</td>
-  <td>E0052R14B19PXF<div class='muted'>CONNECTOR-PLUG</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2272</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>690</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr><tr>
-  <td>17082615400-3</td>
-  <td>NSA938003-14<div class='muted'>BACKSHELL-CONNECTOR</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2273</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>1 640</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>E0052R14B19PXF</td><td class='desc'>CONNECTOR-PLUG</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2272</td><td class='num'>690</td><td><div class='problem'>ждем ответ по alt. P/N 8525-16R14B19PXHL</div>коммерция без изменений; новый TROUBLE за период</td></tr><tr><td>NSA938003-14</td><td class='desc'>BACKSHELL-CONNECTOR</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2273</td><td class='num'>1 640</td><td><div class='problem'>ждем одобрения доков</div>коммерция без изменений; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот Техникс</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">3 USD</span>
-    <span class="pill">Δ -0</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 3 USD</span><span class="pill">маржа 0 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>29062612040-2</td>
-  <td>BACS12FA3K10<div class='muted'>SCREW</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>3</td>
-  <td class='num '>-0</td>
-  <td class='num'>+0</td>
-  <td>поставщик: JET TECHNIC → LUFTHANSA; новый TROUBLE за период</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>BACS12FA3K10</td><td class='desc'>SCREW</td><td>EXPENDABLE</td><td>LUFTHANSA · #5956</td><td class='num'>3</td><td>поставщик: JET TECHNIC → LUFTHANSA; новый TROUBLE за период</td></tr></tbody>
 </table></div>
 </details></div>
 </details>
@@ -381,621 +175,168 @@ STG 1</div></td>
 <details class="group">
   <summary>
     <span class="group-name">Нерешённые TROUBLE</span>
-    <span class="pill warn">37 поз.</span>
-    <span class="pill">16 кли.</span>
-    <span class="pill">продажа 228 742 USD</span>
-    <span class="pill">Δ маржа 1 664</span>
+    <span class="pill warn">37 поз.</span><span class="pill">16 кли.</span><span class="pill">продажа 228 742 USD</span><span class="pill">маржа 59 347 USD</span>
   </summary>
   <div class="group-body">
 <details class="group client">
   <summary>
     <span class="group-name">Руслайн</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">77 252 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 77 252 USD</span><span class="pill">маржа 27 814 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>14022513251</td>
-  <td>117025-02<div class='muted'>OXYGEN GENERATOR</div></td>
-  <td>ROTABLE</td>
-  <td>LUFTHANSA · #3793 - cancel</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>77 000</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>2092519150-3</td>
-  <td>R1310P022<div class='muted'>ATS Carbon O-ring</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1359 - cancelled</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>252</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>117025-02</td><td class='desc'>OXYGEN GENERATOR</td><td>ROTABLE</td><td>LUFTHANSA · #3793</td><td class='num'>≥7 дн.</td><td class='num'>77 000</td><td><div class='problem'>cancel</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>R1310P022</td><td class='desc'>ATS Carbon O-ring</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1359</td><td class='num'>≥7 дн.</td><td class='num'>252</td><td><div class='problem'>PO-0016782 BOS предлагает 20летние с кривыми доками, ищем замену; cancelled</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Utair</span>
-    <span class="pill">3 поз.</span>
-    <span class="pill">41 930 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">3 поз.</span><span class="pill">продажа 41 930 USD</span><span class="pill">маржа 2 828 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17072615315</td>
-  <td>236024-3<div class='muted'>PLACARD</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2153</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 140</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>22072610315</td>
-  <td>BACC2C4C06720EG<div class='muted'>CABLE ASSY</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2163</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>890</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>22072613105</td>
-  <td>3291214-2<div class='muted'>VALVE BLEED AIR</div></td>
-  <td>ROTABLE</td>
-  <td>AJW</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>39 900</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>236024-3</td><td class='desc'>PLACARD</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2153</td><td class='num'>≥7 дн.</td><td class='num'>1 140</td><td><div class='problem'>Ждем подтверждение Ситниковой и заказываем</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>3291214-2</td><td class='desc'>VALVE BLEED AIR</td><td>ROTABLE</td><td>AJW</td><td class='num'>≥7 дн.</td><td class='num'>39 900</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>BACC2C4C06720EG</td><td class='desc'>CABLE ASSY</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2163</td><td class='num'>≥7 дн.</td><td class='num'>890</td><td><div class='problem'>DAT MOW Предоплата 80% P20228326; Оманец завис с сертом Ждем серт от оманца, проверяем что всё ок, переобуваемся на оманца; Ждем серт от оманца, проверяем что всё ок, переобуваемся на оманца</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">FLAGAVIA</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">36 700 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 36 700 USD</span><span class="pill">маржа 7 630 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>21052616426</td>
-  <td>F7XC301910011A8<div class='muted'>VALVE.
-ANTI-ICING</div></td>
-  <td>ROTABLE</td>
-  <td>DUNAMIS AERO</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>36 700</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>F7XC301910011A8</td><td class='desc'>VALVE.
+ANTI-ICING</td><td>ROTABLE</td><td>DUNAMIS AERO</td><td class='num'>≥7 дн.</td><td class='num'>36 700</td><td><div class='problem'>отмена // NQ // valid &amp;&amp;</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Nordwind</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">18 500 USD</span>
-    <span class="pill">Δ -1 094</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 18 500 USD</span><span class="pill">маржа 976 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>7072610593</td>
-  <td>4323070-00-66-26<div class='muted'>OVEN</div></td>
-  <td>ROTABLE</td>
-  <td>SPECIALIST AVIATION LIMITED</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>18 500</td>
-  <td class='num neg'>-1 094</td>
-  <td class='num'>+0</td>
-  <td>закупка увеличилась на 875 USD; fee увеличился на 219 USD; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>4323070-00-66-26</td><td class='desc'>OVEN</td><td>ROTABLE</td><td>SPECIALIST AVIATION LIMITED</td><td class='num'>≥7 дн.</td><td class='num'>18 500</td><td><div class='problem'>JP2090726-1 JP2080726-1 - canceled</div>закупка увеличилась на 875 USD; fee увеличился на 219 USD; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Авиакомплекс</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">12 840 USD</span>
-    <span class="pill">Δ 2 758</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 12 840 USD</span><span class="pill">маржа 6 834 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>10062612500-3</td>
-  <td>MS25036-149N<div class='muted'>TERMINAL LUG</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2080</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>4 590</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>12052614550-4</td>
-  <td>MS21225-8<div class='muted'>NUT</div></td>
-  <td>EXPENDABLE</td>
-  <td>ADEPT FASTENERS</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>8 250</td>
-  <td class='num pos'>2 758</td>
-  <td class='num'>+0</td>
-  <td>закупка уменьшилась на 2 314 USD; транспорт уменьшился на 400 USD; fee уменьшился на 44 USD; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>MS21225-8</td><td class='desc'>NUT</td><td>EXPENDABLE</td><td>ADEPT FASTENERS</td><td class='num'>≥7 дн.</td><td class='num'>8 250</td><td>закупка уменьшилась на 2 314 USD; транспорт уменьшился на 400 USD; fee уменьшился на 44 USD; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>MS25036-149N</td><td class='desc'>TERMINAL LUG</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2080</td><td class='num'>≥7 дн.</td><td class='num'>4 590</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Смартавиа</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">10 200 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 10 200 USD</span><span class="pill">маржа 2 752 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>26022610150-3</td>
-  <td>170-14458-990<div class='muted'>SHADE</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #5870</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>9 400</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>3082600050-3</td>
-  <td>CR3524-8-3<div class='muted'>RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2197</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>800</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>170-14458-990</td><td class='desc'>SHADE</td><td>EXPENDABLE</td><td>LUFTHANSA · #5870</td><td class='num'>≥7 дн.</td><td class='num'>9 400</td><td><div class='problem'>PO-0015043 Авиол ЛТ 22 окт, БОС дорого Запросили на ИЛС</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3524-8-3</td><td class='desc'>RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2197</td><td class='num'>≥7 дн.</td><td class='num'>800</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот Техникс</span>
-    <span class="pill">3 поз.</span>
-    <span class="pill">8 840 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">3 поз.</span><span class="pill">продажа 8 840 USD</span><span class="pill">маржа 2 389 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17032611560-2</td>
-  <td>NSA935405-01<div class='muted'>MOUNT</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1847 - cancelled</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>300</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>22012611420-2</td>
-  <td>ABS5049B15<div class='muted'>PLATE</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1749-2</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>6 300</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>28052616510-2</td>
-  <td>111-1-1100<div class='muted'>SWITCH-PRESSURE</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2015 - cancelled</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>2 240</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>111-1-1100</td><td class='desc'>SWITCH-PRESSURE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2015</td><td class='num'>≥7 дн.</td><td class='num'>2 240</td><td><div class='problem'>P3042326 \ ищем замену на рынке; cancelled</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>ABS5049B15</td><td class='desc'>PLATE</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1749-2</td><td class='num'>≥7 дн.</td><td class='num'>6 300</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>NSA935405-01</td><td class='desc'>MOUNT</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1847</td><td class='num'>≥7 дн.</td><td class='num'>300</td><td><div class='problem'>cancelled</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Белавиа</span>
-    <span class="pill">4 поз.</span>
-    <span class="pill">6 650 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">4 поз.</span><span class="pill">продажа 6 650 USD</span><span class="pill">маржа 1 369 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>12082611385</td>
-  <td>NAS1739MW6-3<div class='muted'>RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2247</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>270</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>13072610520-2</td>
-  <td>Z261H0000110<div class='muted'>INDICATOR-SEAT ROW</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2136-2</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>2 100</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>4082615385</td>
-  <td>KB29665<div class='muted'>WASHER</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #5880</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>2 600</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>5082611265</td>
-  <td>ASPFF-V06-12<div class='muted'>Pin</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2202</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 680</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>ASPFF-V06-12</td><td class='desc'>Pin</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2202</td><td class='num'>≥7 дн.</td><td class='num'>1 680</td><td><div class='problem'>DAP MSQ Дополнение № 336 Штифт; В пн ждем подтверждение серта от Митюревой</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>KB29665</td><td class='desc'>WASHER</td><td>EXPENDABLE</td><td>LUFTHANSA · #5880</td><td class='num'>≥7 дн.</td><td class='num'>2 600</td><td><div class='problem'>DAP MSQ Дополнение № 339 Шайба</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>NAS1739MW6-3</td><td class='desc'>RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2247</td><td class='num'>≥7 дн.</td><td class='num'>270</td><td><div class='problem'>DDP MSQ Дополнение № 350 Заклепка; В пн ждем подтверждение серта от Митюревой</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>Z261H0000110</td><td class='desc'>INDICATOR-SEAT ROW</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2136-2</td><td class='num'>≥7 дн.</td><td class='num'>2 100</td><td><div class='problem'>DAP MSQ Дополнение № 333 указатель ряда</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">VDT</span>
-    <span class="pill">9 поз.</span>
-    <span class="pill">4 610 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">9 поз.</span><span class="pill">продажа 4 610 USD</span><span class="pill">маржа 2 213 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>17112513450-4</td>
-  <td>33342<div class='muted'>BEARING</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1599 - cancelled</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>800</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>26062616100-4</td>
-  <td>E0052N10B06SWE<div class='muted'>CONNECTOR</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>300</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>27052618550-4</td>
-  <td>CR3224-4-3<div class='muted'>BLIND RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2070</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>260</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8062616550-4</td>
-  <td>CR3214-6-04<div class='muted'>BLIND RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2087</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>270</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8062616550-4</td>
-  <td>CR3224-4-02<div class='muted'>BLIND RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>WENCOR</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>500</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8062616550-4</td>
-  <td>CR3224-6-3<div class='muted'>BLIND RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2088</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>300</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8062616550-4</td>
-  <td>CR3224-6-5<div class='muted'>BLIND RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2089</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>510</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8062616550-4</td>
-  <td>CR3522-5-6<div class='muted'>RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2085</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>350</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>8072615100-4</td>
-  <td>81004-37602<div class='muted'>SOCKET ASSY</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2129</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 320</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>33342</td><td class='desc'>BEARING</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1599</td><td class='num'>≥7 дн.</td><td class='num'>800</td><td><div class='problem'>PO 107844, stock out, клиент проинформирован; cancelled</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>81004-37602</td><td class='desc'>SOCKET ASSY</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2129</td><td class='num'>≥7 дн.</td><td class='num'>1 320</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3214-6-04</td><td class='desc'>BLIND RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2087</td><td class='num'>≥7 дн.</td><td class='num'>270</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3224-4-02</td><td class='desc'>BLIND RIVET</td><td>EXPENDABLE</td><td>WENCOR</td><td class='num'>≥7 дн.</td><td class='num'>500</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3224-4-3</td><td class='desc'>BLIND RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2070</td><td class='num'>≥7 дн.</td><td class='num'>260</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3224-6-3</td><td class='desc'>BLIND RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2088</td><td class='num'>≥7 дн.</td><td class='num'>300</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3224-6-5</td><td class='desc'>BLIND RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2089</td><td class='num'>≥7 дн.</td><td class='num'>510</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>CR3522-5-6</td><td class='desc'>RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2085</td><td class='num'>≥7 дн.</td><td class='num'>350</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>E0052N10B06SWE</td><td class='desc'>CONNECTOR</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS</td><td class='num'>≥7 дн.</td><td class='num'>300</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">ЮВТ</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">3 216 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 3 216 USD</span><span class="pill">маржа 1 510 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>270726144012</td>
-  <td>NAS6204-25D<div class='muted'>BOLT</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>176</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>2806241209</td>
-  <td>HS1066<div class='muted'>Switch</div></td>
-  <td>ROTABLE</td>
-  <td>BLUE OCEAN SOLUTIONS</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>3 040</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>HS1066</td><td class='desc'>Switch</td><td>ROTABLE</td><td>BLUE OCEAN SOLUTIONS</td><td class='num'>≥7 дн.</td><td class='num'>3 040</td><td><div class='problem'>ждем как приедет tooling (потом если что направляем)</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>NAS6204-25D</td><td class='desc'>BOLT</td><td>EXPENDABLE</td><td>LUFTHANSA</td><td class='num'>≥7 дн.</td><td class='num'>176</td><td><div class='problem'>prepayment 50% нет в стоке</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">ИКАР (Nordwind)</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">2 950 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 2 950 USD</span><span class="pill">маржа 939 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>30092510550-3</td>
-  <td>M81714/65-12-1<div class='muted'>SPLICE</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #4987 - cancel</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>2 950</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>M81714/65-12-1</td><td class='desc'>SPLICE</td><td>EXPENDABLE</td><td>LUFTHANSA · #4987</td><td class='num'>≥7 дн.</td><td class='num'>2 950</td><td><div class='problem'>cancel</div>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">НЕОМАРКЕТ</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">1 600 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 1 600 USD</span><span class="pill">маржа 847 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>23072611550-4</td>
-  <td>NAS1523AA4R<div class='muted'>PACKING</div></td>
-  <td>EXPENDABLE</td>
-  <td>PROPONENT</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 600</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>NAS1523AA4R</td><td class='desc'>PACKING</td><td>EXPENDABLE</td><td>PROPONENT</td><td class='num'>≥7 дн.</td><td class='num'>1 600</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Ямал</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">1 380 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 1 380 USD</span><span class="pill">маржа 572 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>22062617223</td>
-  <td>E0028-92-0-0<div class='muted'>SWITCH-TOGGLE</div></td>
-  <td>ROTABLE</td>
-  <td>STS COMPONENT SOLUTIONS</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 100</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>4052616370-3</td>
-  <td>CR3212-5-9<div class='muted'>RIVET</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1969</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>280</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>CR3212-5-9</td><td class='desc'>RIVET</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1969</td><td class='num'>≥7 дн.</td><td class='num'>280</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>E0028-92-0-0</td><td class='desc'>SWITCH-TOGGLE</td><td>ROTABLE</td><td>STS COMPONENT SOLUTIONS</td><td class='num'>≥7 дн.</td><td class='num'>1 100</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Авиастар-ТУ</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">1 250 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 1 250 USD</span><span class="pill">маржа 422 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>27072616250-3</td>
-  <td>80053-10<div class='muted'>STUD, TENSION</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2180</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>1 250</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>80053-10</td><td class='desc'>STUD, TENSION</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2180</td><td class='num'>≥7 дн.</td><td class='num'>1 250</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Уральские Авиалинии</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">444 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 444 USD</span><span class="pill">маржа 78 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>21052614350-3</td>
-  <td>D5281004720400<div class='muted'>PAD</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2002-2</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>138</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr><tr>
-  <td>25122514050-3</td>
-  <td>NAS1022N8<div class='muted'>NUT</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №1661</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>306</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>D5281004720400</td><td class='desc'>PAD</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2002-2</td><td class='num'>≥7 дн.</td><td class='num'>138</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr><tr><td>NAS1022N8</td><td class='desc'>NUT</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №1661</td><td class='num'>≥7 дн.</td><td class='num'>306</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Дримджет</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">380 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 380 USD</span><span class="pill">маржа 174 USD</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>7072611374</td>
-  <td>WF337192<div class='muted'>FILTER, PUMP WATER SYSTEM</div></td>
-  <td>EXPENDABLE</td>
-  <td>PROPONENT</td>
-  <td class='num'>≥7 дн.</td>
-  <td class='num'>380</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>В TROUBLE</th><th>Продажа USD</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>WF337192</td><td class='desc'>FILTER, PUMP WATER SYSTEM</td><td>EXPENDABLE</td><td>PROPONENT</td><td class='num'>≥7 дн.</td><td class='num'>380</td><td>коммерция без изменений; в TROUBLE ≥7 дн. без решения (оба снимка)</td></tr></tbody>
 </table></div>
 </details></div>
 </details>
@@ -1003,156 +344,58 @@ ANTI-ICING</div></td>
 <details class="group">
   <summary>
     <span class="group-name">Решённые TROUBLE</span>
-    <span class="pill ok">7 поз.</span>
-    <span class="pill">5 кли.</span>
-    <span class="pill">продажа 47 287 USD</span>
-    <span class="pill">Δ маржа 440</span>
+    <span class="pill ok">7 поз.</span><span class="pill">5 кли.</span><span class="pill">продажа 47 287 USD</span><span class="pill">Δ маржа 440</span>
   </summary>
   <div class="group-body">
 <details class="group client">
   <summary>
     <span class="group-name">Nordwind</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">15 800 USD</span>
-    <span class="pill">Δ 1 311</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 15 800 USD</span><span class="pill">Δ маржа 1 311</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>29072614273</td>
-  <td>80-178-03-88013<div class='muted'>LGCIU-LANDING GEAR CONTROL INTERFACE UNIT</div></td>
-  <td>ROTABLE</td>
-  <td>LTB AEROSPACE</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>15 800</td>
-  <td class='num pos'>1 311</td>
-  <td class='num'>+33</td>
-  <td>закупка уменьшилась на 1 400 USD; поставщик: JET TECHNIC → IBERIA; root supplier: AJW → LTB AEROSPACE; fee увеличился на 89 USD; срок поставки сдвинут на +33 дн.; «дней на поставку» 20 → 25</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>80-178-03-88013</td><td class='desc'>LGCIU-LANDING GEAR CONTROL INTERFACE UNIT</td><td>ROTABLE</td><td>LTB AEROSPACE</td><td class='num'>15 800</td><td class='num pos'>1 311</td><td>закупка уменьшилась на 1 400 USD; поставщик: JET TECHNIC → IBERIA; root supplier: AJW → LTB AEROSPACE; fee увеличился на 89 USD; срок поставки сдвинут на +33 дн.; «дней на поставку» 20 → 25</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Белавиа</span>
-    <span class="pill">3 поз.</span>
-    <span class="pill">15 587 USD</span>
-    <span class="pill">Δ -12</span>
+    <span class="pill">3 поз.</span><span class="pill">продажа 15 587 USD</span><span class="pill">Δ маржа -12</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>12082610185</td>
-  <td>BACB30VF3K6<div class='muted'>BOLT</div></td>
-  <td>EXPENDABLE</td>
-  <td>BLUE OCEAN SOLUTIONS · №2315</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>280</td>
-  <td class='num neg'>-12</td>
-  <td class='num'>+0</td>
-  <td>закупка увеличилась на 48 USD; транспорт уменьшился на 40 USD; поставщик: LUFTHANSA → BLUE OCEAN SOLUTIONS; root supplier: PROPONENT → nan; fee увеличился на 4 USD</td>
-</tr><tr>
-  <td>17062619080-2</td>
-  <td>NAS513-4<div class='muted'>WASHER</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #5713-2</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>7</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений</td>
-</tr><tr>
-  <td>30042612555</td>
-  <td>С29054-010<div class='muted'>Transducer</div></td>
-  <td>ROTABLE</td>
-  <td>SOURCE ONE SPARES</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>15 300</td>
-  <td class='num '>—</td>
-  <td class='num'>+0</td>
-  <td>коммерция без изменений</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>BACB30VF3K6</td><td class='desc'>BOLT</td><td>EXPENDABLE</td><td>BLUE OCEAN SOLUTIONS · №2315</td><td class='num'>280</td><td class='num neg'>-12</td><td><div class='problem'>DAP MSQ Дополнение № 348 Болт</div>закупка увеличилась на 48 USD; транспорт уменьшился на 40 USD; поставщик: LUFTHANSA → BLUE OCEAN SOLUTIONS; root supplier: PROPONENT → nan; fee увеличился на 4 USD</td></tr><tr><td>NAS513-4</td><td class='desc'>WASHER</td><td>EXPENDABLE</td><td>LUFTHANSA · #5713-2</td><td class='num'>7</td><td class='num '>—</td><td><div class='problem'>DAP MSQ Дополнение № 316 шайба</div>коммерция без изменений</td></tr><tr><td>С29054-010</td><td class='desc'>Transducer</td><td>ROTABLE</td><td>SOURCE ONE SPARES</td><td class='num'>15 300</td><td class='num '>—</td><td><div class='problem'>DAP MSQ Дополнение № 283 датчик перепада давления; Николь нашла компонент, ждем от нее новостей</div>коммерция без изменений</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Utair</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">14 500 USD</span>
-    <span class="pill">Δ -455</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 14 500 USD</span><span class="pill">Δ маржа -455</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>13082611355</td>
-  <td>902862<div class='muted'>FIRE DETECTOR
-ASSY</div></td>
-  <td>ROTABLE</td>
-  <td>RELIANCE AIRCRAFT INTERNATIONAL</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>10 700 → 14 500</td>
-  <td class='num neg'>-455</td>
-  <td class='num'>+0</td>
-  <td>закупка увеличилась на 3 500 USD; транспорт увеличился на 500 USD; продажа увеличилась на 3 800 USD; root supplier: TURBO RESOURCES → RELIANCE AIRCRAFT INTERNATIONAL; fee увеличился на 255 USD</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>902862</td><td class='desc'>FIRE DETECTOR
+ASSY</td><td>ROTABLE</td><td>RELIANCE AIRCRAFT INTERNATIONAL</td><td class='num'>10 700 → 14 500</td><td class='num neg'>-455</td><td><div class='problem'>Перезаказываем у релианс скидка с 7k + фото (проверяем с клиентом) // обнаружена коррозия + ждем новые опции; скидка с 7k + фото (проверяем с клиентом) // обнаружена коррозия + ждем новые опции</div>закупка увеличилась на 3 500 USD; транспорт увеличился на 500 USD; продажа увеличилась на 3 800 USD; root supplier: TURBO RESOURCES → RELIANCE AIRCRAFT INTERNATIONAL; fee увеличился на 255 USD</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Руслайн</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">900 USD</span>
-    <span class="pill">Δ -208</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 900 USD</span><span class="pill">Δ маржа -208</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>30062618300-3</td>
-  <td>WF337192<div class='muted'>FILTER, PUMP WATER SYSTEM</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #6086</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>900</td>
-  <td class='num neg'>-208</td>
-  <td class='num'>+0</td>
-  <td>закупка увеличилась на 191 USD; поставщик: IBERIA → LUFTHANSA; root supplier: PROPONENT → AVIALL; fee увеличился на 17 USD</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>WF337192</td><td class='desc'>FILTER, PUMP WATER SYSTEM</td><td>EXPENDABLE</td><td>LUFTHANSA · #6086</td><td class='num'>900</td><td class='num neg'>-208</td><td>закупка увеличилась на 191 USD; поставщик: IBERIA → LUFTHANSA; root supplier: PROPONENT → AVIALL; fee увеличился на 17 USD</td></tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">500 USD</span>
-    <span class="pill">Δ -196</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 500 USD</span><span class="pill">Δ маржа -196</span>
   </summary>
   <div class="group-body"><table>
-  <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Поставщик</th>
-    <th>В TROUBLE</th><th>Продажа USD</th><th>Δ маржа</th><th>Δ срок</th><th>Комментарий</th>
-  </tr></thead>
-  <tbody><tr>
-  <td>250615100-4</td>
-  <td>NAS1102E3-10<div class='muted'>SCREW</div></td>
-  <td>EXPENDABLE</td>
-  <td>LUFTHANSA · #6066</td>
-  <td class='num'>0–7 дн.</td>
-  <td class='num'>500</td>
-  <td class='num neg'>-196</td>
-  <td class='num'>+60</td>
-  <td>закупка увеличилась на 90 USD; транспорт увеличился на 100 USD; root supplier: WENCOR → PEERLESS AEROSPACE; fee увеличился на 6 USD; срок поставки сдвинут на +60 дн.</td>
-</tr></tbody>
+  <thead><tr><th>P/N</th><th>Описание</th><th>Cat.</th><th>Поставщик</th><th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th></tr></thead>
+  <tbody><tr><td>NAS1102E3-10</td><td class='desc'>SCREW</td><td>EXPENDABLE</td><td>LUFTHANSA · #6066</td><td class='num'>500</td><td class='num neg'>-196</td><td><div class='problem'>B0659426 \ АФЛ скажем что BIS, позиции стали сильно дороже</div>закупка увеличилась на 90 USD; транспорт увеличился на 100 USD; root supplier: WENCOR → PEERLESS AEROSPACE; fee увеличился на 6 USD; срок поставки сдвинут на +60 дн.</td></tr></tbody>
 </table></div>
 </details></div>
 </details>
@@ -1160,52 +403,45 @@ ASSY</div></td>
 <details class="group">
   <summary>
     <span class="group-name">Отмены и возвраты</span>
-    <span class="pill warn">10 поз.</span>
-    <span class="pill">7 кли.</span>
-    <span class="pill">продажа 149 290 USD</span>
-    <span class="pill">Δ маржа -259</span>
+    <span class="pill warn">10 поз.</span><span class="pill">7 кли.</span><span class="pill">продажа 149 290 USD</span><span class="pill">маржа 23 859 USD</span>
   </summary>
   <div class="group-body">
 <details class="group client">
   <summary>
     <span class="group-name">S7 Engineering</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">108 000 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 108 000 USD</span><span class="pill">маржа 14 571 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>10072616456</td>
-  <td>3822391-6<div class='muted'>CENTRIFUGAL E/C
+  <td>3822391-6</td>
+  <td class='desc'>CENTRIFUGAL E/C
 COMPRESSOR
-ROTOR</div></td>
+ROTOR</td>
   <td>ROTABLE</td>
   <td>из TROUBLE → отмена</td>
   <td class='num'>108 000</td>
   <td class='num '>—</td>
-  <td>TROUBLE → отмена/возврат</td>
+  <td><div class='problem'>sold // проверяем опцию (Шляхина) P22541226</div>TROUBLE → отмена/возврат</td>
 </tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Utair</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">28 500 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 28 500 USD</span><span class="pill">маржа 5 300 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>15072611055</td>
-  <td>411A2113-40B<div class='muted'>PANEL ASSY</div></td>
+  <td>411A2113-40B</td>
+  <td class='desc'>PANEL ASSY</td>
   <td>ROTABLE</td>
   <td>отмена</td>
   <td class='num'>28 500</td>
@@ -1217,18 +453,16 @@ ROTOR</div></td>
 <details class="group client">
   <summary>
     <span class="group-name">Well Known aviation technology</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">6 570 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 6 570 USD</span><span class="pill">маржа 2 995 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>JTI300726-9</td>
-  <td>D5311219120200<div class='muted'>FWD LH DOOR SILL FWD LH</div></td>
+  <td>D5311219120200</td>
+  <td class='desc'>FWD LH DOOR SILL FWD LH</td>
   <td>ROTABLE</td>
   <td>отмена</td>
   <td class='num'>6 570</td>
@@ -1240,18 +474,16 @@ ROTOR</div></td>
 <details class="group client">
   <summary>
     <span class="group-name">Ямал</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">4 840 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 4 840 USD</span><span class="pill">маржа 863 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>20032618200-3</td>
-  <td>570-720-102<div class='muted'>CABLE, UPLOCK</div></td>
+  <td>570-720-102</td>
+  <td class='desc'>CABLE, UPLOCK</td>
   <td>EXPENDABLE</td>
   <td>из TROUBLE → отмена</td>
   <td class='num'>4 840</td>
@@ -1263,49 +495,45 @@ ROTOR</div></td>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот</span>
-    <span class="pill">2 поз.</span>
-    <span class="pill">1 020 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">2 поз.</span><span class="pill">продажа 1 020 USD</span><span class="pill">маржа 540 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>20082617590-4</td>
-  <td>P-421<div class='muted'>INSULATING TAPE, PTFE</div></td>
-  <td>EXPENDABLE</td>
-  <td>отмена</td>
-  <td class='num'>720</td>
-  <td class='num '>—</td>
-  <td>—</td>
-</tr><tr>
-  <td>250615100-4</td>
-  <td>NSA5472-10K7<div class='muted'>NUT</div></td>
+  <td>NSA5472-10K7</td>
+  <td class='desc'>NUT</td>
   <td>EXPENDABLE</td>
   <td>из TROUBLE → отмена</td>
   <td class='num'>300</td>
   <td class='num '>—</td>
   <td>TROUBLE → отмена/возврат</td>
+</tr><tr>
+  <td>P-421</td>
+  <td class='desc'>INSULATING TAPE, PTFE</td>
+  <td>EXPENDABLE</td>
+  <td>отмена</td>
+  <td class='num'>720</td>
+  <td class='num '>—</td>
+  <td>—</td>
 </tr></tbody>
 </table></div>
 </details>
 <details class="group client">
   <summary>
     <span class="group-name">Аэрофлот Техникс</span>
-    <span class="pill">1 поз.</span>
-    <span class="pill">360 USD</span>
-    <span class="pill">Δ —</span>
+    <span class="pill">1 поз.</span><span class="pill">продажа 360 USD</span><span class="pill">маржа 255 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td>21082517550-3</td>
-  <td>NSA931130-12<div class='muted'>FUSE</div></td>
+  <td>NSA931130-12</td>
+  <td class='desc'>FUSE</td>
   <td>EXPENDABLE</td>
   <td>из TROUBLE → возврат</td>
   <td class='num'>360</td>
@@ -1317,39 +545,37 @@ ROTOR</div></td>
 <details class="group client">
   <summary>
     <span class="group-name">Закупка на склад</span>
-    <span class="pill">3 поз.</span>
-    <span class="pill">0 USD</span>
-    <span class="pill">Δ -259</span>
+    <span class="pill">3 поз.</span><span class="pill">продажа 0 USD</span><span class="pill">маржа -665 USD</span>
   </summary>
   <div class="group-body"><table>
   <thead><tr>
-    <th>Счёт</th><th>P/N</th><th>Cat.</th><th>Тип</th>
+    <th>P/N</th><th>Описание</th><th>Cat.</th><th>Тип</th>
     <th>Продажа USD</th><th>Δ маржа</th><th>Комментарий</th>
   </tr></thead>
   <tbody><tr>
-  <td></td>
-  <td>NSA931130-12<div class='muted'>FUSE</div></td>
-  <td>EXPENDABLE</td>
-  <td>из TROUBLE → отмена</td>
-  <td class='num'>0</td>
-  <td class='num '>—</td>
-  <td>TROUBLE → отмена/возврат</td>
-</tr><tr>
-  <td>-</td>
-  <td>182625<div class='muted'>PACKING-PREFORMED</div></td>
+  <td>182625</td>
+  <td class='desc'>PACKING-PREFORMED</td>
   <td>EXPENDABLE</td>
   <td>отмена</td>
   <td class='num'>0</td>
   <td class='num neg'>-12</td>
   <td>кол-во 23 → 48; EXP: вероятно правка количества / ед. изм.; закупка увеличилась на 12 USD; поставщик: LUFTHANSA → BLUE OCEAN SOLUTIONS</td>
 </tr><tr>
-  <td>-</td>
-  <td>J149P10<div class='muted'>NUT</div></td>
+  <td>J149P10</td>
+  <td class='desc'>NUT</td>
   <td>EXPENDABLE</td>
   <td>отмена</td>
   <td class='num'>0</td>
   <td class='num neg'>-246</td>
   <td>кол-во 3 → 20; EXP: вероятно правка количества / ед. изм.; закупка увеличилась на 186 USD; транспорт увеличился на 50 USD; поставщик: BLUE OCEAN SOLUTIONS → LUFTHANSA; root supplier: nan → SATAIR; fee увеличился на 10 USD</td>
+</tr><tr>
+  <td>NSA931130-12</td>
+  <td class='desc'>FUSE</td>
+  <td>EXPENDABLE</td>
+  <td>из TROUBLE → отмена</td>
+  <td class='num'>0</td>
+  <td class='num '>—</td>
+  <td>TROUBLE → отмена/возврат</td>
 </tr></tbody>
 </table></div>
 </details></div>

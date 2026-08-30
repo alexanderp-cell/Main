@@ -354,6 +354,23 @@ def looks_like_problem(text: str) -> bool:
     return bool(_PROBLEM_RE.search(cleaned))
 
 
+def _is_code_like(text: str) -> bool:
+    compact = re.sub(r"[\s._-]+", "", text)
+    return bool(re.fullmatch(r"(?i)(?:po|p|#|№)?[A-Z]?\d{3,}", compact))
+
+
+def _is_problem_or_prose(text: str) -> bool:
+    cleaned = _clean_text_cell(text)
+    if not cleaned:
+        return False
+    if looks_like_problem(cleaned):
+        return True
+    if _is_code_like(cleaned):
+        return False
+    words = re.findall(r"[A-Za-zА-Яа-яЁё]{3,}", cleaned)
+    return len(words) >= 3
+
+
 def _add_problem_note(notes: list[str], seen: set[str], text: str) -> None:
     cleaned = _clean_text_cell(text)
     if not cleaned:
@@ -375,7 +392,7 @@ def extract_problem_notes(prev: pd.Series, curr: pd.Series) -> list[str]:
             col_name = str(col)
             if col_name == COL_COMMENT or _COMMENT_COL_RE.search(col_name):
                 comment = _clean_text_cell(value)
-                if comment:
+                if comment and _is_problem_or_prose(comment):
                     _add_problem_note(notes, seen, comment)
 
     for row in (curr, prev):
@@ -742,6 +759,7 @@ def trouble_kpis(events: list[StatusChange], period_days: int) -> dict[str, Any]
         "cancel_rate": cancel_rate,
         "avg_ongoing_days": avg(ongoing_days),
         "avg_margin_delta": avg(resolved_margin),
+        "sum_margin_delta": sum(resolved_margin) if resolved_margin else 0.0,
         "resolved_positive": positive,
         "resolved_negative": negative,
         "period_days": period_days,
@@ -818,9 +836,32 @@ def fmt_comment_cell(e: StatusChange) -> str:
     return "".join(parts)
 
 
-def _show_margin_pill(items: list[StatusChange]) -> bool:
-    kinds = {e.change_kind for e in items}
-    return bool(kinds - {"entered", "ongoing"})
+def sum_plan_sale(items: list[StatusChange]) -> float:
+    return sum(e.sale_curr for e in items)
+
+
+def sum_plan_margin(items: list[StatusChange]) -> float:
+    return sum(e.margin_curr for e in items)
+
+
+def header_metric_pills(
+    items: list[StatusChange],
+    *,
+    margin_mode: str,
+    pill_class: str = "",
+    include_clients: bool = True,
+) -> str:
+    """Dropdown header: rows, clients, plan sale, plan margin (or Δ margin for resolved)."""
+    count_class = f"pill {pill_class}".strip()
+    pills = [f'<span class="{count_class}">{len(items)} поз.</span>']
+    if include_clients:
+        pills.append(f'<span class="pill">{len(group_by_customer(items))} кли.</span>')
+    pills.append(f'<span class="pill">продажа {fmt_money(sum_plan_sale(items), 0)} USD</span>')
+    if margin_mode == "delta":
+        pills.append(f'<span class="pill">Δ маржа {fmt_money(sum_meaningful_margin(items), 0)}</span>')
+    else:
+        pills.append(f'<span class="pill">маржа {fmt_money(sum_plan_margin(items), 0)} USD</span>')
+    return "".join(pills)
 
 
 def render_trouble_table(items: list[StatusChange], *, section: str | None = None) -> str:
@@ -899,25 +940,19 @@ def render_cancel_table(items: list[StatusChange]) -> str:
 def render_client_groups(
     items: list[StatusChange],
     table_fn,
+    *,
+    margin_mode: str = "plan",
 ) -> str:
     if not items:
         return "<p class='muted'>Нет изменений за период.</p>"
     blocks = []
     for client, client_items in group_by_customer(items):
-        sale = sum(e.sale_curr for e in client_items)
-        margin_pill = ""
-        if _show_margin_pill(client_items):
-            margin_d = sum_meaningful_margin(client_items)
-            margin_txt = fmt_money(margin_d, 0) if margin_d else "—"
-            margin_pill = f'<span class="pill">Δ {margin_txt}</span>'
         blocks.append(
             f"""
 <details class="group client">
   <summary>
     <span class="group-name">{esc(client)}</span>
-    <span class="pill">{len(client_items)} поз.</span>
-    <span class="pill">{fmt_money(sale, 0)} USD</span>
-    {margin_pill}
+    {header_metric_pills(client_items, margin_mode=margin_mode, include_clients=False)}
   </summary>
   <div class="group-body">{table_fn(client_items)}</div>
 </details>"""
@@ -930,33 +965,24 @@ def render_section(
     items: list[StatusChange],
     table_fn,
     pill_class: str = "",
+    *,
+    margin_mode: str = "plan",
 ) -> str:
     if not items:
         return f"""
 <details class="group">
   <summary>
     <span class="group-name">{esc(title)}</span>
-    <span class="pill">0 поз.</span>
+    {header_metric_pills(items, margin_mode=margin_mode, pill_class=pill_class)}
   </summary>
   <div class="group-body"><p class='muted'>Нет изменений за период.</p></div>
 </details>"""
-    sale = sum(e.sale_curr for e in items)
-    clients = len(group_by_customer(items))
-    pill = f"pill {pill_class}".strip()
-    inner = render_client_groups(items, table_fn)
-    margin_pill = ""
-    if _show_margin_pill(items):
-        margin_d = sum_meaningful_margin(items)
-        margin_txt = fmt_money(margin_d, 0) if margin_d else "—"
-        margin_pill = f'<span class="pill">Δ маржа {margin_txt}</span>'
+    inner = render_client_groups(items, table_fn, margin_mode=margin_mode)
     return f"""
 <details class="group">
   <summary>
     <span class="group-name">{esc(title)}</span>
-    <span class="{pill}">{len(items)} поз.</span>
-    <span class="pill">{clients} кли.</span>
-    <span class="pill">продажа {fmt_money(sale, 0)} USD</span>
-    {margin_pill}
+    {header_metric_pills(items, margin_mode=margin_mode, pill_class=pill_class)}
   </summary>
   <div class="group-body">{inner}</div>
 </details>"""
@@ -995,11 +1021,7 @@ def render_html_report(
     resolved_trouble = [e for e in trouble if e.change_kind == "resolved"]
     cancel_refund = merge_cancel_refund(cancellations, refunds, trouble)
 
-    resolved_margin_kpi = (
-        fmt_money(kpis["avg_margin_delta"], 0)
-        if kpis["avg_margin_delta"] is not None
-        else "—"
-    )
+    resolved_margin_kpi = fmt_money(kpis["sum_margin_delta"], 0)
 
     sections = "\n".join([
         render_section(
@@ -1007,20 +1029,29 @@ def render_html_report(
             new_trouble,
             lambda xs: render_trouble_table(xs, section="entered"),
             "warn",
+            margin_mode="plan",
         ),
         render_section(
             "Нерешённые TROUBLE",
             unresolved_trouble,
             lambda xs: render_trouble_table(xs, section="ongoing"),
             "warn",
+            margin_mode="plan",
         ),
         render_section(
             "Решённые TROUBLE",
             resolved_trouble,
             lambda xs: render_trouble_table(xs, section="resolved"),
             "ok",
+            margin_mode="delta",
         ),
-        render_section("Отмены и возвраты", cancel_refund, render_cancel_table, "warn"),
+        render_section(
+            "Отмены и возвраты",
+            cancel_refund,
+            render_cancel_table,
+            "warn",
+            margin_mode="plan",
+        ),
     ])
 
     return f"""<!DOCTYPE html>
@@ -1043,7 +1074,7 @@ def render_html_report(
       <div><div class="label">Нерешённые TROUBLE</div><div class="value">{len(unresolved_trouble)}<div class="muted">≥{period_days} дн. в обоих снимках</div></div></div>
       <div><div class="label">Решённые TROUBLE</div><div class="value">{len(resolved_trouble)}<div class="muted">{fmt_pct(kpis['resolve_rate'])} от стартовых</div></div></div>
       <div><div class="label">Отмены + возвраты</div><div class="value">{len(cancel_refund)}</div></div>
-      <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">+{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
+      <div><div class="label">Δ маржа (решённые)</div><div class="value">{resolved_margin_kpi}<div class="muted">сумма Δ · +{kpis['resolved_positive']} / −{kpis['resolved_negative']} с Δ</div></div></div>
       <div><div class="label">Гарантии (новые)</div><div class="value">{len(warranty)}</div></div>
     </div>
     <p class="muted">TROUBLE: EXP — кол-во/ед. изм.; ROTABLE — замена юнита. «Новые» — смена статуса на TROUBLE за период и заказы, взятые в работу в период (появились в ТАЗ уже в TROUBLE). Отмена/возврат: было NOT PAID / PAID / TROUBLE → CANCELLED / REFUND.</p>

@@ -111,6 +111,16 @@ def test_description_is_not_treated_as_problem() -> None:
     assert notes == []
 
 
+def test_po_numbers_are_not_problem_text() -> None:
+    assert extract_problem_notes(taz_row(**{COL_COMMENT: "PO108630"}), taz_row(**{COL_COMMENT: "PO108630"})) == []
+    assert extract_problem_notes(taz_row(**{COL_COMMENT: "P3761426"}), taz_row(**{COL_COMMENT: "P3761426"})) == []
+    notes = extract_problem_notes(
+        taz_row(**{COL_COMMENT: "PO 107844, stock out, клиент проинформирован"}),
+        taz_row(**{COL_COMMENT: "PO 107844, stock out, клиент проинформирован"}),
+    )
+    assert notes and "stock out" in notes[0].lower()
+
+
 def _events(prev: pd.Series, curr: pd.Series):
     return compare_snapshots({"k": prev}, {"k": curr}, period_days=7)
 
@@ -171,12 +181,12 @@ def test_resolved_shows_margin_not_days() -> None:
     assert "Счёт" not in html
 
 
-def test_full_report_hides_margin_pill_for_new_and_unresolved() -> None:
+def test_section_headers_show_plan_or_delta_margin() -> None:
     prev_rows = {
         "new": taz_row(
             **{COL_STATUS: STATUS_PAID, COL_PN: "NEW-1", COL_PURCHASE: 100, COL_SALE: 5000}
         ),
-        "open": taz_row(**{COL_PN: "OPEN-1", COL_SALE: 2000}),
+        "open": taz_row(**{COL_PN: "OPEN-1", COL_SALE: 2000, COL_PURCHASE: 1200}),
         "done": taz_row(
             **{
                 COL_STATUS: STATUS_TROUBLE,
@@ -197,7 +207,7 @@ def test_full_report_hides_margin_pill_for_new_and_unresolved() -> None:
                 COL_COMMENT: "срыв поставки",
             }
         ),
-        "open": taz_row(**{COL_PN: "OPEN-1", COL_SALE: 2000}),
+        "open": taz_row(**{COL_PN: "OPEN-1", COL_SALE: 2000, COL_PURCHASE: 1200}),
         "done": taz_row(
             **{
                 COL_STATUS: STATUS_FINISHED,
@@ -222,12 +232,23 @@ def test_full_report_hides_margin_pill_for_new_and_unresolved() -> None:
     mid = html.index('group-name">Нерешённые TROUBLE')
     new_block = html[start:mid]
     assert "Δ маржа" not in new_block
+    assert "продажа 5 000 USD" in new_block
+    assert "маржа" in new_block
+    assert "1 кли." in new_block
     assert "срыв поставки" in html
     assert "Δ срок" not in html
-    assert ">Счёт<" not in html and "th>Счёт" not in html
-    assert "В TROUBLE" in html  # unresolved section
+    assert "В TROUBLE" in html
     resolved_block = html.split("Решённые TROUBLE", 1)[1].split("Отмены и возвраты", 1)[0]
     assert "Δ маржа" in resolved_block
+    # Summary KPI uses the same SUM as the resolved header, not the average.
+    from generate_taz_changes_report import fmt_money, sum_meaningful_margin
+
+    resolved = [e for e in trouble if e.change_kind == "resolved"]
+    summed = fmt_money(sum_meaningful_margin(resolved), 0)
+    kpis_chunk = html.split("Δ маржа (решённые)", 1)[1][:400]
+    assert "сумма Δ" in html
+    assert summed in kpis_chunk
+    assert f"Δ маржа {summed}" in resolved_block
 
 
 if __name__ == "__main__":
