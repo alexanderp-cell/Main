@@ -232,7 +232,8 @@ def test_section_headers_show_plan_or_delta_margin() -> None:
     mid = html.index('group-name">Нерешённые TROUBLE')
     new_block = html[start:mid]
     assert "Δ маржа" not in new_block
-    assert "продажа 5 000 USD" in new_block
+    assert "кол-во 1 шт." in new_block
+    assert "продажа итого 5 000 USD" in new_block
     assert "маржа" in new_block
     assert "1 кли." in new_block
     assert "срыв поставки" in html

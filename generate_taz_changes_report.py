@@ -154,6 +154,12 @@ def fmt_money(v: float | None, digits: int = 0) -> str:
     return f"{v:,.{digits}f}".replace(",", " ")
 
 
+def fmt_qty(v: float) -> str:
+    if abs(v - round(v)) < 0.001:
+        return str(int(round(v)))
+    return f"{v:g}"
+
+
 def fmt_pct(v: float | None) -> str:
     if v is None:
         return "—"
@@ -836,8 +842,16 @@ def fmt_comment_cell(e: StatusChange) -> str:
     return "".join(parts)
 
 
+def line_qty(e: StatusChange) -> float:
+    return e.qty_curr if e.qty_curr else e.qty_prev
+
+
 def sum_plan_sale(items: list[StatusChange]) -> float:
-    return sum(e.sale_curr for e in items)
+    return sum(e.sale_curr if e.sale_curr else e.sale_prev for e in items)
+
+
+def sum_plan_qty(items: list[StatusChange]) -> float:
+    return sum(line_qty(e) for e in items)
 
 
 def sum_plan_margin(items: list[StatusChange]) -> float:
@@ -851,12 +865,13 @@ def header_metric_pills(
     pill_class: str = "",
     include_clients: bool = True,
 ) -> str:
-    """Dropdown header: rows, clients, plan sale, plan margin (or Δ margin for resolved)."""
+    """Dropdown header: rows, clients, qty (шт), line-total sale, plan/Δ margin."""
     count_class = f"pill {pill_class}".strip()
     pills = [f'<span class="{count_class}">{len(items)} поз.</span>']
     if include_clients:
         pills.append(f'<span class="pill">{len(group_by_customer(items))} кли.</span>')
-    pills.append(f'<span class="pill">продажа {fmt_money(sum_plan_sale(items), 0)} USD</span>')
+    pills.append(f'<span class="pill">кол-во {fmt_qty(sum_plan_qty(items))} шт.</span>')
+    pills.append(f'<span class="pill">продажа итого {fmt_money(sum_plan_sale(items), 0)} USD</span>')
     if margin_mode == "delta":
         pills.append(f'<span class="pill">Δ маржа {fmt_money(sum_meaningful_margin(items), 0)}</span>')
     else:
