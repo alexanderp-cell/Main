@@ -1407,7 +1407,7 @@ def render_html_report(
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="brand-mark">FASTAIR</div><div style="font-size:13px;opacity:.9">TROUBLE / CANCEL</div></div>
+  <div class="brand"><div class="brand-mark">not so fastair</div><div style="font-size:13px;opacity:.9">TROUBLE / CANCEL</div></div>
   <h1>TROUBLE / CANCEL</h1>
   <div class="period">{period}</div>
   <div class="sub">{period_days} дн. · сравнение выгрузок ТАЗ{history_note}</div>
@@ -1430,7 +1430,7 @@ def render_html_report(
   {sections}
 
   <div class="footer">
-    FASTAIR · источник ТАЗ · {esc(prev_date.isoformat())} → {esc(curr_date.isoformat())} ·
+    not so fastair · источник ТАЗ · {esc(prev_date.isoformat())} → {esc(curr_date.isoformat())} ·
     ключ строки: счёт + P/N + описание
   </div>
 </div>
