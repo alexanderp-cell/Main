@@ -26,6 +26,17 @@ EARLY_STATUSES = {
     "11. Внесено в ТАЗ",
 }
 
+CONDITION_ONLY = {"SV", "N", "OH", "R", "HT", "NEW"}
+
+HOLD_REASON_RULES = [
+    ("В активах", r"актив"),
+    ("Документы / сертификаты", r"(жд[её]м|нужн|запраш|ждут|provide).*(док|doc|btb|arc|nis|серт|cert|ppwk|ах|approval)"),
+    ("Габариты / транспорт", r"(габарит|транспорт|доставк|exw|размер|вес)"),
+    ("Отмена / не отправляем", r"(отмен|не предлаг|не отправ|sold|зина)"),
+    ("Обсуждение / риски", r"(обсуд|риск|целесообраз)"),
+    ("Ждём ответ поставщика", r"(жд[её]м|жду|апдейт|квота от)"),
+]
+
 GROUP_SHEETS = [
     "Группа A",
     "Группа B",
@@ -116,6 +127,49 @@ def fmt_pct(value: float | None) -> str:
     return f"{value:.0f}%"
 
 
+def clean_text(value) -> str | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    return text if text and text != "-" else None
+
+
+def meaningful_remarks(text: str | None) -> str | None:
+    if not text:
+        return None
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return None
+    first = lines[0].upper()
+    if first in CONDITION_ONLY:
+        if len(lines) == 1:
+            return None
+        rest = "\n".join(lines[1:]).strip()
+        return rest or None
+    return text.strip()
+
+
+def is_workflow_root(text: str) -> bool:
+    low = text.lower()
+    if re.search(r"[а-яё]", text, re.IGNORECASE):
+        return True
+    if len(text) > 35:
+        return True
+    return any(token in low for token in ("жд", "квота", "апдейт", "док", "актив", "таргет"))
+
+
+def classify_hold_reason(text: str | None) -> str:
+    if not text:
+        return "Без комментария"
+    low = text.lower()
+    for label, pattern in HOLD_REASON_RULES:
+        if re.search(pattern, low, re.IGNORECASE):
+            return label
+    if re.search(r"[а-яё]", text, re.IGNORECASE):
+        return "Прочий комментарий"
+    return "Без категории"
+
+
 def bucket_for_sale(value: float | None) -> str | None:
     if value is None:
         return None
@@ -138,9 +192,12 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "qty": 10,
             "quote_dt": 12,
             "root_price": 14,
+            "root": 15,
             "supplier_price": 16,
             "transit": 18,
             "cond": 19,
+            "ppwk": 23,
+            "remarks": 24,
             "offered": 25,
             "sent_dt": 26,
             "accepted_dt": 27,
@@ -157,9 +214,12 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "qty": 10,
         "quote_dt": 15,
         "root_price": 17,
+        "root": 18,
         "supplier_price": 19,
         "transit": 21,
         "cond": 22,
+        "ppwk": 26,
+        "remarks": 27,
         "offered": 28,
         "sent_dt": 29,
         "accepted_dt": 30,
@@ -181,6 +241,9 @@ class OfferRow:
     offered: float | None
     cond: str | None
     invoice: str | None
+    remarks: str | None = None
+    ppwk: str | None = None
+    root_text: str | None = None
     pn_bold: bool = False
     alt_bold: bool = False
 
@@ -233,6 +296,32 @@ class RequestLine:
         if not self.market_rows() or self.sale_value() is not None:
             return False
         return self.primary_status() not in EARLY_STATUSES
+
+    def workflow_notes(self) -> str | None:
+        """Operational comments from PPWK, Remarks, Root (when used as a note)."""
+        parts: list[str] = []
+        seen: set[str] = set()
+
+        def add(label: str, text: str | None) -> None:
+            if not text:
+                return
+            key = text.strip()
+            if key in seen:
+                return
+            seen.add(key)
+            parts.append(f"{label}: {key}")
+
+        for offer in self.offers:
+            add("PPWK", clean_text(offer.ppwk))
+            add("Remarks", meaningful_remarks(clean_text(offer.remarks)))
+            root = clean_text(offer.root_text)
+            if root and is_workflow_root(root):
+                add("Root", root)
+
+        return " · ".join(parts) if parts else None
+
+    def hold_reason(self) -> str:
+        return classify_hold_reason(self.workflow_notes())
 
     def has_root_price(self) -> bool:
         return any(o.root_price is not None for o in self.offers)
@@ -378,6 +467,9 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     transit=parse_num(val("transit")),
                     offered=parse_num(val("offered")),
                     cond=str(val("cond")).strip() if val("cond") else None,
+                    remarks=clean_text(val("remarks")),
+                    ppwk=clean_text(val("ppwk")),
+                    root_text=clean_text(val("root")),
                     invoice=invoice,
                     pn_bold=bool(pn_cell.font and pn_cell.font.bold),
                     alt_bold=bool(alt_cell.font and alt_cell.font.bold),
@@ -489,12 +581,23 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     buckets = {label: summarize(by_bucket[label]) for label, _, _ in PRICE_BUCKETS}
     buckets["Без продажной оценки"] = summarize(unpriced)
 
+    pending_offer = [line for line in lines if line.supplier_without_offer()]
+    pending_offer.sort(
+        key=lambda line: max((o.supplier_price or 0) for o in line.market_rows()),
+        reverse=True,
+    )
+    hold_reasons = Counter(line.hold_reason() for line in pending_offer)
+    with_notes = sum(1 for line in pending_offer if line.workflow_notes())
+
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
         "taz_source": TAZ_PATH.name if TAZ_PATH.exists() else None,
         "overall": overall,
         "buckets": buckets,
+        "pending_offer": pending_offer,
+        "hold_reasons": dict(hold_reasons.most_common()),
+        "pending_with_notes": with_notes,
     }
 
 
@@ -533,6 +636,75 @@ def render_table_rows(lines: list[RequestLine]) -> str:
             f"<tr><td colspan='13' class='muted'>… ещё {len(rows)-200} строк</td></tr>"
         )
     return "\n".join(html_rows)
+
+
+def render_pending_offer_section(data: dict[str, Any]) -> str:
+    lines: list[RequestLine] = data.get("pending_offer", [])
+    if not lines:
+        return ""
+
+    reason_rows = []
+    for label, count in data.get("hold_reasons", {}).items():
+        reason_rows.append(
+            f"<tr><td>{html.escape(label)}</td><td>{count}</td></tr>"
+        )
+
+    table_rows = []
+    for line in lines:
+        best_supplier = min((o.supplier_price for o in line.market_rows()), default=None)
+        note = line.workflow_notes()
+        reason = line.hold_reason()
+        note_html = html.escape(note) if note else "<span class='muted'>—</span>"
+        if len(note_html) > 220:
+            note_html = note_html[:217] + "…"
+        table_rows.append(
+            "<tr>"
+            f"<td>{html.escape(line.request_no)}</td>"
+            f"<td><b>{html.escape(line.pn)}</b></td>"
+            f"<td>{line.qty or '—'}</td>"
+            f"<td>{html.escape(line.primary_status())}</td>"
+            f"<td>{fmt_money(best_supplier)}</td>"
+            f"<td><span class='tag hold'>{html.escape(reason)}</span></td>"
+            f"<td class='note-cell'>{note_html}</td>"
+            "</tr>"
+        )
+
+    with_notes = data.get("pending_with_notes", 0)
+    return f"""
+  <div class="panel">
+    <h2>Ожидают Offered ({len(lines)})</h2>
+    <p class="lead-sm">Цена закупки есть, статус ≥ «Цена получена», но клиентский Offered ещё не сформирован. Комментарии читаем из колонок <b>PPWK</b>, <b>Remarks</b> и иногда <b>Root</b> (если там пояснение, а не название поставщика).</p>
+    <div class="mini-grid" style="margin-bottom:14px">
+      <div class="mini"><div class="k">Всего позиций</div><div class="v">{len(lines)}</div></div>
+      <div class="mini"><div class="k">С комментарием</div><div class="v">{with_notes}</div></div>
+      <div class="mini warn"><div class="k">Без комментария</div><div class="v">{len(lines) - with_notes}</div></div>
+    </div>
+    <details class="bucket" open>
+      <summary><span class="bucket-title">Причины по комментариям</span></summary>
+      <div class="bucket-body">
+        <div class="table-wrap" style="max-width:420px">
+          <table>
+            <thead><tr><th>Категория</th><th>Строк</th></tr></thead>
+            <tbody>{''.join(reason_rows)}</tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead>
+          <tr>
+            <th>Request №</th><th>P/N</th><th>Qty</th><th>Статус</th>
+            <th>Supplier $/ea</th><th>Причина</th><th>Комментарий (PPWK / Remarks / Root)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {''.join(table_rows)}
+        </tbody>
+      </table>
+    </div>
+  </div>
+"""
 
 
 def render_html(data: dict[str, Any]) -> str:
@@ -619,7 +791,9 @@ h1 {{ font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); colo
 .kpi.warn {{ background:linear-gradient(135deg,#f8ead8,#fff); }}
 .panel {{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); margin:18px 0; }}
 .panel h2 {{ font-family:"Fraunces",Georgia,serif; margin:0 0 12px; font-size:1.35rem; }}
+.lead-sm {{ color:var(--ink-soft); font-size:.92rem; line-height:1.5; margin:0 0 14px; max-width:52rem; }}
 .note {{ font-size:.9rem; color:var(--ink-soft); border-left:3px solid var(--teal); padding:10px 12px; background:rgba(255,255,255,.65); }}
+.note-cell {{ max-width:320px; font-size:.8rem; line-height:1.35; white-space:pre-wrap; }}
 details.bucket {{ background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); margin:14px 0; overflow:hidden; }}
 details.bucket > summary {{
   list-style:none; cursor:pointer; padding:16px 18px; display:flex; flex-wrap:wrap; gap:8px 16px;
@@ -645,6 +819,7 @@ tr:hover td {{ background:#fafcfd; }}
 .muted {{ color:var(--muted); font-size:.82rem; }}
 .tag {{ display:inline-block; font-size:.68rem; font-weight:700; padding:2px 6px; border-radius:999px; }}
 .tag.alt {{ background:#fde68a; color:#7c5a00; }}
+.tag.hold {{ background:#e8f0fe; color:#1e4a8a; }}
 </style>
 </head>
 <body>
@@ -669,12 +844,14 @@ tr:hover td {{ background:#fafcfd; }}
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
-      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой (без строк «Проценка» / Backup).<br/>
+      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
       <b>Сумма заказов 2026</b> — продажная итого (col AH) по листу ORDERS в ТАЗ, Ютэйр, дата взятия в работу 2026. ТУЗ-оценка — Offered × Qty по выигранным RFQ.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
+
+  {render_pending_offer_section(data)}
 
   <div class="panel">
     <h2>Категории по продажной стоимости</h2>
