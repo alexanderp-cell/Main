@@ -39,6 +39,7 @@ HOLD_REASON_RULES = [
 
 TROUBLE_RE = re.compile(r"trouble|трабл", re.IGNORECASE)
 ORDER_REF_RE = re.compile(r"(P\d{5,}|Q\d{5,}|\d{4,}\.0)", re.IGNORECASE)
+TAZ_EXCLUDED_STATUSES = {"5 CANCELLED", "7 REFUND"}
 TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
 ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
 
@@ -197,6 +198,31 @@ def extract_order_refs(*texts: str | None) -> list[str]:
                 seen.add(token)
                 refs.append(token)
     return refs
+
+
+def normalize_invoice(value) -> str | None:
+    if value in (None, ""):
+        return None
+    raw = str(value).strip()
+    if " " in raw and len(re.sub(r"\D", "", raw)) <= 8:
+        return None
+    digits = re.sub(r"\D", "", raw.replace(".0", ""))
+    if not digits:
+        return None
+    if len(digits) < 10 or len(digits) > 14:
+        return None
+    return digits
+
+
+def taz_line_amount(row: tuple) -> float:
+    sale_total = parse_num(row[33])
+    if sale_total is not None:
+        return sale_total
+    qty = parse_num(row[13]) or 1
+    sale_ea = parse_num(row[32])
+    if sale_ea is not None:
+        return sale_ea * qty
+    return 0.0
 
 
 def bucket_for_sale(value: float | None) -> str | None:
@@ -526,11 +552,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
             pn_cell = row_fmt[cols["pn"] - 1]
             alt_cell = row_fmt[cols["alt_pn"] - 1]
             invoice_raw = val("invoice")
-            invoice = None
-            if invoice_raw not in (None, ""):
-                invoice_text = str(invoice_raw).strip()
-                if len(invoice_text) <= 20 and re.match(r"^[\d-]+$", invoice_text.replace(".0", "")):
-                    invoice = invoice_text.replace(".0", "")
+            invoice = normalize_invoice(invoice_raw)
 
             raw_request_dt = val("request_dt")
             request_dt = to_dt(raw_request_dt)
@@ -568,7 +590,9 @@ def load_request_lines(path: Path) -> list[RequestLine]:
 def load_taz_orders_2026(path: Path) -> dict[str, Any]:
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
-    total = 0.0
+    totals = Counter()
+    category_totals = Counter()
+    status_totals = Counter()
     lines = 0
     invoices: set[str] = set()
 
@@ -581,22 +605,102 @@ def load_taz_orders_2026(path: Path) -> dict[str, Any]:
         work_dt = row[16]
         if not isinstance(work_dt, datetime) or work_dt.year != 2026:
             continue
-        qty = parse_num(row[13]) or 1
-        sale_ea = parse_num(row[32])
-        sale_total = parse_num(row[33])
-        if sale_total is not None:
-            total += sale_total
-        elif sale_ea is not None:
-            total += sale_ea * qty
+        amount = taz_line_amount(row)
+        status = str(row[4]).strip() if row[4] else "—"
+        category = str(row[15]).strip() if row[15] else "—"
+        totals["gross"] += amount
+        status_totals[status] += amount
+        category_totals[category] += amount
+        if status in TAZ_EXCLUDED_STATUSES:
+            totals[status] += amount
+            continue
+        totals["net"] += amount
         lines += 1
+        if category == "ROTABLE":
+            totals["rotable_net"] += amount
+        elif category == "EXPENDABLE":
+            totals["expendable_net"] += amount
         if row[0] not in (None, ""):
             invoices.add(str(row[0]).strip())
 
     wb.close()
     return {
-        "total": total,
+        "total": totals["net"],
+        "gross_total": totals["gross"],
+        "cancelled": totals.get("5 CANCELLED", 0),
+        "refund": totals.get("7 REFUND", 0),
+        "rotable_net": totals["rotable_net"],
+        "expendable_net": totals["expendable_net"],
         "lines": lines,
         "invoices": len(invoices),
+        "by_category": dict(category_totals),
+        "by_status": dict(status_totals.most_common()),
+    }
+
+
+def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
+    won_lines = [line for line in lines if line.won()]
+    won_invoices = {
+        normalize_invoice(offer.invoice)
+        for line in won_lines
+        for offer in line.offers
+        if offer.invoice
+    }
+    won_invoices.discard(None)
+    won_pn = {line.pn for line in won_lines}
+    all_pn = {line.pn for line in lines}
+
+    buckets = Counter()
+    counts = Counter()
+    tuz_taz_2026 = 0.0
+    tuz_taz_any_year = 0.0
+    invoice_amounts_2026: dict[str, float] = defaultdict(float)
+    invoice_amounts_any: dict[str, float] = defaultdict(float)
+
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row or not is_utair(row[6]):
+            continue
+        amount = taz_line_amount(row)
+        invoice = normalize_invoice(row[0])
+        work_dt = row[16]
+        if invoice:
+            invoice_amounts_any[invoice] += amount
+            if isinstance(work_dt, datetime) and work_dt.year == 2026:
+                invoice_amounts_2026[invoice] += amount
+        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+            continue
+        status = str(row[4]).strip() if row[4] else ""
+        category = str(row[15]).strip() if row[15] else ""
+        if category != "ROTABLE" or status in TAZ_EXCLUDED_STATUSES:
+            continue
+        pn = str(row[10]).strip() if row[10] else ""
+        if invoice in won_invoices:
+            key = "tuz_won_invoice"
+        elif pn in won_pn:
+            key = "tuz_won_pn_no_invoice"
+        elif pn in all_pn:
+            key = "tuz_open_or_lost"
+        else:
+            key = "not_in_tuz"
+        buckets[key] += amount
+        counts[key] += 1
+
+    for invoice in won_invoices:
+        tuz_taz_any_year += invoice_amounts_any.get(invoice, 0)
+        tuz_taz_2026 += invoice_amounts_2026.get(invoice, 0)
+
+    wb.close()
+    rotable_net = sum(buckets.values())
+    return {
+        "tuz_won_offered": sum(line.order_value() or 0 for line in won_lines),
+        "tuz_won_count": len(won_lines),
+        "tuz_taz_2026": tuz_taz_2026,
+        "tuz_taz_any_year": tuz_taz_any_year,
+        "taz_rotable_buckets": dict(buckets),
+        "taz_rotable_counts": dict(counts),
+        "taz_rotable_net": rotable_net,
     }
 
 
@@ -652,14 +756,25 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         }
 
     taz_orders = load_taz_orders_2026(TAZ_PATH) if TAZ_PATH.exists() else None
+    reconciliation = reconcile_taz_tuz(lines, TAZ_PATH) if TAZ_PATH.exists() else None
 
     overall = summarize(lines)
     if taz_orders:
         overall["orders_total"] = taz_orders["total"]
+        overall["orders_gross"] = taz_orders["gross_total"]
+        overall["orders_cancelled"] = taz_orders["cancelled"]
+        overall["orders_refund"] = taz_orders["refund"]
+        overall["orders_rotable"] = taz_orders["rotable_net"]
+        overall["orders_expendable"] = taz_orders["expendable_net"]
         overall["taz_lines_2026"] = taz_orders["lines"]
         overall["taz_invoices_2026"] = taz_orders["invoices"]
     else:
         overall["orders_total"] = overall["tuz_orders_total"]
+        overall["orders_gross"] = None
+        overall["orders_cancelled"] = None
+        overall["orders_refund"] = None
+        overall["orders_rotable"] = None
+        overall["orders_expendable"] = None
         overall["taz_lines_2026"] = None
         overall["taz_invoices_2026"] = None
     buckets = {label: summarize(by_bucket[label]) for label, _, _ in PRICE_BUCKETS}
@@ -688,6 +803,8 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "trouble_lines": trouble_lines,
         "trouble_count": len(trouble_lines),
         "new_request_count": len(lines) - len(trouble_lines),
+        "reconciliation": reconciliation,
+        "taz_orders": taz_orders,
     }
 
 
@@ -841,6 +958,65 @@ def render_pending_offer_section(data: dict[str, Any]) -> str:
 """
 
 
+def render_reconciliation_section(data: dict[str, Any]) -> str:
+    overall = data["overall"]
+    recon = data.get("reconciliation")
+    if not recon:
+        return ""
+
+    buckets = recon["taz_rotable_buckets"]
+    counts = recon["taz_rotable_counts"]
+    rotable_net = recon["taz_rotable_net"] or 1
+    labels = {
+        "tuz_won_invoice": "ТУЗ выигран + invoice совпал с ТАЗ",
+        "tuz_won_pn_no_invoice": "ТУЗ выигран, invoice в ТУЗ пустой",
+        "tuz_open_or_lost": "P/N есть в ТУЗ, но заказ ещё не «согласовал»",
+        "not_in_tuz": "P/N нет в ТУЗ (другой канал / старый заказ)",
+    }
+    rows = []
+    for key, label in labels.items():
+        amount = buckets.get(key, 0)
+        if not amount:
+            continue
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(label)}</td>"
+            f"<td>{counts.get(key, 0)}</td>"
+            f"<td>{fmt_money(amount)}</td>"
+            f"<td>{amount / rotable_net * 100:.0f}%</td>"
+            "</tr>"
+        )
+
+    cancelled = overall.get("orders_cancelled") or 0
+    refund = overall.get("orders_refund") or 0
+    gross = overall.get("orders_gross") or overall["orders_total"]
+
+    return f"""
+  <div class="panel">
+    <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
+    <p class="lead-sm">Разница <b>{fmt_money(overall['orders_total'])}</b> (ТАЗ) и <b>{fmt_money(overall['tuz_orders_total'])}</b> (ТУЗ Offered×Qty) — <u>не</u> «$4 млн мимо ТУЗ». Это разные срезы: ТАЗ = все заказы, взятые в работу в 2026; ТУЗ = только {recon['tuz_won_count']} выигранных RFQ-строк на групповых листах.</p>
+    <div class="mini-grid" style="margin-bottom:14px">
+      <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="sub">{overall.get('taz_invoices_2026')} счетов · {overall.get('taz_lines_2026')} строк</div></div>
+      <div class="mini"><div class="k">из них ROTABLE</div><div class="v">{fmt_money(overall.get('orders_rotable'))}</div><div class="sub">EXPENDABLE {fmt_money(overall.get('orders_expendable'))}</div></div>
+      <div class="mini warn"><div class="k">Исключено Cancel + Refund</div><div class="v">{fmt_money(cancelled + refund)}</div><div class="sub">было валово {fmt_money(gross)}</div></div>
+      <div class="mini"><div class="k">ТУЗ выигранные</div><div class="v">{fmt_money(recon['tuz_won_offered'])}</div><div class="sub">Offered × Qty · {recon['tuz_won_count']} RFQ</div></div>
+      <div class="mini"><div class="k">ТУЗ → ТАЗ по invoice</div><div class="v">{fmt_money(recon['tuz_taz_2026'])}</div><div class="sub">продажная AH, work date 2026</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>TAZ ROTABLE 2026</th><th>Строк</th><th>Сумма</th><th>Доля</th></tr>
+        </thead>
+        <tbody>{''.join(rows)}</tbody>
+        <tfoot>
+          <tr><th>Итого ROTABLE (без Cancel/Refund)</th><th>{sum(counts.values())}</th><th>{fmt_money(rotable_net)}</th><th>100%</th></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+"""
+
+
 def render_html(data: dict[str, Any]) -> str:
     overall = data["overall"]
     bucket_order = [label for label, _, _ in PRICE_BUCKETS] + ["Без продажной оценки"]
@@ -970,8 +1146,8 @@ tr:hover td {{ background:#fafcfd; }}
     <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">{overall['not_found']} / {overall['in_procurement']}</div><div class="h">без supplier quote / ещё ищем</div></div>
     <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">{overall['sent']}</div><div class="h">есть дата в AC</div></div>
     <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">{overall['won']}</div><div class="h">{overall['won_pct']:.1f}% конверсия</div></div>
-    <div class="kpi accent"><div class="k">Сумма заказов 2026</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">ТАЗ ORDERS · {overall.get('taz_invoices_2026') or '—'} счетов · {overall.get('taz_lines_2026') or '—'} строк</div></div>
-    <div class="kpi"><div class="k">ТУЗ выигранные (Offered×Qty)</div><div class="v">{fmt_money(overall['tuz_orders_total'])}</div><div class="h">{overall['won']} RFQ со статусом «согласовал» / invoice</div></div>
+    <div class="kpi accent"><div class="k">ТАЗ 2026 (без Cancel)</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">ROTABLE {fmt_money(overall.get('orders_rotable'))} · {overall.get('taz_invoices_2026') or '—'} счетов</div></div>
+    <div class="kpi"><div class="k">ТУЗ выигранные</div><div class="v">{fmt_money(overall['tuz_orders_total'])}</div><div class="h">{overall['won']} RFQ · Offered×Qty</div></div>
     <div class="kpi"><div class="k">Медиана B→O</div><div class="v">{fmt_hours(overall['median_proc'])}</div><div class="h">закупки: запрос → цена</div></div>
     <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">{fmt_hours(overall['median_sales'])} / {fmt_hours(overall['median_total'])}</div><div class="h">продажи / полный цикл</div></div>
   </div>
@@ -982,11 +1158,13 @@ tr:hover td {{ background:#fafcfd; }}
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
-      <b>Сумма заказов 2026</b> — продажная итого (col AH) по листу ORDERS в ТАЗ, Ютэйр, дата взятия в работу 2026. ТУЗ-оценка — Offered × Qty по выигранным RFQ.<br/>
+      <b>Сумма заказов</b> — ТАЗ: продажная итого (AH), work date 2026, <b>без 5 CANCELLED и 7 REFUND</b>. ТУЗ: Offered×Qty по выигранным RFQ (групповые листы). Сверка — в отдельном блоке ниже.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).<br/>
       <b>Trouble</b> — повторный поиск компонента (Urgency / Request № / № заказа в дате). Это не новый запрос клиента, а попытка закрыть уже согласованный заказ после потери первого источника.
     </div>
   </div>
+
+  {render_reconciliation_section(data)}
 
   {render_trouble_section(data)}
 

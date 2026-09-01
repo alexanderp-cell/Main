@@ -69,7 +69,7 @@ tr:hover td { background:#fafcfd; }
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 01.09.2026 15:45 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 01.09.2026 16:24 · Questions v2 не включён</div>
 
   <div class="grid">
     <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">3142</div><div class="h">Request № + P/N · новых 3132</div></div>
@@ -78,8 +78,8 @@ tr:hover td { background:#fafcfd; }
     <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">64 / 537</div><div class="h">без supplier quote / ещё ищем</div></div>
     <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">2176</div><div class="h">есть дата в AC</div></div>
     <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">69</div><div class="h">2.2% конверсия</div></div>
-    <div class="kpi accent"><div class="k">Сумма заказов 2026</div><div class="v">$7,815,233</div><div class="h">ТАЗ ORDERS · 280 счетов · 366 строк</div></div>
-    <div class="kpi"><div class="k">ТУЗ выигранные (Offered×Qty)</div><div class="v">$3,543,162</div><div class="h">69 RFQ со статусом «согласовал» / invoice</div></div>
+    <div class="kpi accent"><div class="k">ТАЗ 2026 (без Cancel)</div><div class="v">$7,668,468</div><div class="h">ROTABLE $7,275,100 · 263 счетов</div></div>
+    <div class="kpi"><div class="k">ТУЗ выигранные</div><div class="v">$3,543,162</div><div class="h">69 RFQ · Offered×Qty</div></div>
     <div class="kpi"><div class="k">Медиана B→O</div><div class="v">1.1 д</div><div class="h">закупки: запрос → цена</div></div>
     <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">3 ч / 1.2 д</div><div class="h">продажи / полный цикл</div></div>
   </div>
@@ -90,11 +90,36 @@ tr:hover td { background:#fafcfd; }
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>50</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
-      <b>Сумма заказов 2026</b> — продажная итого (col AH) по листу ORDERS в ТАЗ, Ютэйр, дата взятия в работу 2026. ТУЗ-оценка — Offered × Qty по выигранным RFQ.<br/>
+      <b>Сумма заказов</b> — ТАЗ: продажная итого (AH), work date 2026, <b>без 5 CANCELLED и 7 REFUND</b>. ТУЗ: Offered×Qty по выигранным RFQ (групповые листы). Сверка — в отдельном блоке ниже.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).<br/>
       <b>Trouble</b> — повторный поиск компонента (Urgency / Request № / № заказа в дате). Это не новый запрос клиента, а попытка закрыть уже согласованный заказ после потери первого источника.
     </div>
   </div>
+
+  
+  <div class="panel">
+    <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
+    <p class="lead-sm">Разница <b>$7,668,468</b> (ТАЗ) и <b>$3,543,162</b> (ТУЗ Offered×Qty) — <u>не</u> «$4 млн мимо ТУЗ». Это разные срезы: ТАЗ = все заказы, взятые в работу в 2026; ТУЗ = только 69 выигранных RFQ-строк на групповых листах.</p>
+    <div class="mini-grid" style="margin-bottom:14px">
+      <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">$7,668,468</div><div class="sub">263 счетов · 339 строк</div></div>
+      <div class="mini"><div class="k">из них ROTABLE</div><div class="v">$7,275,100</div><div class="sub">EXPENDABLE $353,968</div></div>
+      <div class="mini warn"><div class="k">Исключено Cancel + Refund</div><div class="v">$146,765</div><div class="sub">было валово $7,815,233</div></div>
+      <div class="mini"><div class="k">ТУЗ выигранные</div><div class="v">$3,543,162</div><div class="sub">Offered × Qty · 69 RFQ</div></div>
+      <div class="mini"><div class="k">ТУЗ → ТАЗ по invoice</div><div class="v">$2,221,710</div><div class="sub">продажная AH, work date 2026</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>TAZ ROTABLE 2026</th><th>Строк</th><th>Сумма</th><th>Доля</th></tr>
+        </thead>
+        <tbody><tr><td>ТУЗ выигран + invoice совпал с ТАЗ</td><td>49</td><td>$2,125,100</td><td>29%</td></tr><tr><td>ТУЗ выигран, invoice в ТУЗ пустой</td><td>4</td><td>$299,800</td><td>4%</td></tr><tr><td>P/N есть в ТУЗ, но заказ ещё не «согласовал»</td><td>19</td><td>$3,319,850</td><td>46%</td></tr><tr><td>P/N нет в ТУЗ (другой канал / старый заказ)</td><td>21</td><td>$1,530,350</td><td>21%</td></tr></tbody>
+        <tfoot>
+          <tr><th>Итого ROTABLE (без Cancel/Refund)</th><th>93</th><th>$7,275,100</th><th>100%</th></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
 
   
   <div class="panel">
