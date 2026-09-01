@@ -205,15 +205,29 @@ class RequestLine:
         return next(iter(statuses), "—")
 
     def market_rows(self) -> list[OfferRow]:
+        """Supplier quotes on meaningful rows (exclude Backup / not-found statuses)."""
         rows = []
         for offer in self.offers:
-            if offer.status in NOT_FOUND_STATUSES:
+            if offer.status in NOT_FOUND_STATUSES or offer.status == "8. Backup":
                 continue
-            if offer.supplier_price is not None or offer.root_price is not None:
-                rows.append(offer)
-            elif offer.offered is not None:
+            if offer.supplier_price is not None:
                 rows.append(offer)
         return rows
+
+    def has_supplier_price(self) -> bool:
+        return any(o.supplier_price is not None for o in self.offers)
+
+    def has_root_price(self) -> bool:
+        return any(o.root_price is not None for o in self.offers)
+
+    def is_not_found(self) -> bool:
+        if self.found_on_market():
+            return False
+        statuses = {o.status for o in self.offers if o.status}
+        return bool(statuses & NOT_FOUND_STATUSES) or self.primary_status() in NOT_FOUND_STATUSES
+
+    def is_in_procurement(self) -> bool:
+        return self.primary_status() == "1. Проценка у поставщиков" and not self.found_on_market()
 
     def selected_offer(self) -> OfferRow | None:
         sent = [o for o in self.offers if o.sent_dt and o.offered is not None]
@@ -248,9 +262,25 @@ class RequestLine:
         return any(o.invoice for o in self.offers)
 
     def found_on_market(self) -> bool:
-        if any(o.status in NOT_FOUND_STATUSES for o in self.offers) and not self.market_rows():
-            return False
+        """Found = есть Supplier Price на строке, которая не Backup и не «не нашли»."""
         return len(self.market_rows()) > 0
+
+    def order_value(self) -> float | None:
+        if not self.won():
+            return None
+        sale = self.sale_value()
+        if sale is not None:
+            return sale
+        qty = self.qty or 1
+        for offer in self.offers:
+            if offer.status == "7. Клиент согласовал" and offer.offered is not None:
+                return offer.offered * qty
+        for offer in self.offers:
+            if offer.offered is not None:
+                return offer.offered * qty
+        for offer in self.market_rows():
+            return offer.supplier_price * qty
+        return None
 
     def timing(self) -> dict[str, float | None]:
         request_dt = next((o.request_dt for o in self.offers if o.request_dt), None)
@@ -360,9 +390,15 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         sales = [t["sales"] for line in group for t in [line.timing()] if t["sales"] is not None]
         total = [t["total"] for line in group for t in [line.timing()] if t["total"] is not None]
         found = sum(1 for line in group if line.found_on_market())
+        not_found = sum(1 for line in group if line.is_not_found())
+        in_procurement = sum(1 for line in group if line.is_in_procurement())
+        supplier_no_offer = sum(
+            1 for line in group if line.has_supplier_price() and line.sale_value() is None
+        )
         won = sum(1 for line in group if line.won())
+        orders_total = sum(line.order_value() or 0 for line in group if line.won())
         sent = sum(1 for line in group if any(o.sent_dt for o in line.offers))
-        pending_proc = sum(1 for line in group if line.primary_status() == "1. Проценка у поставщиков")
+        pending_proc = in_procurement
         offer_counts = [len(line.market_rows()) for line in group if line.market_rows()]
         markups = [line.markup_pct() for line in group if line.markup_pct() is not None]
 
@@ -370,8 +406,12 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "count": len(group),
             "found": found,
             "found_pct": (found / len(group) * 100) if group else 0,
+            "not_found": not_found,
+            "in_procurement": in_procurement,
+            "supplier_no_offer": supplier_no_offer,
             "won": won,
             "won_pct": (won / len(group) * 100) if group else 0,
+            "orders_total": orders_total,
             "sent": sent,
             "pending_proc": pending_proc,
             "avg_offers": statistics.mean(offer_counts) if offer_counts else 0,
@@ -399,6 +439,8 @@ def render_table_rows(lines: list[RequestLine]) -> str:
     html_rows = []
     for line in rows[:200]:
         offer = line.selected_offer()
+        best_supplier = min((o.supplier_price for o in line.market_rows()), default=None)
+        display_offer = offer.offered if offer else None
         timing = line.timing()
         alt_flag = ""
         if any(o.alt_bold or o.pn_bold for o in line.offers):
@@ -412,7 +454,8 @@ def render_table_rows(lines: list[RequestLine]) -> str:
             f"<td>{line.qty or '—'}</td>"
             f"<td>{html.escape(line.primary_status())}</td>"
             f"<td>{len(line.market_rows())}</td>"
-            f"<td>{fmt_money(offer.offered if offer else None)}</td>"
+            f"<td>{fmt_money(display_offer)}"
+            f"{('<div class=\"muted\">Supp: ' + fmt_money(best_supplier) + '</div>') if (display_offer is None and best_supplier is not None) else ''}</td>"
             f"<td>{fmt_money(line.sale_value())}</td>"
             f"<td>{fmt_pct(line.markup_pct())}</td>"
             f"<td>{fmt_hours(timing['procurement'])}</td>"
@@ -437,22 +480,26 @@ def render_html(data: dict[str, Any]) -> str:
         bucket = data["buckets"][label]
         if bucket["count"] == 0:
             continue
+        extra = ""
+        if label == "Без продажной оценки" and bucket.get("supplier_no_offer"):
+            extra = f" · supplier price без Offered: {bucket['supplier_no_offer']}"
         bucket_sections.append(
             f"""
             <details class="bucket" {'open' if label == bucket_order[0] else ''}>
               <summary>
                 <span class="bucket-title">{html.escape(label)}</span>
-                <span class="bucket-meta">{bucket['count']} запросов · найдено {bucket['found_pct']:.0f}% · заказов {bucket['won']} · медиана B→AC {fmt_hours(bucket['median_total'])}</span>
+                <span class="bucket-meta">{bucket['count']} запросов · найдено {bucket['found_pct']:.0f}% · не найдено {bucket['not_found']} · заказов {bucket['won']} · медиана B→AC {fmt_hours(bucket['median_total'])}{extra}</span>
               </summary>
               <div class="bucket-body">
                 <div class="mini-grid">
-                  <div class="mini"><div class="k">Найдено на рынке</div><div class="v">{bucket['found']} <span class="sub">({bucket['found_pct']:.0f}%)</span></div></div>
+                  <div class="mini"><div class="k">Найдено (Supplier Price)</div><div class="v">{bucket['found']} <span class="sub">({bucket['found_pct']:.0f}%)</span></div></div>
+                  <div class="mini warn"><div class="k">Не найдено</div><div class="v">{bucket['not_found']}</div></div>
+                  <div class="mini warn"><div class="k">В проценке</div><div class="v">{bucket['in_procurement']}</div></div>
                   <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">{bucket['sent']}</div></div>
                   <div class="mini"><div class="k">Заказ получен</div><div class="v">{bucket['won']} <span class="sub">({bucket['won_pct']:.0f}%)</span></div></div>
+                  <div class="mini accent"><div class="k">Сумма заказов</div><div class="v">{fmt_money(bucket['orders_total'])}</div></div>
                   <div class="mini"><div class="k">Ср. офферов / запрос</div><div class="v">{bucket['avg_offers']:.1f}</div></div>
-                  <div class="mini"><div class="k">Медиана наценки</div><div class="v">{fmt_pct(bucket['median_markup'])}</div></div>
                   <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">{fmt_hours(bucket['median_proc'])} / {fmt_hours(bucket['median_sales'])} / {fmt_hours(bucket['median_total'])}</div></div>
-                  <div class="mini warn"><div class="k">Ещё в проценке</div><div class="v">{bucket['pending_proc']}</div></div>
                 </div>
                 <div class="table-wrap">
                   <table>
@@ -544,23 +591,23 @@ tr:hover td {{ background:#fafcfd; }}
 
   <div class="grid">
     <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">{overall['count']}</div><div class="h">Request № + P/N</div></div>
-    <div class="kpi"><div class="k">Найдено на рынке</div><div class="v">{overall['found']}</div><div class="h">{overall['found_pct']:.0f}% запросов с офферами</div></div>
+    <div class="kpi"><div class="k">Найдено на рынке</div><div class="v">{overall['found']}</div><div class="h">{overall['found_pct']:.0f}% — только Supplier Price</div></div>
+    <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">{overall['not_found']} / {overall['in_procurement']}</div><div class="h">без supplier quote / ещё ищем</div></div>
     <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">{overall['sent']}</div><div class="h">есть дата в AC</div></div>
     <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">{overall['won']}</div><div class="h">{overall['won_pct']:.1f}% конверсия</div></div>
+    <div class="kpi accent"><div class="k">Сумма заказов</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">Offered × Qty по выигранным</div></div>
     <div class="kpi"><div class="k">Медиана B→O</div><div class="v">{fmt_hours(overall['median_proc'])}</div><div class="h">закупки: запрос → цена</div></div>
-    <div class="kpi"><div class="k">Медиана O→AC</div><div class="v">{fmt_hours(overall['median_sales'])}</div><div class="h">продажи: цена → отправка</div></div>
-    <div class="kpi"><div class="k">Медиана B→AC</div><div class="v">{fmt_hours(overall['median_total'])}</div><div class="h">полный цикл</div></div>
-    <div class="kpi warn"><div class="k">В проценке</div><div class="v">{overall['pending_proc']}</div><div class="h">статус «1. Проценка у поставщиков»</div></div>
+    <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">{fmt_hours(overall['median_sales'])} / {fmt_hours(overall['median_total'])}</div><div class="h">продажи / полный цикл</div></div>
   </div>
 
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
-      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O).<br/>
-      <b>O→AC</b> — от получения цены до отправки оффера клиенту (AC).<br/>
-      <b>Наценка</b> — (Offered − Supplier − Transit) / себестоимость; если нет supplier — от Root price.<br/>
-      <b>alt P/N</b> — в ТУЗ P/N выделен жирным или предложен альтернативный номер.<br/>
-      Исключения: Questions v2, expendables, счёт «622-6263-003» не учитывались отдельно.
+      <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
+      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> уже имеют Supplier Price (цена закупки есть, клиентский Offered ещё не сформирован).<br/>
+      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
+      <b>Сумма заказов</b> — суммарная продажная стоимость по статусу «Клиент согласовал» / выставленному счёту (Offered × Qty).<br/>
+      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
 
