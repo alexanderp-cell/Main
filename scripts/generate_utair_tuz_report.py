@@ -16,7 +16,15 @@ from typing import Any
 import openpyxl
 
 TUZ_PATH = Path("/tmp/utair_analysis/TUZ_ТУЗ полный файл 01.09.2026.xlsx")
+TAZ_PATH = Path("/tmp/utair_analysis/TAZ_ТАЗ полный файл 28.08.2026.xlsx")
 OUTPUT_PATH = Path("/workspace/UTAIR_TUZ_performance_report.html")
+
+EARLY_STATUSES = {
+    "0. Начальный этап",
+    "1. Проценка у поставщиков",
+    "8. Backup",
+    "11. Внесено в ТАЗ",
+}
 
 GROUP_SHEETS = [
     "Группа A",
@@ -59,8 +67,11 @@ def parse_num(value) -> float | None:
         return None
     if isinstance(value, (int, float)):
         return float(value)
-    text = str(value).strip().upper()
-    if text in {"", "TBA", "N/A", "NA", "#VALUE!", "-"}:
+    text = str(value).strip()
+    if text.startswith("="):
+        return None
+    text = text.upper()
+    if text in {"", "TBA", "N/A", "NA", "#VALUE!", "-", "БЕЗ ЦЕНЫ"}:
         return None
     match = re.search(r"[-+]?\d[\d\s.,]*", text)
     if not match:
@@ -215,7 +226,13 @@ class RequestLine:
         return rows
 
     def has_supplier_price(self) -> bool:
-        return any(o.supplier_price is not None for o in self.offers)
+        return len(self.market_rows()) > 0
+
+    def supplier_without_offer(self) -> bool:
+        """Supplier quote exists, status past procurement, but no client Offered × Qty."""
+        if not self.market_rows() or self.sale_value() is not None:
+            return False
+        return self.primary_status() not in EARLY_STATUSES
 
     def has_root_price(self) -> bool:
         return any(o.root_price is not None for o in self.offers)
@@ -296,17 +313,19 @@ class RequestLine:
 
 
 def load_request_lines(path: Path) -> list[RequestLine]:
-    wb = openpyxl.load_workbook(path, read_only=False, data_only=False)
+    wb_vals = openpyxl.load_workbook(path, read_only=False, data_only=True)
+    wb_fmt = openpyxl.load_workbook(path, read_only=False, data_only=False)
     grouped: dict[tuple[str, str, str], RequestLine] = {}
 
     for sheet in GROUP_SHEETS:
-        if sheet not in wb.sheetnames:
+        if sheet not in wb_vals.sheetnames:
             continue
-        ws = wb[sheet]
+        ws_vals = wb_vals[sheet]
+        ws_fmt = wb_fmt[sheet]
         cols = sheet_columns(sheet)
 
-        for row in ws.iter_rows(min_row=2):
-            values = [cell.value for cell in row]
+        for row_vals, row_fmt in zip(ws_vals.iter_rows(min_row=2), ws_fmt.iter_rows(min_row=2)):
+            values = [cell.value for cell in row_vals]
             if not values:
                 continue
 
@@ -337,8 +356,8 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     offers=[],
                 )
 
-            pn_cell = row[cols["pn"] - 1]
-            alt_cell = row[cols["alt_pn"] - 1]
+            pn_cell = row_fmt[cols["pn"] - 1]
+            alt_cell = row_fmt[cols["alt_pn"] - 1]
             invoice_raw = val("invoice")
             invoice = None
             if invoice_raw not in (None, ""):
@@ -365,8 +384,44 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                 )
             )
 
-    wb.close()
+    wb_vals.close()
+    wb_fmt.close()
     return list(grouped.values())
+
+
+def load_taz_orders_2026(path: Path) -> dict[str, Any]:
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
+    total = 0.0
+    lines = 0
+    invoices: set[str] = set()
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row:
+            continue
+        customer = row[6]
+        if not is_utair(customer):
+            continue
+        work_dt = row[16]
+        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+            continue
+        qty = parse_num(row[13]) or 1
+        sale_ea = parse_num(row[32])
+        sale_total = parse_num(row[33])
+        if sale_total is not None:
+            total += sale_total
+        elif sale_ea is not None:
+            total += sale_ea * qty
+        lines += 1
+        if row[0] not in (None, ""):
+            invoices.add(str(row[0]).strip())
+
+    wb.close()
+    return {
+        "total": total,
+        "lines": lines,
+        "invoices": len(invoices),
+    }
 
 
 def median(values: list[float]) -> float | None:
@@ -392,11 +447,9 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         found = sum(1 for line in group if line.found_on_market())
         not_found = sum(1 for line in group if line.is_not_found())
         in_procurement = sum(1 for line in group if line.is_in_procurement())
-        supplier_no_offer = sum(
-            1 for line in group if line.has_supplier_price() and line.sale_value() is None
-        )
+        supplier_no_offer = sum(1 for line in group if line.supplier_without_offer())
         won = sum(1 for line in group if line.won())
-        orders_total = sum(line.order_value() or 0 for line in group if line.won())
+        tuz_orders_total = sum(line.order_value() or 0 for line in group if line.won())
         sent = sum(1 for line in group if any(o.sent_dt for o in line.offers))
         pending_proc = in_procurement
         offer_counts = [len(line.market_rows()) for line in group if line.market_rows()]
@@ -411,7 +464,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "supplier_no_offer": supplier_no_offer,
             "won": won,
             "won_pct": (won / len(group) * 100) if group else 0,
-            "orders_total": orders_total,
+            "tuz_orders_total": tuz_orders_total,
             "sent": sent,
             "pending_proc": pending_proc,
             "avg_offers": statistics.mean(offer_counts) if offer_counts else 0,
@@ -422,13 +475,24 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "lines": group,
         }
 
+    taz_orders = load_taz_orders_2026(TAZ_PATH) if TAZ_PATH.exists() else None
+
     overall = summarize(lines)
+    if taz_orders:
+        overall["orders_total"] = taz_orders["total"]
+        overall["taz_lines_2026"] = taz_orders["lines"]
+        overall["taz_invoices_2026"] = taz_orders["invoices"]
+    else:
+        overall["orders_total"] = overall["tuz_orders_total"]
+        overall["taz_lines_2026"] = None
+        overall["taz_invoices_2026"] = None
     buckets = {label: summarize(by_bucket[label]) for label, _, _ in PRICE_BUCKETS}
     buckets["Без продажной оценки"] = summarize(unpriced)
 
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
+        "taz_source": TAZ_PATH.name if TAZ_PATH.exists() else None,
         "overall": overall,
         "buckets": buckets,
     }
@@ -497,7 +561,7 @@ def render_html(data: dict[str, Any]) -> str:
                   <div class="mini warn"><div class="k">В проценке</div><div class="v">{bucket['in_procurement']}</div></div>
                   <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">{bucket['sent']}</div></div>
                   <div class="mini"><div class="k">Заказ получен</div><div class="v">{bucket['won']} <span class="sub">({bucket['won_pct']:.0f}%)</span></div></div>
-                  <div class="mini accent"><div class="k">Сумма заказов</div><div class="v">{fmt_money(bucket['orders_total'])}</div></div>
+                  <div class="mini accent"><div class="k">Сумма заказов (ТУЗ)</div><div class="v">{fmt_money(bucket['tuz_orders_total'])}</div></div>
                   <div class="mini"><div class="k">Ср. офферов / запрос</div><div class="v">{bucket['avg_offers']:.1f}</div></div>
                   <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">{fmt_hours(bucket['median_proc'])} / {fmt_hours(bucket['median_sales'])} / {fmt_hours(bucket['median_total'])}</div></div>
                 </div>
@@ -595,7 +659,8 @@ tr:hover td {{ background:#fafcfd; }}
     <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">{overall['not_found']} / {overall['in_procurement']}</div><div class="h">без supplier quote / ещё ищем</div></div>
     <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">{overall['sent']}</div><div class="h">есть дата в AC</div></div>
     <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">{overall['won']}</div><div class="h">{overall['won_pct']:.1f}% конверсия</div></div>
-    <div class="kpi accent"><div class="k">Сумма заказов</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">Offered × Qty по выигранным</div></div>
+    <div class="kpi accent"><div class="k">Сумма заказов 2026</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">ТАЗ ORDERS · {overall.get('taz_invoices_2026') or '—'} счетов · {overall.get('taz_lines_2026') or '—'} строк</div></div>
+    <div class="kpi"><div class="k">ТУЗ выигранные (Offered×Qty)</div><div class="v">{fmt_money(overall['tuz_orders_total'])}</div><div class="h">{overall['won']} RFQ со статусом «согласовал» / invoice</div></div>
     <div class="kpi"><div class="k">Медиана B→O</div><div class="v">{fmt_hours(overall['median_proc'])}</div><div class="h">закупки: запрос → цена</div></div>
     <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">{fmt_hours(overall['median_sales'])} / {fmt_hours(overall['median_total'])}</div><div class="h">продажи / полный цикл</div></div>
   </div>
@@ -604,9 +669,9 @@ tr:hover td {{ background:#fafcfd; }}
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
-      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> уже имеют Supplier Price (цена закупки есть, клиентский Offered ещё не сформирован).<br/>
+      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой (без строк «Проценка» / Backup).<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
-      <b>Сумма заказов</b> — суммарная продажная стоимость по статусу «Клиент согласовал» / выставленному счёту (Offered × Qty).<br/>
+      <b>Сумма заказов 2026</b> — продажная итого (col AH) по листу ORDERS в ТАЗ, Ютэйр, дата взятия в работу 2026. ТУЗ-оценка — Offered × Qty по выигранным RFQ.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
