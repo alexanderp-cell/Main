@@ -37,6 +37,11 @@ HOLD_REASON_RULES = [
     ("Ждём ответ поставщика", r"(жд[её]м|жду|апдейт|квота от)"),
 ]
 
+TROUBLE_RE = re.compile(r"trouble|трабл", re.IGNORECASE)
+ORDER_REF_RE = re.compile(r"(P\d{5,}|Q\d{5,}|\d{4,}\.0)", re.IGNORECASE)
+TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
+ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
+
 GROUP_SHEETS = [
     "Группа A",
     "Группа B",
@@ -170,6 +175,30 @@ def classify_hold_reason(text: str | None) -> str:
     return "Без категории"
 
 
+def request_dt_order_ref(value) -> str | None:
+    if value is None or isinstance(value, datetime):
+        return None
+    text = str(value).strip()
+    match = ORDER_NUM_DT_RE.match(text)
+    if match:
+        return f"№{match.group(1)}"
+    return None
+
+
+def extract_order_refs(*texts: str | None) -> list[str]:
+    refs: list[str] = []
+    seen: set[str] = set()
+    for text in texts:
+        if not text:
+            continue
+        for match in ORDER_REF_RE.finditer(str(text)):
+            token = match.group(1)
+            if token not in seen:
+                seen.add(token)
+                refs.append(token)
+    return refs
+
+
 def bucket_for_sale(value: float | None) -> str | None:
     if value is None:
         return None
@@ -185,6 +214,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "status": 1,
             "request_dt": 2,
             "request_no": 3,
+            "urgency": 4,
             "client": 5,
             "pn": 7,
             "alt_pn": 8,
@@ -207,6 +237,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "status": 1,
         "request_dt": 2,
         "request_no": 3,
+        "urgency": 4,
         "client": 5,
         "pn": 7,
         "alt_pn": 8,
@@ -241,6 +272,8 @@ class OfferRow:
     offered: float | None
     cond: str | None
     invoice: str | None
+    request_dt_text: str | None = None
+    urgency: str | None = None
     remarks: str | None = None
     ppwk: str | None = None
     root_text: str | None = None
@@ -322,6 +355,51 @@ class RequestLine:
 
     def hold_reason(self) -> str:
         return classify_hold_reason(self.workflow_notes())
+
+    def is_trouble_search(self) -> bool:
+        """Repeat procurement when the first source was lost (Trouble / order ref in left cols)."""
+        if TROUBLE_RE.search(self.request_no):
+            return True
+        for offer in self.offers:
+            if offer.urgency and TROUBLE_RE.search(offer.urgency):
+                return True
+            if offer.request_dt_text and request_dt_order_ref(offer.request_dt_text):
+                return True
+        return False
+
+    def trouble_order_ref(self) -> str | None:
+        refs = extract_order_refs(self.request_no)
+        if refs:
+            return refs[0]
+        if self.request_no and not TROUBLE_ONLY_REQUEST_RE.match(self.request_no.strip()):
+            if any(offer.urgency and TROUBLE_RE.search(offer.urgency) for offer in self.offers):
+                token = self.request_no.strip().splitlines()[0].strip()
+                if ORDER_REF_RE.fullmatch(token) or ORDER_NUM_DT_RE.match(token):
+                    return token
+        for offer in self.offers:
+            dt_ref = request_dt_order_ref(offer.request_dt_text)
+            if dt_ref:
+                return dt_ref
+        return None
+
+    def trouble_via(self) -> str | None:
+        if TROUBLE_RE.search(self.request_no):
+            return "Request №"
+        for offer in self.offers:
+            if offer.urgency and TROUBLE_RE.search(offer.urgency):
+                return "Urgency"
+            if offer.request_dt_text and request_dt_order_ref(offer.request_dt_text):
+                return "Request date"
+        return None
+
+    def trouble_tag_html(self) -> str:
+        if not self.is_trouble_search():
+            return ""
+        ref = self.trouble_order_ref()
+        label = "Trouble"
+        if ref:
+            label += f" → {ref}"
+        return f" <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>{html.escape(label)}</span>"
 
     def has_root_price(self) -> bool:
         return any(o.root_price is not None for o in self.offers)
@@ -454,11 +532,16 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                 if len(invoice_text) <= 20 and re.match(r"^[\d-]+$", invoice_text.replace(".0", "")):
                     invoice = invoice_text.replace(".0", "")
 
+            raw_request_dt = val("request_dt")
+            request_dt = to_dt(raw_request_dt)
+            request_dt_text = clean_text(raw_request_dt) if request_dt is None else None
+
             grouped[key].offers.append(
                 OfferRow(
                     sheet=sheet,
                     status=str(val("status")).strip() if val("status") else None,
-                    request_dt=to_dt(val("request_dt")),
+                    request_dt=request_dt,
+                    request_dt_text=request_dt_text,
                     quote_dt=to_dt(val("quote_dt")),
                     sent_dt=to_dt(val("sent_dt")),
                     accepted_dt=to_dt(val("accepted_dt")),
@@ -471,6 +554,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     ppwk=clean_text(val("ppwk")),
                     root_text=clean_text(val("root")),
                     invoice=invoice,
+                    urgency=clean_text(val("urgency")),
                     pn_bold=bool(pn_cell.font and pn_cell.font.bold),
                     alt_bold=bool(alt_cell.font and alt_cell.font.bold),
                 )
@@ -589,6 +673,9 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     hold_reasons = Counter(line.hold_reason() for line in pending_offer)
     with_notes = sum(1 for line in pending_offer if line.workflow_notes())
 
+    trouble_lines = [line for line in lines if line.is_trouble_search()]
+    trouble_lines.sort(key=lambda line: line.trouble_order_ref() or line.request_no)
+
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
@@ -598,6 +685,9 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "pending_offer": pending_offer,
         "hold_reasons": dict(hold_reasons.most_common()),
         "pending_with_notes": with_notes,
+        "trouble_lines": trouble_lines,
+        "trouble_count": len(trouble_lines),
+        "new_request_count": len(lines) - len(trouble_lines),
     }
 
 
@@ -614,7 +704,7 @@ def render_table_rows(lines: list[RequestLine]) -> str:
             alt_flag = " <span class='tag alt'>alt P/N</span>"
         html_rows.append(
             "<tr>"
-            f"<td>{html.escape(line.request_no)}</td>"
+            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
             f"<td><b>{html.escape(line.pn)}</b>{alt_flag}"
             f"{('<div class=\"muted\">ALT: ' + html.escape(line.alt_pn) + '</div>') if line.alt_pn else ''}</td>"
             f"<td>{html.escape(line.description or '—')}</td>"
@@ -638,6 +728,50 @@ def render_table_rows(lines: list[RequestLine]) -> str:
     return "\n".join(html_rows)
 
 
+def render_trouble_section(data: dict[str, Any]) -> str:
+    lines: list[RequestLine] = data.get("trouble_lines", [])
+    if not lines:
+        return ""
+
+    table_rows = []
+    for line in lines:
+        urgency = next((o.urgency for o in line.offers if o.urgency), "—")
+        ref = line.trouble_order_ref() or "—"
+        via = line.trouble_via() or "—"
+        table_rows.append(
+            "<tr>"
+            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
+            f"<td><b>{html.escape(line.pn)}</b></td>"
+            f"<td>{line.qty or '—'}</td>"
+            f"<td>{html.escape(ref)}</td>"
+            f"<td>{html.escape(via)}</td>"
+            f"<td>{html.escape(str(urgency))}</td>"
+            f"<td>{html.escape(line.primary_status())}</td>"
+            f"<td>{'✓' if line.won() else '—'}</td>"
+            "</tr>"
+        )
+
+    return f"""
+  <div class="panel">
+    <h2>Повторный поиск — Trouble ({len(lines)})</h2>
+    <p class="lead-sm">Не новый запрос клиента, а повторная проценка, когда первый источник пропал (клиент долго решал, юнит уже продан и т.п.). Маркеры в левой части ТУЗ: колонка <b>Urgency</b> = Trouble/Troubles, <b>Request №</b> = TROUBLES или «Troubles + номер заказа», иногда <b>Request date</b> = №заказа.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Request №</th><th>P/N</th><th>Qty</th><th>Связанный заказ</th>
+            <th>Маркер</th><th>Urgency</th><th>Статус</th><th>Заказ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {''.join(table_rows)}
+        </tbody>
+      </table>
+    </div>
+  </div>
+"""
+
+
 def render_pending_offer_section(data: dict[str, Any]) -> str:
     lines: list[RequestLine] = data.get("pending_offer", [])
     if not lines:
@@ -659,7 +793,7 @@ def render_pending_offer_section(data: dict[str, Any]) -> str:
             note_html = note_html[:217] + "…"
         table_rows.append(
             "<tr>"
-            f"<td>{html.escape(line.request_no)}</td>"
+            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
             f"<td><b>{html.escape(line.pn)}</b></td>"
             f"<td>{line.qty or '—'}</td>"
             f"<td>{html.escape(line.primary_status())}</td>"
@@ -820,6 +954,7 @@ tr:hover td {{ background:#fafcfd; }}
 .tag {{ display:inline-block; font-size:.68rem; font-weight:700; padding:2px 6px; border-radius:999px; }}
 .tag.alt {{ background:#fde68a; color:#7c5a00; }}
 .tag.hold {{ background:#e8f0fe; color:#1e4a8a; }}
+.tag.trouble {{ background:#fde8e8; color:#9b1c1c; }}
 </style>
 </head>
 <body>
@@ -829,7 +964,8 @@ tr:hover td {{ background:#fafcfd; }}
   <div class="meta">Источник: {html.escape(data['source'])} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
 
   <div class="grid">
-    <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">{overall['count']}</div><div class="h">Request № + P/N</div></div>
+    <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">{overall['count']}</div><div class="h">Request № + P/N · новых {data.get('new_request_count', overall['count'])}</div></div>
+    <div class="kpi warn"><div class="k">Повторный поиск (Trouble)</div><div class="v">{data.get('trouble_count', 0)}</div><div class="h">не новый RFQ — спасаем заказ</div></div>
     <div class="kpi"><div class="k">Найдено на рынке</div><div class="v">{overall['found']}</div><div class="h">{overall['found_pct']:.0f}% — только Supplier Price</div></div>
     <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">{overall['not_found']} / {overall['in_procurement']}</div><div class="h">без supplier quote / ещё ищем</div></div>
     <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">{overall['sent']}</div><div class="h">есть дата в AC</div></div>
@@ -847,9 +983,12 @@ tr:hover td {{ background:#fafcfd; }}
       <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
       <b>Сумма заказов 2026</b> — продажная итого (col AH) по листу ORDERS в ТАЗ, Ютэйр, дата взятия в работу 2026. ТУЗ-оценка — Offered × Qty по выигранным RFQ.<br/>
-      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
+      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).<br/>
+      <b>Trouble</b> — повторный поиск компонента (Urgency / Request № / № заказа в дате). Это не новый запрос клиента, а попытка закрыть уже согласованный заказ после потери первого источника.
     </div>
   </div>
+
+  {render_trouble_section(data)}
 
   {render_pending_offer_section(data)}
 
