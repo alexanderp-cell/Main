@@ -89,6 +89,8 @@ TAZ_WARRANTY_STATUSES = {"8 WARRANTY"}
 WARRANTY_TEXT_RE = re.compile(r"гарант|warranty", re.IGNORECASE)
 TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
 ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
+REPORT_YEAR = 2026
+TAZ_LOOKUP_SHEETS = ("ORDERS", "PRESALE")
 
 GROUP_SHEETS = [
     "Группа A",
@@ -504,7 +506,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "pn": 7,
             "alt_pn": 8,
             "description": 9,
-            "qty": 10,
+            "qty": 10,  # J — qty requested by client
             "quote_dt": 12,
             "root_price": 14,
             "root": 15,
@@ -512,6 +514,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "supplier": 17,
             "transit": 18,
             "cond": 19,
+            "qty_avail": 21,  # U — qty offered / available
             "ppwk": 23,
             "remarks": 24,
             "offered": 25,
@@ -528,7 +531,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "pn": 7,
         "alt_pn": 8,
         "description": 9,
-        "qty": 10,
+        "qty": 10,  # J — qty requested by client
         "quote_dt": 15,
         "root_price": 17,
         "root": 18,
@@ -536,6 +539,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "supplier": 20,
         "transit": 21,
         "cond": 22,
+        "qty_avail": 24,  # X — qty offered / available
         "ppwk": 26,
         "remarks": 27,
         "offered": 28,
@@ -558,7 +562,7 @@ def sheet_columns_shifted(sheet: str) -> dict[str, int]:
         "pn": 9,
         "alt_pn": 10,
         "description": 11,
-        "qty": 12,
+        "qty": 12,  # L — qty requested by client
         "quote_dt": 15,
         "root_price": 17,
         "root": 18,
@@ -566,6 +570,7 @@ def sheet_columns_shifted(sheet: str) -> dict[str, int]:
         "supplier": 20,
         "transit": 21,
         "cond": 22,
+        "qty_avail": 24,  # X — qty offered / available
         "ppwk": 26,
         "remarks": 27,
         "offered": 28,
@@ -612,6 +617,7 @@ class OfferRow:
     offered: float | None
     cond: str | None
     invoice: str | None
+    qty_avail: float | None = None
     request_dt_text: str | None = None
     urgency: str | None = None
     remarks: str | None = None
@@ -629,7 +635,7 @@ class RequestLine:
     pn: str
     alt_pn: str | None
     description: str | None
-    qty: float | None
+    qty: float | None  # J — client requested qty
     offers: list[OfferRow] = field(default_factory=list)
 
     @property
@@ -793,6 +799,13 @@ class RequestLine:
         return self.primary_status() == "1. Проценка у поставщиков" and not self.found_on_market()
 
     def selected_offer(self) -> OfferRow | None:
+        agreed = [
+            o
+            for o in self.offers
+            if o.status == "7. Клиент согласовал" and o.offered is not None
+        ]
+        if agreed:
+            return sorted(agreed, key=lambda o: o.offered)[0]
         sent = [o for o in self.offers if o.sent_dt and o.offered is not None]
         if sent:
             return sorted(sent, key=lambda o: o.sent_dt)[0]
@@ -802,11 +815,23 @@ class RequestLine:
         priced = [o for o in self.offers if o.offered is not None]
         return priced[0] if priced else None
 
+    def offer_qty(self, offer: OfferRow | None = None) -> float | None:
+        """Commercial qty: min(requested J, available/offered X). Fallback to either."""
+        offer = offer or self.selected_offer()
+        requested = self.qty
+        available = offer.qty_avail if offer else None
+        if requested is not None and available is not None:
+            return min(requested, available)
+        if available is not None:
+            return available
+        return requested
+
     def sale_value(self) -> float | None:
         offer = self.selected_offer()
-        if not offer or offer.offered is None or not self.qty:
+        qty = self.offer_qty(offer)
+        if not offer or offer.offered is None or not qty:
             return None
-        return offer.offered * self.qty
+        return offer.offered * qty
 
     def markup_pct(self) -> float | None:
         offer = self.selected_offer()
@@ -834,16 +859,25 @@ class RequestLine:
         sale = self.sale_value()
         if sale is not None:
             return sale
-        qty = self.qty or 1
         for offer in self.offers:
             if offer.status == "7. Клиент согласовал" and offer.offered is not None:
+                qty = self.offer_qty(offer) or 1
                 return offer.offered * qty
         for offer in self.offers:
             if offer.offered is not None:
+                qty = self.offer_qty(offer) or 1
                 return offer.offered * qty
         for offer in self.market_rows():
-            return offer.supplier_price * qty
+            qty = self.offer_qty(offer) or 1
+            if offer.supplier_price is not None:
+                return offer.supplier_price * qty
         return None
+
+    def in_report_year(self, year: int = REPORT_YEAR) -> bool:
+        years = {o.request_dt.year for o in self.offers if o.request_dt}
+        if not years:
+            return True
+        return year in years
 
     def timing(self) -> dict[str, float | None]:
         request_dt = next((o.request_dt for o in self.offers if o.request_dt), None)
@@ -931,6 +965,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     root_text=clean_text(val("root")),
                     supplier=clean_text(val("supplier")),
                     invoice=invoice,
+                    qty_avail=parse_num(val("qty_avail")),
                     urgency=clean_text(val("urgency")),
                     pn_bold=bool(pn_cell.font and pn_cell.font.bold),
                     alt_bold=bool(alt_cell.font and alt_cell.font.bold),
@@ -939,7 +974,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
 
     wb_vals.close()
     wb_fmt.close()
-    return list(grouped.values())
+    return [line for line in grouped.values() if line.in_report_year(REPORT_YEAR)]
 
 
 def load_taz_orders_2026(path: Path) -> dict[str, Any]:
@@ -1193,45 +1228,70 @@ def median(values: list[float]) -> float | None:
     return statistics.median(values) if values else None
 
 
-def load_taz_invoice_money(path: Path) -> dict[str, dict[str, float]]:
-    """Per-invoice TAZ 2026 money (excl. Cancel/Refund and warranty)."""
-    by_invoice: dict[str, dict[str, float]] = defaultdict(
-        lambda: {
-            "revenue": 0.0,
-            "purchase": 0.0,
-            "transport_fact": 0.0,
-            "fee": 0.0,
-            "customs": 0.0,
-            "margin": 0.0,
-        }
-    )
+def load_taz_invoice_money(path: Path) -> dict[str, dict[str, Any]]:
+    """Per-invoice TAZ money from ORDERS + PRESALE.
+
+    countable=True only for ORDERS in REPORT_YEAR excluding Cancel/Refund/warranty.
+    All matched invoices (any year, incl. PRESALE/Cancel) are kept for won-order display.
+    """
+    by_invoice: dict[str, dict[str, Any]] = {}
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if not row or not is_utair(row[6]):
+
+    for sheet_name in TAZ_LOOKUP_SHEETS:
+        if sheet_name not in wb.sheetnames:
             continue
-        work_dt = row[16]
-        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
-            continue
-        status = str(row[4]).strip() if row[4] else ""
-        if status in TAZ_EXCLUDED_STATUSES or is_taz_warranty_row(row):
-            continue
-        invoice = normalize_invoice(row[0])
-        if not invoice:
-            continue
-        costs = taz_row_costs(row)
-        bucket = by_invoice[invoice]
-        for key in ("revenue", "purchase", "transport_fact", "fee", "customs"):
-            bucket[key] += costs[key]
-        bucket["margin"] = (
-            bucket["revenue"]
-            - bucket["purchase"]
-            - bucket["transport_fact"]
-            - bucket["fee"]
-            - bucket["customs"]
-        )
+        ws = wb[sheet_name]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or not is_utair(row[6]):
+                continue
+            invoice = normalize_invoice(row[0])
+            if not invoice:
+                continue
+            work_dt = row[16]
+            work_year = work_dt.year if isinstance(work_dt, datetime) else None
+            status = str(row[4]).strip() if row[4] else ""
+            costs = taz_row_costs(row)
+            qty = parse_num(row[13])
+            sale_ea = parse_num(row[32])
+            warranty = is_taz_warranty_row(row)
+            countable = (
+                sheet_name == "ORDERS"
+                and work_year == REPORT_YEAR
+                and status not in TAZ_EXCLUDED_STATUSES
+                and not warranty
+            )
+            entry = {
+                "revenue": costs["revenue"],
+                "purchase": costs["purchase"],
+                "transport_fact": costs["transport_fact"],
+                "fee": costs["fee"],
+                "customs": costs["customs"],
+                "margin": (
+                    costs["revenue"]
+                    - costs["purchase"]
+                    - costs["transport_fact"]
+                    - costs["fee"]
+                    - costs["customs"]
+                ),
+                "qty": qty,
+                "sale_ea": sale_ea,
+                "status": status or "—",
+                "sheet": sheet_name,
+                "work_year": work_year,
+                "countable": countable,
+                "warranty": warranty,
+            }
+            prev = by_invoice.get(invoice)
+            # Prefer ORDERS over PRESALE; prefer countable over non-countable.
+            if prev is None:
+                by_invoice[invoice] = entry
+            elif prev["sheet"] != "ORDERS" and sheet_name == "ORDERS":
+                by_invoice[invoice] = entry
+            elif prev["sheet"] == sheet_name and not prev["countable"] and countable:
+                by_invoice[invoice] = entry
+
     wb.close()
-    return dict(by_invoice)
+    return by_invoice
 
 
 def normalize_supplier_name(value: str | None) -> str:
@@ -1376,7 +1436,7 @@ def build_category_focus(group: list[RequestLine], limit: int = 10) -> list[dict
 
 
 def bucket_money_from_taz(
-    group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
+    group: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
 ) -> dict[str, float]:
     invoices: set[str] = set()
     for line in group:
@@ -1387,7 +1447,7 @@ def bucket_money_from_taz(
     matched = 0
     for invoice in invoices:
         row = invoice_money.get(invoice)
-        if not row:
+        if not row or not row.get("countable"):
             continue
         matched += 1
         revenue += row["revenue"]
@@ -1408,32 +1468,85 @@ def bucket_money_from_taz(
     }
 
 
+def line_taz_match(
+    line: RequestLine, invoice_money: dict[str, dict[str, Any]]
+) -> dict[str, Any] | None:
+    """Best TAZ ORDERS/PRESALE row(s) for a won TUZ line, summed by invoice."""
+    matched: list[dict[str, Any]] = []
+    for invoice in sorted(line_invoices(line)):
+        row = invoice_money.get(invoice)
+        if row:
+            matched.append(row)
+    if not matched:
+        return None
+    revenue = sum(r["revenue"] for r in matched)
+    purchase = sum(r["purchase"] for r in matched)
+    transport = sum(r["transport_fact"] for r in matched)
+    fee = sum(r["fee"] for r in matched)
+    customs = sum(r["customs"] for r in matched)
+    margin = revenue - purchase - transport - fee - customs
+    qty = sum(r["qty"] or 0 for r in matched) or None
+    sale_ea = matched[0].get("sale_ea")
+    if len(matched) == 1 and matched[0].get("qty"):
+        sale_ea = matched[0].get("sale_ea")
+    statuses = sorted({r.get("status") or "—" for r in matched})
+    sheets = sorted({r.get("sheet") or "—" for r in matched})
+    return {
+        "revenue": revenue,
+        "purchase": purchase,
+        "transport_fact": transport,
+        "fee": fee,
+        "customs": customs,
+        "margin": margin,
+        "margin_pct": (margin / revenue * 100) if revenue else None,
+        "qty": qty,
+        "sale_ea": sale_ea,
+        "status": " / ".join(statuses),
+        "sheet": " / ".join(sheets),
+        "countable": any(r.get("countable") for r in matched),
+    }
+
+
 def build_won_order_rows(
-    group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
+    group: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for line in group:
         if not line.won():
             continue
-        sale_ea = None
-        for offer in line.offers:
-            if offer.status == "7. Клиент согласовал" and offer.offered is not None:
-                sale_ea = offer.offered
+        offer = None
+        for candidate in line.offers:
+            if candidate.status == "7. Клиент согласовал" and candidate.offered is not None:
+                offer = candidate
                 break
-        if sale_ea is None:
-            selected = line.selected_offer()
-            sale_ea = selected.offered if selected else None
+        if offer is None:
+            offer = line.selected_offer()
 
-        revenue = 0.0
-        margin = 0.0
-        matched = False
-        for invoice in line_invoices(line):
-            taz = invoice_money.get(invoice)
-            if not taz:
-                continue
-            matched = True
-            revenue += taz["revenue"]
-            margin += taz["margin"]
+        tuz_sale_ea = offer.offered if offer else None
+        tuz_qty = line.offer_qty(offer)
+        tuz_total = (
+            tuz_sale_ea * tuz_qty
+            if tuz_sale_ea is not None and tuz_qty is not None
+            else line.order_value()
+        )
+
+        taz = line_taz_match(line, invoice_money)
+        if taz:
+            sale_ea = taz.get("sale_ea") if taz.get("sale_ea") is not None else tuz_sale_ea
+            qty = taz.get("qty") if taz.get("qty") is not None else tuz_qty
+            sale_total = taz["revenue"]
+            margin = taz["margin"] if taz.get("countable") else None
+            margin_pct = taz["margin_pct"] if taz.get("countable") else None
+            taz_status = taz["status"]
+            taz_sheet = taz["sheet"]
+        else:
+            sale_ea = tuz_sale_ea
+            qty = tuz_qty
+            sale_total = tuz_total
+            margin = None
+            margin_pct = None
+            taz_status = None
+            taz_sheet = None
 
         rows.append(
             {
@@ -1441,15 +1554,28 @@ def build_won_order_rows(
                 "pn": line.pn,
                 "description": line.description,
                 "sale_ea": sale_ea,
-                "qty": line.qty,
-                "sale_total": line.order_value(),
-                "margin": margin if matched else None,
-                "margin_pct": (margin / revenue * 100) if matched and revenue else None,
+                "qty": qty,
+                "sale_total": sale_total,
+                "margin": margin,
+                "margin_pct": margin_pct,
+                "taz_status": taz_status,
+                "taz_sheet": taz_sheet,
                 "timing": line.timing(),
             }
         )
     rows.sort(key=lambda item: item.get("sale_total") or 0, reverse=True)
     return rows
+
+
+def line_bucket_sale(
+    line: RequestLine, invoice_money: dict[str, dict[str, Any]]
+) -> float | None:
+    """Sale used for price-category bucketing: TAZ AH when invoice matches, else TUZ."""
+    if line.won():
+        taz = line_taz_match(line, invoice_money)
+        if taz and taz.get("revenue") is not None:
+            return taz["revenue"]
+    return line.sale_value()
 
 
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
@@ -1458,7 +1584,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     invoice_money = load_taz_invoice_money(TAZ_PATH) if TAZ_PATH.exists() else {}
 
     for line in lines:
-        sale = line.sale_value()
+        sale = line_bucket_sale(line, invoice_money)
         bucket = bucket_for_sale(sale)
         if bucket:
             by_bucket[bucket].append(line)
@@ -1474,7 +1600,9 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         in_procurement = sum(1 for line in group if line.is_in_procurement())
         supplier_no_offer = sum(1 for line in group if line.supplier_without_offer())
         won = sum(1 for line in group if line.won())
-        tuz_orders_total = sum(line.order_value() or 0 for line in group if line.won())
+        tuz_orders_total = sum(
+            (line_bucket_sale(line, invoice_money) or 0) for line in group if line.won()
+        )
         sent = sum(1 for line in group if any(o.sent_dt for o in line.offers))
         pending_proc = in_procurement
         quote_counts = [len(line.quote_rows()) for line in group]
@@ -1560,10 +1688,18 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     standard_summary = summarize(standard_lines)
     critical_by_price: dict[str, dict[str, Any]] = {}
     for label, _, _ in PRICE_BUCKETS:
-        subset = [line for line in critical_lines if bucket_for_sale(line.sale_value()) == label]
+        subset = [
+            line
+            for line in critical_lines
+            if bucket_for_sale(line_bucket_sale(line, invoice_money)) == label
+        ]
         if subset:
             critical_by_price[label] = summarize(subset)
-    unpriced_crit = [line for line in critical_lines if bucket_for_sale(line.sale_value()) is None]
+    unpriced_crit = [
+        line
+        for line in critical_lines
+        if bucket_for_sale(line_bucket_sale(line, invoice_money)) is None
+    ]
     if unpriced_crit:
         critical_by_price["Без продажной оценки"] = summarize(unpriced_crit)
 
@@ -2015,11 +2151,20 @@ def render_won_orders_table(orders: list[dict[str, Any]]) -> str:
             margin_html = f"{fmt_money(margin)} <span class='sub'>({order['margin_pct']:.0f}%)</span>"
         elif margin is None:
             margin_html = "—"
+        desc = order.get("description") or "—"
+        taz_bits = []
+        if order.get("taz_sheet"):
+            taz_bits.append(str(order["taz_sheet"]))
+        if order.get("taz_status"):
+            taz_bits.append(str(order["taz_status"]))
+        taz_note = (
+            f"<div class='sub'>{html.escape(' · '.join(taz_bits))}</div>" if taz_bits else ""
+        )
         rows.append(
             "<tr>"
             f"<td>{html.escape(order['request_no'])}</td>"
             f"<td><b>{html.escape(order['pn'])}</b></td>"
-            f"<td>{html.escape(order.get('description') or '—')}</td>"
+            f"<td>{html.escape(desc)}{taz_note}</td>"
             f"<td>{fmt_money(order.get('sale_ea'))}</td>"
             f"<td>{qty_html}</td>"
             f"<td>{fmt_money(order.get('sale_total'))}</td>"
@@ -2224,7 +2369,7 @@ tr:hover td {{ background:#fafcfd; }}
 <body>
 <div class="wrap">
   <h1>{html.escape(CLIENT['brand'])} — оценка работы по ТУЗ</h1>
-  <p class="lead">Анализ проработки запросов {html.escape(CLIENT['genitive'])} по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
+  <p class="lead">Анализ проработки запросов {html.escape(CLIENT['genitive'])} по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × qty предложения; для согласованных — сверка с ТАЗ ORDERS/PRESALE). Запросы {REPORT_YEAR} года.</p>
   <div class="meta">Источник: {html.escape(data['source'])} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
 
   {render_funnel_section(data)}
@@ -2240,9 +2385,9 @@ tr:hover td {{ background:#fafcfd; }}
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
-      <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
+      <b>Деньги</b> — только ТАЗ ORDERS 2026 (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется; Cancel/Refund и гарантии исключены. PRESALE в выручку шапки не входит.<br/>
       <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
-      <b>Категории</b> — по Offered×Qty. В шапке: выручка/маржа ТАЗ, топ-3 Supplier (T), квот/запрос. Внутри — заказы и до 10 P/N с выводом «усилить» или «не тратить ресурс».<br/>
+      <b>Категории</b> — по продажной: Offered × min(J,X); J = запрос клиента, X = предложено/в наличии. Согласованные сверяются с ТАЗ ORDERS+PRESALE (qty/AH/статус). Внутри — заказы и до 10 P/N. Только запросы 2026 года.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
