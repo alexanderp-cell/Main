@@ -22,15 +22,45 @@ body {
 h1 { font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); color:var(--teal-deep); margin:0 0 8px; }
 .lead { color:var(--ink-soft); max-width:46rem; line-height:1.55; margin:0 0 18px; }
 .meta { color:var(--muted); font-size:.88rem; margin-bottom:24px; }
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0 28px; }
-@media(max-width:980px){ .grid { grid-template-columns:repeat(2,1fr); } }
-@media(max-width:560px){ .grid { grid-template-columns:1fr; } }
-.kpi { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow); }
-.kpi .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
-.kpi .v { font-family:"Fraunces",Georgia,serif; font-size:1.55rem; margin-top:4px; color:var(--teal-deep); }
-.kpi .h { font-size:.84rem; color:var(--ink-soft); margin-top:4px; }
-.kpi.accent { background:linear-gradient(135deg,#d7efed,#fff); }
-.kpi.warn { background:linear-gradient(135deg,#f8ead8,#fff); }
+.funnel-panel { margin-top:8px; }
+.funnel {
+  display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin-top:8px;
+}
+.funnel-step {
+  flex:1 1 140px; min-width:120px; background:#fff; border:1px solid var(--line);
+  border-radius:14px; padding:14px 12px; text-align:center;
+}
+.funnel-num {
+  font-family:"Fraunces",Georgia,serif; font-size:1.75rem; font-weight:700; color:var(--teal-deep);
+}
+.funnel-label { font-size:.82rem; font-weight:700; color:var(--ink-soft); margin-top:4px; line-height:1.3; }
+.funnel-pct { font-size:.75rem; color:var(--muted); margin-top:6px; }
+.funnel-conv { font-size:.72rem; color:var(--teal); font-weight:700; margin-top:4px; }
+.funnel-arrow {
+  display:flex; align-items:center; color:var(--muted); font-size:1.2rem; font-weight:700;
+  padding:0 2px;
+}
+@media(max-width:720px){ .funnel-arrow { display:none; } }
+.speed-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media(max-width:720px){ .speed-grid { grid-template-columns:1fr; } }
+.speed-card {
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px;
+}
+.speed-card.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.speed-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
+.speed-v { font-family:"Fraunces",Georgia,serif; font-size:1.6rem; color:var(--teal-deep); margin-top:4px; }
+.speed-h { font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.4; }
+.money-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }
+@media(max-width:980px){ .money-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:560px){ .money-grid { grid-template-columns:1fr; } }
+.money-card {
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+}
+.money-card.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.money-card.warn { background:linear-gradient(135deg,#f8ead8,#fff); }
+.money-k { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }
+.money-v { font-family:"Fraunces",Georgia,serif; font-size:1.35rem; color:var(--teal-deep); margin-top:4px; }
+.money-h { font-size:.8rem; color:var(--ink-soft); margin-top:4px; }
 .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); margin:18px 0; }
 .panel h2 { font-family:"Fraunces",Georgia,serif; margin:0 0 12px; font-size:1.35rem; }
 .lead-sm { color:var(--ink-soft); font-size:.92rem; line-height:1.5; margin:0 0 14px; max-width:52rem; }
@@ -69,37 +99,132 @@ tr:hover td { background:#fafcfd; }
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 07:55 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 08:33 · Questions v2 не включён</div>
 
-  <div class="grid">
-    <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">4240</div><div class="h">Request № + P/N · новых 4230</div></div>
-    <div class="kpi warn"><div class="k">Повторный поиск (Trouble)</div><div class="v">10</div><div class="h">не новый RFQ — спасаем заказ</div></div>
-    <div class="kpi"><div class="k">Найдено на рынке</div><div class="v">3003</div><div class="h">71% — только Supplier Price</div></div>
-    <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">77 / 757</div><div class="h">без supplier quote / ещё ищем</div></div>
-    <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">2929</div><div class="h">есть дата в AC</div></div>
-    <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">106</div><div class="h">2.5% конверсия</div></div>
-    <div class="kpi accent"><div class="k">ТАЗ 2026 (без Cancel)</div><div class="v">$7,668,468</div><div class="h">ROTABLE $7,275,100 · 263 счетов</div></div>
-    <div class="kpi"><div class="k">ТУЗ выигранные</div><div class="v">$8,344,944</div><div class="h">106 RFQ · Offered×Qty</div></div>
-    <div class="kpi"><div class="k">Медиана B→O</div><div class="v">1.1 д</div><div class="h">закупки: запрос → цена</div></div>
-    <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">3 ч / 1.2 д</div><div class="h">продажи / полный цикл</div></div>
+  
+  <div class="panel funnel-panel">
+    <h2>Воронка конверсии</h2>
+    <p class="lead-sm">Без повторных поисков (Trouble). «Найдено» — есть Supplier Price; «Отправлено» — дата в AC; «Интерес» — статус «5. Есть интерес» или заказ; «Заказ» — «7. Клиент согласовал» или invoice.</p>
+    <div class="funnel">
+            <div class="funnel-step">
+              <div class="funnel-num">4230</div>
+              <div class="funnel-label">Всего запросов</div>
+              
+              
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">2994</div>
+              <div class="funnel-label">Найдено на рынке</div>
+              <div class="funnel-pct">71% от всех</div>
+              <div class="funnel-conv">71% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">2922</div>
+              <div class="funnel-label">Отправлено клиенту</div>
+              <div class="funnel-pct">69% от всех</div>
+              <div class="funnel-conv">98% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">372</div>
+              <div class="funnel-label">Есть интерес</div>
+              <div class="funnel-pct">9% от всех</div>
+              <div class="funnel-conv">13% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">101</div>
+              <div class="funnel-label">Заказов получено</div>
+              <div class="funnel-pct">2% от всех</div>
+              <div class="funnel-conv">27% от пред. шага</div>
+            </div>
+            </div>
   </div>
+
+
+  
+  <div class="panel speed-panel">
+    <h2>Скорость</h2>
+    <p class="lead-sm">Медиана по запросам без Trouble, где есть обе даты на этапе.</p>
+    <div class="speed-grid">
+      <div class="speed-card">
+        <div class="speed-k">B → O</div>
+        <div class="speed-v">1.1 д</div>
+        <div class="speed-h">внесли запрос → нашли на рынке</div>
+      </div>
+      <div class="speed-card">
+        <div class="speed-k">O → AC</div>
+        <div class="speed-v">3 ч</div>
+        <div class="speed-h">нашли на рынке → отправили клиенту</div>
+      </div>
+      <div class="speed-card accent">
+        <div class="speed-k">B → AC</div>
+        <div class="speed-v">1.2 д</div>
+        <div class="speed-h">полный цикл до отправки оффера</div>
+      </div>
+    </div>
+  </div>
+
+
+  
+  <div class="panel money-panel">
+    <h2>Деньги: ТАЗ ↔ ТУЗ (выигранные заказы)</h2>
+    <p class='lead-sm'>Общий ТАЗ 2026 (все заказы, без Cancel/Refund) — <b>$7,668,468</b>. Это шире, чем выигранные RFQ в ТУЗ (101 строк, $8,230,444).</p>
+    <p class="lead-sm">ТУЗ Offered×Qty по выигранным RFQ ($8,230,444) выше ТАЗ net по тем же invoice ($5,917,960). Отмены/Refund на этих счетах — $92,400: это часть расхождения, но не главная причина. Основной зазор — разница Offered×Qty и продажной AH ($1,820,554 на invoice с ТАЗ) плюс $491,930 по заказам без invoice в ТУЗ.</p>
+    <div class="money-grid">
+      <div class="money-card accent">
+        <div class="money-k">ТУЗ выигранные</div>
+        <div class="money-v">$8,230,444</div>
+        <div class="money-h">101 RFQ · Offered × Qty</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">ТАЗ net (те же invoice)</div>
+        <div class="money-v">$5,917,960</div>
+        <div class="money-h">90 счетов · без Cancel/Refund</div>
+      </div>
+      <div class="money-card warn">
+        <div class="money-k">Cancel / Refund</div>
+        <div class="money-v">$92,400</div>
+        <div class="money-h">было валово $6,010,360</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Разница ТУЗ − ТАЗ net</div>
+        <div class="money-v">$2,312,484</div>
+        <div class="money-h">без invoice в ТАЗ: $491,930</div>
+      </div>
+    </div>
+    
+    <details class="bucket">
+      <summary><span class="bucket-title">Отмены / Refund на выигранных invoice (4)</span></summary>
+      <div class="bucket-body">
+        <div class="table-wrap" style="max-width:480px">
+          <table>
+            <thead><tr><th>Invoice</th><th>Сумма в ТАЗ</th></tr></thead>
+            <tbody><tr><td>15052612285</td><td>$36,000</td></tr><tr><td>15072611055</td><td>$28,500</td></tr><tr><td>13032611255</td><td>$18,000</td></tr><tr><td>23032615505</td><td>$9,900</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
 
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
-      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>70</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
-      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
-      <b>Сумма заказов</b> — ТАЗ: продажная итого (AH), work date 2026, <b>без 5 CANCELLED и 7 REFUND</b>. ТУЗ: Offered×Qty по выигранным RFQ (групповые листы). Сверка — в отдельном блоке ниже.<br/>
-      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).<br/>
-      <b>Trouble</b> — повторный поиск компонента (Urgency / Request № / № заказа в дате). Это не новый запрос клиента, а попытка закрыть уже согласованный заказ после потери первого источника.
+      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
+      <b>Деньги</b> — ТУЗ: Offered×Qty по выигранным RFQ; ТАЗ: продажная AH по invoice, work date 2026, без 5 CANCELLED и 7 REFUND. Полный ТАЗ шире (все заказы 2026), чем выигранные строки ТУЗ.<br/>
+      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
 
   
   <div class="panel">
     <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
-    <p class="lead-sm">Разница <b>$7,668,468</b> (ТАЗ) и <b>$8,344,944</b> (ТУЗ Offered×Qty) — <u>не</u> «$4 млн мимо ТУЗ». Это разные срезы: ТАЗ = все заказы, взятые в работу в 2026; ТУЗ = только 106 выигранных RFQ-строк на групповых листах.</p>
+    <p class="lead-sm">Разница <b>$7,668,468</b> (ТАЗ) и <b>$8,230,444</b> (ТУЗ Offered×Qty) — <u>не</u> «$4 млн мимо ТУЗ». Это разные срезы: ТАЗ = все заказы, взятые в работу в 2026; ТУЗ = только 106 выигранных RFQ-строк на групповых листах.</p>
     <div class="mini-grid" style="margin-bottom:14px">
       <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">$7,668,468</div><div class="sub">263 счетов · 339 строк</div></div>
       <div class="mini"><div class="k">из них ROTABLE</div><div class="v">$7,275,100</div><div class="sub">EXPENDABLE $353,968</div></div>
@@ -116,79 +241,6 @@ tr:hover td { background:#fafcfd; }
         <tfoot>
           <tr><th>Итого ROTABLE (без Cancel/Refund)</th><th>93</th><th>$7,275,100</th><th>100%</th></tr>
         </tfoot>
-      </table>
-    </div>
-  </div>
-
-
-  
-  <div class="panel">
-    <h2>Повторный поиск — Trouble (10)</h2>
-    <p class="lead-sm">Не новый запрос клиента, а повторная проценка, когда первый источник пропал (клиент долго решал, юнит уже продан и т.п.). Маркеры в левой части ТУЗ: колонка <b>Urgency</b> = Trouble/Troubles, <b>Request №</b> = TROUBLES или «Troubles + номер заказа», иногда <b>Request date</b> = №заказа.</p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Request №</th><th>P/N</th><th>Qty</th><th>Связанный заказ</th>
-            <th>Маркер</th><th>Urgency</th><th>Статус</th><th>Заказ</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>4209 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>1322M32G01</b></td><td>2.0</td><td>—</td><td>Urgency</td><td>Trouble</td><td>3. Цена на деталь получена</td><td>—</td></tr><tr><td>4353 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>11197-5</b></td><td>1.0</td><td>—</td><td>Urgency</td><td>Trouble</td><td>7. Клиент согласовал</td><td>✓</td></tr><tr><td>DAT TEHRAN
-P19464326 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → P19464326</span></td><td><b>1288M44P05</b></td><td>8.0</td><td>P19464326</td><td>Urgency</td><td>TROUBLE</td><td>4. Квотация направлена клиенту</td><td>—</td></tr><tr><td>P19821326 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → P19821326</span></td><td><b>6799A010001</b></td><td>1.0</td><td>P19821326</td><td>Urgency</td><td>TROUBLE</td><td>4. Квотация направлена клиенту</td><td>—</td></tr><tr><td>Troubles
-P20094326 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → P20094326</span></td><td><b>3604524-54</b></td><td>1.0</td><td>P20094326</td><td>Request №</td><td>—</td><td>7. Клиент согласовал</td><td>✓</td></tr><tr><td>Q10169526 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → Q10169526</span></td><td><b>3291214-2</b></td><td>1.0</td><td>Q10169526</td><td>Urgency</td><td>TROUBLE</td><td>7. Клиент согласовал</td><td>✓</td></tr><tr><td>Q9931926 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → Q9931926</span></td><td><b>3604524-54</b></td><td>1.0</td><td>Q9931926</td><td>Urgency</td><td>Troubles</td><td>5. Есть интерес</td><td>✓</td></tr><tr><td>Q9980826 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → Q9980826</span></td><td><b>6799A010001</b></td><td>1.0</td><td>Q9980826</td><td>Urgency</td><td>TROUBLE</td><td>1. Проценка у поставщиков</td><td>—</td></tr><tr><td>TROUBLE <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>332A2341-4</b></td><td>1.0</td><td>—</td><td>Request №</td><td>—</td><td>3. Цена на деталь получена</td><td>—</td></tr><tr><td>TROUBLES <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>3291214-2</b></td><td>1.0</td><td>—</td><td>Request №</td><td>—</td><td>7. Клиент согласовал</td><td>✓</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-
-  
-  <div class="panel">
-    <h2>Ожидают Offered (70)</h2>
-    <p class="lead-sm">Цена закупки есть, статус ≥ «Цена получена», но клиентский Offered ещё не сформирован. Комментарии читаем из колонок <b>PPWK</b>, <b>Remarks</b> и иногда <b>Root</b> (если там пояснение, а не название поставщика).</p>
-    <div class="mini-grid" style="margin-bottom:14px">
-      <div class="mini"><div class="k">Всего позиций</div><div class="v">70</div></div>
-      <div class="mini"><div class="k">С комментарием</div><div class="v">38</div></div>
-      <div class="mini warn"><div class="k">Без комментария</div><div class="v">32</div></div>
-    </div>
-    <details class="bucket" open>
-      <summary><span class="bucket-title">Причины по комментариям</span></summary>
-      <div class="bucket-body">
-        <div class="table-wrap" style="max-width:420px">
-          <table>
-            <thead><tr><th>Категория</th><th>Строк</th></tr></thead>
-            <tbody><tr><td>Без комментария</td><td>32</td></tr><tr><td>Без категории</td><td>16</td></tr><tr><td>Документы / сертификаты</td><td>7</td></tr><tr><td>Прочий комментарий</td><td>7</td></tr><tr><td>Ждём ответ поставщика</td><td>4</td></tr><tr><td>Отмена / не отправляем</td><td>2</td></tr><tr><td>В активах</td><td>1</td></tr><tr><td>Обсуждение / риски</td><td>1</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-    <div class="table-wrap" style="margin-top:14px">
-      <table>
-        <thead>
-          <tr>
-            <th>Request №</th><th>P/N</th><th>Qty</th><th>Статус</th>
-            <th>Supplier $/ea</th><th>Причина</th><th>Комментарий (PPWK / Remarks / Root)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Q10096726</td><td><b>D22698500-7/B</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$879,800</td><td><span class='tag hold'>В активах</span></td><td class='note-cell'>PPWK: В крупных активах 
-&quot;NLG ASSY SN: D22698500‐7/B
-NLG DB SN: 13B18882 
-NLG Actuator SN: A929&quot; · Remarks: EXW UK</td></tr><tr><td>Q10083526</td><td><b>170101-106A</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$285,000</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: PLEASE CHECK THE REMARKS BEFORE SUBMITTING YOUR PROPOSAL
-Condition: Preferably fresh OH, but R is also considered.
-We do not approve for purchase APUs after repair or overhaul in Aviation Power Support, LP, a…</td></tr><tr><td>Q10192326</td><td><b>3244871-9</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$258,750</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>PPWK: ЖДЁМ АХАХ, но не верим · Remarks: For purchased component TSN&amp;CSN or TSO&amp;CSO must be known.Before
-component purchase, Last shop visit report and Modificationstatus (if
-applicable)  must be requested and …</td></tr><tr><td>2814</td><td><b>681L269G13</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$238,050</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>2678</td><td><b>4503653B</b></td><td>2.0</td><td>6. Клиент отказал</td><td>$105,000</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: OAI tag :( · PPWK: https://drive.google.com/file/d/1HYhiOOmq93rkXJeov35dNZpEW3yKIRT9/view?usp=sharing · Remarks: в блэклисте · PPWK: https://amadablaam.com:8443/download?docId=247579</td></tr><tr><td>Q9909426</td><td><b>8400K2</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$119,283</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>314U2100-70</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$77,625</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>35E38-5</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$97,295</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>314U2200-31</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$4,660</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10057026</td><td><b>1558M31G07</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$59,920</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>PPWK: Нужны доки, какие-то ребята из Тайланда · Remarks: ONLY  p/n .....G07
-5500 CR minimum
-Documents needed for proposal review: ARC, NIS, Full BTB trace. · PPWK: Ждем кп от AMP
-Нужны доки:(
-И пока дорого</td></tr><tr><td>Q10081426</td><td><b>6-GA32498</b></td><td>10.0</td><td>3. Цена на деталь получена</td><td>$77,700</td><td><span class='tag hold'>Ждём ответ поставщика</span></td><td class='note-cell'>Remarks: Ждем MGT</td></tr><tr><td>Q10268626</td><td><b>C20633000</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$67,300</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: OH 100% PIN · PPWK: C20633000 AIRCRAFT TRADING</td></tr><tr><td>Q9925326</td><td><b>314A1110-62A</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$60,000</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: дал таргет 60к</td></tr><tr><td>4264</td><td><b>856A2001G04</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$51,875</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>4344</td><td><b>41F1005</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$30,800</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>PPWK: NET 30</td></tr><tr><td>3801</td><td><b>314A1010-15</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$36,225</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>Remarks: Ждём серт. Старый трейс</td></tr><tr><td>2815</td><td><b>315A1001-16</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$33,120</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q9956026</td><td><b>0YX1600A04G01</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$25,875</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>332T2314-1</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$9,315</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>3031863-001</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$6,106</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>P19477526</td><td><b>2100M96P05</b></td><td>1.0</td><td>5. Есть интерес</td><td>$18,000</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: The duration may reach thirty days, but we will try to make it less. · Remarks: это не альты · Remarks: OneDrive_1_27.07.2026.zip · PPWK: *If customer requires OHC, the shop (Air Alliance) can Overhaul units …</td></tr><tr><td>Q10108726</td><td><b>273T6101-5</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$23,800</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3459</td><td><b>B03AA1041</b></td><td>1.0</td><td>7. Клиент согласовал</td><td>$22,770</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3636</td><td><b>83000-05604</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$21,500</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: quoted p/n 83000-05605ATS</td></tr><tr><td>4280</td><td><b>0YX1600A04G01</b></td><td>1.0</td><td>7. Клиент согласовал</td><td>$20,650</td><td><span class='tag hold'>Отмена / не отправляем</span></td><td class='note-cell'>Remarks: ЗИНА - ОТМЕНА</td></tr><tr><td>3382</td><td><b>B03AA1040</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$19,147</td><td><span class='tag hold'>Отмена / не отправляем</span></td><td class='note-cell'>PPWK: https://drive.google.com/file/d/10ws5ux84fobb0eIL_NaUY_OA7VuzoRE5/view?usp=sharing · Remarks: SOLD · PPWK: https://drive.google.com/file/d/1adRfleQ_fN9cJ0zFDgAtPyVOAZ653TbV/view?usp=sharing</td></tr><tr><td>P19591926</td><td><b>S5431011000300</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$18,700</td><td><span class='tag hold'>Ждём ответ поставщика</span></td><td class='note-cell'>Root: Квота от немцев, на джете спросила апдейт</td></tr><tr><td>Q10108726</td><td><b>273T6101-6</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$17,700</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3757</td><td><b>VIBREX2000</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$17,600</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: Стоит 13-25к</td></tr><tr><td>Q10291726</td><td><b>1211318-006</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$13,800</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>W0174926</td><td><b>650-0100-05</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$13,410</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>2944</td><td><b>2100M64G01</b></td><td>22.0</td><td>7. Клиент согласовал</td><td>$13,000</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>PPWK: https://drive.google.com/file/d/1PCUo_oz3QzsYhl9WTCx6igOII-Kbnl2s/view?usp=sharing · Remarks: DAT TEHRAN</td></tr><tr><td>4267</td><td><b>65-46288-13</b></td><td>1.0</td><td>5. Есть интерес</td><td>$10,500</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: AMOS_STSO Q9770026 / 65-46288-13 · PPWK: https://headaero365.sharepoint.com/:f:/s/allcompany/IgAEih8BxBdUS4EPnOLnIfCoAX-XufP5xGewBP9CbjFZ84I?e=3vxag7 · PPWK: https://headaero365.sharepoint.com/:f:/s/allcompan…</td></tr><tr><td>Q10110526</td><td><b>002A0096-1</b></td><td>6.0</td><td>3. Цена на деталь получена</td><td>$11,400</td><td><span class='tag hold'>Обсуждение / риски</span></td><td class='note-cell'>Remarks: обсудить целесообразность/риски по EUC</td></tr><tr><td>Q10291326
-Q10291726</td><td><b>RR37100D</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$6,500</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3835</td><td><b>45-0083-7</b></td><td>1.0</td><td>5. Есть интерес</td><td>$6,800</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10287926</td><td><b>R15048</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$4,720</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: AIRCRAFT 737-400/500/800 TYPES</td></tr><tr><td>3663</td><td><b>3605812-22</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$8,280</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>PPWK: INV-23554 CERT.zip · Remarks: предложено ютам</td></tr><tr><td>Q10189026</td><td><b>FA00631C</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$1,900</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>PPWK: BM</td></tr><tr><td>Q10146426</td><td><b>65C26311-99</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$7,800</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: ATR 72-212A</td></tr><tr><td>3835</td><td><b>396430-2</b></td><td>1.0</td><td>5. Есть интерес</td><td>$7,300</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q9937626</td><td><b>34200405-1</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$7,200</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: HAZMAT</td></tr><tr><td>4397</td><td><b>D52B4100-12</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$7,193</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3794</td><td><b>G84</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$4,140</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3751</td><td><b>DFE-3-200</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$1,730</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10288026</td><td><b>212EDP1-3</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$5,470</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291726</td><td><b>21SN04-466</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$5,290</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>2426</td><td><b>21C1-3-22</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$690</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10280526</td><td><b>H321BDM1</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$4,600</td><td><span class='tag hold'>Ждём ответ поставщика</span></td><td class='note-cell'>Remarks: Ждем квоты с PB. В ЛХ есть ещё, это оптимальная</td></tr><tr><td>Q10292526</td><td><b>292-25</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$3,400</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10291226</td><td><b>9367M84P37</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$3,680</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: Delivery to Iran is required.
-certificates forms FAA/EASA/CAAC/CofC MFG are acceptable</td></tr><tr><td>Q10288826</td><td><b>10166N01N00</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$3,680</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: AIRCRAFT 737-400/500/800 TYPES</td></tr><tr><td>Q10289026</td><td><b>18-1738-9</b></td><td>4.0</td><td>3. Цена на деталь получена</td><td>$1,440</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10288926</td><td><b>65-52807-76</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$3,220</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: BOEING 737-300/400/500</td></tr><tr><td>Q10291926</td><td><b>81194</b></td><td>5.0</td><td>3. Цена на деталь получена</td><td>$1,710</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10287826</td><td><b>1225P6-2</b></td><td>3.0</td><td>3. Цена на деталь получена</td><td>$1,380</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>Remarks: AIRCRAFT 737-400/500/800 TYPES</td></tr><tr><td>3390</td><td><b>TY1878-22</b></td><td>1.0</td><td>7. Клиент согласовал</td><td>$2,500</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>PPWK: https://amadablaam.com:8443/download?docId=248075</td></tr><tr><td>Q10132126</td><td><b>APTE420KBS-2500SG</b></td><td>1.0</td><td>5. Есть интерес</td><td>$1,615</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>3548</td><td><b>5100S151</b></td><td>3.0</td><td>4. Квотация направлена клиенту</td><td>$1,604</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: Отправили на согласование</td></tr><tr><td>4209 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>1322M32G01</b></td><td>2.0</td><td>3. Цена на деталь получена</td><td>$1,525</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>W0175626</td><td><b>7800000-010</b></td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>$1,400</td><td><span class='tag hold'>Прочий комментарий</span></td><td class='note-cell'>Remarks: Продажа 28.06.2024
-2650 USD курс 90руб</td></tr><tr><td>3633</td><td><b>9686M80P02</b></td><td>2.0</td><td>5. Есть интерес</td><td>$230</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>2251</td><td><b>4L83-046</b></td><td>—</td><td>4. Квотация направлена клиенту</td><td>$880</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q10161426</td><td><b>002A0096-4</b></td><td>35.0</td><td>3. Цена на деталь получена</td><td>$802</td><td><span class='tag hold'>Без категории</span></td><td class='note-cell'>PPWK: DAR</td></tr><tr><td>2432</td><td><b>15800-206</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$530</td><td><span class='tag hold'>Без комментария</span></td><td class='note-cell'><span class='muted'>—</span></td></tr><tr><td>Q9992926</td><td><b>BACB30FD7H7</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$63</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>Remarks: Please provide ARC for approval.</td></tr><tr><td>Q10048326</td><td><b>BACB30LM10CD52</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$250</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>Remarks: Please provide full BTB for approval. · PPWK: NET 30</td></tr><tr><td>Q9992926</td><td><b>BACH8A04NN0160T</b></td><td>1.0</td><td>3. Цена на деталь получена</td><td>$200</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>Remarks: Please provide ARC for approval.</td></tr><tr><td>Q9992926</td><td><b>MS51923-209</b></td><td>4.0</td><td>3. Цена на деталь получена</td><td>$1</td><td><span class='tag hold'>Документы / сертификаты</span></td><td class='note-cell'>Remarks: Please provide ARC for approval.</td></tr><tr><td>DAT TEHRAN
-P19464326 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → P19464326</span></td><td><b>1288M44P05</b></td><td>8.0</td><td>4. Квотация направлена клиенту</td><td>$26</td><td><span class='tag hold'>Ждём ответ поставщика</span></td><td class='note-cell'>Remarks: Оманец что-то предлагает, жду серт · PPWK: https://drive.google.com/file/d/1Rx9eysyqUazIBN9i-1YyVw4whPZN3uYv/view?usp=sharing · Remarks: Смотрим доки и переобуваемся · Remarks: Давайте найдем пожалуйста стрип…</td></tr>
-        </tbody>
       </table>
     </div>
   </div>
@@ -785,7 +837,7 @@ MR10037N</div></td><td>SMOKE HOOD</td><td>2.0</td><td>4. Квотация нап
 <tr><td>267</td><td><b>40176-7</b><div class="muted">ALT: 016392-000; 60B40017-7; 30874-001</div></td><td>STANDBY POWER STORAGE BATTERY</td><td>3.0</td><td>4. Квотация направлена клиенту</td><td>5</td><td>$15,900</td><td>$47,700</td><td>27%</td><td>1.1 д</td><td>1 ч</td><td>1.2 д</td><td>—</td></tr>
 <tr><td>3875</td><td><b>314-2200-15</b><div class="muted">ALT: 314-2200-23
 314-2200-20</div></td><td>COWL ASSY</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>2</td><td>$47,600</td><td>$47,600</td><td>31%</td><td>1.1 д</td><td>2 ч</td><td>1.1 д</td><td>—</td></tr>
-<tr><td>P19821326 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → P19821326</span></td><td><b>6799A010001</b></td><td>REGULATOR/SHUTOFF VALVE</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$47,500</td><td>$47,500</td><td>21%</td><td>35.1 д</td><td>6.7 д</td><td>41.8 д</td><td>—</td></tr>
+<tr><td>P19821326</td><td><b>6799A010001</b></td><td>REGULATOR/SHUTOFF VALVE</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$47,500</td><td>$47,500</td><td>21%</td><td>35.1 д</td><td>6.7 д</td><td>41.8 д</td><td>—</td></tr>
 <tr><td>4267</td><td><b>69-37307-300</b><div class="muted">ALT: 69-37307-145; 69-37307-158</div></td><td>MODULE ASSY</td><td>5.0</td><td>4. Квотация направлена клиенту</td><td>2</td><td>$9,500</td><td>$47,500</td><td>37%</td><td>1.1 д</td><td>24 ч</td><td>2.1 д</td><td>—</td></tr>
 <tr><td>3901</td><td><b>066-50008-0408</b></td><td>TRANSCEIVER ASSY</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$47,500</td><td>$47,500</td><td>38%</td><td>3.7 д</td><td>5 ч</td><td>3.9 д</td><td>—</td></tr>
 <tr><td>2683</td><td><b>8063-214</b><div class="muted">ALT: 8063-208; 9368M57P21</div></td><td>CONTROL-MAIN ENG (MEC)</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$47,500</td><td>$47,500</td><td>32%</td><td>22 ч</td><td>6 ч</td><td>1.2 д</td><td>—</td></tr>
@@ -888,7 +940,7 @@ MR10037N</div></td><td>SMOKE HOOD</td><td>2.0</td><td>4. Квотация нап
 <tr><td>3481</td><td><b>65C27507-8</b><div class="muted">ALT: 65C27507-4
 65C27507-3</div></td><td>TRANSMISSION ASSY, RH, #7</td><td>4.0</td><td>4. Квотация направлена клиенту</td><td>3</td><td>$10,000</td><td>$40,000</td><td>82%</td><td>22 ч</td><td>—</td><td>—</td><td>—</td></tr>
 <tr><td>316</td><td><b>3039609</b><div class="muted">ALT: 3039609B; 3121658-01; 9049400-1</div></td><td>EXCITER, IGNITION</td><td>2.0</td><td>4. Квотация направлена клиенту</td><td>2</td><td>$20,000</td><td>$40,000</td><td>11%</td><td>1.1 д</td><td>2 ч</td><td>1.2 д</td><td>—</td></tr>
-<tr><td>TROUBLES <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble</span></td><td><b>3291214-2</b></td><td>VALVE BLEED AIR</td><td>1.0</td><td>7. Клиент согласовал</td><td>1</td><td>$39,900</td><td>$39,900</td><td>9%</td><td>3.0 д</td><td>—</td><td>—</td><td>✓</td></tr>
+<tr><td>TROUBLES</td><td><b>3291214-2</b></td><td>VALVE BLEED AIR</td><td>1.0</td><td>7. Клиент согласовал</td><td>1</td><td>$39,900</td><td>$39,900</td><td>9%</td><td>3.0 д</td><td>—</td><td>—</td><td>✓</td></tr>
 <tr><td>Q9928326</td><td><b>773284-7</b><div class="muted">ALT: 773284-5; 773284-6; 773284-4</div></td><td>SENSOR ASSY - FAN AIR TEMP</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$39,700</td><td>$39,700</td><td>26%</td><td>2.2 д</td><td>—</td><td>2.2 д</td><td>—</td></tr>
 <tr><td>Q9961726</td><td><b>M10DE0104-R</b><div class="muted">ALT: M10DE0104R; M10DE0104</div></td><td>PIPE-EXHAUST</td><td>3.0</td><td>4. Квотация направлена клиенту</td><td>2</td><td>$13,200</td><td>$39,600</td><td>32%</td><td>1.1 д</td><td>1 ч</td><td>1.2 д</td><td>—</td></tr>
 <tr><td>3365</td><td><b>1338M51P05</b></td><td>BLADE</td><td>11.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$3,600</td><td>$39,600</td><td>40%</td><td>1.0 д</td><td>6 ч</td><td>1.3 д</td><td>—</td></tr>
@@ -956,7 +1008,7 @@ MR10037N</div></td><td>SMOKE HOOD</td><td>2.0</td><td>4. Квотация нап
 773284-4</div></td><td>SENSOR ASSY - FAN AIR TEMP</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$36,400</td><td>$36,400</td><td>26%</td><td>2.8 д</td><td>5 ч</td><td>3.0 д</td><td>—</td></tr>
 <tr><td>3014</td><td><b>773284-7</b><div class="muted">ALT: 773284-5; 773284-6; 773284-4</div></td><td>SENSOR ASSY - FAN AIR TEMP</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$36,400</td><td>$36,400</td><td>28%</td><td>1.3 д</td><td>24 ч</td><td>2.3 д</td><td>—</td></tr>
 <tr><td>348</td><td><b>00-13813-03</b></td><td>MOLDED ASSY</td><td>4.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$9,100</td><td>$36,400</td><td>23%</td><td>21 ч</td><td>4 ч</td><td>1.1 д</td><td>—</td></tr>
-<tr><td>Q10169526 <span class='tag trouble' title='Повторный поиск: сохраняем уже согласованный заказ'>Trouble → Q10169526</span></td><td><b>3291214-2</b></td><td>VALVE-BLEED AIR</td><td>1.0</td><td>7. Клиент согласовал</td><td>6</td><td>$36,000</td><td>$36,000</td><td>24%</td><td>—</td><td>0 ч</td><td>—</td><td>✓</td></tr>
+<tr><td>Q10169526</td><td><b>3291214-2</b></td><td>VALVE-BLEED AIR</td><td>1.0</td><td>7. Клиент согласовал</td><td>6</td><td>$36,000</td><td>$36,000</td><td>24%</td><td>—</td><td>0 ч</td><td>—</td><td>✓</td></tr>
 <tr><td>Q10166726</td><td><b>940-0351-001</b></td><td>COMPUTER ASSY</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$36,000</td><td>$36,000</td><td>24%</td><td>1.1 д</td><td>5 ч</td><td>1.3 д</td><td>—</td></tr>
 <tr><td>Q9927826</td><td><b>802170-10</b><div class="muted">ALT: 790270-15; 802170-11; 790270-13; 802170-9; 790270-14; 802170-12</div></td><td>VALVE - HIGH PRESSURE SHUTOFF</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>3</td><td>$36,000</td><td>$36,000</td><td>26%</td><td>2.2 д</td><td>—</td><td>2.2 д</td><td>—</td></tr>
 <tr><td>3376</td><td><b>417A2730-8</b></td><td>BLADDER ASSY</td><td>1.0</td><td>4. Квотация направлена клиенту</td><td>1</td><td>$36,000</td><td>$36,000</td><td>40%</td><td>1.0 д</td><td>11 ч</td><td>1.5 д</td><td>—</td></tr>

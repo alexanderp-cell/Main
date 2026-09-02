@@ -757,6 +757,122 @@ def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
     }
 
 
+def compute_funnel(lines: list[RequestLine]) -> dict[str, Any]:
+    active = [line for line in lines if not line.is_trouble_search()]
+    total = len(active)
+
+    def is_sent(line: RequestLine) -> bool:
+        return any(offer.sent_dt for offer in line.offers)
+
+    def has_interest(line: RequestLine) -> bool:
+        if line.won():
+            return True
+        return any(offer.status == "5. Есть интерес" for offer in line.offers)
+
+    found = sum(1 for line in active if line.found_on_market())
+    sent = sum(1 for line in active if is_sent(line))
+    interest = sum(1 for line in active if has_interest(line))
+    won = sum(1 for line in active if line.won())
+
+    proc = [line.timing()["procurement"] for line in active if line.timing()["procurement"] is not None]
+    sales = [line.timing()["sales"] for line in active if line.timing()["sales"] is not None]
+    total_t = [line.timing()["total"] for line in active if line.timing()["total"] is not None]
+
+    def step_pct(value: int) -> float:
+        return (value / total * 100) if total else 0
+
+    def conv(value: int, base: int) -> float:
+        return (value / base * 100) if base else 0
+
+    return {
+        "total": total,
+        "found": found,
+        "sent": sent,
+        "interest": interest,
+        "won": won,
+        "found_pct": step_pct(found),
+        "sent_pct": step_pct(sent),
+        "interest_pct": step_pct(interest),
+        "won_pct": step_pct(won),
+        "sent_conv": conv(sent, found),
+        "interest_conv": conv(interest, sent),
+        "won_conv": conv(won, interest),
+        "median_proc": median(proc),
+        "median_sales": median(sales),
+        "median_total": median(total_t),
+    }
+
+
+def load_won_money_reconciliation(lines: list[RequestLine], path: Path) -> dict[str, Any]:
+    won_lines = [line for line in lines if line.won() and not line.is_trouble_search()]
+    won_invoices: set[str] = set()
+    for line in won_lines:
+        for offer in line.offers:
+            invoice = normalize_invoice(offer.invoice)
+            if invoice:
+                won_invoices.add(invoice)
+
+    tuz_offered = sum(line.order_value() or 0 for line in won_lines)
+    tuz_offered_matched = 0.0
+    tuz_offered_no_taz = 0.0
+    for line in won_lines:
+        value = line.order_value() or 0
+        invs = {normalize_invoice(o.invoice) for o in line.offers if o.invoice}
+        invs.discard(None)
+        if invs & won_invoices:
+            tuz_offered_matched += value
+        else:
+            tuz_offered_no_taz += value
+
+    taz_gross = 0.0
+    taz_net = 0.0
+    taz_cancelled = 0.0
+    cancelled_invoices: list[tuple[str, float]] = []
+
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
+    per_inv: dict[str, dict[str, float]] = defaultdict(lambda: {"gross": 0.0, "net": 0.0, "cancelled": 0.0})
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row or not is_utair(row[6]):
+            continue
+        work_dt = row[16]
+        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+            continue
+        invoice = normalize_invoice(row[0])
+        if not invoice or invoice not in won_invoices:
+            continue
+        amount = taz_line_amount(row)
+        status = str(row[4]).strip() if row[4] else ""
+        per_inv[invoice]["gross"] += amount
+        taz_gross += amount
+        if status in TAZ_EXCLUDED_STATUSES:
+            per_inv[invoice]["cancelled"] += amount
+            taz_cancelled += amount
+        else:
+            per_inv[invoice]["net"] += amount
+            taz_net += amount
+
+    for invoice, amounts in per_inv.items():
+        if amounts["cancelled"] > 0:
+            cancelled_invoices.append((invoice, amounts["cancelled"]))
+
+    wb.close()
+    cancelled_invoices.sort(key=lambda item: item[1], reverse=True)
+
+    return {
+        "tuz_won_count": len(won_lines),
+        "tuz_won_offered": tuz_offered,
+        "tuz_won_offered_matched": tuz_offered_matched,
+        "tuz_won_offered_no_taz": tuz_offered_no_taz,
+        "taz_won_gross": taz_gross,
+        "taz_won_net": taz_net,
+        "taz_won_cancelled": taz_cancelled,
+        "cancelled_invoices": cancelled_invoices,
+        "won_invoice_count": len(won_invoices),
+    }
+
+
 def median(values: list[float]) -> float | None:
     return statistics.median(values) if values else None
 
@@ -810,6 +926,8 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
 
     taz_orders = load_taz_orders_2026(TAZ_PATH) if TAZ_PATH.exists() else None
     reconciliation = reconcile_taz_tuz(lines, TAZ_PATH) if TAZ_PATH.exists() else None
+    won_money = load_won_money_reconciliation(lines, TAZ_PATH) if TAZ_PATH.exists() else None
+    funnel = compute_funnel(lines)
 
     overall = summarize(lines)
     if taz_orders:
@@ -830,19 +948,13 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         overall["orders_expendable"] = None
         overall["taz_lines_2026"] = None
         overall["taz_invoices_2026"] = None
+    if won_money:
+        overall["tuz_orders_total"] = won_money["tuz_won_offered"]
+        overall["taz_won_net"] = won_money["taz_won_net"]
+        overall["taz_won_gross"] = won_money["taz_won_gross"]
+        overall["taz_won_cancelled"] = won_money["taz_won_cancelled"]
     buckets = {label: summarize(by_bucket[label]) for label, _, _ in PRICE_BUCKETS}
     buckets["Без продажной оценки"] = summarize(unpriced)
-
-    pending_offer = [line for line in lines if line.supplier_without_offer()]
-    pending_offer.sort(
-        key=lambda line: max((o.supplier_price or 0) for o in line.market_rows()),
-        reverse=True,
-    )
-    hold_reasons = Counter(line.hold_reason() for line in pending_offer)
-    with_notes = sum(1 for line in pending_offer if line.workflow_notes())
-
-    trouble_lines = [line for line in lines if line.is_trouble_search()]
-    trouble_lines.sort(key=lambda line: line.trouble_order_ref() or line.request_no)
 
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
@@ -850,12 +962,8 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "taz_source": TAZ_PATH.name if TAZ_PATH.exists() else None,
         "overall": overall,
         "buckets": buckets,
-        "pending_offer": pending_offer,
-        "hold_reasons": dict(hold_reasons.most_common()),
-        "pending_with_notes": with_notes,
-        "trouble_lines": trouble_lines,
-        "trouble_count": len(trouble_lines),
-        "new_request_count": len(lines) - len(trouble_lines),
+        "funnel": funnel,
+        "won_money": won_money,
         "reconciliation": reconciliation,
         "taz_orders": taz_orders,
     }
@@ -874,7 +982,7 @@ def render_table_rows(lines: list[RequestLine]) -> str:
             alt_flag = " <span class='tag alt'>alt P/N</span>"
         html_rows.append(
             "<tr>"
-            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
+            f"<td>{html.escape(line.request_no)}</td>"
             f"<td><b>{html.escape(line.pn)}</b>{alt_flag}"
             f"{('<div class=\"muted\">ALT: ' + html.escape(line.alt_pn) + '</div>') if line.alt_pn else ''}</td>"
             f"<td>{html.escape(line.description or '—')}</td>"
@@ -898,115 +1006,161 @@ def render_table_rows(lines: list[RequestLine]) -> str:
     return "\n".join(html_rows)
 
 
-def render_trouble_section(data: dict[str, Any]) -> str:
-    lines: list[RequestLine] = data.get("trouble_lines", [])
-    if not lines:
-        return ""
-
-    table_rows = []
-    for line in lines:
-        urgency = next((o.urgency for o in line.offers if o.urgency), "—")
-        ref = line.trouble_order_ref() or "—"
-        via = line.trouble_via() or "—"
-        table_rows.append(
-            "<tr>"
-            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
-            f"<td><b>{html.escape(line.pn)}</b></td>"
-            f"<td>{line.qty or '—'}</td>"
-            f"<td>{html.escape(ref)}</td>"
-            f"<td>{html.escape(via)}</td>"
-            f"<td>{html.escape(str(urgency))}</td>"
-            f"<td>{html.escape(line.primary_status())}</td>"
-            f"<td>{'✓' if line.won() else '—'}</td>"
-            "</tr>"
+def render_funnel_section(data: dict[str, Any]) -> str:
+    f = data["funnel"]
+    steps = [
+        ("total", "Всего запросов", f["total"], None),
+        ("found", "Найдено на рынке", f["found"], f["found_pct"]),
+        ("sent", "Отправлено клиенту", f["sent"], f["sent_pct"]),
+        ("interest", "Есть интерес", f["interest"], f["interest_pct"]),
+        ("won", "Заказов получено", f["won"], f["won_pct"]),
+    ]
+    parts = []
+    for idx, (key, label, value, pct) in enumerate(steps):
+        conv = ""
+        if idx > 0:
+            prev = steps[idx - 1][2]
+            c = (value / prev * 100) if prev else 0
+            conv = f'<div class="funnel-conv">{c:.0f}% от пред. шага</div>'
+        pct_html = f'<div class="funnel-pct">{pct:.0f}% от всех</div>' if pct is not None else ""
+        parts.append(
+            f"""
+            <div class="funnel-step">
+              <div class="funnel-num">{value}</div>
+              <div class="funnel-label">{html.escape(label)}</div>
+              {pct_html}
+              {conv}
+            </div>
+            """
         )
+        if idx < len(steps) - 1:
+            parts.append('<div class="funnel-arrow" aria-hidden="true">→</div>')
 
     return f"""
-  <div class="panel">
-    <h2>Повторный поиск — Trouble ({len(lines)})</h2>
-    <p class="lead-sm">Не новый запрос клиента, а повторная проценка, когда первый источник пропал (клиент долго решал, юнит уже продан и т.п.). Маркеры в левой части ТУЗ: колонка <b>Urgency</b> = Trouble/Troubles, <b>Request №</b> = TROUBLES или «Troubles + номер заказа», иногда <b>Request date</b> = №заказа.</p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Request №</th><th>P/N</th><th>Qty</th><th>Связанный заказ</th>
-            <th>Маркер</th><th>Urgency</th><th>Статус</th><th>Заказ</th>
-          </tr>
-        </thead>
-        <tbody>
-          {''.join(table_rows)}
-        </tbody>
-      </table>
+  <div class="panel funnel-panel">
+    <h2>Воронка конверсии</h2>
+    <p class="lead-sm">Без повторных поисков (Trouble). «Найдено» — есть Supplier Price; «Отправлено» — дата в AC; «Интерес» — статус «5. Есть интерес» или заказ; «Заказ» — «7. Клиент согласовал» или invoice.</p>
+    <div class="funnel">{''.join(parts)}</div>
+  </div>
+"""
+
+
+def render_speed_section(data: dict[str, Any]) -> str:
+    f = data["funnel"]
+    return f"""
+  <div class="panel speed-panel">
+    <h2>Скорость</h2>
+    <p class="lead-sm">Медиана по запросам без Trouble, где есть обе даты на этапе.</p>
+    <div class="speed-grid">
+      <div class="speed-card">
+        <div class="speed-k">B → O</div>
+        <div class="speed-v">{fmt_hours(f['median_proc'])}</div>
+        <div class="speed-h">внесли запрос → нашли на рынке</div>
+      </div>
+      <div class="speed-card">
+        <div class="speed-k">O → AC</div>
+        <div class="speed-v">{fmt_hours(f['median_sales'])}</div>
+        <div class="speed-h">нашли на рынке → отправили клиенту</div>
+      </div>
+      <div class="speed-card accent">
+        <div class="speed-k">B → AC</div>
+        <div class="speed-v">{fmt_hours(f['median_total'])}</div>
+        <div class="speed-h">полный цикл до отправки оффера</div>
+      </div>
     </div>
   </div>
 """
 
 
-def render_pending_offer_section(data: dict[str, Any]) -> str:
-    lines: list[RequestLine] = data.get("pending_offer", [])
-    if not lines:
+def render_money_section(data: dict[str, Any]) -> str:
+    overall = data["overall"]
+    wm = data.get("won_money")
+    if not wm:
         return ""
 
-    reason_rows = []
-    for label, count in data.get("hold_reasons", {}).items():
-        reason_rows.append(
-            f"<tr><td>{html.escape(label)}</td><td>{count}</td></tr>"
-        )
+    tuz = wm["tuz_won_offered"]
+    taz_net = wm["taz_won_net"]
+    taz_gross = wm["taz_won_gross"]
+    cancelled = wm["taz_won_cancelled"]
+    matched = wm["tuz_won_offered_matched"]
+    no_taz = wm["tuz_won_offered_no_taz"]
+    gap_matched = matched - taz_net
+    gap_total = tuz - taz_net
 
-    table_rows = []
-    for line in lines:
-        best_supplier = min((o.supplier_price for o in line.market_rows()), default=None)
-        note = line.workflow_notes()
-        reason = line.hold_reason()
-        note_html = html.escape(note) if note else "<span class='muted'>—</span>"
-        if len(note_html) > 220:
-            note_html = note_html[:217] + "…"
-        table_rows.append(
-            "<tr>"
-            f"<td>{html.escape(line.request_no)}{line.trouble_tag_html()}</td>"
-            f"<td><b>{html.escape(line.pn)}</b></td>"
-            f"<td>{line.qty or '—'}</td>"
-            f"<td>{html.escape(line.primary_status())}</td>"
-            f"<td>{fmt_money(best_supplier)}</td>"
-            f"<td><span class='tag hold'>{html.escape(reason)}</span></td>"
-            f"<td class='note-cell'>{note_html}</td>"
-            "</tr>"
-        )
+    cancel_rows = ""
+    for invoice, amount in wm["cancelled_invoices"][:8]:
+        cancel_rows += f"<tr><td>{html.escape(invoice)}</td><td>{fmt_money(amount)}</td></tr>"
+    if len(wm["cancelled_invoices"]) > 8:
+        cancel_rows += f"<tr><td colspan='2' class='muted'>… ещё {len(wm['cancelled_invoices']) - 8} счетов</td></tr>"
 
-    with_notes = data.get("pending_with_notes", 0)
-    return f"""
-  <div class="panel">
-    <h2>Ожидают Offered ({len(lines)})</h2>
-    <p class="lead-sm">Цена закупки есть, статус ≥ «Цена получена», но клиентский Offered ещё не сформирован. Комментарии читаем из колонок <b>PPWK</b>, <b>Remarks</b> и иногда <b>Root</b> (если там пояснение, а не название поставщика).</p>
-    <div class="mini-grid" style="margin-bottom:14px">
-      <div class="mini"><div class="k">Всего позиций</div><div class="v">{len(lines)}</div></div>
-      <div class="mini"><div class="k">С комментарием</div><div class="v">{with_notes}</div></div>
-      <div class="mini warn"><div class="k">Без комментария</div><div class="v">{len(lines) - with_notes}</div></div>
-    </div>
-    <details class="bucket" open>
-      <summary><span class="bucket-title">Причины по комментариям</span></summary>
+    cancel_block = ""
+    if cancel_rows:
+        cancel_block = f"""
+    <details class="bucket">
+      <summary><span class="bucket-title">Отмены / Refund на выигранных invoice ({len(wm['cancelled_invoices'])})</span></summary>
       <div class="bucket-body">
-        <div class="table-wrap" style="max-width:420px">
+        <div class="table-wrap" style="max-width:480px">
           <table>
-            <thead><tr><th>Категория</th><th>Строк</th></tr></thead>
-            <tbody>{''.join(reason_rows)}</tbody>
+            <thead><tr><th>Invoice</th><th>Сумма в ТАЗ</th></tr></thead>
+            <tbody>{cancel_rows}</tbody>
           </table>
         </div>
       </div>
     </details>
-    <div class="table-wrap" style="margin-top:14px">
-      <table>
-        <thead>
-          <tr>
-            <th>Request №</th><th>P/N</th><th>Qty</th><th>Статус</th>
-            <th>Supplier $/ea</th><th>Причина</th><th>Комментарий (PPWK / Remarks / Root)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {''.join(table_rows)}
-        </tbody>
-      </table>
+"""
+
+    verdict = ""
+    if gap_total > 0 and cancelled > 0:
+        verdict = (
+            f"ТУЗ Offered×Qty по выигранным RFQ ({fmt_money(tuz)}) выше ТАЗ net по тем же invoice "
+            f"({fmt_money(taz_net)}). Отмены/Refund на этих счетах — {fmt_money(cancelled)}: "
+            f"это часть расхождения, но не главная причина. Основной зазор — разница Offered×Qty и продажной AH "
+            f"({fmt_money(gap_matched)} на invoice с ТАЗ) плюс {fmt_money(no_taz)} по заказам без invoice в ТУЗ."
+        )
+    elif gap_total > 0:
+        verdict = (
+            f"ТУЗ ({fmt_money(tuz)}) выше ТАЗ net ({fmt_money(taz_net)}) на выигранных invoice. "
+            f"Отмен на этих счетах нет; смотрите Offered×Qty vs AH и строки без invoice."
+        )
+    else:
+        verdict = f"Суммы по выигранным invoice сходятся: ТУЗ {fmt_money(tuz)}, ТАЗ net {fmt_money(taz_net)}."
+
+    taz_all = overall.get("orders_total")
+    taz_all_note = ""
+    if taz_all:
+        taz_all_note = (
+            f"<p class='lead-sm'>Общий ТАЗ 2026 (все заказы, без Cancel/Refund) — <b>{fmt_money(taz_all)}</b>. "
+            f"Это шире, чем выигранные RFQ в ТУЗ ({wm['tuz_won_count']} строк, {fmt_money(tuz)}).</p>"
+        )
+
+    return f"""
+  <div class="panel money-panel">
+    <h2>Деньги: ТАЗ ↔ ТУЗ (выигранные заказы)</h2>
+    {taz_all_note}
+    <p class="lead-sm">{verdict}</p>
+    <div class="money-grid">
+      <div class="money-card accent">
+        <div class="money-k">ТУЗ выигранные</div>
+        <div class="money-v">{fmt_money(tuz)}</div>
+        <div class="money-h">{wm['tuz_won_count']} RFQ · Offered × Qty</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">ТАЗ net (те же invoice)</div>
+        <div class="money-v">{fmt_money(taz_net)}</div>
+        <div class="money-h">{wm['won_invoice_count']} счетов · без Cancel/Refund</div>
+      </div>
+      <div class="money-card warn">
+        <div class="money-k">Cancel / Refund</div>
+        <div class="money-v">{fmt_money(cancelled)}</div>
+        <div class="money-h">было валово {fmt_money(taz_gross)}</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Разница ТУЗ − ТАЗ net</div>
+        <div class="money-v">{fmt_money(gap_total)}</div>
+        <div class="money-h">без invoice в ТАЗ: {fmt_money(no_taz)}</div>
+      </div>
     </div>
+    {cancel_block}
   </div>
 """
 
@@ -1143,15 +1297,45 @@ body {{
 h1 {{ font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); color:var(--teal-deep); margin:0 0 8px; }}
 .lead {{ color:var(--ink-soft); max-width:46rem; line-height:1.55; margin:0 0 18px; }}
 .meta {{ color:var(--muted); font-size:.88rem; margin-bottom:24px; }}
-.grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0 28px; }}
-@media(max-width:980px){{ .grid {{ grid-template-columns:repeat(2,1fr); }} }}
-@media(max-width:560px){{ .grid {{ grid-template-columns:1fr; }} }}
-.kpi {{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow); }}
-.kpi .k {{ font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
-.kpi .v {{ font-family:"Fraunces",Georgia,serif; font-size:1.55rem; margin-top:4px; color:var(--teal-deep); }}
-.kpi .h {{ font-size:.84rem; color:var(--ink-soft); margin-top:4px; }}
-.kpi.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
-.kpi.warn {{ background:linear-gradient(135deg,#f8ead8,#fff); }}
+.funnel-panel {{ margin-top:8px; }}
+.funnel {{
+  display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin-top:8px;
+}}
+.funnel-step {{
+  flex:1 1 140px; min-width:120px; background:#fff; border:1px solid var(--line);
+  border-radius:14px; padding:14px 12px; text-align:center;
+}}
+.funnel-num {{
+  font-family:"Fraunces",Georgia,serif; font-size:1.75rem; font-weight:700; color:var(--teal-deep);
+}}
+.funnel-label {{ font-size:.82rem; font-weight:700; color:var(--ink-soft); margin-top:4px; line-height:1.3; }}
+.funnel-pct {{ font-size:.75rem; color:var(--muted); margin-top:6px; }}
+.funnel-conv {{ font-size:.72rem; color:var(--teal); font-weight:700; margin-top:4px; }}
+.funnel-arrow {{
+  display:flex; align-items:center; color:var(--muted); font-size:1.2rem; font-weight:700;
+  padding:0 2px;
+}}
+@media(max-width:720px){{ .funnel-arrow {{ display:none; }} }}
+.speed-grid {{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }}
+@media(max-width:720px){{ .speed-grid {{ grid-template-columns:1fr; }} }}
+.speed-card {{
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px;
+}}
+.speed-card.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
+.speed-k {{ font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
+.speed-v {{ font-family:"Fraunces",Georgia,serif; font-size:1.6rem; color:var(--teal-deep); margin-top:4px; }}
+.speed-h {{ font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.4; }}
+.money-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }}
+@media(max-width:980px){{ .money-grid {{ grid-template-columns:repeat(2,1fr); }} }}
+@media(max-width:560px){{ .money-grid {{ grid-template-columns:1fr; }} }}
+.money-card {{
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+}}
+.money-card.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
+.money-card.warn {{ background:linear-gradient(135deg,#f8ead8,#fff); }}
+.money-k {{ font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }}
+.money-v {{ font-family:"Fraunces",Georgia,serif; font-size:1.35rem; color:var(--teal-deep); margin-top:4px; }}
+.money-h {{ font-size:.8rem; color:var(--ink-soft); margin-top:4px; }}
 .panel {{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); margin:18px 0; }}
 .panel h2 {{ font-family:"Fraunces",Georgia,serif; margin:0 0 12px; font-size:1.35rem; }}
 .lead-sm {{ color:var(--ink-soft); font-size:.92rem; line-height:1.5; margin:0 0 14px; max-width:52rem; }}
@@ -1192,36 +1376,23 @@ tr:hover td {{ background:#fafcfd; }}
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
   <div class="meta">Источник: {html.escape(data['source'])} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
 
-  <div class="grid">
-    <div class="kpi accent"><div class="k">Запросов (строк RFQ)</div><div class="v">{overall['count']}</div><div class="h">Request № + P/N · новых {data.get('new_request_count', overall['count'])}</div></div>
-    <div class="kpi warn"><div class="k">Повторный поиск (Trouble)</div><div class="v">{data.get('trouble_count', 0)}</div><div class="h">не новый RFQ — спасаем заказ</div></div>
-    <div class="kpi"><div class="k">Найдено на рынке</div><div class="v">{overall['found']}</div><div class="h">{overall['found_pct']:.0f}% — только Supplier Price</div></div>
-    <div class="kpi warn"><div class="k">Не найдено / в проценке</div><div class="v">{overall['not_found']} / {overall['in_procurement']}</div><div class="h">без supplier quote / ещё ищем</div></div>
-    <div class="kpi"><div class="k">Отправлено клиенту</div><div class="v">{overall['sent']}</div><div class="h">есть дата в AC</div></div>
-    <div class="kpi accent"><div class="k">Заказов получено</div><div class="v">{overall['won']}</div><div class="h">{overall['won_pct']:.1f}% конверсия</div></div>
-    <div class="kpi accent"><div class="k">ТАЗ 2026 (без Cancel)</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="h">ROTABLE {fmt_money(overall.get('orders_rotable'))} · {overall.get('taz_invoices_2026') or '—'} счетов</div></div>
-    <div class="kpi"><div class="k">ТУЗ выигранные</div><div class="v">{fmt_money(overall['tuz_orders_total'])}</div><div class="h">{overall['won']} RFQ · Offered×Qty</div></div>
-    <div class="kpi"><div class="k">Медиана B→O</div><div class="v">{fmt_hours(overall['median_proc'])}</div><div class="h">закупки: запрос → цена</div></div>
-    <div class="kpi"><div class="k">Медиана O→AC / B→AC</div><div class="v">{fmt_hours(overall['median_sales'])} / {fmt_hours(overall['median_total'])}</div><div class="h">продажи / полный цикл</div></div>
-  </div>
+  {render_funnel_section(data)}
+
+  {render_speed_section(data)}
+
+  {render_money_section(data)}
 
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
-      <b>Без продажной оценки</b> — нет Offered × Qty; из них <b>{overall.get('supplier_no_offer', 0)}</b> — статус ≥ «Цена получена», есть Supplier Price, но Offered ещё пустой. Смотрите секцию «Ожидают Offered»: там комментарии из PPWK / Remarks (ждём документы, габариты, «в активах» и т.д.).<br/>
-      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC).<br/>
-      <b>Сумма заказов</b> — ТАЗ: продажная итого (AH), work date 2026, <b>без 5 CANCELLED и 7 REFUND</b>. ТУЗ: Offered×Qty по выигранным RFQ (групповые листы). Сверка — в отдельном блоке ниже.<br/>
-      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).<br/>
-      <b>Trouble</b> — повторный поиск компонента (Urgency / Request № / № заказа в дате). Это не новый запрос клиента, а попытка закрыть уже согласованный заказ после потери первого источника.
+      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
+      <b>Деньги</b> — ТУЗ: Offered×Qty по выигранным RFQ; ТАЗ: продажная AH по invoice, work date 2026, без 5 CANCELLED и 7 REFUND. Полный ТАЗ шире (все заказы 2026), чем выигранные строки ТУЗ.<br/>
+      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
 
   {render_reconciliation_section(data)}
-
-  {render_trouble_section(data)}
-
-  {render_pending_offer_section(data)}
 
   <div class="panel">
     <h2>Категории по продажной стоимости</h2>
