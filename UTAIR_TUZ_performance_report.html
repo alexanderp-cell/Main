@@ -109,13 +109,15 @@ tr:hover td { background:#fafcfd; }
 .tag.hold { background:#e8f0fe; color:#1e4a8a; }
 .tag.trouble { background:#fde8e8; color:#9b1c1c; }
 .tag.critical { background:#ffe4e0; color:#9b1c1c; }
+.tag.growth { background:#dcfce7; color:#166534; }
+.tag.skip { background:#f3f4f6; color:#4b5563; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 16:29 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 16:47 · Questions v2 не включён</div>
 
   
   <div class="panel funnel-panel">
@@ -285,7 +287,7 @@ tr:hover td { background:#fafcfd; }
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
       <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
-      <b>Категории</b> — по Offered×Qty запроса. В резюме: выручка/маржа ТАЗ по выигранным invoice, ср. квот на запрос (включая Backup), доля Supplier (T).<br/>
+      <b>Категории</b> — по Offered×Qty. В шапке: выручка/маржа ТАЗ, топ-3 Supplier (T), квот/запрос. Внутри — заказы и до 10 P/N с выводом «усилить» или «не тратить ресурс».<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
