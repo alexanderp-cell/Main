@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate Utair TUZ performance HTML report (group sheets only)."""
+"""Generate airline TUZ performance HTML report (group sheets only)."""
 
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import re
@@ -18,8 +19,49 @@ import openpyxl
 
 TUZ_PATH = Path("/tmp/utair_analysis/TUZ_ТУЗ полный файл 01.09.2026.xlsx")
 TAZ_PATH = Path("/tmp/utair_analysis/TAZ_ТАЗ полный файл 28.08.2026.xlsx")
-OUTPUT_PATH = Path("/workspace/UTAIR_TUZ_performance_report.html")
-ZIP_PATH = Path("/workspace/UTAIR_TUZ_performance_report.zip")
+
+CLIENT_PROFILES: dict[str, dict[str, Any]] = {
+    "utair": {
+        "key": "utair",
+        "brand": "UTair",
+        "genitive": "Ютэйр",
+        "match": ("utair", "utg", "компонентс (utg)"),
+        "exact": {"utg"},
+        "output_html": Path("/workspace/UTAIR_TUZ_performance_report.html"),
+        "output_zip": Path("/workspace/UTAIR_TUZ_performance_report.zip"),
+        "invoice_overrides": {("4232", "761574B"): "16042615005"},
+        "prior_tuz_pn": frozenset({"2410M50P02", "811390-3"}),
+    },
+    "belavia": {
+        "key": "belavia",
+        "brand": "Belavia",
+        "genitive": "Белавиа",
+        "match": ("belavia", "белавиа"),
+        "exact": set(),
+        "output_html": Path("/workspace/BELAVIA_TUZ_performance_report.html"),
+        "output_zip": Path("/workspace/BELAVIA_TUZ_performance_report.zip"),
+        "invoice_overrides": {},
+        "prior_tuz_pn": frozenset(),
+    },
+}
+
+CLIENT = CLIENT_PROFILES["utair"]
+OUTPUT_PATH = CLIENT["output_html"]
+ZIP_PATH = CLIENT["output_zip"]
+TUZ_INVOICE_OVERRIDES: dict[tuple[str, str], str] = dict(CLIENT["invoice_overrides"])
+TAZ_PRIOR_TUZ_PN: frozenset[str] = CLIENT["prior_tuz_pn"]
+
+
+def configure_client(client_key: str) -> None:
+    global CLIENT, OUTPUT_PATH, ZIP_PATH, TUZ_INVOICE_OVERRIDES, TAZ_PRIOR_TUZ_PN
+    if client_key not in CLIENT_PROFILES:
+        raise SystemExit(f"Unknown client: {client_key}. Choose from {sorted(CLIENT_PROFILES)}")
+    CLIENT = CLIENT_PROFILES[client_key]
+    OUTPUT_PATH = CLIENT["output_html"]
+    ZIP_PATH = CLIENT["output_zip"]
+    TUZ_INVOICE_OVERRIDES = dict(CLIENT["invoice_overrides"])
+    TAZ_PRIOR_TUZ_PN = CLIENT["prior_tuz_pn"]
+
 
 EARLY_STATUSES = {
     "0. Начальный этап",
@@ -45,14 +87,6 @@ ORDER_REF_RE = re.compile(r"(P\d{5,}|Q\d{5,}|\d{4,}\.0)", re.IGNORECASE)
 TAZ_EXCLUDED_STATUSES = {"5 CANCELLED", "7 REFUND"}
 TAZ_WARRANTY_STATUSES = {"8 WARRANTY"}
 WARRANTY_TEXT_RE = re.compile(r"гарант|warranty", re.IGNORECASE)
-
-# Forgotten invoice in TUZ — treat as present for TAZ matching.
-TUZ_INVOICE_OVERRIDES: dict[tuple[str, str], str] = {
-    ("4232", "761574B"): "16042615005",
-}
-
-# Quoted in TUZ 2025; TAZ 2026 order is expected without a 2026 TUZ win.
-TAZ_PRIOR_TUZ_PN = frozenset({"2410M50P02", "811390-3"})
 TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
 ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
 
@@ -85,11 +119,18 @@ NOT_FOUND_STATUSES = {
 }
 
 
-def is_utair(customer) -> bool:
+def is_client(customer) -> bool:
     if not customer:
         return False
-    text = str(customer).lower()
-    return "utair" in text or text == "utg" or "компонентс (utg)" in text
+    text = str(customer).strip().lower()
+    if text in CLIENT.get("exact", set()):
+        return True
+    return any(token in text for token in CLIENT["match"])
+
+
+def is_utair(customer) -> bool:
+    """Backward-compatible alias used by older helpers."""
+    return is_client(customer)
 
 
 def parse_num(value) -> float | None:
@@ -383,7 +424,7 @@ def taz_row_costs(row: tuple) -> dict[str, float]:
 
 
 def load_taz_money_2026(path: Path) -> dict[str, Any]:
-    """Utair TAZ 2026 P&L from ORDERS sheet (excl. Cancel/Refund; warranty separate)."""
+    """Airline TAZ 2026 P&L from ORDERS sheet (excl. Cancel/Refund; warranty separate)."""
     totals = Counter()
     warranty = Counter()
     lines = 0
@@ -1367,6 +1408,50 @@ def bucket_money_from_taz(
     }
 
 
+def build_won_order_rows(
+    group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for line in group:
+        if not line.won():
+            continue
+        sale_ea = None
+        for offer in line.offers:
+            if offer.status == "7. Клиент согласовал" and offer.offered is not None:
+                sale_ea = offer.offered
+                break
+        if sale_ea is None:
+            selected = line.selected_offer()
+            sale_ea = selected.offered if selected else None
+
+        revenue = 0.0
+        margin = 0.0
+        matched = False
+        for invoice in line_invoices(line):
+            taz = invoice_money.get(invoice)
+            if not taz:
+                continue
+            matched = True
+            revenue += taz["revenue"]
+            margin += taz["margin"]
+
+        rows.append(
+            {
+                "request_no": line.request_no,
+                "pn": line.pn,
+                "description": line.description,
+                "sale_ea": sale_ea,
+                "qty": line.qty,
+                "sale_total": line.order_value(),
+                "margin": margin if matched else None,
+                "margin_pct": (margin / revenue * 100) if matched and revenue else None,
+                "timing": line.timing(),
+            }
+        )
+    rows.sort(key=lambda item: item.get("sale_total") or 0, reverse=True)
+    return rows
+
+
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     by_bucket: dict[str, list[RequestLine]] = {label: [] for label, _, _ in PRICE_BUCKETS}
     unpriced: list[RequestLine] = []
@@ -1421,6 +1506,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "suppliers_chip": top_suppliers_chip(mix),
             "focus": build_category_focus(group),
             "won_lines": [line for line in group if line.won()],
+            "won_orders": build_won_order_rows(group, invoice_money),
             "median_markup": median(markups),
             "median_proc": median(proc),
             "median_sales": median(sales),
@@ -1624,7 +1710,7 @@ def render_money_section(data: dict[str, Any]) -> str:
     return f"""
   <div class="panel money-panel">
     <h2>Деньги</h2>
-    <p class="lead-sm">Источник — <b>ТАЗ</b>, Utair, work date 2026, без Cancel/Refund и гарантийных поставок ({money.get('warranty_lines', 0)} строк, {fmt_money(money.get('warranty_revenue'))}). Исключено отмен: {fmt_money(excluded)}.</p>
+    <p class="lead-sm">Источник — <b>ТАЗ</b>, {html.escape(CLIENT['brand'])}, work date 2026, без Cancel/Refund и гарантийных поставок ({money.get('warranty_lines', 0)} строк, {fmt_money(money.get('warranty_revenue'))}). Исключено отмен: {fmt_money(excluded)}.</p>
     <div class="money-grid money-grid-6">
       <div class="money-card accent">
         <div class="money-k">1. Выручка</div>
@@ -1915,29 +2001,39 @@ def render_category_focus(items: list[dict[str, Any]]) -> str:
     )
 
 
-def render_won_orders_table(lines: list[RequestLine]) -> str:
-    if not lines:
+def render_won_orders_table(orders: list[dict[str, Any]]) -> str:
+    if not orders:
         return "<p class='muted'>В этом сегменте заказов пока нет.</p>"
     rows = []
-    for line in sorted(lines, key=lambda item: item.order_value() or 0, reverse=True)[:30]:
-        timing = line.timing()
+    for order in orders[:30]:
+        timing = order.get("timing") or {}
+        qty = order.get("qty")
+        qty_html = f"{qty:g}" if isinstance(qty, (int, float)) else "—"
+        margin = order.get("margin")
+        margin_html = fmt_money(margin)
+        if margin is not None and order.get("margin_pct") is not None:
+            margin_html = f"{fmt_money(margin)} <span class='sub'>({order['margin_pct']:.0f}%)</span>"
+        elif margin is None:
+            margin_html = "—"
         rows.append(
             "<tr>"
-            f"<td>{html.escape(line.request_no)}</td>"
-            f"<td><b>{html.escape(line.pn)}</b></td>"
-            f"<td>{html.escape(line.description or '—')}</td>"
-            f"<td>{fmt_money(line.sale_value())}</td>"
-            f"<td>{fmt_money(line.order_value())}</td>"
-            f"<td>{fmt_pct(line.markup_pct())}</td>"
-            f"<td>{fmt_hours(timing['procurement'])}</td>"
-            f"<td>{fmt_hours(timing['total'])}</td>"
+            f"<td>{html.escape(order['request_no'])}</td>"
+            f"<td><b>{html.escape(order['pn'])}</b></td>"
+            f"<td>{html.escape(order.get('description') or '—')}</td>"
+            f"<td>{fmt_money(order.get('sale_ea'))}</td>"
+            f"<td>{qty_html}</td>"
+            f"<td>{fmt_money(order.get('sale_total'))}</td>"
+            f"<td>{margin_html}</td>"
+            f"<td>{fmt_hours(timing.get('procurement'))}</td>"
+            f"<td>{fmt_hours(timing.get('total'))}</td>"
             "</tr>"
         )
     return (
         "<div class='table-wrap'><table>"
         "<thead><tr>"
-        "<th>Request №</th><th>P/N</th><th>Description</th><th>Sale $</th>"
-        "<th>Offered×Qty</th><th>Наценка</th><th>B→O</th><th>B→AC</th>"
+        "<th>Request №</th><th>P/N</th><th>Description</th>"
+        "<th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th>"
+        "<th>B→O</th><th>B→AC</th>"
         "</tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table></div>"
     )
@@ -1950,7 +2046,7 @@ def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) 
     share = bucket.get("revenue_share") or 0
     suppliers = html.escape(bucket.get("suppliers_chip") or "—")
     focus_html = render_category_focus(bucket.get("focus") or [])
-    won_html = render_won_orders_table(bucket.get("won_lines") or [])
+    won_html = render_won_orders_table(bucket.get("won_orders") or [])
     return f"""
             <details class="bucket" {'open' if open_first else ''}>
               <summary>
@@ -2015,7 +2111,7 @@ def render_html(data: dict[str, Any]) -> str:
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>UTair — оценка ТУЗ</title>
+<title>{html.escape(CLIENT['brand'])} — оценка ТУЗ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet"/>
@@ -2127,8 +2223,8 @@ tr:hover td {{ background:#fafcfd; }}
 </head>
 <body>
 <div class="wrap">
-  <h1>UTair — оценка работы по ТУЗ</h1>
-  <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
+  <h1>{html.escape(CLIENT['brand'])} — оценка работы по ТУЗ</h1>
+  <p class="lead">Анализ проработки запросов {html.escape(CLIENT['genitive'])} по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
   <div class="meta">Источник: {html.escape(data['source'])} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
 
   {render_funnel_section(data)}
@@ -2161,15 +2257,35 @@ tr:hover td {{ background:#fafcfd; }}
 </html>"""
 
 
-def main():
+def main(argv: list[str] | None = None):
+    parser = argparse.ArgumentParser(description="Generate TUZ performance HTML report")
+    parser.add_argument(
+        "--client",
+        choices=sorted(CLIENT_PROFILES),
+        default="utair",
+        help="Airline client to filter in TUZ/TAZ",
+    )
+    args = parser.parse_args(argv)
+    configure_client(args.client)
+
     lines = load_request_lines(TUZ_PATH)
     data = aggregate(lines)
+    data["client"] = CLIENT["key"]
+    data["brand"] = CLIENT["brand"]
     OUTPUT_PATH.write_text(render_html(data), encoding="utf-8")
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.write(OUTPUT_PATH, OUTPUT_PATH.name)
     print(f"Generated {OUTPUT_PATH}")
     print(f"Generated {ZIP_PATH}")
-    print(json.dumps({k: data['overall'][k] for k in ['count','found','won','pending_proc']}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "client": CLIENT["key"],
+                **{k: data["overall"][k] for k in ["count", "found", "won", "pending_proc"]},
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":
