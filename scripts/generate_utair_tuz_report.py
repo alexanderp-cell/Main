@@ -1448,12 +1448,6 @@ def render_money_section(data: dict[str, Any]) -> str:
         return ""
 
     excluded = money.get("excluded_revenue") or 0
-    warranty_note = ""
-    if money.get("warranty_lines"):
-        warranty_note = (
-            f" Гарантийные поставки ({money['warranty_lines']} строк, "
-            f"{fmt_money(money.get('warranty_revenue'))}) — отдельный блок ниже."
-        )
 
     return f"""
   <div class="panel money-panel">
