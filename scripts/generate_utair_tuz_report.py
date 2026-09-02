@@ -40,6 +40,7 @@ HOLD_REASON_RULES = [
 ]
 
 TROUBLE_RE = re.compile(r"trouble|трабл", re.IGNORECASE)
+CRITICAL_AOG_RE = re.compile(r"\b(critical|aog)\b", re.IGNORECASE)
 ORDER_REF_RE = re.compile(r"(P\d{5,}|Q\d{5,}|\d{4,}\.0)", re.IGNORECASE)
 TAZ_EXCLUDED_STATUSES = {"5 CANCELLED", "7 REFUND"}
 TAZ_WARRANTY_STATUSES = {"8 WARRANTY"}
@@ -664,6 +665,34 @@ class RequestLine:
 
     def hold_reason(self) -> str:
         return classify_hold_reason(self.workflow_notes())
+
+    def urgency_tags(self) -> list[str]:
+        tags: list[str] = []
+        seen: set[str] = set()
+        for offer in self.offers:
+            text = (offer.urgency or "").strip()
+            if not text:
+                continue
+            low = text.lower()
+            if "aog" in low and "AOG" not in seen:
+                tags.append("AOG")
+                seen.add("AOG")
+            if "critical" in low and "Critical" not in seen:
+                tags.append("Critical")
+                seen.add("Critical")
+        return tags
+
+    def is_critical_aog(self) -> bool:
+        """Client urgency Critical / AOG (col D). Empty and Expedite = standard."""
+        return bool(self.urgency_tags())
+
+    def primary_urgency(self) -> str:
+        tags = self.urgency_tags()
+        if not tags:
+            return "standard"
+        if len(tags) == 2:
+            return "Critical / AOG"
+        return tags[0]
 
     def is_trouble_search(self) -> bool:
         """Repeat procurement when the first source was lost (Trouble / order ref in left cols)."""
@@ -1324,6 +1353,33 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         )
     buckets["Без продажной оценки"]["revenue_share"] = 0
 
+    critical_lines = [line for line in lines if line.is_critical_aog()]
+    standard_lines = [line for line in lines if not line.is_critical_aog()]
+    critical_summary = summarize(critical_lines)
+    standard_summary = summarize(standard_lines)
+    critical_by_price: dict[str, dict[str, Any]] = {}
+    for label, _, _ in PRICE_BUCKETS:
+        subset = [line for line in critical_lines if bucket_for_sale(line.sale_value()) == label]
+        if subset:
+            critical_by_price[label] = summarize(subset)
+    unpriced_crit = [line for line in critical_lines if bucket_for_sale(line.sale_value()) is None]
+    if unpriced_crit:
+        critical_by_price["Без продажной оценки"] = summarize(unpriced_crit)
+
+    aog_count = sum(1 for line in critical_lines if "AOG" in line.urgency_tags())
+    critical_count = sum(1 for line in critical_lines if "Critical" in line.urgency_tags())
+    critical_block = {
+        **critical_summary,
+        "aog_count": aog_count,
+        "critical_count": critical_count,
+        "standard_count": len(standard_lines),
+        "standard_median_total": standard_summary["median_total"],
+        "standard_median_proc": standard_summary["median_proc"],
+        "standard_won_pct": standard_summary["won_pct"],
+        "by_price": critical_by_price,
+        "won_lines": [line for line in critical_lines if line.won()],
+    }
+
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
@@ -1336,6 +1392,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "reconciliation": reconciliation,
         "taz_orders": taz_orders,
         "won_deals": reconciliation.get("won_deals") if reconciliation else [],
+        "critical_aog": critical_block,
     }
 
 
@@ -1582,6 +1639,136 @@ def render_renegotiations_section(data: dict[str, Any]) -> str:
 """
 
 
+def render_critical_aog_section(data: dict[str, Any]) -> str:
+    block = data.get("critical_aog")
+    if not block or not block.get("count"):
+        return ""
+
+    price_rows = []
+    for label, _, _ in PRICE_BUCKETS:
+        subset = block.get("by_price", {}).get(label)
+        if not subset:
+            continue
+        price_rows.append(
+            "<tr>"
+            f"<td>{html.escape(label)}</td>"
+            f"<td>{subset['count']}</td>"
+            f"<td>{subset['won']}</td>"
+            f"<td>{fmt_money(subset.get('revenue'))}</td>"
+            f"<td>{fmt_money(subset.get('margin'))}</td>"
+            f"<td>{fmt_hours(subset.get('median_total'))}</td>"
+            f"<td>{subset.get('avg_quotes', 0):.1f}</td>"
+            "</tr>"
+        )
+    if block.get("by_price", {}).get("Без продажной оценки"):
+        subset = block["by_price"]["Без продажной оценки"]
+        price_rows.append(
+            "<tr>"
+            "<td>Без продажной оценки</td>"
+            f"<td>{subset['count']}</td>"
+            f"<td>{subset['won']}</td>"
+            f"<td>{fmt_money(subset.get('revenue'))}</td>"
+            f"<td>{fmt_money(subset.get('margin'))}</td>"
+            f"<td>{fmt_hours(subset.get('median_total'))}</td>"
+            f"<td>{subset.get('avg_quotes', 0):.1f}</td>"
+            "</tr>"
+        )
+
+    won_lines = block.get("won_lines") or []
+    won_table = ""
+    if won_lines:
+        rows = []
+        for line in sorted(won_lines, key=lambda item: item.order_value() or 0, reverse=True)[:40]:
+            urgency = " / ".join(line.urgency_tags()) or "—"
+            timing = line.timing()
+            rows.append(
+                "<tr>"
+                f"<td>{html.escape(line.request_no)}</td>"
+                f"<td><span class='tag critical'>{html.escape(urgency)}</span></td>"
+                f"<td><b>{html.escape(line.pn)}</b></td>"
+                f"<td>{html.escape(line.description or '—')}</td>"
+                f"<td>{fmt_money(line.sale_value())}</td>"
+                f"<td>{fmt_money(line.order_value())}</td>"
+                f"<td>{fmt_hours(timing['procurement'])}</td>"
+                f"<td>{fmt_hours(timing['total'])}</td>"
+                "</tr>"
+            )
+        won_table = f"""
+    <details class="bucket" open>
+      <summary>
+        <div class="bucket-head">
+          <div class="bucket-title">Заказы из Critical / AOG ({len(won_lines)})</div>
+        </div>
+      </summary>
+      <div class="bucket-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Request №</th><th>Срочность</th><th>P/N</th><th>Description</th>
+                <th>Sale $</th><th>Offered×Qty</th><th>B→O</th><th>B→AC</th>
+              </tr>
+            </thead>
+            <tbody>{''.join(rows)}</tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+"""
+
+    share = (block["count"] / (block["count"] + block["standard_count"]) * 100) if block["count"] else 0
+    return f"""
+  <div class="panel critical-panel">
+    <h2>Critical / AOG</h2>
+    <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — зона, где скорость и конверсия особенно важны.</p>
+    <div class="money-grid money-grid-6">
+      <div class="money-card warn">
+        <div class="money-k">Запросов Critical/AOG</div>
+        <div class="money-v">{block['count']}</div>
+        <div class="money-h">{share:.0f}% от всех · Critical {block['critical_count']} · AOG {block['aog_count']}</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Найдено / отправлено</div>
+        <div class="money-v">{block['found']} / {block['sent']}</div>
+        <div class="money-h">найдено {block['found_pct']:.0f}%</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">Заказов</div>
+        <div class="money-v">{block['won']}</div>
+        <div class="money-h">{block['won_pct']:.1f}% конверсия · стандарт {block['standard_won_pct']:.1f}%</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">Выручка ТАЗ</div>
+        <div class="money-v">{fmt_money(block.get('revenue'))}</div>
+        <div class="money-h">маржа {fmt_money(block.get('margin'))} ({block.get('margin_pct', 0):.0f}%)</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Скорость B→AC</div>
+        <div class="money-v">{fmt_hours(block.get('median_total'))}</div>
+        <div class="money-h">стандарт {fmt_hours(block.get('standard_median_total'))} · B→O {fmt_hours(block.get('median_proc'))}</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Квот / запрос</div>
+        <div class="money-v">{block.get('avg_quotes', 0):.1f}</div>
+        <div class="money-h">всего квот {block.get('quotes_total', 0)}</div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead>
+          <tr>
+            <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
+            <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
+          </tr>
+        </thead>
+        <tbody>{''.join(price_rows)}</tbody>
+      </table>
+    </div>
+    {won_table}
+  </div>
+"""
+
+
 def render_supplier_mix(mix: list[dict[str, Any]]) -> str:
     if not mix:
         return "<div class='muted'>Нет квот с заполненным Supplier (T)</div>"
@@ -1778,6 +1965,8 @@ tr:hover td {{ background:#fafcfd; }}
 .tag.alt {{ background:#fde68a; color:#7c5a00; }}
 .tag.hold {{ background:#e8f0fe; color:#1e4a8a; }}
 .tag.trouble {{ background:#fde8e8; color:#9b1c1c; }}
+.tag.critical {{ background:#ffe4e0; color:#9b1c1c; }}
+.critical-panel .money-card.warn {{ background:linear-gradient(135deg,#fde8e8,#fff); }}
 </style>
 </head>
 <body>
@@ -1792,12 +1981,15 @@ tr:hover td {{ background:#fafcfd; }}
 
   {render_money_section(data)}
 
+  {render_critical_aog_section(data)}
+
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
+      <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
       <b>Категории</b> — по Offered×Qty запроса. В резюме: выручка/маржа ТАЗ по выигранным invoice, ср. квот на запрос (включая Backup), доля Supplier (T).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>

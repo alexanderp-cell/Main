@@ -106,13 +106,15 @@ tr:hover td { background:#fafcfd; }
 .tag.alt { background:#fde68a; color:#7c5a00; }
 .tag.hold { background:#e8f0fe; color:#1e4a8a; }
 .tag.trouble { background:#fde8e8; color:#9b1c1c; }
+.tag.critical { background:#ffe4e0; color:#9b1c1c; }
+.critical-panel .money-card.warn { background:linear-gradient(135deg,#fde8e8,#fff); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 15:53 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 16:03 · Questions v2 не включён</div>
 
   
   <div class="panel funnel-panel">
@@ -220,12 +222,85 @@ tr:hover td { background:#fafcfd; }
   </div>
 
 
+  
+  <div class="panel critical-panel">
+    <h2>Critical / AOG</h2>
+    <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — зона, где скорость и конверсия особенно важны.</p>
+    <div class="money-grid money-grid-6">
+      <div class="money-card warn">
+        <div class="money-k">Запросов Critical/AOG</div>
+        <div class="money-v">401</div>
+        <div class="money-h">9% от всех · Critical 292 · AOG 109</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Найдено / отправлено</div>
+        <div class="money-v">274 / 261</div>
+        <div class="money-h">найдено 68%</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">Заказов</div>
+        <div class="money-v">4</div>
+        <div class="money-h">1.0% конверсия · стандарт 2.7%</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">Выручка ТАЗ</div>
+        <div class="money-v">$67,610</div>
+        <div class="money-h">маржа $24,012 (36%)</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Скорость B→AC</div>
+        <div class="money-v">1.1 д</div>
+        <div class="money-h">стандарт 1.2 д · B→O 1.0 д</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">Квот / запрос</div>
+        <div class="money-v">2.3</div>
+        <div class="money-h">всего квот 931</div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead>
+          <tr>
+            <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
+            <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
+          </tr>
+        </thead>
+        <tbody><tr><td>0–10 тыс. $</td><td>119</td><td>2</td><td>$2,710</td><td>$1,413</td><td>1.2 д</td><td>3.6</td></tr><tr><td>11–25 тыс. $</td><td>76</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>2.6</td></tr><tr><td>26–50 тыс. $</td><td>39</td><td>1</td><td>$29,000</td><td>$10,675</td><td>1.1 д</td><td>2.8</td></tr><tr><td>51–75 тыс. $</td><td>14</td><td>1</td><td>$35,900</td><td>$11,924</td><td>1.1 д</td><td>3.7</td></tr><tr><td>76–100 тыс. $</td><td>4</td><td>0</td><td>$0</td><td>$0</td><td>1.5 д</td><td>3.0</td></tr><tr><td>101–150 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>1.7 д</td><td>4.0</td></tr><tr><td>151–200 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>2.2 д</td><td>2.5</td></tr><tr><td>200+ тыс. $</td><td>8</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>5.8</td></tr><tr><td>Без продажной оценки</td><td>137</td><td>0</td><td>$0</td><td>$0</td><td>—</td><td>0.5</td></tr></tbody>
+      </table>
+    </div>
+    
+    <details class="bucket" open>
+      <summary>
+        <div class="bucket-head">
+          <div class="bucket-title">Заказы из Critical / AOG (4)</div>
+        </div>
+      </summary>
+      <div class="bucket-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Request №</th><th>Срочность</th><th>P/N</th><th>Description</th>
+                <th>Sale $</th><th>Offered×Qty</th><th>B→O</th><th>B→AC</th>
+              </tr>
+            </thead>
+            <tbody><tr><td>Q10010926</td><td><span class='tag critical'>AOG</span></td><td><b>4951957</b></td><td>STARTER MOTOR</td><td>$71,800</td><td>$71,800</td><td>2 ч</td><td>3 ч</td></tr><tr><td>4377</td><td><span class='tag critical'>AOG</span></td><td><b>07325P000-01</b></td><td>BALLSCREW ASSY</td><td>$29,000</td><td>$29,000</td><td>2 ч</td><td>3 ч</td></tr><tr><td>Q10154326</td><td><span class='tag critical'>Critical</span></td><td><b>14330-050</b></td><td>VALVE ASSY-FLUSH ORBITAL</td><td>$2,500</td><td>$2,500</td><td>1.0 д</td><td>1.1 д</td></tr><tr><td>Q10135926</td><td><span class='tag critical'>Critical</span></td><td><b>NAS617-6</b></td><td>PACKING</td><td>$2</td><td>$2</td><td>—</td><td>0 ч</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
+      <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
       <b>Категории</b> — по Offered×Qty запроса. В резюме: выручка/маржа ТАЗ по выигранным invoice, ср. квот на запрос (включая Backup), доля Supplier (T).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
