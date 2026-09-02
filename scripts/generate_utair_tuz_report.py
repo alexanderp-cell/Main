@@ -369,6 +369,79 @@ def taz_line_amount(row: tuple) -> float:
     return 0.0
 
 
+def taz_row_costs(row: tuple) -> dict[str, float]:
+    return {
+        "revenue": taz_line_amount(row),
+        "purchase": parse_num(row[31]) or 0.0,
+        "transport_plan": parse_num(row[34]) or 0.0 if len(row) > 34 else 0.0,
+        "transport_fact": parse_num(row[35]) or 0.0 if len(row) > 35 else 0.0,
+        "fee": parse_num(row[36]) or 0.0 if len(row) > 36 else 0.0,
+        "customs": (parse_num(row[37]) or 0.0 if len(row) > 37 else 0.0)
+        + (parse_num(row[38]) or 0.0 if len(row) > 38 else 0.0),
+    }
+
+
+def load_taz_money_2026(path: Path) -> dict[str, Any]:
+    """Utair TAZ 2026 P&L from ORDERS sheet (excl. Cancel/Refund; warranty separate)."""
+    totals = Counter()
+    warranty = Counter()
+    lines = 0
+    warranty_lines = 0
+    invoices: set[str] = set()
+
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row or not is_utair(row[6]):
+            continue
+        work_dt = row[16]
+        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+            continue
+        status = str(row[4]).strip() if row[4] else "—"
+        costs = taz_row_costs(row)
+        if status in TAZ_EXCLUDED_STATUSES:
+            totals["excluded_revenue"] += costs["revenue"]
+            continue
+        if is_taz_warranty_row(row):
+            warranty_lines += 1
+            for key, value in costs.items():
+                warranty[key] += value
+            continue
+        for key, value in costs.items():
+            totals[key] += value
+        lines += 1
+        invoice = normalize_invoice(row[0])
+        if invoice:
+            invoices.add(invoice)
+
+    wb.close()
+
+    revenue = totals["revenue"]
+    margin = (
+        revenue
+        - totals["purchase"]
+        - totals["transport_fact"]
+        - totals["fee"]
+        - totals["customs"]
+    )
+    return {
+        "revenue": revenue,
+        "purchase": totals["purchase"],
+        "transport_plan": totals["transport_plan"],
+        "transport_fact": totals["transport_fact"],
+        "fee": totals["fee"],
+        "customs": totals["customs"],
+        "margin": margin,
+        "margin_pct": (margin / revenue * 100) if revenue else 0.0,
+        "lines": lines,
+        "invoices": len(invoices),
+        "excluded_revenue": totals["excluded_revenue"],
+        "warranty_revenue": warranty["revenue"],
+        "warranty_lines": warranty_lines,
+    }
+
+
 def bucket_for_sale(value: float | None) -> str | None:
     if value is None:
         return None
@@ -1082,6 +1155,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "lines": group,
         }
 
+    taz_money = load_taz_money_2026(TAZ_PATH) if TAZ_PATH.exists() else None
     taz_orders = load_taz_orders_2026(TAZ_PATH) if TAZ_PATH.exists() else None
     reconciliation = reconcile_taz_tuz(lines, TAZ_PATH) if TAZ_PATH.exists() else None
     won_money = load_won_money_reconciliation(lines, TAZ_PATH) if TAZ_PATH.exists() else None
@@ -1121,6 +1195,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "overall": overall,
         "buckets": buckets,
         "funnel": funnel,
+        "taz_money": taz_money,
         "won_money": won_money,
         "reconciliation": reconciliation,
         "taz_orders": taz_orders,
@@ -1232,106 +1307,54 @@ def render_speed_section(data: dict[str, Any]) -> str:
 
 
 def render_money_section(data: dict[str, Any]) -> str:
-    overall = data["overall"]
-    wm = data.get("won_money")
-    if not wm:
+    money = data.get("taz_money")
+    if not money:
         return ""
 
-    tuz = wm["tuz_won_offered"]
-    taz_net = wm["taz_won_net"]
-    taz_gross = wm["taz_won_gross"]
-    cancelled = wm["taz_won_cancelled"]
-    matched = wm["tuz_won_offered_matched"]
-    no_taz = wm["tuz_won_offered_no_taz"]
-    gap_matched = matched - taz_net
-    gap_total = tuz - taz_net
-
-    cancel_rows = ""
-    for invoice, amount in wm["cancelled_invoices"][:8]:
-        cancel_rows += f"<tr><td>{html.escape(invoice)}</td><td>{fmt_money(amount)}</td></tr>"
-    if len(wm["cancelled_invoices"]) > 8:
-        cancel_rows += f"<tr><td colspan='2' class='muted'>… ещё {len(wm['cancelled_invoices']) - 8} счетов</td></tr>"
-
-    cancel_block = ""
-    if cancel_rows:
-        cancel_block = f"""
-    <details class="bucket">
-      <summary><span class="bucket-title">Отмены / Refund на выигранных invoice ({len(wm['cancelled_invoices'])})</span></summary>
-      <div class="bucket-body">
-        <div class="table-wrap" style="max-width:480px">
-          <table>
-            <thead><tr><th>Invoice</th><th>Сумма в ТАЗ</th></tr></thead>
-            <tbody>{cancel_rows}</tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-"""
-
-    reneg = wm.get("renegotiation_deals") or []
-    reneg_note = ""
-    if reneg:
-        reneg_note = (
-            f" В ТУЗ {wm['tuz_won_count']} зелёных строк, но {wm['tuz_deal_count']} уникальных сделок "
-            f"({len(reneg)} с пересогласованием Trouble)."
+    excluded = money.get("excluded_revenue") or 0
+    warranty_note = ""
+    if money.get("warranty_lines"):
+        warranty_note = (
+            f" Гарантийные поставки ({money['warranty_lines']} строк, "
+            f"{fmt_money(money.get('warranty_revenue'))}) — отдельный блок ниже."
         )
-
-    verdict = ""
-    if gap_total > 0 and cancelled > 0:
-        verdict = (
-            f"ТУЗ Offered×Qty по сделкам ({fmt_money(tuz)}, без двойного счёта Trouble){reneg_note} "
-            f"vs ТАЗ net по invoice ({fmt_money(taz_net)}). Отмены/Refund — {fmt_money(cancelled)}. "
-            f"Основной зазор Offered×Qty vs AH: {fmt_money(gap_matched)}."
-        )
-    elif gap_total > 0:
-        verdict = (
-            f"ТУЗ по сделкам ({fmt_money(tuz)}){reneg_note} vs ТАЗ net ({fmt_money(taz_net)})."
-        )
-    else:
-        verdict = f"Суммы по invoice сходятся: ТУЗ {fmt_money(tuz)}, ТАЗ net {fmt_money(taz_net)}.{reneg_note}"
-
-    taz_all = overall.get("orders_total")
-    taz_all_note = ""
-    if taz_all:
-        taz_all_note = (
-            f"<p class='lead-sm'>Общий ТАЗ 2026 (все заказы, без Cancel/Refund) — <b>{fmt_money(taz_all)}</b>. "
-            f"Это шире, чем {wm['tuz_deal_count']} уникальных сделок в ТУЗ ({fmt_money(tuz)}).</p>"
-        )
-
-    raw = wm.get("tuz_won_offered_raw")
-    raw_note = ""
-    if raw and raw != tuz:
-        raw_note = f"<div class='money-h'>в ТУЗ {wm['tuz_won_count']} зелёных строк · raw {fmt_money(raw)}</div>"
 
     return f"""
   <div class="panel money-panel">
-    <h2>Деньги: ТАЗ ↔ ТУЗ (выигранные заказы)</h2>
-    {taz_all_note}
-    <p class="lead-sm">{verdict}</p>
-    <div class="money-grid">
+    <h2>Деньги</h2>
+    <p class="lead-sm">Источник — <b>ТАЗ</b>, Utair, work date 2026, без Cancel/Refund.{warranty_note} Исключено отмен: {fmt_money(excluded)}.</p>
+    <div class="money-grid money-grid-6">
       <div class="money-card accent">
-        <div class="money-k">ТУЗ сделки</div>
-        <div class="money-v">{fmt_money(tuz)}</div>
-        <div class="money-h">{wm['tuz_deal_count']} сделок · Offered × Qty</div>
-        {raw_note}
+        <div class="money-k">1. Выручка</div>
+        <div class="money-v">{fmt_money(money['revenue'])}</div>
+        <div class="money-h">{money['lines']} строк · {money['invoices']} счетов · продажная AH</div>
       </div>
       <div class="money-card">
-        <div class="money-k">ТАЗ net (те же invoice)</div>
-        <div class="money-v">{fmt_money(taz_net)}</div>
-        <div class="money-h">{wm['won_invoice_count']} счетов · без Cancel/Refund</div>
-      </div>
-      <div class="money-card warn">
-        <div class="money-k">Cancel / Refund</div>
-        <div class="money-v">{fmt_money(cancelled)}</div>
-        <div class="money-h">было валово {fmt_money(taz_gross)}</div>
+        <div class="money-k">2. Закупка</div>
+        <div class="money-v">{fmt_money(money['purchase'])}</div>
+        <div class="money-h">закупка, итого</div>
       </div>
       <div class="money-card">
-        <div class="money-k">Разница ТУЗ − ТАЗ net</div>
-        <div class="money-v">{fmt_money(gap_total)}</div>
-        <div class="money-h">без invoice в ТАЗ: {fmt_money(no_taz)}</div>
+        <div class="money-k">3. Транспорт</div>
+        <div class="money-v">{fmt_money(money['transport_fact'])}</div>
+        <div class="money-h">факт · план {fmt_money(money['transport_plan'])}</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">4. Fee</div>
+        <div class="money-v">{fmt_money(money['fee'])}</div>
+        <div class="money-h">transaction fee</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">5. Таможня</div>
+        <div class="money-v">{fmt_money(money['customs'])}</div>
+        <div class="money-h">пошлина + СВХ</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">6. Маржа</div>
+        <div class="money-v">{fmt_money(money['margin'])}</div>
+        <div class="money-h">{money['margin_pct']:.1f}% · выручка − закупка − транспорт факт − fee − таможня</div>
       </div>
     </div>
-    {cancel_block}
   </div>
 """
 
@@ -1425,80 +1448,6 @@ def render_renegotiations_section(data: dict[str, Any]) -> str:
     <h2>Пересогласования (Trouble → новый «выигрыш»)</h2>
     <p class="lead-sm">В ТУЗ виден процесс: несколько зелёных строк на одну сделку. В ТАЗ — один итоговый заказ. Здесь сгруппировано {len(deals)} сделок с повторным согласованием; в метриках считается одна сделка.</p>
     {''.join(cards)}
-  </div>
-"""
-
-
-def render_reconciliation_section(data: dict[str, Any]) -> str:
-    overall = data["overall"]
-    recon = data.get("reconciliation")
-    if not recon:
-        return ""
-
-    buckets = recon["taz_rotable_buckets"]
-    counts = recon["taz_rotable_counts"]
-    rotable_net = recon["taz_rotable_net"] or 1
-    labels = {
-        "tuz_won_invoice": "ТУЗ выигран + invoice совпал с ТАЗ",
-        "warranty": "Гарантийная поставка (замена юнита)",
-        "tuz_prior_year": "Квота в ТУЗ 2025 — в 2026 нет выигрыша",
-        "tuz_won_pn_no_invoice": "ТУЗ выигран, invoice в ТУЗ пустой",
-        "tuz_open_or_lost": "P/N есть в ТУЗ, но заказ ещё не «согласовал»",
-        "not_in_tuz": "P/N нет в ТУЗ (другой канал / старый заказ)",
-    }
-    detail_keys = {"warranty", "tuz_prior_year", "tuz_open_or_lost", "tuz_won_pn_no_invoice"}
-    rows = []
-    detail_blocks = []
-    bucket_rows = recon.get("taz_rotable_rows", {})
-    for key, label in labels.items():
-        amount = buckets.get(key, 0)
-        if not amount and not counts.get(key):
-            continue
-        rows.append(
-            "<tr>"
-            f"<td>{html.escape(label)}</td>"
-            f"<td>{counts.get(key, 0)}</td>"
-            f"<td>{fmt_money(amount)}</td>"
-            f"<td>{amount / rotable_net * 100:.0f}%</td>"
-            "</tr>"
-        )
-        if key in detail_keys and bucket_rows.get(key):
-            detail_blocks.append(
-                f"""
-                <details class="bucket">
-                  <summary><span class="bucket-title">{html.escape(label)} ({counts.get(key, 0)})</span></summary>
-                  <div class="bucket-body">{render_taz_rows_table(bucket_rows[key])}</div>
-                </details>
-                """
-            )
-
-    cancelled = overall.get("orders_cancelled") or 0
-    refund = overall.get("orders_refund") or 0
-    gross = overall.get("orders_gross") or overall["orders_total"]
-
-    return f"""
-  <div class="panel">
-    <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
-    <p class="lead-sm">Разница <b>{fmt_money(overall['orders_total'])}</b> (ТАЗ) и <b>{fmt_money(overall['tuz_orders_total'])}</b> (ТУЗ сделки) — разные срезы. ТАЗ = все заказы 2026; ТУЗ = {recon.get('tuz_deal_count', recon['tuz_won_count'])} уникальных сделок ({recon['tuz_won_count']} зелёных строк). Invoice 761574B/4232 учтён вручную (16042615005).</p>
-    <div class="mini-grid" style="margin-bottom:14px">
-      <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="sub">{overall.get('taz_invoices_2026')} счетов · {overall.get('taz_lines_2026')} строк</div></div>
-      <div class="mini"><div class="k">из них ROTABLE</div><div class="v">{fmt_money(overall.get('orders_rotable'))}</div><div class="sub">EXPENDABLE {fmt_money(overall.get('orders_expendable'))}</div></div>
-      <div class="mini warn"><div class="k">Исключено Cancel + Refund</div><div class="v">{fmt_money(cancelled + refund)}</div><div class="sub">было валово {fmt_money(gross)}</div></div>
-      <div class="mini"><div class="k">ТУЗ сделки</div><div class="v">{fmt_money(recon.get('tuz_won_offered_deals', recon['tuz_won_offered']))}</div><div class="sub">{recon.get('tuz_deal_count', recon['tuz_won_count'])} сделок · {recon['tuz_won_count']} строк</div></div>
-      <div class="mini"><div class="k">ТУЗ → ТАЗ по invoice</div><div class="v">{fmt_money(recon['tuz_taz_2026'])}</div><div class="sub">продажная AH, work date 2026</div></div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>TAZ ROTABLE 2026</th><th>Строк</th><th>Сумма</th><th>Доля</th></tr>
-        </thead>
-        <tbody>{''.join(rows)}</tbody>
-        <tfoot>
-          <tr><th>Итого ROTABLE (без Cancel/Refund)</th><th>{sum(counts.values())}</th><th>{fmt_money(rotable_net)}</th><th>100%</th></tr>
-        </tfoot>
-      </table>
-    </div>
-    {''.join(detail_blocks)}
   </div>
 """
 
@@ -1604,9 +1553,10 @@ h1 {{ font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); colo
 .speed-k {{ font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
 .speed-v {{ font-family:"Fraunces",Georgia,serif; font-size:1.6rem; color:var(--teal-deep); margin-top:4px; }}
 .speed-h {{ font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.4; }}
-.money-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }}
-@media(max-width:980px){{ .money-grid {{ grid-template-columns:repeat(2,1fr); }} }}
-@media(max-width:560px){{ .money-grid {{ grid-template-columns:1fr; }} }}
+.money-grid {{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0; }}
+.money-grid-6 {{ grid-template-columns:repeat(3,1fr); }}
+@media(max-width:980px){{ .money-grid, .money-grid-6 {{ grid-template-columns:repeat(2,1fr); }} }}
+@media(max-width:560px){{ .money-grid, .money-grid-6 {{ grid-template-columns:1fr; }} }}
 .money-card {{
   background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
 }}
@@ -1666,13 +1616,10 @@ tr:hover td {{ background:#fafcfd; }}
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
-      <b>Деньги</b> — ТУЗ: Offered×Qty по уникальным сделкам (пересогласования Trouble не дублируются); ТАЗ: AH по invoice. Гарантийные поставки — отдельный блок.<br/>
-      <b>Invoice вручную</b> — 4232 / 761574B → 16042615005 (забыли внести в ТУЗ).<br/>
+      <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
-
-  {render_reconciliation_section(data)}
 
   {render_warranty_section(data)}
 

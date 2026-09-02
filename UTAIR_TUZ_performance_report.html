@@ -50,9 +50,10 @@ h1 { font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); color
 .speed-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
 .speed-v { font-family:"Fraunces",Georgia,serif; font-size:1.6rem; color:var(--teal-deep); margin-top:4px; }
 .speed-h { font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.4; }
-.money-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }
-@media(max-width:980px){ .money-grid { grid-template-columns:repeat(2,1fr); } }
-@media(max-width:560px){ .money-grid { grid-template-columns:1fr; } }
+.money-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0; }
+.money-grid-6 { grid-template-columns:repeat(3,1fr); }
+@media(max-width:980px){ .money-grid, .money-grid-6 { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:560px){ .money-grid, .money-grid-6 { grid-template-columns:1fr; } }
 .money-card {
   background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
 }
@@ -99,7 +100,7 @@ tr:hover td { background:#fafcfd; }
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 10:57 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 14:59 · Questions v2 не включён</div>
 
   
   <div class="panel funnel-panel">
@@ -170,45 +171,40 @@ tr:hover td { background:#fafcfd; }
 
   
   <div class="panel money-panel">
-    <h2>Деньги: ТАЗ ↔ ТУЗ (выигранные заказы)</h2>
-    <p class='lead-sm'>Общий ТАЗ 2026 (все заказы, без Cancel/Refund) — <b>$7,668,468</b>. Это шире, чем 102 уникальных сделок в ТУЗ ($8,271,844).</p>
-    <p class="lead-sm">ТУЗ Offered×Qty по сделкам ($8,271,844, без двойного счёта Trouble) В ТУЗ 106 зелёных строк, но 102 уникальных сделок (3 с пересогласованием Trouble). vs ТАЗ net по invoice ($6,246,460). Отмены/Refund — $92,400. Основной зазор Offered×Qty vs AH: $1,788,454.</p>
-    <div class="money-grid">
+    <h2>Деньги</h2>
+    <p class="lead-sm">Источник — <b>ТАЗ</b>, Utair, work date 2026, без Cancel/Refund. Гарантийные поставки (8 строк, $36,100) — отдельный блок ниже. Исключено отмен: $146,765.</p>
+    <div class="money-grid money-grid-6">
       <div class="money-card accent">
-        <div class="money-k">ТУЗ сделки</div>
-        <div class="money-v">$8,271,844</div>
-        <div class="money-h">102 сделок · Offered × Qty</div>
-        <div class='money-h'>в ТУЗ 106 зелёных строк · raw $8,344,944</div>
+        <div class="money-k">1. Выручка</div>
+        <div class="money-v">$7,632,368</div>
+        <div class="money-h">331 строк · 252 счетов · продажная AH</div>
       </div>
       <div class="money-card">
-        <div class="money-k">ТАЗ net (те же invoice)</div>
-        <div class="money-v">$6,246,460</div>
-        <div class="money-h">94 счетов · без Cancel/Refund</div>
-      </div>
-      <div class="money-card warn">
-        <div class="money-k">Cancel / Refund</div>
-        <div class="money-v">$92,400</div>
-        <div class="money-h">было валово $6,338,860</div>
+        <div class="money-k">2. Закупка</div>
+        <div class="money-v">$5,703,424</div>
+        <div class="money-h">закупка, итого</div>
       </div>
       <div class="money-card">
-        <div class="money-k">Разница ТУЗ − ТАЗ net</div>
-        <div class="money-v">$2,025,384</div>
-        <div class="money-h">без invoice в ТАЗ: $236,930</div>
+        <div class="money-k">3. Транспорт</div>
+        <div class="money-v">$165,245</div>
+        <div class="money-h">факт · план $257,276</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">4. Fee</div>
+        <div class="money-v">$264,428</div>
+        <div class="money-h">transaction fee</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">5. Таможня</div>
+        <div class="money-v">$7,163</div>
+        <div class="money-h">пошлина + СВХ</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">6. Маржа</div>
+        <div class="money-v">$1,492,108</div>
+        <div class="money-h">19.5% · выручка − закупка − транспорт факт − fee − таможня</div>
       </div>
     </div>
-    
-    <details class="bucket">
-      <summary><span class="bucket-title">Отмены / Refund на выигранных invoice (4)</span></summary>
-      <div class="bucket-body">
-        <div class="table-wrap" style="max-width:480px">
-          <table>
-            <thead><tr><th>Invoice</th><th>Сумма в ТАЗ</th></tr></thead>
-            <tbody><tr><td>15052612285</td><td>$36,000</td></tr><tr><td>15072611055</td><td>$28,500</td></tr><tr><td>13032611255</td><td>$18,000</td></tr><tr><td>23032615505</td><td>$9,900</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </details>
-
   </div>
 
 
@@ -217,53 +213,10 @@ tr:hover td { background:#fafcfd; }
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
-      <b>Деньги</b> — ТУЗ: Offered×Qty по уникальным сделкам (пересогласования Trouble не дублируются); ТАЗ: AH по invoice. Гарантийные поставки — отдельный блок.<br/>
-      <b>Invoice вручную</b> — 4232 / 761574B → 16042615005 (забыли внести в ТУЗ).<br/>
+      <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
-
-  
-  <div class="panel">
-    <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
-    <p class="lead-sm">Разница <b>$7,668,468</b> (ТАЗ) и <b>$8,271,844</b> (ТУЗ сделки) — разные срезы. ТАЗ = все заказы 2026; ТУЗ = 102 уникальных сделок (106 зелёных строк). Invoice 761574B/4232 учтён вручную (16042615005).</p>
-    <div class="mini-grid" style="margin-bottom:14px">
-      <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">$7,668,468</div><div class="sub">263 счетов · 339 строк</div></div>
-      <div class="mini"><div class="k">из них ROTABLE</div><div class="v">$7,275,100</div><div class="sub">EXPENDABLE $353,968</div></div>
-      <div class="mini warn"><div class="k">Исключено Cancel + Refund</div><div class="v">$146,765</div><div class="sub">было валово $7,815,233</div></div>
-      <div class="mini"><div class="k">ТУЗ сделки</div><div class="v">$8,271,844</div><div class="sub">102 сделок · 106 строк</div></div>
-      <div class="mini"><div class="k">ТУЗ → ТАЗ по invoice</div><div class="v">$6,338,860</div><div class="sub">продажная AH, work date 2026</div></div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>TAZ ROTABLE 2026</th><th>Строк</th><th>Сумма</th><th>Доля</th></tr>
-        </thead>
-        <tbody><tr><td>ТУЗ выигран + invoice совпал с ТАЗ</td><td>77</td><td>$6,191,250</td><td>85%</td></tr><tr><td>Гарантийная поставка (замена юнита)</td><td>8</td><td>$36,100</td><td>0%</td></tr><tr><td>Квота в ТУЗ 2025 — в 2026 нет выигрыша</td><td>2</td><td>$991,500</td><td>14%</td></tr><tr><td>P/N есть в ТУЗ, но заказ ещё не «согласовал»</td><td>1</td><td>$4,500</td><td>0%</td></tr><tr><td>P/N нет в ТУЗ (другой канал / старый заказ)</td><td>5</td><td>$51,750</td><td>1%</td></tr></tbody>
-        <tfoot>
-          <tr><th>Итого ROTABLE (без Cancel/Refund)</th><th>93</th><th>$7,275,100</th><th>100%</th></tr>
-        </tfoot>
-      </table>
-    </div>
-    
-                <details class="bucket">
-                  <summary><span class="bucket-title">Гарантийная поставка (замена юнита) (8)</span></summary>
-                  <div class="bucket-body"><div class='table-wrap'><table><thead><tr><th>Invoice</th><th>P/N</th><th>Description</th><th>ТАЗ $</th><th>Status</th><th>Тип поставки</th><th>Комментарий</th></tr></thead><tbody><tr><td>10092417102</td><td><b>650-0100-05</b></td><td>LTE MODEM UNIT</td><td>$0</td><td>1 NOT PAID</td><td>Гарантийная Поставка</td><td class='note-cell'>Гарантия по счету 10092417102</td></tr><tr><td>25092410102</td><td><b>622-9436-101</b></td><td>EFIS SYMBOL GENERATOR</td><td>$0</td><td>4 FINISHED</td><td>Гарантийная Поставка</td><td class='note-cell'>ГАРАНТИЯ счет 25092410102</td></tr><tr><td>23092410152</td><td><b>45-0083-7</b></td><td>RETRACTABLE AIRCRAFT LANDING LIGHT</td><td>$0</td><td>3 SHIPPED</td><td>Гарантийная Поставка</td><td class='note-cell'>ГАРАНТИЯ счет 23092410152</td></tr><tr><td>9082411322</td><td><b>396430-2</b></td><td>VALVE ASSY</td><td>$0</td><td>3 SHIPPED</td><td>Гарантийная Поставка</td><td class='note-cell'>ГАРАНТИЯ счет 9082411322</td></tr><tr><td>24042617421</td><td><b>4383100-02-6600</b></td><td>CONTROL MODULE</td><td>$9,600</td><td>8 WARRANTY</td><td>Продажа от поставщика</td><td class='note-cell'>AAP 13458</td></tr><tr><td>28062412022</td><td><b>7800000-010</b></td><td>FLUSH VLV</td><td>$0</td><td>3 SHIPPED</td><td>Гарантийная Поставка</td><td class='note-cell'>ГАРАНТИЯ счет 28062412022</td></tr><tr><td>2102241901</td><td><b>ED34A350</b></td><td>FLIGHT DATA ACQUISITION UNIT</td><td>$0</td><td>3 SHIPPED</td><td>Продажа от поставщика</td><td class='note-cell'>гарантия для P14790624</td></tr><tr><td>10042608555</td><td><b>7003974-606</b></td><td>COMPUTER, FLIGHT
-GUIDANCE</td><td>$26,500</td><td>8 WARRANTY</td><td>Продажа со склада</td><td class='note-cell'>P19618826</td></tr></tbody></table></div></div>
-                </details>
-                
-                <details class="bucket">
-                  <summary><span class="bucket-title">Квота в ТУЗ 2025 — в 2026 нет выигрыша (2)</span></summary>
-                  <div class="bucket-body"><div class='table-wrap'><table><thead><tr><th>Invoice</th><th>P/N</th><th>Description</th><th>ТАЗ $</th><th>Status</th><th>Тип поставки</th><th>Комментарий</th></tr></thead><tbody><tr><td>10022616045</td><td><b>2410M50P02</b></td><td>522 HPT FRONT AIR SEAL</td><td>$883,500</td><td>4 FINISHED</td><td>Продажа от поставщика</td><td class='note-cell'>DDP MOW</td></tr><tr><td>2012610425</td><td><b>811390-3</b></td><td>VALVE ASSY - STARTER</td><td>$108,000</td><td>4 FINISHED</td><td>Продажа от поставщика</td><td class='note-cell'>DDP MOW</td></tr></tbody></table></div></div>
-                </details>
-                
-                <details class="bucket">
-                  <summary><span class="bucket-title">P/N есть в ТУЗ, но заказ ещё не «согласовал» (1)</span></summary>
-                  <div class="bucket-body"><div class='table-wrap'><table><thead><tr><th>Invoice</th><th>P/N</th><th>Description</th><th>ТАЗ $</th><th>Status</th><th>Тип поставки</th><th>Комментарий</th></tr></thead><tbody><tr><td>130226152012</td><td><b>DHE1148</b></td><td>PROXIMITY SWITCH</td><td>$4,500</td><td>4 FINISHED</td><td>Продажа со склада</td><td class='note-cell'>P19237226</td></tr></tbody></table></div></div>
-                </details>
-                
-  </div>
-
 
   
   <div class="panel warranty-panel">
