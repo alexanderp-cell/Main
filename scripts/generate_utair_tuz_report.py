@@ -1458,7 +1458,7 @@ def render_money_section(data: dict[str, Any]) -> str:
     return f"""
   <div class="panel money-panel">
     <h2>Деньги</h2>
-    <p class="lead-sm">Источник — <b>ТАЗ</b>, Utair, work date 2026, без Cancel/Refund.{warranty_note} Исключено отмен: {fmt_money(excluded)}.</p>
+    <p class="lead-sm">Источник — <b>ТАЗ</b>, Utair, work date 2026, без Cancel/Refund и гарантийных поставок ({money.get('warranty_lines', 0)} строк, {fmt_money(money.get('warranty_revenue'))}). Исключено отмен: {fmt_money(excluded)}.</p>
     <div class="money-grid money-grid-6">
       <div class="money-card accent">
         <div class="money-k">1. Выручка</div>
