@@ -467,6 +467,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "root_price": 14,
             "root": 15,
             "supplier_price": 16,
+            "supplier": 17,
             "transit": 18,
             "cond": 19,
             "ppwk": 23,
@@ -490,6 +491,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "root_price": 17,
         "root": 18,
         "supplier_price": 19,
+        "supplier": 20,
         "transit": 21,
         "cond": 22,
         "ppwk": 26,
@@ -519,6 +521,7 @@ def sheet_columns_shifted(sheet: str) -> dict[str, int]:
         "root_price": 17,
         "root": 18,
         "supplier_price": 19,
+        "supplier": 20,
         "transit": 21,
         "cond": 22,
         "ppwk": 26,
@@ -572,6 +575,7 @@ class OfferRow:
     remarks: str | None = None
     ppwk: str | None = None
     root_text: str | None = None
+    supplier: str | None = None
     pn_bold: bool = False
     alt_bold: bool = False
 
@@ -611,6 +615,16 @@ class RequestLine:
         rows = []
         for offer in self.offers:
             if offer.status in NOT_FOUND_STATUSES or offer.status == "8. Backup":
+                continue
+            if offer.supplier_price is not None:
+                rows.append(offer)
+        return rows
+
+    def quote_rows(self) -> list[OfferRow]:
+        """All market quotes for the request, including Backup (procurement effort)."""
+        rows = []
+        for offer in self.offers:
+            if offer.status in NOT_FOUND_STATUSES:
                 continue
             if offer.supplier_price is not None:
                 rows.append(offer)
@@ -845,6 +859,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     remarks=clean_text(val("remarks")),
                     ppwk=clean_text(val("ppwk")),
                     root_text=clean_text(val("root")),
+                    supplier=clean_text(val("supplier")),
                     invoice=invoice,
                     urgency=clean_text(val("urgency")),
                     pn_bold=bool(pn_cell.font and pn_cell.font.bold),
@@ -1108,9 +1123,113 @@ def median(values: list[float]) -> float | None:
     return statistics.median(values) if values else None
 
 
+def load_taz_invoice_money(path: Path) -> dict[str, dict[str, float]]:
+    """Per-invoice TAZ 2026 money (excl. Cancel/Refund and warranty)."""
+    by_invoice: dict[str, dict[str, float]] = defaultdict(
+        lambda: {
+            "revenue": 0.0,
+            "purchase": 0.0,
+            "transport_fact": 0.0,
+            "fee": 0.0,
+            "customs": 0.0,
+            "margin": 0.0,
+        }
+    )
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb["ORDERS"] if "ORDERS" in wb.sheetnames else wb[wb.sheetnames[0]]
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row or not is_utair(row[6]):
+            continue
+        work_dt = row[16]
+        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+            continue
+        status = str(row[4]).strip() if row[4] else ""
+        if status in TAZ_EXCLUDED_STATUSES or is_taz_warranty_row(row):
+            continue
+        invoice = normalize_invoice(row[0])
+        if not invoice:
+            continue
+        costs = taz_row_costs(row)
+        bucket = by_invoice[invoice]
+        for key in ("revenue", "purchase", "transport_fact", "fee", "customs"):
+            bucket[key] += costs[key]
+        bucket["margin"] = (
+            bucket["revenue"]
+            - bucket["purchase"]
+            - bucket["transport_fact"]
+            - bucket["fee"]
+            - bucket["customs"]
+        )
+    wb.close()
+    return dict(by_invoice)
+
+
+def normalize_supplier_name(value: str | None) -> str:
+    if not value:
+        return "—"
+    text = str(value).strip()
+    if not text or text.upper() in {"TBA", "N/A", "NA", "-", "БЕЗ ЦЕНЫ"}:
+        return "—"
+    return text
+
+
+def supplier_mix(group: list[RequestLine], top_n: int = 6) -> list[dict[str, Any]]:
+    counts: Counter[str] = Counter()
+    for line in group:
+        for offer in line.quote_rows():
+            counts[normalize_supplier_name(offer.supplier)] += 1
+    total = sum(counts.values())
+    if not total:
+        return []
+    ranked = counts.most_common()
+    top = ranked[:top_n]
+    other = sum(count for _, count in ranked[top_n:])
+    rows = [
+        {"name": name, "count": count, "pct": count / total * 100}
+        for name, count in top
+    ]
+    if other:
+        rows.append({"name": "прочие", "count": other, "pct": other / total * 100})
+    return rows
+
+
+def bucket_money_from_taz(
+    group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
+) -> dict[str, float]:
+    invoices: set[str] = set()
+    for line in group:
+        if not line.won():
+            continue
+        invoices |= line_invoices(line)
+    revenue = purchase = transport = fee = customs = 0.0
+    matched = 0
+    for invoice in invoices:
+        row = invoice_money.get(invoice)
+        if not row:
+            continue
+        matched += 1
+        revenue += row["revenue"]
+        purchase += row["purchase"]
+        transport += row["transport_fact"]
+        fee += row["fee"]
+        customs += row["customs"]
+    margin = revenue - purchase - transport - fee - customs
+    return {
+        "revenue": revenue,
+        "purchase": purchase,
+        "transport_fact": transport,
+        "fee": fee,
+        "customs": customs,
+        "margin": margin,
+        "margin_pct": (margin / revenue * 100) if revenue else 0.0,
+        "matched_invoices": matched,
+    }
+
+
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     by_bucket: dict[str, list[RequestLine]] = {label: [] for label, _, _ in PRICE_BUCKETS}
     unpriced: list[RequestLine] = []
+    invoice_money = load_taz_invoice_money(TAZ_PATH) if TAZ_PATH.exists() else {}
 
     for line in lines:
         sale = line.sale_value()
@@ -1132,8 +1251,11 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         tuz_orders_total = sum(line.order_value() or 0 for line in group if line.won())
         sent = sum(1 for line in group if any(o.sent_dt for o in line.offers))
         pending_proc = in_procurement
-        offer_counts = [len(line.market_rows()) for line in group if line.market_rows()]
+        quote_counts = [len(line.quote_rows()) for line in group]
+        quotes_total = sum(quote_counts)
         markups = [line.markup_pct() for line in group if line.markup_pct() is not None]
+        money = bucket_money_from_taz(group, invoice_money)
+        mix = supplier_mix(group)
 
         return {
             "count": len(group),
@@ -1145,9 +1267,16 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "won": won,
             "won_pct": (won / len(group) * 100) if group else 0,
             "tuz_orders_total": tuz_orders_total,
+            "revenue": money["revenue"],
+            "margin": money["margin"],
+            "margin_pct": money["margin_pct"],
+            "matched_invoices": money["matched_invoices"],
             "sent": sent,
             "pending_proc": pending_proc,
-            "avg_offers": statistics.mean(offer_counts) if offer_counts else 0,
+            "quotes_total": quotes_total,
+            "avg_quotes": (quotes_total / len(group)) if group else 0,
+            "avg_offers": statistics.mean([c for c in quote_counts if c]) if any(quote_counts) else 0,
+            "supplier_mix": mix,
             "median_markup": median(markups),
             "median_proc": median(proc),
             "median_sales": median(sales),
@@ -1188,6 +1317,13 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     buckets = {label: summarize(by_bucket[label]) for label, _, _ in PRICE_BUCKETS}
     buckets["Без продажной оценки"] = summarize(unpriced)
 
+    priced_revenue = sum(buckets[label]["revenue"] for label, _, _ in PRICE_BUCKETS)
+    for label, _, _ in PRICE_BUCKETS:
+        buckets[label]["revenue_share"] = (
+            buckets[label]["revenue"] / priced_revenue * 100 if priced_revenue else 0
+        )
+    buckets["Без продажной оценки"]["revenue_share"] = 0
+
     return {
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
@@ -1222,7 +1358,7 @@ def render_table_rows(lines: list[RequestLine]) -> str:
             f"<td>{html.escape(line.description or '—')}</td>"
             f"<td>{line.qty or '—'}</td>"
             f"<td>{html.escape(line.primary_status())}</td>"
-            f"<td>{len(line.market_rows())}</td>"
+            f"<td>{len(line.quote_rows())}</td>"
             f"<td>{fmt_money(display_offer)}"
             f"{('<div class=\"muted\">Supp: ' + fmt_money(best_supplier) + '</div>') if (display_offer is None and best_supplier is not None) else ''}</td>"
             f"<td>{fmt_money(line.sale_value())}</td>"
@@ -1452,42 +1588,68 @@ def render_renegotiations_section(data: dict[str, Any]) -> str:
 """
 
 
-def render_html(data: dict[str, Any]) -> str:
-    overall = data["overall"]
-    bucket_order = [label for label, _, _ in PRICE_BUCKETS] + ["Без продажной оценки"]
+def render_supplier_mix(mix: list[dict[str, Any]]) -> str:
+    if not mix:
+        return "<div class='muted'>Нет квот с заполненным Supplier (T)</div>"
+    rows = []
+    for item in mix:
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(item['name'])}</td>"
+            f"<td>{item['count']}</td>"
+            f"<td>{item['pct']:.0f}%</td>"
+            "</tr>"
+        )
+    return (
+        "<div class='table-wrap supplier-mix'>"
+        "<table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+    )
 
-    bucket_sections = []
-    for label in bucket_order:
-        bucket = data["buckets"][label]
-        if bucket["count"] == 0:
-            continue
-        extra = ""
-        if label == "Без продажной оценки" and bucket.get("supplier_no_offer"):
-            extra = f" · supplier price без Offered: {bucket['supplier_no_offer']}"
-        bucket_sections.append(
-            f"""
-            <details class="bucket" {'open' if label == bucket_order[0] else ''}>
+
+def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) -> str:
+    mix_html = render_supplier_mix(bucket.get("supplier_mix") or [])
+    revenue = bucket.get("revenue") or 0
+    margin = bucket.get("margin") or 0
+    share = bucket.get("revenue_share") or 0
+    return f"""
+            <details class="bucket" {'open' if open_first else ''}>
               <summary>
-                <span class="bucket-title">{html.escape(label)}</span>
-                <span class="bucket-meta">{bucket['count']} запросов · найдено {bucket['found_pct']:.0f}% · не найдено {bucket['not_found']} · заказов {bucket['won']} · медиана B→AC {fmt_hours(bucket['median_total'])}{extra}</span>
+                <div class="bucket-head">
+                  <div class="bucket-title">{html.escape(label)}</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">{bucket['count']}</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">{bucket['won']}</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">{fmt_money(revenue)}</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">{fmt_money(margin)} <small>{bucket.get('margin_pct', 0):.0f}%</small></span></div>
+                    <div class="bk"><span class="bk-k">Доля выручки</span><span class="bk-v">{share:.0f}%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">{bucket.get('avg_quotes', 0):.1f}</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">{fmt_hours(bucket['median_total'])}</span></div>
+                  </div>
+                </div>
               </summary>
               <div class="bucket-body">
-                <div class="mini-grid">
-                  <div class="mini"><div class="k">Найдено (Supplier Price)</div><div class="v">{bucket['found']} <span class="sub">({bucket['found_pct']:.0f}%)</span></div></div>
-                  <div class="mini warn"><div class="k">Не найдено</div><div class="v">{bucket['not_found']}</div></div>
-                  <div class="mini warn"><div class="k">В проценке</div><div class="v">{bucket['in_procurement']}</div></div>
+                <div class="mini-grid bucket-summary">
                   <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">{bucket['sent']}</div></div>
-                  <div class="mini"><div class="k">Заказ получен</div><div class="v">{bucket['won']} <span class="sub">({bucket['won_pct']:.0f}%)</span></div></div>
-                  <div class="mini accent"><div class="k">Сумма заказов (ТУЗ)</div><div class="v">{fmt_money(bucket['tuz_orders_total'])}</div></div>
-                  <div class="mini"><div class="k">Ср. офферов / запрос</div><div class="v">{bucket['avg_offers']:.1f}</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">{bucket.get('quotes_total', 0)}</div></div>
+                  <div class="mini"><div class="k">Ср. квот на запрос</div><div class="v">{bucket.get('avg_quotes', 0):.1f}</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">{fmt_money(revenue)}</div><div class="sub">{bucket.get('matched_invoices', 0)} invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">{fmt_money(margin)} <span class="sub">({bucket.get('margin_pct', 0):.0f}%)</span></div></div>
+                  <div class="mini"><div class="k">Offered×Qty (ТУЗ)</div><div class="v">{fmt_money(bucket['tuz_orders_total'])}</div></div>
                   <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">{fmt_hours(bucket['median_proc'])} / {fmt_hours(bucket['median_sales'])} / {fmt_hours(bucket['median_total'])}</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">{bucket['in_procurement']}</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Сколько рыночных квот (включая Backup) пришло через какого западного поставщика/канал (колонка T). Root (R) — конечный источник.</p>
+                  {mix_html}
                 </div>
                 <div class="table-wrap">
                   <table>
                     <thead>
                       <tr>
                         <th>Request №</th><th>P/N</th><th>Description</th><th>Qty</th><th>Статус</th>
-                        <th>Офферов</th><th>Offered/ea</th><th>Sale $</th><th>Наценка</th>
+                        <th>Квот</th><th>Offered/ea</th><th>Sale $</th><th>Наценка</th>
                         <th>B→O</th><th>O→AC</th><th>B→AC</th><th>Заказ</th>
                       </tr>
                     </thead>
@@ -1499,7 +1661,20 @@ def render_html(data: dict[str, Any]) -> str:
               </div>
             </details>
             """
-        )
+
+
+def render_html(data: dict[str, Any]) -> str:
+    overall = data["overall"]
+    bucket_order = [label for label, _, _ in PRICE_BUCKETS] + ["Без продажной оценки"]
+
+    bucket_sections = []
+    first = True
+    for label in bucket_order:
+        bucket = data["buckets"][label]
+        if bucket["count"] == 0:
+            continue
+        bucket_sections.append(render_bucket_section(label, bucket, open_first=first))
+        first = False
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -1570,22 +1745,34 @@ h1 {{ font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); colo
 .lead-sm {{ color:var(--ink-soft); font-size:.92rem; line-height:1.5; margin:0 0 14px; max-width:52rem; }}
 .note {{ font-size:.9rem; color:var(--ink-soft); border-left:3px solid var(--teal); padding:10px 12px; background:rgba(255,255,255,.65); }}
 .note-cell {{ max-width:320px; font-size:.8rem; line-height:1.35; white-space:pre-wrap; }}
-details.bucket {{ background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); margin:14px 0; overflow:hidden; }}
+details.bucket {{ background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); margin:18px 0; overflow:hidden; }}
 details.bucket > summary {{
-  list-style:none; cursor:pointer; padding:16px 18px; display:flex; flex-wrap:wrap; gap:8px 16px;
-  align-items:center; justify-content:space-between; background:linear-gradient(180deg,#fff,rgba(255,255,255,.7));
+  list-style:none; cursor:pointer; padding:20px 22px; background:linear-gradient(180deg,#fff,rgba(255,255,255,.72));
 }}
 details.bucket > summary::-webkit-details-marker {{ display:none; }}
 details.bucket[open] > summary {{ border-bottom:1px solid var(--line); }}
-.bucket-title {{ font-family:"Fraunces",Georgia,serif; font-size:1.15rem; font-weight:700; color:var(--teal-deep); }}
+.bucket-head {{ display:flex; flex-direction:column; gap:14px; width:100%; }}
+.bucket-title {{ font-family:"Fraunces",Georgia,serif; font-size:1.55rem; font-weight:700; color:var(--teal-deep); }}
+.bucket-kpis {{ display:grid; grid-template-columns:repeat(7,minmax(96px,1fr)); gap:10px; }}
+@media(max-width:980px){{ .bucket-kpis {{ grid-template-columns:repeat(3,1fr); }} }}
+@media(max-width:560px){{ .bucket-kpis {{ grid-template-columns:repeat(2,1fr); }} }}
+.bk {{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; min-height:74px; }}
+.bk.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
+.bk-k {{ display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }}
+.bk-v {{ display:block; margin-top:6px; font-size:1.2rem; font-weight:800; color:var(--ink); line-height:1.15; }}
+.bk-v small {{ font-size:.78rem; color:var(--muted); font-weight:700; }}
 .bucket-meta {{ color:var(--muted); font-size:.86rem; }}
-.bucket-body {{ padding:14px 16px 18px; }}
+.bucket-body {{ padding:16px 18px 22px; }}
+.supplier-block {{ margin:8px 0 18px; }}
+.supplier-block h3 {{ margin:0 0 6px; font-size:1rem; color:var(--teal-deep); }}
+.supplier-mix {{ max-width:520px; }}
 .mini-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }}
 @media(max-width:860px){{ .mini-grid {{ grid-template-columns:repeat(2,1fr); }} }}
-.mini {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }}
+.mini {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }}
 .mini.warn {{ background:#fff7ed; }}
+.mini.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
 .mini .k {{ font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }}
-.mini .v {{ font-size:1rem; font-weight:700; margin-top:3px; color:var(--ink); }}
+.mini .v {{ font-size:1.12rem; font-weight:800; margin-top:4px; color:var(--ink); }}
 .mini .sub {{ font-size:.82rem; color:var(--muted); font-weight:600; }}
 .table-wrap {{ overflow:auto; border:1px solid var(--line); border-radius:12px; }}
 table {{ width:100%; border-collapse:collapse; font-size:.82rem; background:#fff; }}
@@ -1617,16 +1804,14 @@ tr:hover td {{ background:#fafcfd; }}
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
+      <b>Категории</b> — по Offered×Qty запроса. В резюме: выручка/маржа ТАЗ по выигранным invoice, ср. квот на запрос (включая Backup), доля Supplier (T).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
 
-  {render_warranty_section(data)}
-
-  {render_renegotiations_section(data)}
-
   <div class="panel">
     <h2>Категории по продажной стоимости</h2>
+    <p class="lead-sm">Сравнивайте не только число заказов, но выручку и маржу: 30 мелких заказов могут давать меньше денег, чем 3 крупных.</p>
     {''.join(bucket_sections)}
   </div>
 </div>
