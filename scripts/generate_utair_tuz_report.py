@@ -284,6 +284,58 @@ def sheet_columns(sheet: str) -> dict[str, int]:
     }
 
 
+def sheet_columns_shifted(sheet: str) -> dict[str, int]:
+    """Layout with Sales ID / Purch ID inserted before Request date (+2 cols)."""
+    if sheet in OLD_SHEETS:
+        return sheet_columns(sheet)
+    return {
+        "status": 1,
+        "request_dt": 4,
+        "request_no": 5,
+        "urgency": 3,
+        "client": 7,
+        "pn": 9,
+        "alt_pn": 10,
+        "description": 11,
+        "qty": 12,
+        "quote_dt": 15,
+        "root_price": 17,
+        "root": 18,
+        "supplier_price": 19,
+        "transit": 21,
+        "cond": 22,
+        "ppwk": 26,
+        "remarks": 27,
+        "offered": 28,
+        "sent_dt": 29,
+        "accepted_dt": 30,
+        "invoice": 31,
+    }
+
+
+def format_request_no(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, float) and value == int(value):
+        return str(int(value))
+    return str(value).strip()
+
+
+def is_shifted_row(values: list) -> bool:
+    """Detect Mary/KDV-style layout: Client in col G, Request № in col E."""
+    if len(values) < 8:
+        return False
+    client_normal = values[4]
+    client_shifted = values[6]
+    return is_utair(client_shifted) and not is_utair(client_normal)
+
+
+def resolve_row_columns(sheet: str, values: list) -> dict[str, int]:
+    if sheet in {"Группа A", "Группа B", "Группа C"} and is_shifted_row(values):
+        return sheet_columns_shifted(sheet)
+    return sheet_columns(sheet)
+
+
 @dataclass
 class OfferRow:
     sheet: str
@@ -515,12 +567,13 @@ def load_request_lines(path: Path) -> list[RequestLine]:
             continue
         ws_vals = wb_vals[sheet]
         ws_fmt = wb_fmt[sheet]
-        cols = sheet_columns(sheet)
 
         for row_vals, row_fmt in zip(ws_vals.iter_rows(min_row=2), ws_fmt.iter_rows(min_row=2)):
             values = [cell.value for cell in row_vals]
             if not values:
                 continue
+
+            cols = resolve_row_columns(sheet, values)
 
             def val(key: str):
                 index = cols[key] - 1
@@ -535,7 +588,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
             if request_no in (None, "") or pn in (None, ""):
                 continue
 
-            request_no_s = str(request_no).strip()
+            request_no_s = format_request_no(request_no)
             pn_s = str(pn).strip()
             key = (sheet, request_no_s, pn_s)
             if key not in grouped:
