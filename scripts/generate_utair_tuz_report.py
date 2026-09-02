@@ -7,6 +7,7 @@ import html
 import json
 import re
 import statistics
+import zipfile
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +19,7 @@ import openpyxl
 TUZ_PATH = Path("/tmp/utair_analysis/TUZ_ТУЗ полный файл 01.09.2026.xlsx")
 TAZ_PATH = Path("/tmp/utair_analysis/TAZ_ТАЗ полный файл 28.08.2026.xlsx")
 OUTPUT_PATH = Path("/workspace/UTAIR_TUZ_performance_report.html")
+ZIP_PATH = Path("/workspace/UTAIR_TUZ_performance_report.zip")
 
 EARLY_STATUSES = {
     "0. Начальный этап",
@@ -1407,7 +1409,10 @@ def main():
     lines = load_request_lines(TUZ_PATH)
     data = aggregate(lines)
     OUTPUT_PATH.write_text(render_html(data), encoding="utf-8")
+    with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.write(OUTPUT_PATH, OUTPUT_PATH.name)
     print(f"Generated {OUTPUT_PATH}")
+    print(f"Generated {ZIP_PATH}")
     print(json.dumps({k: data['overall'][k] for k in ['count','found','won','pending_proc']}, ensure_ascii=False))
 
 
