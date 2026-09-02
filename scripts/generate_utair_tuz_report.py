@@ -1408,6 +1408,50 @@ def bucket_money_from_taz(
     }
 
 
+def build_won_order_rows(
+    group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for line in group:
+        if not line.won():
+            continue
+        sale_ea = None
+        for offer in line.offers:
+            if offer.status == "7. Клиент согласовал" and offer.offered is not None:
+                sale_ea = offer.offered
+                break
+        if sale_ea is None:
+            selected = line.selected_offer()
+            sale_ea = selected.offered if selected else None
+
+        revenue = 0.0
+        margin = 0.0
+        matched = False
+        for invoice in line_invoices(line):
+            taz = invoice_money.get(invoice)
+            if not taz:
+                continue
+            matched = True
+            revenue += taz["revenue"]
+            margin += taz["margin"]
+
+        rows.append(
+            {
+                "request_no": line.request_no,
+                "pn": line.pn,
+                "description": line.description,
+                "sale_ea": sale_ea,
+                "qty": line.qty,
+                "sale_total": line.order_value(),
+                "margin": margin if matched else None,
+                "margin_pct": (margin / revenue * 100) if matched and revenue else None,
+                "timing": line.timing(),
+            }
+        )
+    rows.sort(key=lambda item: item.get("sale_total") or 0, reverse=True)
+    return rows
+
+
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     by_bucket: dict[str, list[RequestLine]] = {label: [] for label, _, _ in PRICE_BUCKETS}
     unpriced: list[RequestLine] = []
@@ -1462,6 +1506,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "suppliers_chip": top_suppliers_chip(mix),
             "focus": build_category_focus(group),
             "won_lines": [line for line in group if line.won()],
+            "won_orders": build_won_order_rows(group, invoice_money),
             "median_markup": median(markups),
             "median_proc": median(proc),
             "median_sales": median(sales),
@@ -1956,29 +2001,39 @@ def render_category_focus(items: list[dict[str, Any]]) -> str:
     )
 
 
-def render_won_orders_table(lines: list[RequestLine]) -> str:
-    if not lines:
+def render_won_orders_table(orders: list[dict[str, Any]]) -> str:
+    if not orders:
         return "<p class='muted'>В этом сегменте заказов пока нет.</p>"
     rows = []
-    for line in sorted(lines, key=lambda item: item.order_value() or 0, reverse=True)[:30]:
-        timing = line.timing()
+    for order in orders[:30]:
+        timing = order.get("timing") or {}
+        qty = order.get("qty")
+        qty_html = f"{qty:g}" if isinstance(qty, (int, float)) else "—"
+        margin = order.get("margin")
+        margin_html = fmt_money(margin)
+        if margin is not None and order.get("margin_pct") is not None:
+            margin_html = f"{fmt_money(margin)} <span class='sub'>({order['margin_pct']:.0f}%)</span>"
+        elif margin is None:
+            margin_html = "—"
         rows.append(
             "<tr>"
-            f"<td>{html.escape(line.request_no)}</td>"
-            f"<td><b>{html.escape(line.pn)}</b></td>"
-            f"<td>{html.escape(line.description or '—')}</td>"
-            f"<td>{fmt_money(line.sale_value())}</td>"
-            f"<td>{fmt_money(line.order_value())}</td>"
-            f"<td>{fmt_pct(line.markup_pct())}</td>"
-            f"<td>{fmt_hours(timing['procurement'])}</td>"
-            f"<td>{fmt_hours(timing['total'])}</td>"
+            f"<td>{html.escape(order['request_no'])}</td>"
+            f"<td><b>{html.escape(order['pn'])}</b></td>"
+            f"<td>{html.escape(order.get('description') or '—')}</td>"
+            f"<td>{fmt_money(order.get('sale_ea'))}</td>"
+            f"<td>{qty_html}</td>"
+            f"<td>{fmt_money(order.get('sale_total'))}</td>"
+            f"<td>{margin_html}</td>"
+            f"<td>{fmt_hours(timing.get('procurement'))}</td>"
+            f"<td>{fmt_hours(timing.get('total'))}</td>"
             "</tr>"
         )
     return (
         "<div class='table-wrap'><table>"
         "<thead><tr>"
-        "<th>Request №</th><th>P/N</th><th>Description</th><th>Sale $</th>"
-        "<th>Offered×Qty</th><th>Наценка</th><th>B→O</th><th>B→AC</th>"
+        "<th>Request №</th><th>P/N</th><th>Description</th>"
+        "<th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th>"
+        "<th>B→O</th><th>B→AC</th>"
         "</tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table></div>"
     )
@@ -1991,7 +2046,7 @@ def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) 
     share = bucket.get("revenue_share") or 0
     suppliers = html.escape(bucket.get("suppliers_chip") or "—")
     focus_html = render_category_focus(bucket.get("focus") or [])
-    won_html = render_won_orders_table(bucket.get("won_lines") or [])
+    won_html = render_won_orders_table(bucket.get("won_orders") or [])
     return f"""
             <details class="bucket" {'open' if open_first else ''}>
               <summary>
