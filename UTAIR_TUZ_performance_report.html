@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>UTair — оценка ТУЗ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink:#1a2332; --ink-soft:#3d4a5c; --muted:#6b7a8f; --line:rgba(26,35,50,.10);
+  --paper:#f3f6f8; --panel:rgba(255,255,255,.84); --teal:#0b6e6b; --teal-deep:#084e4c;
+  --amber:#c9782a; --danger:#b42318; --ok:#0f7a4c; --shadow:0 16px 40px rgba(26,35,50,.08); --radius:18px;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; color:var(--ink); font-family:"Manrope",system-ui,sans-serif;
+  background:radial-gradient(1000px 500px at 0% 0%, rgba(11,110,107,.12), transparent 55%), var(--paper);
+}
+.wrap { max-width:1180px; margin:0 auto; padding:36px 18px 72px; }
+h1 { font-family:"Fraunces",Georgia,serif; font-size:clamp(2rem,4vw,3rem); color:var(--teal-deep); margin:0 0 8px; }
+.lead { color:var(--ink-soft); max-width:46rem; line-height:1.55; margin:0 0 18px; }
+.meta { color:var(--muted); font-size:.88rem; margin-bottom:24px; }
+.funnel-panel { margin-top:8px; }
+.funnel {
+  display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; margin-top:8px;
+}
+.funnel-step {
+  flex:1 1 140px; min-width:120px; background:#fff; border:1px solid var(--line);
+  border-radius:14px; padding:14px 12px; text-align:center;
+}
+.funnel-num {
+  font-family:"Fraunces",Georgia,serif; font-size:1.75rem; font-weight:700; color:var(--teal-deep);
+}
+.funnel-label { font-size:.82rem; font-weight:700; color:var(--ink-soft); margin-top:4px; line-height:1.3; }
+.funnel-pct { font-size:.75rem; color:var(--muted); margin-top:6px; }
+.funnel-conv { font-size:.72rem; color:var(--teal); font-weight:700; margin-top:4px; }
+.funnel-arrow {
+  display:flex; align-items:center; color:var(--muted); font-size:1.2rem; font-weight:700;
+  padding:0 2px;
+}
+@media(max-width:720px){ .funnel-arrow { display:none; } }
+.speed-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media(max-width:720px){ .speed-grid { grid-template-columns:1fr; } }
+.speed-card {
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px;
+}
+.speed-card.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.speed-k { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
+.speed-v { font-family:"Fraunces",Georgia,serif; font-size:1.6rem; color:var(--teal-deep); margin-top:4px; }
+.speed-h { font-size:.84rem; color:var(--ink-soft); margin-top:6px; line-height:1.4; }
+.money-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0; }
+.money-grid-6 { grid-template-columns:repeat(3,1fr); }
+@media(max-width:980px){ .money-grid, .money-grid-6 { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:560px){ .money-grid, .money-grid-6 { grid-template-columns:1fr; } }
+.money-card {
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+}
+.money-card.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.money-card.warn { background:linear-gradient(135deg,#f8ead8,#fff); }
+.money-k { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }
+.money-v { font-family:"Fraunces",Georgia,serif; font-size:1.35rem; color:var(--teal-deep); margin-top:4px; }
+.money-h { font-size:.8rem; color:var(--ink-soft); margin-top:4px; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); margin:18px 0; }
+.panel h2 { font-family:"Fraunces",Georgia,serif; margin:0 0 12px; font-size:1.35rem; }
+.lead-sm { color:var(--ink-soft); font-size:.92rem; line-height:1.5; margin:0 0 14px; max-width:52rem; }
+.note { font-size:.9rem; color:var(--ink-soft); border-left:3px solid var(--teal); padding:10px 12px; background:rgba(255,255,255,.65); }
+.note-cell { max-width:320px; font-size:.8rem; line-height:1.35; white-space:pre-wrap; }
+details.bucket { background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); margin:18px 0; overflow:hidden; }
+details.bucket > summary {
+  list-style:none; cursor:pointer; padding:20px 22px; background:linear-gradient(180deg,#fff,rgba(255,255,255,.72));
+}
+details.bucket > summary::-webkit-details-marker { display:none; }
+details.bucket[open] > summary { border-bottom:1px solid var(--line); }
+.bucket-head { display:flex; flex-direction:column; gap:14px; width:100%; }
+.bucket-title { font-family:"Fraunces",Georgia,serif; font-size:1.55rem; font-weight:700; color:var(--teal-deep); }
+.bucket-kpis { display:grid; grid-template-columns:repeat(7,minmax(96px,1fr)); gap:10px; }
+@media(max-width:980px){ .bucket-kpis { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:560px){ .bucket-kpis { grid-template-columns:repeat(2,1fr); } }
+.bk { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; min-height:74px; }
+.bk.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.bk.warn { background:linear-gradient(135deg,#fde8e8,#fff); }
+.bk-k { display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }
+.bk-v { display:block; margin-top:6px; font-size:1.2rem; font-weight:800; color:var(--ink); line-height:1.15; }
+.bk-v.bk-sup { font-size:.92rem; font-weight:700; letter-spacing:-.01em; }
+.bk-v small { font-size:.78rem; color:var(--muted); font-weight:700; }
+.bucket-meta { color:var(--muted); font-size:.86rem; }
+.bucket-body { padding:16px 18px 22px; }
+.supplier-block, .focus-block { margin:8px 0 18px; }
+.supplier-block h3, .focus-block h3 { margin:0 0 6px; font-size:1rem; color:var(--teal-deep); }
+.supplier-mix { max-width:520px; }
+.mini-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+@media(max-width:860px){ .mini-grid { grid-template-columns:repeat(2,1fr); } }
+.mini { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.mini.warn { background:#fff7ed; }
+.mini.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.mini .k { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }
+.mini .v { font-size:1.12rem; font-weight:800; margin-top:4px; color:var(--ink); }
+.mini .sub { font-size:.82rem; color:var(--muted); font-weight:600; }
+.table-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; }
+table { width:100%; border-collapse:collapse; font-size:.82rem; background:#fff; }
+th,td { padding:8px 7px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+th { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:#f8fafb; position:sticky; top:0; }
+tr:hover td { background:#fafcfd; }
+.muted { color:var(--muted); font-size:.82rem; }
+.tag { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 6px; border-radius:999px; }
+.tag.alt { background:#fde68a; color:#7c5a00; }
+.tag.hold { background:#e8f0fe; color:#1e4a8a; }
+.tag.trouble { background:#fde8e8; color:#9b1c1c; }
+.tag.critical { background:#ffe4e0; color:#9b1c1c; }
+.tag.growth { background:#dcfce7; color:#166534; }
+.tag.skip { background:#f3f4f6; color:#4b5563; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>UTair — оценка работы по ТУЗ</h1>
+  <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × qty предложения; для согласованных — сверка с ТАЗ ORDERS/PRESALE). Запросы 2026 года.</p>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 17:12 · Questions v2 не включён</div>
+
+  
+  <div class="panel funnel-panel">
+    <h2>Воронка конверсии</h2>
+    <p class="lead-sm">Без повторных поисков (Trouble). «Заказов получено» — уникальные сделки (пересогласования Trouble не дублируют). «Найдено» — Supplier Price; «Отправлено» — дата в AC; «Интерес» — «5. Есть интерес» или заказ.</p>
+    <div class="funnel">
+            <div class="funnel-step">
+              <div class="funnel-num">3015</div>
+              <div class="funnel-label">Всего запросов</div>
+              
+              
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">2122</div>
+              <div class="funnel-label">Найдено на рынке</div>
+              <div class="funnel-pct">70% от всех</div>
+              <div class="funnel-conv">70% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">2041</div>
+              <div class="funnel-label">Отправлено клиенту</div>
+              <div class="funnel-pct">68% от всех</div>
+              <div class="funnel-conv">96% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">276</div>
+              <div class="funnel-label">Есть интерес</div>
+              <div class="funnel-pct">9% от всех</div>
+              <div class="funnel-conv">14% от пред. шага</div>
+            </div>
+            <div class="funnel-arrow" aria-hidden="true">→</div>
+            <div class="funnel-step">
+              <div class="funnel-num">89</div>
+              <div class="funnel-label">Заказов получено</div>
+              <div class="funnel-pct">3% от всех</div>
+              <div class="funnel-conv">32% от пред. шага</div>
+            </div>
+            </div>
+  </div>
+
+
+  
+  <div class="panel speed-panel">
+    <h2>Скорость</h2>
+    <p class="lead-sm">Медиана по запросам без Trouble, где есть обе даты на этапе.</p>
+    <div class="speed-grid">
+      <div class="speed-card">
+        <div class="speed-k">B → O</div>
+        <div class="speed-v">1.1 д</div>
+        <div class="speed-h">внесли запрос → нашли на рынке</div>
+      </div>
+      <div class="speed-card">
+        <div class="speed-k">O → AC</div>
+        <div class="speed-v">2 ч</div>
+        <div class="speed-h">нашли на рынке → отправили клиенту</div>
+      </div>
+      <div class="speed-card accent">
+        <div class="speed-k">B → AC</div>
+        <div class="speed-v">1.2 д</div>
+        <div class="speed-h">полный цикл до отправки оффера</div>
+      </div>
+    </div>
+  </div>
+
+
+  
+  <div class="panel money-panel">
+    <h2>Деньги</h2>
+    <p class="lead-sm">Источник — <b>ТАЗ</b>, UTair, work date 2026, без Cancel/Refund и гарантийных поставок (8 строк, $36,100). Исключено отмен: $146,765.</p>
+    <div class="money-grid money-grid-6">
+      <div class="money-card accent">
+        <div class="money-k">1. Выручка</div>
+        <div class="money-v">$7,632,368</div>
+        <div class="money-h">331 строк · 252 счетов · продажная AH</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">2. Закупка</div>
+        <div class="money-v">$5,703,424</div>
+        <div class="money-h">закупка, итого</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">3. Транспорт</div>
+        <div class="money-v">$165,245</div>
+        <div class="money-h">факт · план $257,276</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">4. Fee</div>
+        <div class="money-v">$264,428</div>
+        <div class="money-h">transaction fee</div>
+      </div>
+      <div class="money-card">
+        <div class="money-k">5. Таможня</div>
+        <div class="money-v">$7,163</div>
+        <div class="money-h">пошлина + СВХ</div>
+      </div>
+      <div class="money-card accent">
+        <div class="money-k">6. Маржа</div>
+        <div class="money-v">$1,492,108</div>
+        <div class="money-h">19.5% · выручка − закупка − транспорт факт − fee − таможня</div>
+      </div>
+    </div>
+  </div>
+
+
+  
+  <details class="bucket critical-panel">
+    <summary>
+      <div class="bucket-head">
+        <div class="bucket-title">Critical / AOG</div>
+        <div class="bucket-kpis">
+          <div class="bk warn"><span class="bk-k">Запросов</span><span class="bk-v">400</span></div>
+          <div class="bk"><span class="bk-k">Critical / AOG</span><span class="bk-v">292 / 108</span></div>
+          <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">4 <small>1.0%</small></span></div>
+          <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$67,610</span></div>
+          <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$24,012 <small>36%</small></span></div>
+          <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.1 д</span></div>
+          <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">2.3</span></div>
+        </div>
+      </div>
+    </summary>
+    <div class="bucket-body">
+      <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — 13% всех запросов. Конверсия 1.0% vs стандарт 3.4%; B→AC 1.1 д vs стандарт 1.3 д.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
+              <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
+            </tr>
+          </thead>
+          <tbody><tr><td>0–10 тыс. $</td><td>122</td><td>2</td><td>$2,710</td><td>$1,413</td><td>1.2 д</td><td>3.7</td></tr><tr><td>11–25 тыс. $</td><td>77</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>2.6</td></tr><tr><td>26–50 тыс. $</td><td>36</td><td>2</td><td>$64,900</td><td>$22,599</td><td>1.1 д</td><td>2.8</td></tr><tr><td>51–75 тыс. $</td><td>12</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>3.6</td></tr><tr><td>76–100 тыс. $</td><td>5</td><td>0</td><td>$0</td><td>$0</td><td>2.0 д</td><td>3.2</td></tr><tr><td>101–150 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>1.7 д</td><td>4.0</td></tr><tr><td>151–200 тыс. $</td><td>1</td><td>0</td><td>$0</td><td>$0</td><td>1.3 д</td><td>1.0</td></tr><tr><td>200+ тыс. $</td><td>8</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>5.8</td></tr><tr><td>Без продажной оценки</td><td>137</td><td>0</td><td>$0</td><td>$0</td><td>—</td><td>0.5</td></tr></tbody>
+        </table>
+      </div>
+      
+    <details class="bucket">
+      <summary>
+        <div class="bucket-head">
+          <div class="bucket-title">Заказы из Critical / AOG (4)</div>
+        </div>
+      </summary>
+      <div class="bucket-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Request №</th><th>Срочность</th><th>P/N</th><th>Description</th>
+                <th>Sale $</th><th>Offered×Qty</th><th>B→O</th><th>B→AC</th>
+              </tr>
+            </thead>
+            <tbody><tr><td>Q10010926</td><td><span class='tag critical'>AOG</span></td><td><b>4951957</b></td><td>STARTER MOTOR</td><td>$35,900</td><td>$35,900</td><td>2 ч</td><td>3 ч</td></tr><tr><td>4377</td><td><span class='tag critical'>AOG</span></td><td><b>07325P000-01</b></td><td>BALLSCREW ASSY</td><td>$29,000</td><td>$29,000</td><td>2 ч</td><td>3 ч</td></tr><tr><td>Q10154326</td><td><span class='tag critical'>Critical</span></td><td><b>14330-050</b></td><td>VALVE ASSY-FLUSH ORBITAL</td><td>$2,500</td><td>$2,500</td><td>1.0 д</td><td>1.1 д</td></tr><tr><td>Q10135926</td><td><span class='tag critical'>Critical</span></td><td><b>NAS617-6</b></td><td>PACKING</td><td>$2</td><td>$2</td><td>—</td><td>0 ч</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    </div>
+  </details>
+
+
+  <div class="panel">
+    <h2>Как читать отчёт</h2>
+    <div class="note">
+      <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
+      <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
+      <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
+      <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
+      <b>Категории</b> — по Offered×Qty. В шапке: выручка/маржа ТАЗ, топ-3 Supplier (T), квот/запрос. Внутри — заказы и до 10 P/N с выводом «усилить» или «не тратить ресурс».<br/>
+      <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Категории по продажной стоимости</h2>
+    <p class="lead-sm">Сравнивайте не только число заказов, но выручку и маржу: 30 мелких заказов могут давать меньше денег, чем 3 крупных.</p>
+    
+            <details class="bucket" open>
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">0–10 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">791</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">37</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$163,320</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$51,102 <small>31%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">LH 57% · JT 28% · KT 13%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">4.3</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.3 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">780</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">3400</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">5%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$163,320</div><div class="sub">31 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$51,102 <span class="sub">(31%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">LH 57% · JT 28% · KT 13%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.3 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>LH</td><td>1940</td><td>57%</td></tr><tr><td>JT</td><td>968</td><td>28%</td></tr><tr><td>KT MNT</td><td>451</td><td>13%</td></tr><tr><td>BOS</td><td>20</td><td>1%</td></tr><tr><td>JET</td><td>14</td><td>0%</td></tr><tr><td>FAI</td><td>5</td><td>0%</td></tr><tr><td>прочие</td><td>2</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>4076</td><td><b>65-46140-9</b></td><td>1.9 TEE BOLT ASSY, DRAG STRUT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$9,900</td><td>1</td><td>$9,900</td><td>$1,476 <span class='sub'>(15%)</span></td><td>2.8 д</td><td>2.8 д</td></tr><tr><td>3876</td><td><b>65-46140-6</b></td><td>1.9 TEE BOLT ASSY, DRAG STRUT<div class='sub'>ORDERS · 5 CANCELLED</div></td><td>$9,900</td><td>1</td><td>$9,900</td><td>—</td><td>20 ч</td><td>23 ч</td></tr><tr><td>3019</td><td><b>K289P07</b></td><td>BLADE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$4,760</td><td>2</td><td>$9,520</td><td>$2,879 <span class='sub'>(30%)</span></td><td>1.2 д</td><td>2.3 д</td></tr><tr><td>Q9969026</td><td><b>8901-326</b></td><td>T2 SENSOR<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$4,500</td><td>2</td><td>$9,000</td><td>$3,907 <span class='sub'>(43%)</span></td><td>3.0 д</td><td>3.1 д</td></tr><tr><td>4353</td><td><b>11197-5</b></td><td>DETECTOR</td><td>$8,800</td><td>1</td><td>$8,800</td><td>—</td><td>19 ч</td><td>20 ч</td></tr><tr><td>4087</td><td><b>11197-5</b></td><td>DETECTOR<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$8,800</td><td>1</td><td>$8,800</td><td>$2,108 <span class='sub'>(24%)</span></td><td>1.1 д</td><td>1.1 д</td></tr><tr><td>Q10127326</td><td><b>3601193-8</b></td><td>ATOMIZER ASSY - FUEL REPAIR PART<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$8,500</td><td>1</td><td>$8,500</td><td>$2,086 <span class='sub'>(25%)</span></td><td>1.0 д</td><td>1.0 д</td></tr><tr><td>Q10055626</td><td><b>129694-2</b></td><td>SENSOR-BLEED AIR OVERTEMP VALVE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$8,200</td><td>1</td><td>$8,200</td><td>$1,828 <span class='sub'>(22%)</span></td><td>24 ч</td><td>1.0 д</td></tr><tr><td>3510</td><td><b>3616296-1</b></td><td>COUPLING SPLINE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$8,200</td><td>1</td><td>$8,200</td><td>—</td><td>3.0 д</td><td>6.9 д</td></tr><tr><td>4219</td><td><b>144-187-000-011</b></td><td>SENSOR - VIB FFCC<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$7,500</td><td>1</td><td>$7,500</td><td>$1,252 <span class='sub'>(17%)</span></td><td>20 ч</td><td>22 ч</td></tr><tr><td>2394</td><td><b>5100S151</b></td><td>PRE-BONDED PATCHES KIT,SMALL<div class='sub'>ORDERS · 2 PAID</div></td><td>$2,500</td><td>3</td><td>$7,500</td><td>$2,820 <span class='sub'>(38%)</span></td><td>1.1 д</td><td>2.0 д</td></tr><tr><td>Q10241126</td><td><b>580-285-058</b></td><td>CABLE - FEED BACK VSV<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$7,100</td><td>1</td><td>$7,100</td><td>$1,317 <span class='sub'>(19%)</span></td><td>1.0 д</td><td>1.0 д</td></tr><tr><td>Q10259026</td><td><b>PSD40-504M</b></td><td>ADAPTER ASSY - FUEL SYSTEM<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$6,900</td><td>1</td><td>$6,900</td><td>$4,913 <span class='sub'>(71%)</span></td><td>2.8 д</td><td>3.9 д</td></tr><tr><td>3853</td><td><b>335-251-803-0</b></td><td>HOSE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$6,890</td><td>1</td><td>$6,890</td><td>$4,550 <span class='sub'>(66%)</span></td><td>—</td><td>—</td></tr><tr><td>Q9954326</td><td><b>10-631045-2</b></td><td>IGNITION EXCITER<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$3,100</td><td>2</td><td>$6,200</td><td>$2,982 <span class='sub'>(48%)</span></td><td>1.9 д</td><td>2.0 д</td></tr><tr><td>2916</td><td><b>69-42193-2</b></td><td>2.13 BOLT - DOWNLOCK<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$6,000</td><td>1</td><td>$6,000</td><td>$2,194 <span class='sub'>(37%)</span></td><td>1.2 д</td><td>1.4 д</td></tr><tr><td>Q10012726</td><td><b>69-38868-3</b></td><td>PLATE</td><td>$5,910</td><td>1</td><td>$5,910</td><td>—</td><td>18 ч</td><td>18 ч</td></tr><tr><td>Q10174726</td><td><b>285A1300-1</b></td><td>ACCESSORY UNIT<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$5,800</td><td>1</td><td>$5,800</td><td>$1,562 <span class='sub'>(27%)</span></td><td>1.0 д</td><td>1.1 д</td></tr><tr><td>Q10180326</td><td><b>2-8020-27</b></td><td>FUSE ASSY<div class='sub'>ORDERS · 2 PAID</div></td><td>$5,200</td><td>1</td><td>$5,200</td><td>$1,152 <span class='sub'>(22%)</span></td><td>1.1 д</td><td>8 ч</td></tr><tr><td>Q10066026</td><td><b>G7501-01</b></td><td>VHF NAV CONTROL PANEL<div class='sub'>ORDERS · 3 SHIPPED</div></td><td>$5,000</td><td>1</td><td>$5,000</td><td>$761 <span class='sub'>(15%)</span></td><td>1.0 д</td><td>1.1 д</td></tr><tr><td>Q9933026</td><td><b>G7501-01</b></td><td>VHF NAV CONTROL PANEL<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$4,800</td><td>1</td><td>$4,800</td><td>$1,397 <span class='sub'>(29%)</span></td><td>20 ч</td><td>1.2 д</td></tr><tr><td>2388</td><td><b>9550173560</b></td><td>PROBE</td><td>$4,800</td><td>1</td><td>$4,800</td><td>—</td><td>1.1 д</td><td>2.0 д</td></tr><tr><td>Q10181826</td><td><b>9550173560</b></td><td>PROBE<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$4,500</td><td>1</td><td>$4,500</td><td>$2,197 <span class='sub'>(49%)</span></td><td>22 ч</td><td>5 ч</td></tr><tr><td>2675</td><td><b>69-39465-29</b></td><td>1.1.9 GLAND NUT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$4,000</td><td>1</td><td>$4,000</td><td>$1,109 <span class='sub'>(28%)</span></td><td>1.2 д</td><td>1.3 д</td></tr><tr><td>Q10072626</td><td><b>GA31538</b></td><td>VALVE ASSEMBLY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$1,300</td><td>3</td><td>$3,900</td><td>$1,716 <span class='sub'>(44%)</span></td><td>—</td><td>0 ч</td></tr><tr><td>Q10098326</td><td><b>90G97</b></td><td>SWITCH</td><td>$3,800</td><td>1</td><td>$3,800</td><td>—</td><td>1.1 д</td><td>1.1 д</td></tr><tr><td>3330</td><td><b>49380</b></td><td>PROBE-PITOT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$3,800</td><td>1</td><td>$3,800</td><td>$819 <span class='sub'>(22%)</span></td><td>2.1 д</td><td>2.2 д</td></tr><tr><td>Q10189826</td><td><b>335-011-307-0</b></td><td>PANEL ASSY<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$3,600</td><td>1</td><td>$3,600</td><td>$1,182 <span class='sub'>(33%)</span></td><td>3 ч</td><td>4.3 д</td></tr><tr><td>4266</td><td><b>20200-0206</b></td><td>TANK UNIT 1 AND 2<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$3,500</td><td>1</td><td>$3,500</td><td>$1,165 <span class='sub'>(33%)</span></td><td>22 ч</td><td>1.0 д</td></tr><tr><td>Q9954126</td><td><b>DMC50-17</b></td><td>ANTENNA ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$3,400</td><td>1</td><td>$3,400</td><td>$-199 <span class='sub'>(-6%)</span></td><td>1.2 д</td><td>1.2 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>9550173560</b><div class='muted'>PROBE</div></td><td>3</td><td>2</td><td>3.3</td><td>$4,800</td><td class='note-cell'>Запрашивали 3×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>G7501-01</b><div class='muted'>VHF NAV CONTROL PANEL</div></td><td>2</td><td>2</td><td>11.0</td><td>$5,000</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>11197-5</b><div class='muted'>DETECTOR</div></td><td>2</td><td>2</td><td>3.0</td><td>$10,500</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>129694-2</b><div class='muted'>SENSOR-BLEED AIR OVERTEMP VALVE</div></td><td>4</td><td>1</td><td>6.8</td><td>$8,200</td><td class='note-cell'>Запрашивали 4×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>1421-100</b><div class='muted'>PRESSURE SWITCH</div></td><td>6</td><td>0</td><td>3.0</td><td>$8,400</td><td class='note-cell'>Запрашивали 6×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>158300-101</b><div class='muted'>AILERON AUTOPILOT ACTUATOR</div></td><td>5</td><td>0</td><td>7.8</td><td>$9,800</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>622-9436-101</b><div class='muted'>EFIS SYMBOL GENERATOR</div></td><td>5</td><td>0</td><td>7.4</td><td>$7,000</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>G6773-04</b><div class='muted'>VHF NAV/DME CONTROL PANEL</div></td><td>5</td><td>0</td><td>6.0</td><td>$8,300</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>2670136</b><div class='muted'>VALVE, FUELING SHUTOFF</div></td><td>5</td><td>0</td><td>5.8</td><td>$9,400</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>CGAB1400-01</b><div class='muted'>SMOKE DETECTOR</div></td><td>5</td><td>0</td><td>4.4</td><td>$9,000</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">11–25 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">551</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">21</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$331,500</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$97,557 <small>29%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">JT 38% · KT 35% · LH 25%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.6</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">545</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">1973</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">10%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$331,500</div><div class="sub">20 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$97,557 <span class="sub">(29%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">JT 38% · KT 35% · LH 25%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>JT</td><td>759</td><td>38%</td></tr><tr><td>KT MNT</td><td>695</td><td>35%</td></tr><tr><td>LH</td><td>499</td><td>25%</td></tr><tr><td>BOS</td><td>9</td><td>0%</td></tr><tr><td>JET</td><td>7</td><td>0%</td></tr><tr><td>SOHO</td><td>2</td><td>0%</td></tr><tr><td>прочие</td><td>2</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>Q9942126</td><td><b>141A4810-56</b></td><td>WINDSHIELD ASSY RH<div class='sub'>ORDERS · 2 PAID</div></td><td>$24,600</td><td>1</td><td>$24,600</td><td>$6,660 <span class='sub'>(27%)</span></td><td>1.1 д</td><td>2.2 д</td></tr><tr><td>3563</td><td><b>B03AA1040</b></td><td>DUAL DISTRIBUTOR VALVE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$24,000</td><td>1</td><td>$24,000</td><td>$10,584 <span class='sub'>(44%)</span></td><td>1.0 д</td><td>2.0 д</td></tr><tr><td>Q10201526</td><td><b>824392-2-002</b></td><td>CABIN PRESSURE SELECTOR PANEL<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$22,500</td><td>1</td><td>$22,500</td><td>$2,837 <span class='sub'>(13%)</span></td><td>24 ч</td><td>24 ч</td></tr><tr><td>Q10153126</td><td><b>214A3112-3</b></td><td>DUCT ASSY<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$10,700</td><td>2</td><td>$21,400</td><td>$8,400 <span class='sub'>(39%)</span></td><td>6 ч</td><td>6 ч</td></tr><tr><td>2106</td><td><b>D2557266900600</b></td><td>ACTUATOR UNIT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$20,500</td><td>1</td><td>$20,500</td><td>$2,772 <span class='sub'>(14%)</span></td><td>21 ч</td><td>23 ч</td></tr><tr><td>4233</td><td><b>0856LU6</b></td><td>PROBE ASSY<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$19,000</td><td>1</td><td>$19,000</td><td>$5,856 <span class='sub'>(31%)</span></td><td>1.3 д</td><td>4.3 д</td></tr><tr><td>4092</td><td><b>3079014-01</b></td><td>ADAPTER ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$9,100</td><td>2</td><td>$18,200</td><td>$4,285 <span class='sub'>(24%)</span></td><td>23 ч</td><td>1.7 д</td></tr><tr><td>3566</td><td><b>69-42193-3</b></td><td>2.13 BOLT - DOWNLOCK<div class='sub'>ORDERS · 5 CANCELLED</div></td><td>$3,000</td><td>6</td><td>$18,000</td><td>—</td><td>5 ч</td><td>5 ч</td></tr><tr><td>3471</td><td><b>214N2520-82</b></td><td>DIFFUSER ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$8,800</td><td>2</td><td>$17,600</td><td>$6,004 <span class='sub'>(34%)</span></td><td>24 ч</td><td>4.1 д</td></tr><tr><td>Q10171226</td><td><b>102AH2AG</b></td><td>SENSOR-TOTAL AIR TEMPERATURE<div class='sub'>ORDERS · 2 PAID</div></td><td>$16,500</td><td>1</td><td>$16,500</td><td>$3,882 <span class='sub'>(24%)</span></td><td>1.1 д</td><td>1.3 д</td></tr><tr><td>Q10074626</td><td><b>002A0096-1</b></td><td>TOP KIT -INLET COWL CRUSHABLE SPACER<div class='sub'>ORDERS · 2 PAID</div></td><td>$16,500</td><td>1</td><td>$16,500</td><td>$5,060 <span class='sub'>(31%)</span></td><td>1.8 д</td><td>1.8 д</td></tr><tr><td>Q9995826</td><td><b>002A0096-1</b></td><td>TOP KIT -INLET COWL CRUSHABLE SPACER<div class='sub'>ORDERS · 13 BIS</div></td><td>$16,500</td><td>1</td><td>$16,500</td><td>$5,060 <span class='sub'>(31%)</span></td><td>1.1 д</td><td>1.2 д</td></tr><tr><td>Q9941226</td><td><b>2100-1020-02</b></td><td>COCKPIT VOICE RECORDER<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$15,500</td><td>1</td><td>$15,500</td><td>$6,535 <span class='sub'>(42%)</span></td><td>1.2 д</td><td>1.3 д</td></tr><tr><td>4281</td><td><b>2100-1020-02</b></td><td>COCKPIT VOICE RECORDER<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$15,500</td><td>1</td><td>$15,500</td><td>$6,535 <span class='sub'>(42%)</span></td><td>3.0 д</td><td>3.1 д</td></tr><tr><td>Q9979526</td><td><b>3604524-54</b></td><td>COMBUSTOR UNIT ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$14,800</td><td>1</td><td>$14,800</td><td>—</td><td>6 ч</td><td>8 ч</td></tr><tr><td>3492</td><td><b>0851HT</b></td><td>PROBE, 3RD PITOT STATIC<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$7,400</td><td>2</td><td>$14,800</td><td>$6,002 <span class='sub'>(41%)</span></td><td>3.3 д</td><td>3.4 д</td></tr><tr><td>Q10209726</td><td><b>902862</b></td><td>FIRE DETECTOR ASSY<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$14,500</td><td>1</td><td>$14,500</td><td>$3,985 <span class='sub'>(27%)</span></td><td>22 ч</td><td>1.9 д</td></tr><tr><td>2941</td><td><b>96019-02</b></td><td>ISOLATOR<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$13,800</td><td>1</td><td>$13,800</td><td>$2,880 <span class='sub'>(21%)</span></td><td>3.3 д</td><td>3.3 д</td></tr><tr><td>3956</td><td><b>398908-5</b></td><td>VALVE ASSY - TEMP CONT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$13,500</td><td>1</td><td>$13,500</td><td>$3,464 <span class='sub'>(26%)</span></td><td>1.1 д</td><td>1.2 д</td></tr><tr><td>Troubles
+P20094326</td><td><b>3604524-54</b></td><td>COMBUSTOR UNIT ASSY<div class='sub'>ORDERS · 2 PAID</div></td><td>$13,300</td><td>1</td><td>$13,300</td><td>$3,940 <span class='sub'>(30%)</span></td><td>—</td><td>—</td></tr><tr><td>Q9931926</td><td><b>3604524-54</b></td><td>COMBUSTOR UNIT ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$13,300</td><td>1</td><td>$13,300</td><td>$2,817 <span class='sub'>(21%)</span></td><td>—</td><td>—</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>3604524-54</b><div class='muted'>COMBUSTOR UNIT ASSY</div></td><td>3</td><td>3</td><td>5.0</td><td>$13,300</td><td class='note-cell'>Запрашивали 3×, уже был заказ (3). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2100-1020-02</b><div class='muted'>COCKPIT VOICE RECORDER</div></td><td>3</td><td>2</td><td>5.3</td><td>$46,500</td><td class='note-cell'>Запрашивали 3×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>902862</b><div class='muted'>FIRE DETECTOR ASSY</div></td><td>6</td><td>1</td><td>4.3</td><td>$10,700</td><td class='note-cell'>Запрашивали 6×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>002A0096-1</b><div class='muted'>TOP KIT -INLET COWL CRUSHABLE SPACER</div></td><td>2</td><td>2</td><td>1.5</td><td>$16,500</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>7003110-912</b><div class='muted'>EFIS CATHODE RAY TUBE</div></td><td>5</td><td>0</td><td>5.0</td><td>$22,100</td><td class='note-cell'>Запрашивали 5×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>379580-650</b><div class='muted'>PUMP ASSY</div></td><td>4</td><td>0</td><td>4.5</td><td>$20,900</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>500-12Y</b><div class='muted'>ELT-EMERGENCY LOCATOR TRANSMITTER</div></td><td>4</td><td>0</td><td>3.2</td><td>$14,000</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>C16363AA</b><div class='muted'>ALPHA PROBE</div></td><td>4</td><td>0</td><td>3.0</td><td>$19,300</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>57186-11</b><div class='muted'>PUMP HYD A-C MOTOR DRIVEN</div></td><td>3</td><td>0</td><td>6.3</td><td>$18,900</td><td class='note-cell'>Запрашивали 3×, в среднем 6 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>2100-4043-00</b><div class='muted'>SOLID STATE FLIGHT DATA RECORDER</div></td><td>3</td><td>0</td><td>6.3</td><td>$16,500</td><td class='note-cell'>Запрашивали 3×, в среднем 6 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">26–50 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">328</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">19</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$469,690</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$106,894 <small>23%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 49% · JT 32% · LH 18%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.4</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">322</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">1116</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">14%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$469,690</div><div class="sub">14 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$106,894 <span class="sub">(23%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 49% · JT 32% · LH 18%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>542</td><td>49%</td></tr><tr><td>JT</td><td>355</td><td>32%</td></tr><tr><td>LH</td><td>204</td><td>18%</td></tr><tr><td>JET</td><td>6</td><td>1%</td></tr><tr><td>KTMNT</td><td>4</td><td>0%</td></tr><tr><td>AVITRUE</td><td>2</td><td>0%</td></tr><tr><td>прочие</td><td>3</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>Q10236426</td><td><b>82425-00-0060</b></td><td>NAVIGATION PROCESSOR UNIT<div class='sub'>ORDERS · 6 TROUBLE</div></td><td>$48,900</td><td>1</td><td>$48,900</td><td>$13,675 <span class='sub'>(28%)</span></td><td>1.1 д</td><td>1.2 д</td></tr><tr><td>2813</td><td><b>396608-1</b></td><td>VALVE ASSY - PACK FLOW AND SHUTOFF<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$44,000</td><td>1</td><td>$44,000</td><td>$6,144 <span class='sub'>(14%)</span></td><td>22 ч</td><td>22 ч</td></tr><tr><td>Q10111226</td><td><b>0YX1600A04G01</b></td><td>ELECTRICAL BOX</td><td>$42,000</td><td>1</td><td>$42,000</td><td>—</td><td>21.1 д</td><td>1.1 д</td></tr><tr><td>TROUBLES</td><td><b>3291214-2</b></td><td>VALVE BLEED AIR</td><td>$39,900</td><td>1</td><td>$39,900</td><td>—</td><td>3.0 д</td><td>—</td></tr><tr><td>Q10169526</td><td><b>3291214-2</b></td><td>VALVE-BLEED AIR<div class='sub'>ORDERS · 6 TROUBLE</div></td><td>$39,900</td><td>1</td><td>$39,900</td><td>$3,098 <span class='sub'>(8%)</span></td><td>—</td><td>—</td></tr><tr><td>Q9938126</td><td><b>6799A010001</b></td><td>REGULATOR/SHUTOFF VALVE<div class='sub'>ORDERS · 7 REFUND</div></td><td>$36,000</td><td>1</td><td>$36,000</td><td>—</td><td>24 ч</td><td>24 ч</td></tr><tr><td>Q10010926</td><td><b>4951957</b></td><td>STARTER MOTOR<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$35,900</td><td>1</td><td>$35,900</td><td>$11,924 <span class='sub'>(33%)</span></td><td>2 ч</td><td>3 ч</td></tr><tr><td>3211</td><td><b>2100M96P05</b></td><td>BLADE<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$34,800</td><td>1</td><td>$34,800</td><td>$4,832 <span class='sub'>(14%)</span></td><td>1 ч</td><td>1 ч</td></tr><tr><td>2449</td><td><b>LA4E20606HM0100</b></td><td>MULTIFUNCTION COMPUTER<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$34,500</td><td>1</td><td>$34,500</td><td>$6,389 <span class='sub'>(19%)</span></td><td>1.0 д</td><td>1.1 д</td></tr><tr><td>2356</td><td><b>1151952-19</b></td><td>STANDBY POWER CONTROL UNIT</td><td>$33,100</td><td>1</td><td>$33,100</td><td>—</td><td>3 ч</td><td>2.9 д</td></tr><tr><td>3399</td><td><b>1151952-19</b></td><td>STANDBY POWER CONTROL UNIT<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$32,990</td><td>1</td><td>$32,990</td><td>$12,284 <span class='sub'>(37%)</span></td><td>23 ч</td><td>24 ч</td></tr><tr><td>4258</td><td><b>472001-01</b></td><td>CARTRIDGE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$2,900</td><td>10</td><td>$29,000</td><td>$4,697 <span class='sub'>(16%)</span></td><td>1.2 д</td><td>1.2 д</td></tr><tr><td>4377</td><td><b>07325P000-01</b></td><td>BALLSCREW ASSY<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$14,500</td><td>2</td><td>$29,000</td><td>$10,675 <span class='sub'>(37%)</span></td><td>2 ч</td><td>3 ч</td></tr><tr><td>3960</td><td><b>0YX1600A04G01</b></td><td>ELECTRICAL BOX<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$29,000</td><td>1</td><td>$29,000</td><td>$7,883 <span class='sub'>(27%)</span></td><td>7.9 д</td><td>7.9 д</td></tr><tr><td>3237</td><td><b>4383100-02-6600</b></td><td>CONTROL MODULE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$9,600</td><td>3</td><td>$28,800</td><td>$10,868 <span class='sub'>(38%)</span></td><td>1.1 д</td><td>1.2 д</td></tr><tr><td>Q10058826</td><td><b>411A2113-40B</b></td><td>PANEL ASSY<div class='sub'>ORDERS · 5 CANCELLED</div></td><td>$28,500</td><td>1</td><td>$28,500</td><td>—</td><td>3.0 д</td><td>3.2 д</td></tr><tr><td>3012</td><td><b>B03AA1040</b></td><td>DUAL DISTRIBUTOR VALVE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$28,000</td><td>1</td><td>$28,000</td><td>$2,114 <span class='sub'>(8%)</span></td><td>1.1 д</td><td>1.2 д</td></tr><tr><td>2438</td><td><b>B03AA1040</b></td><td>DUAL DISTRIBUTOR VALVE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$27,900</td><td>1</td><td>$27,900</td><td>$6,746 <span class='sub'>(24%)</span></td><td>23 ч</td><td>23 ч</td></tr><tr><td>4070</td><td><b>S5431011000300</b></td><td>COWL ASSY-LOWER<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$27,000</td><td>1</td><td>$27,000</td><td>$5,566 <span class='sub'>(21%)</span></td><td>2.9 д</td><td>2.9 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>6799A010001</b><div class='muted'>REGULATOR/SHUTOFF VALVE</div></td><td>5</td><td>1</td><td>2.2</td><td>$32,000</td><td class='note-cell'>Запрашивали 5×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>3291214-2</b><div class='muted'>VALVE BLEED AIR</div></td><td>3</td><td>2</td><td>5.7</td><td>$39,900</td><td class='note-cell'>Запрашивали 3×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>0YX1600A04G01</b><div class='muted'>ELECTRICAL BOX</div></td><td>2</td><td>2</td><td>1.5</td><td>$42,000</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>1151952-19</b><div class='muted'>STANDBY POWER CONTROL UNIT</div></td><td>2</td><td>2</td><td>3.5</td><td>$33,100</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>B03AA1040</b><div class='muted'>DUAL DISTRIBUTOR VALVE</div></td><td>2</td><td>2</td><td>3.0</td><td>$56,000</td><td class='note-cell'>Запрашивали 2×, уже был заказ (2). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>792755-15</b><div class='muted'>PRESSURE REGULATING VALVE CONTROLLER</div></td><td>6</td><td>0</td><td>3.5</td><td>$38,400</td><td class='note-cell'>Запрашивали 6×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>816332-5-401</b><div class='muted'>PROPELLER ELECTRONIC CONTROL</div></td><td>4</td><td>0</td><td>5.5</td><td>$49,700</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>7003652-602</b><div class='muted'>ADVISORY DISPLAY UNIT-AFCS</div></td><td>4</td><td>0</td><td>3.5</td><td>$35,500</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>20202-02</b><div class='muted'>COMPENSATOR</div></td><td>4</td><td>0</td><td>2.2</td><td>$36,000</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>066-50007-0531</b><div class='muted'>TRANSCEIVER-LRRA</div></td><td>3</td><td>0</td><td>6.0</td><td>$28,600</td><td class='note-cell'>Запрашивали 3×, в среднем 6 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">51–75 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">142</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">4</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$234,800</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$50,512 <small>22%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 49% · JT 31% · LH 17%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.2</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">141</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">459</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">7%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$234,800</div><div class="sub">4 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$50,512 <span class="sub">(22%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 49% · JT 31% · LH 17%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 3 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>225</td><td>49%</td></tr><tr><td>JT</td><td>144</td><td>31%</td></tr><tr><td>LH</td><td>79</td><td>17%</td></tr><tr><td>SOHO</td><td>7</td><td>2%</td></tr><tr><td>BOS</td><td>2</td><td>0%</td></tr><tr><td>CHRIS</td><td>2</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>Q10170526</td><td><b>2313M-348-4</b></td><td>MOTOR/CONVERTER ASSY<div class='sub'>ORDERS · 1 NOT PAID</div></td><td>$72,000</td><td>1</td><td>$72,000</td><td>$14,168 <span class='sub'>(20%)</span></td><td>1.1 д</td><td>1.1 д</td></tr><tr><td>2824</td><td><b>GMT4150-1</b></td><td>CLOCK<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$28,900</td><td>2</td><td>$57,800</td><td>$14,744 <span class='sub'>(26%)</span></td><td>3.1 д</td><td>3.2 д</td></tr><tr><td>Q10155326</td><td><b>C20633000</b></td><td>BRAKE ASSY - CARBON MESSIER-BUGATTI<div class='sub'>ORDERS · 6 TROUBLE</div></td><td>$53,000</td><td>1</td><td>$53,000</td><td>$10,940 <span class='sub'>(21%)</span></td><td>1.1 д</td><td>2.2 д</td></tr><tr><td>Q10064226</td><td><b>2206400-2</b></td><td>MACHINE ASSY - AIR CYCLE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$52,000</td><td>1</td><td>$52,000</td><td>$10,660 <span class='sub'>(20%)</span></td><td>1.0 д</td><td>1.1 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2206400-2</b><div class='muted'>MACHINE ASSY - AIR CYCLE</div></td><td>4</td><td>1</td><td>6.2</td><td>$52,000</td><td class='note-cell'>Запрашивали 4×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>5A3307-701</b><div class='muted'>SLIDE ASSY - ESCAPE</div></td><td>3</td><td>0</td><td>8.3</td><td>$71,700</td><td class='note-cell'>Запрашивали 3×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>90010705-1</b><div class='muted'>BRAKE STACK REPLACEMENT</div></td><td>4</td><td>0</td><td>2.8</td><td>$62,200</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>314-2100-3</b><div class='muted'>COWL ASSY</div></td><td>3</td><td>0</td><td>6.0</td><td>$73,700</td><td class='note-cell'>Запрашивали 3×, в среднем 6 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">76–100 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">72</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">3</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$191,000</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$39,128 <small>20%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 53% · JT 29% · LH 16%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">2.7</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">72</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">197</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">6%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$191,000</div><div class="sub">2 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$39,128 <span class="sub">(20%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 53% · JT 29% · LH 16%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>105</td><td>53%</td></tr><tr><td>JT</td><td>57</td><td>29%</td></tr><tr><td>LH</td><td>31</td><td>16%</td></tr><tr><td>SOHO</td><td>4</td><td>2%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>3888</td><td><b>2028M21P02</b></td><td>COUPLING<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$32,000</td><td>3</td><td>$96,000</td><td>$17,286 <span class='sub'>(18%)</span></td><td>0 ч</td><td>0 ч</td></tr><tr><td>Q10074926</td><td><b>2042M67P04</b></td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$95,000</td><td>1</td><td>$95,000</td><td>$21,843 <span class='sub'>(23%)</span></td><td>1.1 д</td><td>1.8 д</td></tr><tr><td>3758</td><td><b>41F9002</b></td><td>FILTER ASSY<div class='sub'>PRESALE · 1 NOT PAID</div></td><td>$16,000</td><td>5</td><td>$80,000</td><td>—</td><td>1.0 д</td><td>1.0 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>41F9002</b><div class='muted'>FILTER ASSY</div></td><td>3</td><td>1</td><td>1.0</td><td>$80,000</td><td class='note-cell'>Запрашивали 3×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">101–150 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">76</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">2</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$241,850</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$107,988 <small>45%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 50% · JT 34% · LH 15%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.3</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">73</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">253</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">7%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$241,850</div><div class="sub">2 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$107,988 <span class="sub">(45%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 50% · JT 34% · LH 15%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">1</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>127</td><td>50%</td></tr><tr><td>JT</td><td>86</td><td>34%</td></tr><tr><td>LH</td><td>37</td><td>15%</td></tr><tr><td>BOS</td><td>1</td><td>0%</td></tr><tr><td>JET</td><td>1</td><td>0%</td></tr><tr><td>SOHO</td><td>1</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>3052</td><td><b>9373M34P03</b></td><td>BLADE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$1,550</td><td>87</td><td>$134,850</td><td>$79,361 <span class='sub'>(59%)</span></td><td>1.4 д</td><td>—</td></tr><tr><td>Q9937126</td><td><b>2042M67P04</b></td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$107,000</td><td>1</td><td>$107,000</td><td>$28,627 <span class='sub'>(27%)</span></td><td>1.1 д</td><td>1.1 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>1968M94G25</b><div class='muted'>CHAMBER ASSY</div></td><td>3</td><td>0</td><td>1.7</td><td>$122,300</td><td class='note-cell'>Запрашивали 3×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>82165-22</b><div class='muted'>MULTI CONTROL DISPLAY UNIT</div></td><td>4</td><td>0</td><td>3.2</td><td>$129,900</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">151–200 тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">35</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">1</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$0</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$0 <small>0%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 53% · JT 29% · LH 12%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.2</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.2 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">33</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">112</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">0%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$0</div><div class="sub">0 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$0 <span class="sub">(0%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 53% · JT 29% · LH 12%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 2 ч / 1.2 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>59</td><td>53%</td></tr><tr><td>JT</td><td>33</td><td>29%</td></tr><tr><td>LH</td><td>14</td><td>12%</td></tr><tr><td>SOHO</td><td>3</td><td>3%</td></tr><tr><td>AVITRUE</td><td>1</td><td>1%</td></tr><tr><td>BOS</td><td>1</td><td>1%</td></tr><tr><td>прочие</td><td>1</td><td>1%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>3396</td><td><b>9373M82G11</b></td><td>SEAL<div class='sub'>PRESALE · 5 CANCELLED</div></td><td>$27,900</td><td>6</td><td>$167,400</td><td>—</td><td>1.1 д</td><td>1.3 д</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>441921-5</b><div class='muted'>FUEL CONTROL UNIT</div></td><td>5</td><td>0</td><td>5.2</td><td>$164,000</td><td class='note-cell'>Запрашивали 5×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">200+ тыс. $</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">78</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">3</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$1,723,800</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$356,000 <small>21%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">KT 47% · JT 23% · LH 23%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">3.4</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.3 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">77</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">264</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">51%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$1,723,800</div><div class="sub">3 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$356,000 <span class="sub">(21%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">KT 47% · JT 23% · LH 23%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.1 д / 3 ч / 1.3 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">0</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>KT MNT</td><td>124</td><td>47%</td></tr><tr><td>JT</td><td>61</td><td>23%</td></tr><tr><td>LH</td><td>60</td><td>23%</td></tr><tr><td>SOHO</td><td>9</td><td>3%</td></tr><tr><td>Avitrue</td><td>2</td><td>1%</td></tr><tr><td>BOS</td><td>2</td><td>1%</td></tr><tr><td>прочие</td><td>6</td><td>2%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>Q9922226</td><td><b>442652</b></td><td>UNIT - HYDROMECHANICAL (HMU)<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$1,145,000</td><td>1</td><td>$1,145,000</td><td>$201,397 <span class='sub'>(18%)</span></td><td>—</td><td>0 ч</td></tr><tr><td>3363</td><td><b>2084M33P02</b></td><td>BLADE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$4,400</td><td>72</td><td>$316,800</td><td>$112,164 <span class='sub'>(35%)</span></td><td>1.1 д</td><td>1.3 д</td></tr><tr><td>4232</td><td><b>761574B</b></td><td>GENERATOR ASSY - INTEGRATED DRIVE<div class='sub'>ORDERS · 4 FINISHED</div></td><td>$262,000</td><td>1</td><td>$262,000</td><td>$42,440 <span class='sub'>(16%)</span></td><td>—</td><td>3 ч</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2101M71G07</b><div class='muted'>NOZZLE</div></td><td>4</td><td>0</td><td>1.5</td><td>$615,000</td><td class='note-cell'>Запрашивали 4×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>761574B</b><div class='muted'>GENERATOR ASSY - INTEGRATED DRIVE</div></td><td>2</td><td>1</td><td>7.0</td><td>$262,000</td><td class='note-cell'>Запрашивали 2×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2048M20G03</b><div class='muted'>315 HPC STG 4-9 SPOOL</div></td><td>3</td><td>0</td><td>7.3</td><td>$1,550,000</td><td class='note-cell'>Запрашивали 3×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>442653</b><div class='muted'>UNIT ASSY-HYDROMECHANICAL</div></td><td>3</td><td>0</td><td>9.3</td><td>$1,430,000</td><td class='note-cell'>Запрашивали 3×, в среднем 9 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>9000000-10310</b><div class='muted'>T2CAS COMPUTER</div></td><td>4</td><td>0</td><td>1.5</td><td>$233,000</td><td class='note-cell'>Запрашивали 4×, офферы уходили клиенту, покупок 0. Похоже, не покупают — не раздувать глубину проценки.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+            <details class="bucket" >
+              <summary>
+                <div class="bucket-head">
+                  <div class="bucket-title">Без продажной оценки</div>
+                  <div class="bucket-kpis">
+                    <div class="bk"><span class="bk-k">Запросов</span><span class="bk-v">952</span></div>
+                    <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">4</span></div>
+                    <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$0</span></div>
+                    <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$0 <small>0%</small></span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">LH 45% · KT 29% · JT 23%</span></div>
+                    <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">0.5</span></div>
+                    <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">3.3 д</span></div>
+                  </div>
+                </div>
+              </summary>
+              <div class="bucket-body">
+                <div class="mini-grid bucket-summary">
+                  <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">5</div></div>
+                  <div class="mini"><div class="k">Всего квот (T)</div><div class="v">513</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">0%</div></div>
+                  <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">$0</div><div class="sub">0 invoice</div></div>
+                  <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">$0 <span class="sub">(0%)</span></div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">LH 45% · KT 29% · JT 23%</div></div>
+                  <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">1.0 д / 3 ч / 3.3 д</div></div>
+                  <div class="mini"><div class="k">В проценке</div><div class="v">552</div></div>
+                </div>
+                <div class="supplier-block">
+                  <h3>Квоты по Supplier (T)</h3>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
+                  <div class='table-wrap supplier-mix'><table><thead><tr><th>Supplier (T)</th><th>Квот</th><th>Доля</th></tr></thead><tbody><tr><td>LH</td><td>233</td><td>45%</td></tr><tr><td>KT MNT</td><td>149</td><td>29%</td></tr><tr><td>JT</td><td>118</td><td>23%</td></tr><tr><td>BOS</td><td>10</td><td>2%</td></tr><tr><td>SOHO</td><td>2</td><td>0%</td></tr><tr><td>KT</td><td>1</td><td>0%</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  <div class='table-wrap'><table><thead><tr><th>Request №</th><th>P/N</th><th>Description</th><th>Sale</th><th>Qty</th><th>Sale total</th><th>Маржа</th><th>B→O</th><th>B→AC</th></tr></thead><tbody><tr><td>2944</td><td><b>2100M64G01</b></td><td>NOZZLE</td><td>—</td><td>22</td><td>$182,000</td><td>—</td><td>3.3 д</td><td>3.3 д</td></tr><tr><td>3459</td><td><b>B03AA1041</b></td><td>DUAL DISTRIBUTOR VALVE</td><td>—</td><td>1</td><td>$22,770</td><td>—</td><td>1.2 д</td><td>—</td></tr><tr><td>4280</td><td><b>0YX1600A04G01</b></td><td>ELECTRICAL BOX</td><td>—</td><td>1</td><td>$20,650</td><td>—</td><td>3 ч</td><td>—</td></tr><tr><td>3390</td><td><b>TY1878-22</b></td><td>SYNC LOCK</td><td>—</td><td>1</td><td>$2,500</td><td>—</td><td>18 ч</td><td>—</td></tr></tbody></table></div>
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  <div class='table-wrap'><table><thead><tr><th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th><th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th></tr></thead><tbody><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2410M49P01</b><div class='muted'>525 HPT DISK</div></td><td>5</td><td>0</td><td>0.4</td><td>—</td><td class='note-cell'>Запрашивали 5×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>B03AA1041</b><div class='muted'>DUAL DISTRIBUTOR VALVE</div></td><td>3</td><td>1</td><td>2.7</td><td>—</td><td class='note-cell'>Запрашивали 3×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>0YX1600A04G01</b><div class='muted'>ELECTRICAL BOX</div></td><td>3</td><td>1</td><td>1.3</td><td>—</td><td class='note-cell'>Запрашивали 3×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2100M64G01</b><div class='muted'>NOZZLE</div></td><td>2</td><td>1</td><td>1.0</td><td>—</td><td class='note-cell'>Запрашивали 2×, уже был заказ (1). Имеет смысл усилить проработку рынка — выше шанс повторных побед.</td></tr><tr><td><span class='tag growth'>Точка роста</span></td><td><b>2100M96P05</b><div class='muted'>BLADE</div></td><td>3</td><td>0</td><td>1.3</td><td>—</td><td class='note-cell'>Запрашивали 3×, был интерес, заказа нет. Точка роста: дожать альтернативы / коммерцию.</td></tr><tr><td><span class='tag skip'>Не усиливать</span></td><td><b>65-46140-6</b><div class='muted'>1.9 TEE BOLT ASSY, DRAG STRUT</div></td><td>3</td><td>0</td><td>5.0</td><td>—</td><td class='note-cell'>Запрашивали 3×, в среднем 5 квот на запрос, заказов нет. Сократить усилия закупщиков на этот P/N.</td></tr></tbody></table></div>
+                </div>
+              </div>
+            </details>
+            
+  </div>
+</div>
+</body>
+</html>
