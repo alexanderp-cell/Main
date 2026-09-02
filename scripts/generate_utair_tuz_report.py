@@ -42,6 +42,16 @@ HOLD_REASON_RULES = [
 TROUBLE_RE = re.compile(r"trouble|трабл", re.IGNORECASE)
 ORDER_REF_RE = re.compile(r"(P\d{5,}|Q\d{5,}|\d{4,}\.0)", re.IGNORECASE)
 TAZ_EXCLUDED_STATUSES = {"5 CANCELLED", "7 REFUND"}
+TAZ_WARRANTY_STATUSES = {"8 WARRANTY"}
+WARRANTY_TEXT_RE = re.compile(r"гарант|warranty", re.IGNORECASE)
+
+# Forgotten invoice in TUZ — treat as present for TAZ matching.
+TUZ_INVOICE_OVERRIDES: dict[tuple[str, str], str] = {
+    ("4232", "761574B"): "16042615005",
+}
+
+# Quoted in TUZ 2025; TAZ 2026 order is expected without a 2026 TUZ win.
+TAZ_PRIOR_TUZ_PN = frozenset({"2410M50P02", "811390-3"})
 TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
 ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
 
@@ -214,6 +224,138 @@ def normalize_invoice(value) -> str | None:
     if len(digits) < 10 or len(digits) > 14:
         return None
     return digits
+
+
+def line_invoices(line: RequestLine) -> set[str]:
+    invs: set[str] = set()
+    for offer in line.offers:
+        inv = normalize_invoice(offer.invoice)
+        if inv:
+            invs.add(inv)
+    override = TUZ_INVOICE_OVERRIDES.get((line.request_no, line.pn))
+    if override:
+        invs.add(override)
+    return invs
+
+
+def normalize_ref_token(value: str | None) -> str | None:
+    if not value:
+        return None
+    text = str(value).strip().splitlines()[0].strip()
+    return text or None
+
+
+def is_taz_warranty_row(row: tuple) -> bool:
+    status = str(row[4]).strip() if row[4] else ""
+    if status in TAZ_WARRANTY_STATUSES:
+        return True
+    comment = str(row[5]).strip() if len(row) > 5 and row[5] else ""
+    delivery = str(row[23]).strip() if len(row) > 23 and row[23] else ""
+    return bool(WARRANTY_TEXT_RE.search(f"{comment} {delivery}"))
+
+
+def is_prior_year_tuz_pn(pn: str, lines: list[RequestLine]) -> bool:
+    if pn in TAZ_PRIOR_TUZ_PN:
+        return True
+    pn_lines = [line for line in lines if line.pn == pn]
+    if not pn_lines or any(line.won() for line in pn_lines):
+        return False
+    return all(line.sheet in OLD_SHEETS for line in pn_lines)
+
+
+def pick_canonical_won_line(lines: list[RequestLine]) -> RequestLine:
+    def latest_dt(line: RequestLine) -> datetime:
+        return max(
+            (o.accepted_dt or o.sent_dt or o.quote_dt or datetime.min for o in line.offers),
+            default=datetime.min,
+        )
+
+    def score(line: RequestLine) -> tuple:
+        return (latest_dt(line), len(line_invoices(line)), not line.is_trouble_search())
+
+    return max(lines, key=score)
+
+
+def build_won_deals(won_lines: list[RequestLine]) -> list[dict[str, Any]]:
+    if not won_lines:
+        return []
+
+    parent = {id(line): id(line) for line in won_lines}
+    req_map: dict[str, list[int]] = defaultdict(list)
+    for line in won_lines:
+        token = normalize_ref_token(line.request_no) or line.request_no
+        req_map[token].append(id(line))
+
+    def find(node: int) -> int:
+        while parent[node] != node:
+            parent[node] = parent[parent[node]]
+            node = parent[node]
+        return node
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for line in won_lines:
+        lid = id(line)
+        invs = line_invoices(line)
+        for other in won_lines:
+            oid = id(other)
+            if invs & line_invoices(other):
+                union(lid, oid)
+            if line.pn == other.pn and (line.is_trouble_search() or other.is_trouble_search()):
+                union(lid, oid)
+        ref = normalize_ref_token(line.trouble_order_ref())
+        if ref:
+            for oid in req_map.get(ref, []):
+                union(lid, oid)
+
+    groups: dict[int, list[RequestLine]] = defaultdict(list)
+    for line in won_lines:
+        groups[find(id(line))].append(line)
+
+    deals: list[dict[str, Any]] = []
+    for members in groups.values():
+        canonical = pick_canonical_won_line(members)
+        invoices: set[str] = set()
+        for member in members:
+            invoices |= line_invoices(member)
+        deals.append(
+            {
+                "lines": members,
+                "canonical": canonical,
+                "invoices": sorted(invoices),
+                "pn": canonical.pn,
+                "renegotiation_count": len(members) - 1,
+                "tuz_offered": canonical.order_value() or 0,
+                "has_trouble": any(member.is_trouble_search() for member in members),
+            }
+        )
+    deals.sort(key=lambda deal: deal["tuz_offered"], reverse=True)
+    return deals
+
+
+def collect_won_invoices(won_lines: list[RequestLine]) -> set[str]:
+    invs: set[str] = set()
+    for line in won_lines:
+        invs |= line_invoices(line)
+    invs.discard(None)
+    return invs
+
+
+def taz_row_brief(row: tuple) -> dict[str, Any]:
+    work_dt = row[16]
+    return {
+        "invoice": normalize_invoice(row[0]) or str(row[0]).strip() if row[0] else "—",
+        "pn": str(row[10]).strip() if row[10] else "—",
+        "description": str(row[12]).strip() if len(row) > 12 and row[12] else "—",
+        "amount": taz_line_amount(row),
+        "status": str(row[4]).strip() if row[4] else "—",
+        "delivery": str(row[23]).strip() if len(row) > 23 and row[23] else "—",
+        "comment": str(row[5]).strip().splitlines()[0] if row[5] else "—",
+        "work_dt": work_dt.strftime("%d.%m.%Y") if isinstance(work_dt, datetime) else "—",
+    }
 
 
 def taz_line_amount(row: tuple) -> float:
@@ -695,18 +837,14 @@ def load_taz_orders_2026(path: Path) -> dict[str, Any]:
 
 def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
     won_lines = [line for line in lines if line.won()]
-    won_invoices = {
-        normalize_invoice(offer.invoice)
-        for line in won_lines
-        for offer in line.offers
-        if offer.invoice
-    }
-    won_invoices.discard(None)
+    won_deals = build_won_deals(won_lines)
+    won_invoices = collect_won_invoices(won_lines)
     won_pn = {line.pn for line in won_lines}
     all_pn = {line.pn for line in lines}
 
     buckets = Counter()
     counts = Counter()
+    bucket_rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
     tuz_taz_2026 = 0.0
     tuz_taz_any_year = 0.0
     invoice_amounts_2026: dict[str, float] = defaultdict(float)
@@ -731,8 +869,13 @@ def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
         if category != "ROTABLE" or status in TAZ_EXCLUDED_STATUSES:
             continue
         pn = str(row[10]).strip() if row[10] else ""
-        if invoice in won_invoices:
+        brief = taz_row_brief(row)
+        if is_taz_warranty_row(row):
+            key = "warranty"
+        elif invoice in won_invoices:
             key = "tuz_won_invoice"
+        elif is_prior_year_tuz_pn(pn, lines):
+            key = "tuz_prior_year"
         elif pn in won_pn:
             key = "tuz_won_pn_no_invoice"
         elif pn in all_pn:
@@ -741,6 +884,7 @@ def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
             key = "not_in_tuz"
         buckets[key] += amount
         counts[key] += 1
+        bucket_rows[key].append(brief)
 
     for invoice in won_invoices:
         tuz_taz_any_year += invoice_amounts_any.get(invoice, 0)
@@ -750,18 +894,28 @@ def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
     rotable_net = sum(buckets.values())
     return {
         "tuz_won_offered": sum(line.order_value() or 0 for line in won_lines),
+        "tuz_won_offered_deals": sum(deal["tuz_offered"] for deal in won_deals),
         "tuz_won_count": len(won_lines),
+        "tuz_deal_count": len(won_deals),
         "tuz_taz_2026": tuz_taz_2026,
         "tuz_taz_any_year": tuz_taz_any_year,
         "taz_rotable_buckets": dict(buckets),
         "taz_rotable_counts": dict(counts),
+        "taz_rotable_rows": {key: rows for key, rows in bucket_rows.items()},
         "taz_rotable_net": rotable_net,
+        "won_deals": won_deals,
     }
 
 
 def compute_funnel(lines: list[RequestLine]) -> dict[str, Any]:
     active = [line for line in lines if not line.is_trouble_search()]
     total = len(active)
+    won_deals = build_won_deals([line for line in lines if line.won()])
+    primary_deals = [
+        deal
+        for deal in won_deals
+        if any(not member.is_trouble_search() for member in deal["lines"])
+    ]
 
     def is_sent(line: RequestLine) -> bool:
         return any(offer.sent_dt for offer in line.offers)
@@ -774,7 +928,7 @@ def compute_funnel(lines: list[RequestLine]) -> dict[str, Any]:
     found = sum(1 for line in active if line.found_on_market())
     sent = sum(1 for line in active if is_sent(line))
     interest = sum(1 for line in active if has_interest(line))
-    won = sum(1 for line in active if line.won())
+    won = len(primary_deals)
 
     proc = [line.timing()["procurement"] for line in active if line.timing()["procurement"] is not None]
     sales = [line.timing()["sales"] for line in active if line.timing()["sales"] is not None]
@@ -792,6 +946,8 @@ def compute_funnel(lines: list[RequestLine]) -> dict[str, Any]:
         "sent": sent,
         "interest": interest,
         "won": won,
+        "won_raw": len(won_deals),
+        "won_renegotiations": sum(deal["renegotiation_count"] for deal in won_deals),
         "found_pct": step_pct(found),
         "sent_pct": step_pct(sent),
         "interest_pct": step_pct(interest),
@@ -806,22 +962,18 @@ def compute_funnel(lines: list[RequestLine]) -> dict[str, Any]:
 
 
 def load_won_money_reconciliation(lines: list[RequestLine], path: Path) -> dict[str, Any]:
-    won_lines = [line for line in lines if line.won() and not line.is_trouble_search()]
-    won_invoices: set[str] = set()
-    for line in won_lines:
-        for offer in line.offers:
-            invoice = normalize_invoice(offer.invoice)
-            if invoice:
-                won_invoices.add(invoice)
+    won_lines = [line for line in lines if line.won()]
+    won_deals = build_won_deals(won_lines)
+    primary_deals = won_deals
+    won_invoices = collect_won_invoices(won_lines)
 
-    tuz_offered = sum(line.order_value() or 0 for line in won_lines)
+    tuz_offered_raw = sum(line.order_value() or 0 for line in won_lines)
+    tuz_offered = sum(deal["tuz_offered"] for deal in won_deals)
     tuz_offered_matched = 0.0
     tuz_offered_no_taz = 0.0
-    for line in won_lines:
-        value = line.order_value() or 0
-        invs = {normalize_invoice(o.invoice) for o in line.offers if o.invoice}
-        invs.discard(None)
-        if invs & won_invoices:
+    for deal in won_deals:
+        value = deal["tuz_offered"]
+        if set(deal["invoices"]) & won_invoices:
             tuz_offered_matched += value
         else:
             tuz_offered_no_taz += value
@@ -864,6 +1016,8 @@ def load_won_money_reconciliation(lines: list[RequestLine], path: Path) -> dict[
 
     return {
         "tuz_won_count": len(won_lines),
+        "tuz_deal_count": len(won_deals),
+        "tuz_won_offered_raw": tuz_offered_raw,
         "tuz_won_offered": tuz_offered,
         "tuz_won_offered_matched": tuz_offered_matched,
         "tuz_won_offered_no_taz": tuz_offered_no_taz,
@@ -872,6 +1026,8 @@ def load_won_money_reconciliation(lines: list[RequestLine], path: Path) -> dict[
         "taz_won_cancelled": taz_cancelled,
         "cancelled_invoices": cancelled_invoices,
         "won_invoice_count": len(won_invoices),
+        "won_deals": won_deals,
+        "renegotiation_deals": [deal for deal in won_deals if deal["renegotiation_count"] > 0],
     }
 
 
@@ -968,6 +1124,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "won_money": won_money,
         "reconciliation": reconciliation,
         "taz_orders": taz_orders,
+        "won_deals": reconciliation.get("won_deals") if reconciliation else [],
     }
 
 
@@ -1041,7 +1198,7 @@ def render_funnel_section(data: dict[str, Any]) -> str:
     return f"""
   <div class="panel funnel-panel">
     <h2>Воронка конверсии</h2>
-    <p class="lead-sm">Без повторных поисков (Trouble). «Найдено» — есть Supplier Price; «Отправлено» — дата в AC; «Интерес» — статус «5. Есть интерес» или заказ; «Заказ» — «7. Клиент согласовал» или invoice.</p>
+    <p class="lead-sm">Без повторных поисков (Trouble). «Заказов получено» — уникальные сделки (пересогласования Trouble не дублируют). «Найдено» — Supplier Price; «Отправлено» — дата в AC; «Интерес» — «5. Есть интерес» или заказ.</p>
     <div class="funnel">{''.join(parts)}</div>
   </div>
 """
@@ -1111,29 +1268,40 @@ def render_money_section(data: dict[str, Any]) -> str:
     </details>
 """
 
+    reneg = wm.get("renegotiation_deals") or []
+    reneg_note = ""
+    if reneg:
+        reneg_note = (
+            f" В ТУЗ {wm['tuz_won_count']} зелёных строк, но {wm['tuz_deal_count']} уникальных сделок "
+            f"({len(reneg)} с пересогласованием Trouble)."
+        )
+
     verdict = ""
     if gap_total > 0 and cancelled > 0:
         verdict = (
-            f"ТУЗ Offered×Qty по выигранным RFQ ({fmt_money(tuz)}) выше ТАЗ net по тем же invoice "
-            f"({fmt_money(taz_net)}). Отмены/Refund на этих счетах — {fmt_money(cancelled)}: "
-            f"это часть расхождения, но не главная причина. Основной зазор — разница Offered×Qty и продажной AH "
-            f"({fmt_money(gap_matched)} на invoice с ТАЗ) плюс {fmt_money(no_taz)} по заказам без invoice в ТУЗ."
+            f"ТУЗ Offered×Qty по сделкам ({fmt_money(tuz)}, без двойного счёта Trouble){reneg_note} "
+            f"vs ТАЗ net по invoice ({fmt_money(taz_net)}). Отмены/Refund — {fmt_money(cancelled)}. "
+            f"Основной зазор Offered×Qty vs AH: {fmt_money(gap_matched)}."
         )
     elif gap_total > 0:
         verdict = (
-            f"ТУЗ ({fmt_money(tuz)}) выше ТАЗ net ({fmt_money(taz_net)}) на выигранных invoice. "
-            f"Отмен на этих счетах нет; смотрите Offered×Qty vs AH и строки без invoice."
+            f"ТУЗ по сделкам ({fmt_money(tuz)}){reneg_note} vs ТАЗ net ({fmt_money(taz_net)})."
         )
     else:
-        verdict = f"Суммы по выигранным invoice сходятся: ТУЗ {fmt_money(tuz)}, ТАЗ net {fmt_money(taz_net)}."
+        verdict = f"Суммы по invoice сходятся: ТУЗ {fmt_money(tuz)}, ТАЗ net {fmt_money(taz_net)}.{reneg_note}"
 
     taz_all = overall.get("orders_total")
     taz_all_note = ""
     if taz_all:
         taz_all_note = (
             f"<p class='lead-sm'>Общий ТАЗ 2026 (все заказы, без Cancel/Refund) — <b>{fmt_money(taz_all)}</b>. "
-            f"Это шире, чем выигранные RFQ в ТУЗ ({wm['tuz_won_count']} строк, {fmt_money(tuz)}).</p>"
+            f"Это шире, чем {wm['tuz_deal_count']} уникальных сделок в ТУЗ ({fmt_money(tuz)}).</p>"
         )
+
+    raw = wm.get("tuz_won_offered_raw")
+    raw_note = ""
+    if raw and raw != tuz:
+        raw_note = f"<div class='money-h'>в ТУЗ {wm['tuz_won_count']} зелёных строк · raw {fmt_money(raw)}</div>"
 
     return f"""
   <div class="panel money-panel">
@@ -1142,9 +1310,10 @@ def render_money_section(data: dict[str, Any]) -> str:
     <p class="lead-sm">{verdict}</p>
     <div class="money-grid">
       <div class="money-card accent">
-        <div class="money-k">ТУЗ выигранные</div>
+        <div class="money-k">ТУЗ сделки</div>
         <div class="money-v">{fmt_money(tuz)}</div>
-        <div class="money-h">{wm['tuz_won_count']} RFQ · Offered × Qty</div>
+        <div class="money-h">{wm['tuz_deal_count']} сделок · Offered × Qty</div>
+        {raw_note}
       </div>
       <div class="money-card">
         <div class="money-k">ТАЗ net (те же invoice)</div>
@@ -1167,6 +1336,99 @@ def render_money_section(data: dict[str, Any]) -> str:
 """
 
 
+def render_taz_rows_table(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return ""
+    body = []
+    for row in rows:
+        body.append(
+            "<tr>"
+            f"<td>{html.escape(str(row['invoice']))}</td>"
+            f"<td><b>{html.escape(str(row['pn']))}</b></td>"
+            f"<td>{html.escape(str(row['description']))}</td>"
+            f"<td>{fmt_money(row['amount'])}</td>"
+            f"<td>{html.escape(str(row['status']))}</td>"
+            f"<td>{html.escape(str(row['delivery']))}</td>"
+            f"<td class='note-cell'>{html.escape(str(row['comment']))}</td>"
+            "</tr>"
+        )
+    return (
+        "<div class='table-wrap'><table>"
+        "<thead><tr><th>Invoice</th><th>P/N</th><th>Description</th><th>ТАЗ $</th>"
+        "<th>Status</th><th>Тип поставки</th><th>Комментарий</th></tr></thead>"
+        f"<tbody>{''.join(body)}</tbody></table></div>"
+    )
+
+
+def render_warranty_section(data: dict[str, Any]) -> str:
+    recon = data.get("reconciliation")
+    if not recon:
+        return ""
+    rows = recon.get("taz_rotable_rows", {}).get("warranty", [])
+    if not rows:
+        return ""
+    total = sum(row["amount"] for row in rows)
+    return f"""
+  <div class="panel warranty-panel">
+    <h2>Гарантийные поставки (TAZ ROTABLE 2026)</h2>
+    <p class="lead-sm">Замена юнита клиенту вместо ранее поставленного, который не приняли. В ТУЗ это не новый RFQ — отдельный блок, не «открытые заказы».</p>
+    <div class="mini-grid" style="margin-bottom:14px">
+      <div class="mini warn"><div class="k">Строк</div><div class="v">{len(rows)}</div></div>
+      <div class="mini"><div class="k">Сумма</div><div class="v">{fmt_money(total)}</div></div>
+    </div>
+    {render_taz_rows_table(rows)}
+  </div>
+"""
+
+
+def render_renegotiations_section(data: dict[str, Any]) -> str:
+    wm = data.get("won_money") or {}
+    deals = wm.get("renegotiation_deals") or []
+    if not deals:
+        return ""
+
+    cards = []
+    for deal in deals:
+        members = []
+        for line in deal["lines"]:
+            tag = " <span class='tag trouble'>Trouble</span>" if line.is_trouble_search() else ""
+            invs = ", ".join(deal["invoices"]) if deal["invoices"] else "—"
+            members.append(
+                "<tr>"
+                f"<td>{html.escape(line.request_no)}{tag}</td>"
+                f"<td>{html.escape(line.primary_status())}</td>"
+                f"<td>{fmt_money(line.order_value())}</td>"
+                f"<td>{html.escape(', '.join(sorted(line_invoices(line))) or '—')}</td>"
+                "</tr>"
+            )
+        cards.append(
+            f"""
+            <details class="bucket">
+              <summary>
+                <span class="bucket-title">{html.escape(deal['pn'])}</span>
+                <span class="bucket-meta">{len(deal['lines'])} строк ТУЗ · invoice {html.escape(', '.join(deal['invoices']) or '—')} · итог {fmt_money(deal['tuz_offered'])}</span>
+              </summary>
+              <div class="bucket-body">
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Request №</th><th>Статус</th><th>Offered×Qty</th><th>Invoice</th></tr></thead>
+                    <tbody>{''.join(members)}</tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+            """
+        )
+
+    return f"""
+  <div class="panel">
+    <h2>Пересогласования (Trouble → новый «выигрыш»)</h2>
+    <p class="lead-sm">В ТУЗ виден процесс: несколько зелёных строк на одну сделку. В ТАЗ — один итоговый заказ. Здесь сгруппировано {len(deals)} сделок с повторным согласованием; в метриках считается одна сделка.</p>
+    {''.join(cards)}
+  </div>
+"""
+
+
 def render_reconciliation_section(data: dict[str, Any]) -> str:
     overall = data["overall"]
     recon = data.get("reconciliation")
@@ -1178,14 +1440,19 @@ def render_reconciliation_section(data: dict[str, Any]) -> str:
     rotable_net = recon["taz_rotable_net"] or 1
     labels = {
         "tuz_won_invoice": "ТУЗ выигран + invoice совпал с ТАЗ",
+        "warranty": "Гарантийная поставка (замена юнита)",
+        "tuz_prior_year": "Квота в ТУЗ 2025 — в 2026 нет выигрыша",
         "tuz_won_pn_no_invoice": "ТУЗ выигран, invoice в ТУЗ пустой",
         "tuz_open_or_lost": "P/N есть в ТУЗ, но заказ ещё не «согласовал»",
         "not_in_tuz": "P/N нет в ТУЗ (другой канал / старый заказ)",
     }
+    detail_keys = {"warranty", "tuz_prior_year", "tuz_open_or_lost", "tuz_won_pn_no_invoice"}
     rows = []
+    detail_blocks = []
+    bucket_rows = recon.get("taz_rotable_rows", {})
     for key, label in labels.items():
         amount = buckets.get(key, 0)
-        if not amount:
+        if not amount and not counts.get(key):
             continue
         rows.append(
             "<tr>"
@@ -1195,6 +1462,15 @@ def render_reconciliation_section(data: dict[str, Any]) -> str:
             f"<td>{amount / rotable_net * 100:.0f}%</td>"
             "</tr>"
         )
+        if key in detail_keys and bucket_rows.get(key):
+            detail_blocks.append(
+                f"""
+                <details class="bucket">
+                  <summary><span class="bucket-title">{html.escape(label)} ({counts.get(key, 0)})</span></summary>
+                  <div class="bucket-body">{render_taz_rows_table(bucket_rows[key])}</div>
+                </details>
+                """
+            )
 
     cancelled = overall.get("orders_cancelled") or 0
     refund = overall.get("orders_refund") or 0
@@ -1203,12 +1479,12 @@ def render_reconciliation_section(data: dict[str, Any]) -> str:
     return f"""
   <div class="panel">
     <h2>Сверка ТАЗ ↔ ТУЗ (2026)</h2>
-    <p class="lead-sm">Разница <b>{fmt_money(overall['orders_total'])}</b> (ТАЗ) и <b>{fmt_money(overall['tuz_orders_total'])}</b> (ТУЗ Offered×Qty) — <u>не</u> «$4 млн мимо ТУЗ». Это разные срезы: ТАЗ = все заказы, взятые в работу в 2026; ТУЗ = только {recon['tuz_won_count']} выигранных RFQ-строк на групповых листах.</p>
+    <p class="lead-sm">Разница <b>{fmt_money(overall['orders_total'])}</b> (ТАЗ) и <b>{fmt_money(overall['tuz_orders_total'])}</b> (ТУЗ сделки) — разные срезы. ТАЗ = все заказы 2026; ТУЗ = {recon.get('tuz_deal_count', recon['tuz_won_count'])} уникальных сделок ({recon['tuz_won_count']} зелёных строк). Invoice 761574B/4232 учтён вручную (16042615005).</p>
     <div class="mini-grid" style="margin-bottom:14px">
       <div class="mini accent"><div class="k">ТАЗ 2026 (без Cancel/Refund)</div><div class="v">{fmt_money(overall['orders_total'])}</div><div class="sub">{overall.get('taz_invoices_2026')} счетов · {overall.get('taz_lines_2026')} строк</div></div>
       <div class="mini"><div class="k">из них ROTABLE</div><div class="v">{fmt_money(overall.get('orders_rotable'))}</div><div class="sub">EXPENDABLE {fmt_money(overall.get('orders_expendable'))}</div></div>
       <div class="mini warn"><div class="k">Исключено Cancel + Refund</div><div class="v">{fmt_money(cancelled + refund)}</div><div class="sub">было валово {fmt_money(gross)}</div></div>
-      <div class="mini"><div class="k">ТУЗ выигранные</div><div class="v">{fmt_money(recon['tuz_won_offered'])}</div><div class="sub">Offered × Qty · {recon['tuz_won_count']} RFQ</div></div>
+      <div class="mini"><div class="k">ТУЗ сделки</div><div class="v">{fmt_money(recon.get('tuz_won_offered_deals', recon['tuz_won_offered']))}</div><div class="sub">{recon.get('tuz_deal_count', recon['tuz_won_count'])} сделок · {recon['tuz_won_count']} строк</div></div>
       <div class="mini"><div class="k">ТУЗ → ТАЗ по invoice</div><div class="v">{fmt_money(recon['tuz_taz_2026'])}</div><div class="sub">продажная AH, work date 2026</div></div>
     </div>
     <div class="table-wrap">
@@ -1222,6 +1498,7 @@ def render_reconciliation_section(data: dict[str, Any]) -> str:
         </tfoot>
       </table>
     </div>
+    {''.join(detail_blocks)}
   </div>
 """
 
@@ -1389,12 +1666,17 @@ tr:hover td {{ background:#fafcfd; }}
     <div class="note">
       <b>Найдено на рынке</b> — есть <b>Supplier Price per unit</b> на строке, которая не Backup и не «не нашли». Root Price <u>не считается</u> рыночным оффером.<br/>
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
-      <b>Деньги</b> — ТУЗ: Offered×Qty по выигранным RFQ; ТАЗ: продажная AH по invoice, work date 2026, без 5 CANCELLED и 7 REFUND. Полный ТАЗ шире (все заказы 2026), чем выигранные строки ТУЗ.<br/>
+      <b>Деньги</b> — ТУЗ: Offered×Qty по уникальным сделкам (пересогласования Trouble не дублируются); ТАЗ: AH по invoice. Гарантийные поставки — отдельный блок.<br/>
+      <b>Invoice вручную</b> — 4232 / 761574B → 16042615005 (забыли внести в ТУЗ).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
 
   {render_reconciliation_section(data)}
+
+  {render_warranty_section(data)}
+
+  {render_renegotiations_section(data)}
 
   <div class="panel">
     <h2>Категории по продажной стоимости</h2>
