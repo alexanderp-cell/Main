@@ -1222,6 +1222,118 @@ def supplier_mix(group: list[RequestLine], top_n: int = 6) -> list[dict[str, Any
     return rows
 
 
+def short_supplier_label(name: str) -> str:
+    text = name.strip()
+    low = text.lower().replace(" ", "")
+    if low in {"ktmnt", "kt"}:
+        return "KT"
+    if low == "lh":
+        return "LH"
+    if low == "jt":
+        return "JT"
+    return text[:10]
+
+
+def top_suppliers_chip(mix: list[dict[str, Any]], top_n: int = 3) -> str:
+    items = [item for item in mix if item["name"] not in {"—", "прочие"}][:top_n]
+    if not items:
+        return "—"
+    return " · ".join(
+        f"{short_supplier_label(item['name'])} {item['pct']:.0f}%" for item in items
+    )
+
+
+def build_category_focus(group: list[RequestLine], limit: int = 10) -> list[dict[str, Any]]:
+    """Pick up to N P/Ns: growth opportunities vs low-value effort."""
+    by_pn: dict[str, list[RequestLine]] = defaultdict(list)
+    for line in group:
+        by_pn[line.pn].append(line)
+
+    candidates: list[dict[str, Any]] = []
+    for pn, rows in by_pn.items():
+        n = len(rows)
+        won = sum(1 for line in rows if line.won())
+        sent = sum(1 for line in rows if any(offer.sent_dt for offer in line.offers))
+        interest = sum(
+            1
+            for line in rows
+            if line.won() or any((offer.status or "").startswith("5.") for offer in line.offers)
+        )
+        quotes = sum(len(line.quote_rows()) for line in rows)
+        avg_q = quotes / n if n else 0
+        desc = next((line.description for line in rows if line.description), "—")
+        sample = max(rows, key=lambda line: (line.won(), line.sale_value() or 0, len(line.quote_rows())))
+
+        kind = None
+        note = None
+        score = 0.0
+        if n >= 2 and won >= 1:
+            kind = "growth"
+            note = (
+                f"Запрашивали {n}×, уже был заказ ({won}). "
+                f"Имеет смысл усилить проработку рынка — выше шанс повторных побед."
+            )
+            score = n * 10 + won * 25 + interest * 5
+        elif n >= 3 and interest >= 1 and won == 0:
+            kind = "growth"
+            note = (
+                f"Запрашивали {n}×, был интерес, заказа нет. "
+                f"Точка роста: дожать альтернативы / коммерцию."
+            )
+            score = n * 9 + interest * 18 + avg_q
+        elif n >= 4 and won == 0 and sent >= 3:
+            kind = "skip"
+            note = (
+                f"Запрашивали {n}×, офферы уходили клиенту, покупок 0. "
+                f"Похоже, не покупают — не раздувать глубину проценки."
+            )
+            score = n * 12 + quotes * 0.3
+        elif n >= 3 and won == 0 and avg_q >= 5:
+            kind = "skip"
+            note = (
+                f"Запрашивали {n}×, в среднем {avg_q:.0f} квот на запрос, заказов нет. "
+                f"Сократить усилия закупщиков на этот P/N."
+            )
+            score = n * 8 + avg_q * 4
+
+        if not kind:
+            continue
+        candidates.append(
+            {
+                "kind": kind,
+                "pn": pn,
+                "description": desc,
+                "requests": n,
+                "won": won,
+                "sent": sent,
+                "quotes": quotes,
+                "avg_quotes": avg_q,
+                "sale": sample.sale_value(),
+                "note": note,
+                "score": score,
+                "request_no": sample.request_no,
+            }
+        )
+
+    growth = sorted((c for c in candidates if c["kind"] == "growth"), key=lambda c: -c["score"])
+    skip = sorted((c for c in candidates if c["kind"] == "skip"), key=lambda c: -c["score"])
+    picked: list[dict[str, Any]] = []
+    for pool, take in ((growth, 5), (skip, 5)):
+        for item in pool[:take]:
+            if len(picked) >= limit:
+                break
+            picked.append(item)
+    if len(picked) < limit:
+        rest = sorted(candidates, key=lambda c: -c["score"])
+        for item in rest:
+            if item in picked:
+                continue
+            picked.append(item)
+            if len(picked) >= limit:
+                break
+    return picked
+
+
 def bucket_money_from_taz(
     group: list[RequestLine], invoice_money: dict[str, dict[str, float]]
 ) -> dict[str, float]:
@@ -1306,6 +1418,9 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "avg_quotes": (quotes_total / len(group)) if group else 0,
             "avg_offers": statistics.mean([c for c in quote_counts if c]) if any(quote_counts) else 0,
             "supplier_mix": mix,
+            "suppliers_chip": top_suppliers_chip(mix),
+            "focus": build_category_focus(group),
+            "won_lines": [line for line in group if line.won()],
             "median_markup": median(markups),
             "median_proc": median(proc),
             "median_sales": median(sales),
@@ -1771,11 +1886,71 @@ def render_supplier_mix(mix: list[dict[str, Any]]) -> str:
     )
 
 
+def render_category_focus(items: list[dict[str, Any]]) -> str:
+    if not items:
+        return "<p class='muted'>Недостаточно повторяющихся P/N для выводов в этом сегменте.</p>"
+    rows = []
+    for item in items:
+        kind_label = "Точка роста" if item["kind"] == "growth" else "Не усиливать"
+        kind_class = "growth" if item["kind"] == "growth" else "skip"
+        rows.append(
+            "<tr>"
+            f"<td><span class='tag {kind_class}'>{kind_label}</span></td>"
+            f"<td><b>{html.escape(item['pn'])}</b>"
+            f"<div class='muted'>{html.escape(item.get('description') or '—')}</div></td>"
+            f"<td>{item['requests']}</td>"
+            f"<td>{item['won']}</td>"
+            f"<td>{item.get('avg_quotes', 0):.1f}</td>"
+            f"<td>{fmt_money(item.get('sale'))}</td>"
+            f"<td class='note-cell'>{html.escape(item['note'])}</td>"
+            "</tr>"
+        )
+    return (
+        "<div class='table-wrap'>"
+        "<table><thead><tr>"
+        "<th>Вывод</th><th>P/N</th><th>Запросов</th><th>Заказов</th>"
+        "<th>Квот/запрос</th><th>Sale $</th><th>Пояснение</th>"
+        "</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+    )
+
+
+def render_won_orders_table(lines: list[RequestLine]) -> str:
+    if not lines:
+        return "<p class='muted'>В этом сегменте заказов пока нет.</p>"
+    rows = []
+    for line in sorted(lines, key=lambda item: item.order_value() or 0, reverse=True)[:30]:
+        timing = line.timing()
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(line.request_no)}</td>"
+            f"<td><b>{html.escape(line.pn)}</b></td>"
+            f"<td>{html.escape(line.description or '—')}</td>"
+            f"<td>{fmt_money(line.sale_value())}</td>"
+            f"<td>{fmt_money(line.order_value())}</td>"
+            f"<td>{fmt_pct(line.markup_pct())}</td>"
+            f"<td>{fmt_hours(timing['procurement'])}</td>"
+            f"<td>{fmt_hours(timing['total'])}</td>"
+            "</tr>"
+        )
+    return (
+        "<div class='table-wrap'><table>"
+        "<thead><tr>"
+        "<th>Request №</th><th>P/N</th><th>Description</th><th>Sale $</th>"
+        "<th>Offered×Qty</th><th>Наценка</th><th>B→O</th><th>B→AC</th>"
+        "</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+    )
+
+
 def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) -> str:
     mix_html = render_supplier_mix(bucket.get("supplier_mix") or [])
     revenue = bucket.get("revenue") or 0
     margin = bucket.get("margin") or 0
     share = bucket.get("revenue_share") or 0
+    suppliers = html.escape(bucket.get("suppliers_chip") or "—")
+    focus_html = render_category_focus(bucket.get("focus") or [])
+    won_html = render_won_orders_table(bucket.get("won_lines") or [])
     return f"""
             <details class="bucket" {'open' if open_first else ''}>
               <summary>
@@ -1786,7 +1961,7 @@ def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) 
                     <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">{bucket['won']}</span></div>
                     <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">{fmt_money(revenue)}</span></div>
                     <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">{fmt_money(margin)} <small>{bucket.get('margin_pct', 0):.0f}%</small></span></div>
-                    <div class="bk"><span class="bk-k">Доля выручки</span><span class="bk-v">{share:.0f}%</span></div>
+                    <div class="bk"><span class="bk-k">Поставщики</span><span class="bk-v bk-sup">{suppliers}</span></div>
                     <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">{bucket.get('avg_quotes', 0):.1f}</span></div>
                     <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">{fmt_hours(bucket['median_total'])}</span></div>
                   </div>
@@ -1796,31 +1971,26 @@ def render_bucket_section(label: str, bucket: dict[str, Any], open_first: bool) 
                 <div class="mini-grid bucket-summary">
                   <div class="mini"><div class="k">Отправлено клиенту</div><div class="v">{bucket['sent']}</div></div>
                   <div class="mini"><div class="k">Всего квот (T)</div><div class="v">{bucket.get('quotes_total', 0)}</div></div>
-                  <div class="mini"><div class="k">Ср. квот на запрос</div><div class="v">{bucket.get('avg_quotes', 0):.1f}</div></div>
+                  <div class="mini"><div class="k">Доля выручки</div><div class="v">{share:.0f}%</div></div>
                   <div class="mini accent"><div class="k">Выручка ТАЗ</div><div class="v">{fmt_money(revenue)}</div><div class="sub">{bucket.get('matched_invoices', 0)} invoice</div></div>
                   <div class="mini accent"><div class="k">Маржа ТАЗ</div><div class="v">{fmt_money(margin)} <span class="sub">({bucket.get('margin_pct', 0):.0f}%)</span></div></div>
-                  <div class="mini"><div class="k">Offered×Qty (ТУЗ)</div><div class="v">{fmt_money(bucket['tuz_orders_total'])}</div></div>
+                  <div class="mini"><div class="k">Поставщики (топ-3)</div><div class="v" style="font-size:.95rem">{suppliers}</div></div>
                   <div class="mini"><div class="k">B→O / O→AC / B→AC</div><div class="v">{fmt_hours(bucket['median_proc'])} / {fmt_hours(bucket['median_sales'])} / {fmt_hours(bucket['median_total'])}</div></div>
                   <div class="mini"><div class="k">В проценке</div><div class="v">{bucket['in_procurement']}</div></div>
                 </div>
                 <div class="supplier-block">
                   <h3>Квоты по Supplier (T)</h3>
-                  <p class="lead-sm">Сколько рыночных квот (включая Backup) пришло через какого западного поставщика/канал (колонка T). Root (R) — конечный источник.</p>
+                  <p class="lead-sm">Рыночные квоты включая Backup. Root (R) — конечный источник, T — западный канал.</p>
                   {mix_html}
                 </div>
-                <div class="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Request №</th><th>P/N</th><th>Description</th><th>Qty</th><th>Статус</th>
-                        <th>Квот</th><th>Offered/ea</th><th>Sale $</th><th>Наценка</th>
-                        <th>B→O</th><th>O→AC</th><th>B→AC</th><th>Заказ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {render_table_rows(bucket['lines'])}
-                    </tbody>
-                  </table>
+                <div class="focus-block">
+                  <h3>Заказы в сегменте</h3>
+                  {won_html}
+                </div>
+                <div class="focus-block">
+                  <h3>Фокус: усилить или не тратить ресурс (до 10 P/N)</h3>
+                  <p class="lead-sm">Не весь список запросов — только повторяющиеся P/N с сигналом: либо точка роста конверсии, либо лишняя нагрузка на проценку.</p>
+                  {focus_html}
                 </div>
               </div>
             </details>
@@ -1925,11 +2095,12 @@ details.bucket[open] > summary {{ border-bottom:1px solid var(--line); }}
 .bk.warn {{ background:linear-gradient(135deg,#fde8e8,#fff); }}
 .bk-k {{ display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }}
 .bk-v {{ display:block; margin-top:6px; font-size:1.2rem; font-weight:800; color:var(--ink); line-height:1.15; }}
+.bk-v.bk-sup {{ font-size:.92rem; font-weight:700; letter-spacing:-.01em; }}
 .bk-v small {{ font-size:.78rem; color:var(--muted); font-weight:700; }}
 .bucket-meta {{ color:var(--muted); font-size:.86rem; }}
 .bucket-body {{ padding:16px 18px 22px; }}
-.supplier-block {{ margin:8px 0 18px; }}
-.supplier-block h3 {{ margin:0 0 6px; font-size:1rem; color:var(--teal-deep); }}
+.supplier-block, .focus-block {{ margin:8px 0 18px; }}
+.supplier-block h3, .focus-block h3 {{ margin:0 0 6px; font-size:1rem; color:var(--teal-deep); }}
 .supplier-mix {{ max-width:520px; }}
 .mini-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }}
 @media(max-width:860px){{ .mini-grid {{ grid-template-columns:repeat(2,1fr); }} }}
@@ -1950,6 +2121,8 @@ tr:hover td {{ background:#fafcfd; }}
 .tag.hold {{ background:#e8f0fe; color:#1e4a8a; }}
 .tag.trouble {{ background:#fde8e8; color:#9b1c1c; }}
 .tag.critical {{ background:#ffe4e0; color:#9b1c1c; }}
+.tag.growth {{ background:#dcfce7; color:#166534; }}
+.tag.skip {{ background:#f3f4f6; color:#4b5563; }}
 </style>
 </head>
 <body>
@@ -1973,7 +2146,7 @@ tr:hover td {{ background:#fafcfd; }}
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется.<br/>
       <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
-      <b>Категории</b> — по Offered×Qty запроса. В резюме: выручка/маржа ТАЗ по выигранным invoice, ср. квот на запрос (включая Backup), доля Supplier (T).<br/>
+      <b>Категории</b> — по Offered×Qty. В шапке: выручка/маржа ТАЗ, топ-3 Supplier (T), квот/запрос. Внутри — заказы и до 10 P/N с выводом «усилить» или «не тратить ресурс».<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
