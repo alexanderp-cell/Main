@@ -80,6 +80,7 @@ details.bucket[open] > summary { border-bottom:1px solid var(--line); }
 @media(max-width:560px){ .bucket-kpis { grid-template-columns:repeat(2,1fr); } }
 .bk { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; min-height:74px; }
 .bk.accent { background:linear-gradient(135deg,#d7efed,#fff); }
+.bk.warn { background:linear-gradient(135deg,#fde8e8,#fff); }
 .bk-k { display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }
 .bk-v { display:block; margin-top:6px; font-size:1.2rem; font-weight:800; color:var(--ink); line-height:1.15; }
 .bk-v small { font-size:.78rem; color:var(--muted); font-weight:700; }
@@ -107,14 +108,13 @@ tr:hover td { background:#fafcfd; }
 .tag.hold { background:#e8f0fe; color:#1e4a8a; }
 .tag.trouble { background:#fde8e8; color:#9b1c1c; }
 .tag.critical { background:#ffe4e0; color:#9b1c1c; }
-.critical-panel .money-card.warn { background:linear-gradient(135deg,#fde8e8,#fff); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>UTair — оценка работы по ТУЗ</h1>
   <p class="lead">Анализ проработки запросов Ютэйр по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × Qty).</p>
-  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 16:03 · Questions v2 не включён</div>
+  <div class="meta">Источник: TUZ_ТУЗ полный файл 01.09.2026.xlsx · сформировано 02.09.2026 16:19 · Questions v2 не включён</div>
 
   
   <div class="panel funnel-panel">
@@ -223,54 +223,36 @@ tr:hover td { background:#fafcfd; }
 
 
   
-  <div class="panel critical-panel">
-    <h2>Critical / AOG</h2>
-    <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — зона, где скорость и конверсия особенно важны.</p>
-    <div class="money-grid money-grid-6">
-      <div class="money-card warn">
-        <div class="money-k">Запросов Critical/AOG</div>
-        <div class="money-v">401</div>
-        <div class="money-h">9% от всех · Critical 292 · AOG 109</div>
+  <details class="bucket critical-panel">
+    <summary>
+      <div class="bucket-head">
+        <div class="bucket-title">Critical / AOG</div>
+        <div class="bucket-kpis">
+          <div class="bk warn"><span class="bk-k">Запросов</span><span class="bk-v">401</span></div>
+          <div class="bk"><span class="bk-k">Critical / AOG</span><span class="bk-v">292 / 109</span></div>
+          <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">4 <small>1.0%</small></span></div>
+          <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">$67,610</span></div>
+          <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">$24,012 <small>36%</small></span></div>
+          <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">1.1 д</span></div>
+          <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">2.3</span></div>
+        </div>
       </div>
-      <div class="money-card">
-        <div class="money-k">Найдено / отправлено</div>
-        <div class="money-v">274 / 261</div>
-        <div class="money-h">найдено 68%</div>
+    </summary>
+    <div class="bucket-body">
+      <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — 9% всех запросов. Конверсия 1.0% vs стандарт 2.7%; B→AC 1.1 д vs стандарт 1.2 д.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
+              <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
+            </tr>
+          </thead>
+          <tbody><tr><td>0–10 тыс. $</td><td>119</td><td>2</td><td>$2,710</td><td>$1,413</td><td>1.2 д</td><td>3.6</td></tr><tr><td>11–25 тыс. $</td><td>76</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>2.6</td></tr><tr><td>26–50 тыс. $</td><td>39</td><td>1</td><td>$29,000</td><td>$10,675</td><td>1.1 д</td><td>2.8</td></tr><tr><td>51–75 тыс. $</td><td>14</td><td>1</td><td>$35,900</td><td>$11,924</td><td>1.1 д</td><td>3.7</td></tr><tr><td>76–100 тыс. $</td><td>4</td><td>0</td><td>$0</td><td>$0</td><td>1.5 д</td><td>3.0</td></tr><tr><td>101–150 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>1.7 д</td><td>4.0</td></tr><tr><td>151–200 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>2.2 д</td><td>2.5</td></tr><tr><td>200+ тыс. $</td><td>8</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>5.8</td></tr><tr><td>Без продажной оценки</td><td>137</td><td>0</td><td>$0</td><td>$0</td><td>—</td><td>0.5</td></tr></tbody>
+        </table>
       </div>
-      <div class="money-card accent">
-        <div class="money-k">Заказов</div>
-        <div class="money-v">4</div>
-        <div class="money-h">1.0% конверсия · стандарт 2.7%</div>
-      </div>
-      <div class="money-card accent">
-        <div class="money-k">Выручка ТАЗ</div>
-        <div class="money-v">$67,610</div>
-        <div class="money-h">маржа $24,012 (36%)</div>
-      </div>
-      <div class="money-card">
-        <div class="money-k">Скорость B→AC</div>
-        <div class="money-v">1.1 д</div>
-        <div class="money-h">стандарт 1.2 д · B→O 1.0 д</div>
-      </div>
-      <div class="money-card">
-        <div class="money-k">Квот / запрос</div>
-        <div class="money-v">2.3</div>
-        <div class="money-h">всего квот 931</div>
-      </div>
-    </div>
-    <div class="table-wrap" style="margin-top:14px">
-      <table>
-        <thead>
-          <tr>
-            <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
-            <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
-          </tr>
-        </thead>
-        <tbody><tr><td>0–10 тыс. $</td><td>119</td><td>2</td><td>$2,710</td><td>$1,413</td><td>1.2 д</td><td>3.6</td></tr><tr><td>11–25 тыс. $</td><td>76</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>2.6</td></tr><tr><td>26–50 тыс. $</td><td>39</td><td>1</td><td>$29,000</td><td>$10,675</td><td>1.1 д</td><td>2.8</td></tr><tr><td>51–75 тыс. $</td><td>14</td><td>1</td><td>$35,900</td><td>$11,924</td><td>1.1 д</td><td>3.7</td></tr><tr><td>76–100 тыс. $</td><td>4</td><td>0</td><td>$0</td><td>$0</td><td>1.5 д</td><td>3.0</td></tr><tr><td>101–150 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>1.7 д</td><td>4.0</td></tr><tr><td>151–200 тыс. $</td><td>2</td><td>0</td><td>$0</td><td>$0</td><td>2.2 д</td><td>2.5</td></tr><tr><td>200+ тыс. $</td><td>8</td><td>0</td><td>$0</td><td>$0</td><td>1.1 д</td><td>5.8</td></tr><tr><td>Без продажной оценки</td><td>137</td><td>0</td><td>$0</td><td>$0</td><td>—</td><td>0.5</td></tr></tbody>
-      </table>
-    </div>
-    
-    <details class="bucket" open>
+      
+    <details class="bucket">
       <summary>
         <div class="bucket-head">
           <div class="bucket-title">Заказы из Critical / AOG (4)</div>
@@ -291,7 +273,8 @@ tr:hover td { background:#fafcfd; }
       </div>
     </details>
 
-  </div>
+    </div>
+  </details>
 
 
   <div class="panel">

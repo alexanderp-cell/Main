@@ -1694,7 +1694,7 @@ def render_critical_aog_section(data: dict[str, Any]) -> str:
                 "</tr>"
             )
         won_table = f"""
-    <details class="bucket" open>
+    <details class="bucket">
       <summary>
         <div class="bucket-head">
           <div class="bucket-title">Заказы из Critical / AOG ({len(won_lines)})</div>
@@ -1718,54 +1718,37 @@ def render_critical_aog_section(data: dict[str, Any]) -> str:
 
     share = (block["count"] / (block["count"] + block["standard_count"]) * 100) if block["count"] else 0
     return f"""
-  <div class="panel critical-panel">
-    <h2>Critical / AOG</h2>
-    <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — зона, где скорость и конверсия особенно важны.</p>
-    <div class="money-grid money-grid-6">
-      <div class="money-card warn">
-        <div class="money-k">Запросов Critical/AOG</div>
-        <div class="money-v">{block['count']}</div>
-        <div class="money-h">{share:.0f}% от всех · Critical {block['critical_count']} · AOG {block['aog_count']}</div>
+  <details class="bucket critical-panel">
+    <summary>
+      <div class="bucket-head">
+        <div class="bucket-title">Critical / AOG</div>
+        <div class="bucket-kpis">
+          <div class="bk warn"><span class="bk-k">Запросов</span><span class="bk-v">{block['count']}</span></div>
+          <div class="bk"><span class="bk-k">Critical / AOG</span><span class="bk-v">{block['critical_count']} / {block['aog_count']}</span></div>
+          <div class="bk"><span class="bk-k">Заказов</span><span class="bk-v">{block['won']} <small>{block['won_pct']:.1f}%</small></span></div>
+          <div class="bk accent"><span class="bk-k">Выручка ТАЗ</span><span class="bk-v">{fmt_money(block.get('revenue'))}</span></div>
+          <div class="bk accent"><span class="bk-k">Маржа</span><span class="bk-v">{fmt_money(block.get('margin'))} <small>{block.get('margin_pct', 0):.0f}%</small></span></div>
+          <div class="bk"><span class="bk-k">B→AC</span><span class="bk-v">{fmt_hours(block.get('median_total'))}</span></div>
+          <div class="bk"><span class="bk-k">Квот / запрос</span><span class="bk-v">{block.get('avg_quotes', 0):.1f}</span></div>
+        </div>
       </div>
-      <div class="money-card">
-        <div class="money-k">Найдено / отправлено</div>
-        <div class="money-v">{block['found']} / {block['sent']}</div>
-        <div class="money-h">найдено {block['found_pct']:.0f}%</div>
+    </summary>
+    <div class="bucket-body">
+      <p class="lead-sm">Срочность из колонки D. Пусто и Expedite = стандарт. Здесь только Critical и AOG — {share:.0f}% всех запросов. Конверсия {block['won_pct']:.1f}% vs стандарт {block['standard_won_pct']:.1f}%; B→AC {fmt_hours(block.get('median_total'))} vs стандарт {fmt_hours(block.get('standard_median_total'))}.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
+              <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
+            </tr>
+          </thead>
+          <tbody>{''.join(price_rows)}</tbody>
+        </table>
       </div>
-      <div class="money-card accent">
-        <div class="money-k">Заказов</div>
-        <div class="money-v">{block['won']}</div>
-        <div class="money-h">{block['won_pct']:.1f}% конверсия · стандарт {block['standard_won_pct']:.1f}%</div>
-      </div>
-      <div class="money-card accent">
-        <div class="money-k">Выручка ТАЗ</div>
-        <div class="money-v">{fmt_money(block.get('revenue'))}</div>
-        <div class="money-h">маржа {fmt_money(block.get('margin'))} ({block.get('margin_pct', 0):.0f}%)</div>
-      </div>
-      <div class="money-card">
-        <div class="money-k">Скорость B→AC</div>
-        <div class="money-v">{fmt_hours(block.get('median_total'))}</div>
-        <div class="money-h">стандарт {fmt_hours(block.get('standard_median_total'))} · B→O {fmt_hours(block.get('median_proc'))}</div>
-      </div>
-      <div class="money-card">
-        <div class="money-k">Квот / запрос</div>
-        <div class="money-v">{block.get('avg_quotes', 0):.1f}</div>
-        <div class="money-h">всего квот {block.get('quotes_total', 0)}</div>
-      </div>
+      {won_table}
     </div>
-    <div class="table-wrap" style="margin-top:14px">
-      <table>
-        <thead>
-          <tr>
-            <th>Ценовой сегмент</th><th>Запросов</th><th>Заказов</th>
-            <th>Выручка ТАЗ</th><th>Маржа</th><th>B→AC</th><th>Квот/запрос</th>
-          </tr>
-        </thead>
-        <tbody>{''.join(price_rows)}</tbody>
-      </table>
-    </div>
-    {won_table}
-  </div>
+  </details>
 """
 
 
@@ -1939,6 +1922,7 @@ details.bucket[open] > summary {{ border-bottom:1px solid var(--line); }}
 @media(max-width:560px){{ .bucket-kpis {{ grid-template-columns:repeat(2,1fr); }} }}
 .bk {{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 12px 10px; min-height:74px; }}
 .bk.accent {{ background:linear-gradient(135deg,#d7efed,#fff); }}
+.bk.warn {{ background:linear-gradient(135deg,#fde8e8,#fff); }}
 .bk-k {{ display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; }}
 .bk-v {{ display:block; margin-top:6px; font-size:1.2rem; font-weight:800; color:var(--ink); line-height:1.15; }}
 .bk-v small {{ font-size:.78rem; color:var(--muted); font-weight:700; }}
@@ -1966,7 +1950,6 @@ tr:hover td {{ background:#fafcfd; }}
 .tag.hold {{ background:#e8f0fe; color:#1e4a8a; }}
 .tag.trouble {{ background:#fde8e8; color:#9b1c1c; }}
 .tag.critical {{ background:#ffe4e0; color:#9b1c1c; }}
-.critical-panel .money-card.warn {{ background:linear-gradient(135deg,#fde8e8,#fff); }}
 </style>
 </head>
 <body>
