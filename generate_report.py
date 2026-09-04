@@ -58,7 +58,7 @@ STATUSES_IN_WORK = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
 STATUSES_SHIPPED = {STATUS_SHIPPED, STATUS_FINISHED}
 # SHIPPED = still in work; only FINISHED counts as shipped (Aeroflot, S7 Engineering).
 CLIENTS_SHIPPED_COUNTS_AS_IN_WORK = {"Аэрофлот", "S7 Engineering"}
-CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari", "tropical_yacht", "bmw_night"}
+CUTE_THEMES = {"lavender_raf", "como_prosecco", "montecarlo_ferrari", "tropical_yacht", "bmw_night", "deep_space"}
 
 COLUMN_RENAME = {
     COL_INVOICE: "№ счета",
@@ -239,6 +239,25 @@ THEMES = {
         tab_summary="0D1B2A",
         title_font="Georgia",
     ),
+    # Deep space: black holes, galaxies, stars — Aeroflot weekly theme.
+    "deep_space": ReportTheme(
+        name="deep_space",
+        navy="070B1A",
+        blue="1A2A6B",
+        light_blue="E8ECF8",
+        green="3D6B8C",
+        light_green="EDF2F8",
+        orange="C9A227",
+        light_orange="F8F1DC",
+        zebra="F3F5FA",
+        subtotal="DDE3F2",
+        border="A8B0CC",
+        tab_total="1A2A6B",
+        tab_shipped="3D6B8C",
+        tab_in_work="C9A227",
+        tab_summary="070B1A",
+        title_font="Georgia",
+    ),
 }
 
 
@@ -267,6 +286,7 @@ def activate_theme(theme: ReportTheme) -> None:
         "montecarlo_ferrari": "5C3B2E",
         "tropical_yacht": "2E6B7A",
         "bmw_night": "4A6080",
+        "deep_space": "6B7AA8",
     }.get(theme.name, "595959")
     FONT_SUBTITLE = Font(name="Calibri", size=11, color=subtitle_color)
     FONT_SECTION = Font(name="Calibri", size=12, bold=True, color=COLOR_WHITE)
@@ -815,6 +835,8 @@ def write_weekly_summary_sheet(
         title.value = f"⛵ {sheet_title} — {client} · яхта · тропический рай · отдых на богатом"
     elif cute_comments and theme_name == "bmw_night":
         title.value = f"🚗 {sheet_title} — {client} · BMW 8 · набережная Казани · кальянная"
+    elif cute_comments and theme_name == "deep_space":
+        title.value = f"✦ {sheet_title} — {client} · космос · чёрные дыры · галактики · покорение дальних миров"
     elif cute_comments:
         title.value = f"♡ {sheet_title} — {client} · нежный отчёт ♡"
     _style_cell(title, font=FONT_TITLE, alignment=ALIGN_LEFT)
@@ -877,6 +899,19 @@ def write_weekly_summary_sheet(
             % len(epigraphs)
         ]
         subtitle.value = f"{subtitle.value}  ·  {epi}"
+    elif cute_comments and theme_name == "deep_space":
+        epigraphs = [
+            "чёрная дыра на горизонте — и неделя, которая тянет гравитацией цифр",
+            "спираль галактики, золотые звёзды и спокойный курс к дальним мирам",
+            "покорение дальнего космоса: считаем без паники, как экипаж у шлюза",
+            "туманность светится, отчёт держит орбиту, Аэрофлот в гиперпространстве",
+            "богатый тон недели: индиго, золото звёзд и лёгкий запах межзвёздной пыли",
+        ]
+        epi = epigraphs[
+            int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            % len(epigraphs)
+        ]
+        subtitle.value = f"{subtitle.value}  ·  {epi}"
     elif cute_comments:
         epigraphs = [
             "сегодняшний раф — с ноткой перрона и терпения",
@@ -925,6 +960,15 @@ def write_weekly_summary_sheet(
         elif theme_name == "bmw_night":
             mood_cards = build_bmw_mood_cards(summary, client)
             cycle = [BMW8, BMW_HOOKAH, BMW_RIVER, BMW_LIGHTS]
+            seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
+            mood_images = {
+                "Новые заказы": cycle[seed % len(cycle)],
+                "Отгруженные заказы": cycle[(seed + 1) % len(cycle)],
+                "Оплаченные клиентом": cycle[(seed + 2) % len(cycle)],
+            }
+        elif theme_name == "deep_space":
+            mood_cards = build_space_mood_cards(summary, client)
+            cycle = [SPACE_BLACKHOLE, SPACE_GALAXY, SPACE_STARS, SPACE_VOYAGE]
             seed = int(hashlib.md5(summary.week_end.isoformat().encode()).hexdigest()[:8], 16)
             mood_images = {
                 "Новые заказы": cycle[seed % len(cycle)],
@@ -1010,6 +1054,7 @@ def write_weekly_summary_sheet(
                 "como_prosecco": COMO_GLASS,
                 "tropical_yacht": YACHT_SAIL,
                 "bmw_night": BMW8,
+                "deep_space": SPACE_GALAXY,
             }.get(theme_name, LAVENDER_HEART)
             _write_mood_card(
                 ws,
@@ -1019,7 +1064,7 @@ def write_weekly_summary_sheet(
                 theme_name=theme_name,
             )
             row = max(row, section_start + 6)
-            if theme_name in {"bmw_night", "tropical_yacht"}:
+            if theme_name in {"bmw_night", "tropical_yacht", "deep_space"}:
                 row = max(row, section_start + 9)
 
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=13)
@@ -1037,6 +1082,8 @@ def write_weekly_summary_sheet(
         note.value += "  ·  справа — тост за неделю на палубе яхты в тропическом раю ⛵"
     elif cute_comments and theme_name == "bmw_night":
         note.value += "  ·  справа — тост за неделю: BMW на набережной Казани и кальянная 🚗"
+    elif cute_comments and theme_name == "deep_space":
+        note.value += "  ·  справа — тост за неделю в дальнем космосе: чёрные дыры, галактики, звёзды ✦"
     elif cute_comments:
         note.value += "  ·  комментарии справа — нежное резюме недели ♡"
     _style_cell(note, font=FONT_SUBTITLE, alignment=ALIGN_LEFT)
@@ -1443,6 +1490,12 @@ BMW_RIVER = ASSETS_DIR / "bmw-kazan-small.jpg"
 BMW_LIGHTS = ASSETS_DIR / "bmw-lights-small.jpg"
 BMW_HOOKAH = ASSETS_DIR / "bmw-hookah-small.jpg"
 BMW_PROMENADE = ASSETS_DIR / "bmw-promenade.jpg"
+SPACE_BANNER = ASSETS_DIR / "space-banner-wide.jpg"
+SPACE_BLACKHOLE = ASSETS_DIR / "space-blackhole-small.jpg"
+SPACE_GALAXY = ASSETS_DIR / "space-galaxy-small.jpg"
+SPACE_STARS = ASSETS_DIR / "space-stars-small.jpg"
+SPACE_VOYAGE = ASSETS_DIR / "space-voyage-small.jpg"
+SPACE_NEBULA = ASSETS_DIR / "space-nebula-wide.jpg"
 
 
 def _pick_variant(seed: str, options: list[tuple[str, str]]) -> tuple[str, str]:
@@ -2712,6 +2765,238 @@ def build_bmw_mood_cards(summary: WeeklySummary, client: str) -> dict[str, dict[
     return cards
 
 
+def build_space_mood_cards(summary: WeeklySummary, client: str = "Аэрофлот") -> dict[str, dict[str, str]]:
+    """Deep space: black holes, galaxies, stars — conquering distant worlds."""
+    cards: dict[str, dict[str, str]] = {}
+    week_tag = summary.week_end.strftime("%Y-%m-%d")
+    period = f"{summary.week_start.strftime('%d.%m')}–{summary.week_end.strftime('%d.%m')}"
+
+    new = summary.new_orders
+    amounts = [float(r.get("Сумма, USD") or 0) for r in new.rows]
+    max_amount = max(amounts) if amounts else 0.0
+    avg_check = (new.total / new.count) if new.count else 0.0
+    top_desc, top_amt = _top_sale_line(new.rows)
+    mix = _category_mix(new.rows)
+    money = _fmt_money(new.total)
+    max_m = _fmt_money(max_amount)
+    avg_m = _fmt_money(avg_check)
+
+    if new.count == 0:
+        options = [
+            (
+                "🌑 Тихая орбита",
+                f"За {period} новых заказов нет. Чёрная дыра молчит, "
+                "звёзды мерцают сами по себе — иногда покорение миров начинается с паузы ✦",
+            ),
+            (
+                "✨ Антракт между галактиками",
+                "Продажи в гиперпространственном штиле. Не тревожим экипаж — "
+                "ждём следующий сигнал с дальнего края ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|sales|empty", options)
+    elif max_amount >= 30000 or new.total >= 150000:
+        options = [
+            (
+                "🚀 Прыжок к дальним мирам!",
+                f"Продажи за {period}: {money} USD · {new.count} поз. "
+                f"Звезда вечера — «{top_desc}» на {max_m} USD. "
+                "Галактика аплодирует, шлюз уже открыт ✦",
+            ),
+            (
+                "💫 Джекпот у горизонта событий",
+                f"{new.count} заказов на {money} USD. Средний чек ~{avg_m}. "
+                "Это уже не разведка — это полноценное покорение дальнего космоса 🌌",
+            ),
+            (
+                "🌌 Ключ от гиперпространства",
+                f"Неделя класса deep space: {money} USD"
+                + (f", микс {mix}" if mix else "")
+                + f". «{top_desc}» сверкает, как ядро спиральной галактики ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|sales|big", options)
+    elif max_amount < 5000 and new.total < 25000:
+        options = [
+            (
+                "⭐ Лёгкая звезда",
+                f"Аккуратные {new.count} поз. на {money} USD. "
+                "В дальнем космосе уважают и скромный маяк — если он без суеты ✦",
+            ),
+            (
+                "🛰️ Орбита наполовину",
+                f"Чек скромный (~{avg_m} USD), зато живой. "
+                f"За {period} — {money} USD. Не сверхновая, а спокойный дрейф вдоль рукава ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|sales|small", options)
+    else:
+        options = [
+            (
+                "🌌 Круиз вдоль спирали",
+                f"{new.count} новых позиций на {money} USD за {period}. "
+                f"Топ — «{top_desc}» ({_fmt_money(top_amt)} USD). "
+                "Ровный курс, золотые звёзды, без лишней турбулентности ✦",
+            ),
+            (
+                "✦ Курс на дальний мир",
+                f"Продажи: {money} USD · {new.count} поз."
+                + (f" · {mix}." if mix else ".")
+                + f" Не шторм и не вакуум — уверенный полёт {client} ✨",
+            ),
+            (
+                "💙 Индиго недели",
+                f"{new.count} заказов, {money} USD, средний чек ~{avg_m}. "
+                "Именно такой тон любит космос: богатство без крика ✦",
+            ),
+            (
+                "✨ Звезда на горизонте",
+                f"За неделю {money} USD. Самый яркий блик — «{top_desc}». "
+                f"{client} держит курс к дальним мирам 🌌",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|sales|mid", options)
+    cards["Новые заказы"] = {"title": title, "body": body}
+
+    shipped = summary.shipped_orders
+    late = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("просрочка"))
+    early = sum(1 for r in shipped.rows if str(r.get("Поставка", "")).startswith("досрочно"))
+    on_time = max(shipped.count - late - early, 0)
+    late_n, late_avg, late_max = _avg_late_days(shipped.rows)
+    ship_money = _fmt_money(shipped.total)
+
+    if shipped.count == 0:
+        options = [
+            (
+                "🛸 Корабль ещё у дока",
+                "FINISHED-отгрузок за период нет. SHIPPED дрейфует как «в работе» — "
+                "по правилам миссии. Шлюз ждёт зелёного света ✦",
+            ),
+            (
+                "🌑 Тишина у чёрной дыры",
+                "Пока без finished-отгрузок. Дальний космос умеет ждать красиво — "
+                "звёзды на месте, экипаж на связи ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|ship|empty", options)
+    elif shipped.count and late / shipped.count >= 0.5:
+        options = [
+            (
+                "☄️ Гравитация задержала",
+                f"Из {shipped.count} finished-отгрузок ({ship_money} USD) "
+                f"с опозданием {late}"
+                + (f", в среднем ~{late_avg} дн." if late_avg else "")
+                + (f", рекорд {late_max} дн." if late_max else "")
+                + ". Даже у горизонта событий бывает пробка. "
+                "Главное — долететь с достоинством 🫶",
+            ),
+            (
+                "🛟 Спокойно, капитан на мостике",
+                f"{late} из {shipped.count} позже плана, на {ship_money} USD всё равно у клиента. "
+                "Не паникуем — поднимаем тост за терпение ✦",
+            ),
+            (
+                "🌊 Солнечный ветер гуляет",
+                f"График плавает, но звезда на месте: {shipped.count} поз. на {ship_money} USD. "
+                "Лучше опоздать роскошно, чем спешить дёшево ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|ship|late", options)
+    elif early > late:
+        options = [
+            (
+                "🏁 Быстрее света!",
+                f"Досрочно {early} из {shipped.count}, в срок {on_time}. "
+                "Неделя как гиперпрыжок без турбулентности: чистый кайф ✨🚀",
+            ),
+            (
+                "🚀 Ранняя посадка на новый мир",
+                f"{early} позиций раньше срока, отгружено на {ship_money} USD. "
+                "Экипаж кивает: красивая стыковка ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|ship|early", options)
+    else:
+        options = [
+            (
+                "🛰 Ровный круг по орбите",
+                f"FINISHED: {shipped.count} поз. на {ship_money} USD "
+                f"(рано {early} / вовремя {on_time} / позже {late}). "
+                "Богатый, спокойный ритм — фирменный стиль дальнего полёта ✦",
+            ),
+            (
+                "🥂 Тост за ровную логистику",
+                f"{shipped.count} отгрузок за {period} на {ship_money} USD. "
+                "Без драмы, с видом на галактику. Иногда лучший комментарий — «мир наш» ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|ship|ok", options)
+    cards["Отгруженные заказы"] = {"title": title, "body": body}
+
+    paid = summary.paid_orders
+    paid_money = _fmt_money(paid.total)
+    pay_amounts = [float(r.get("Оплачено за неделю, USD") or 0) for r in paid.rows]
+    max_pay = max(pay_amounts) if pay_amounts else 0.0
+    pay_share = (paid.total / new.total * 100) if new.total > 0 and paid.total > 0 else 0.0
+
+    if paid.count == 0 or paid.total <= 0:
+        options = [
+            (
+                "🫧 Касса в криосне",
+                "Платежей за период нет. Не грустим: даже у чёрной дыры "
+                "сначала настраивают маяк, потом считают кассу ✦",
+            ),
+            (
+                "🌑 Тишина в туманности",
+                "Пока без оплат. Смотрим на звёзды и верим, "
+                "что следующий перевод прилетит из дальнего мира ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|pay|empty", options)
+    elif paid.total >= 100000:
+        options = [
+            (
+                "💎 Касса как сверхновая!",
+                f"За {period} пришло {paid_money} USD по {paid.count} позициям "
+                f"(крупнейший ~{_fmt_money(max_pay)}). "
+                "Это тот самый свет, когда галактика уже наша ✦🌌",
+            ),
+            (
+                "🚀 Касса на попутном ветре",
+                f"{paid_money} USD — орбита полностью наша. "
+                f"{paid.count} платежей, и каждый блестит как золото звёзд. Спасибо, {client} ✨",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|pay|big", options)
+    else:
+        options = [
+            (
+                "✦ Ещё по звезде",
+                f"Оплачено {paid_money} USD ({paid.count} поз., максимум {_fmt_money(max_pay)}). "
+                "Не сверхновая — зато честный, спокойный приход. Касса довольна 💙",
+            ),
+            (
+                "💳 Мягкий приход к шлюзу",
+                f"{paid.count} платежей на {paid_money} USD за {period}."
+                + (f" Это ~{pay_share:.0f}% от новых продаж недели." if pay_share else "")
+                + " Капитан кивает: движение есть ✦",
+            ),
+            (
+                "🔑 Золотой ключ кассы",
+                f"Пришло {paid_money} USD. Самый заметный платёж: {_fmt_money(max_pay)} USD. "
+                f"Спасибо {client} — миссия сыграла красиво ✨",
+            ),
+            (
+                "💫 Позывной: оплата принята",
+                f"На частоте кассы — {paid_money} USD ({paid.count} поз.). "
+                "Связь устойчивая, корабль у туманности, звёзды холодные ✦",
+            ),
+        ]
+        title, body = _pick_variant(f"{week_tag}|space|pay|mid", options)
+    cards["Оплаченные клиентом"] = {"title": title, "body": body}
+    return cards
+
+
 def lavender_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
     options = [
         (
@@ -2776,6 +3061,13 @@ def _write_mood_card(
         title_font = Font(name="Georgia", size=12, bold=True, color="E8EEF4")
         img_size = 118
         img_col = "T"
+    elif theme_name == "deep_space":
+        title_fill = PatternFill("solid", fgColor="070B1A")
+        cream = PatternFill("solid", fgColor="F8F1DC")
+        body_font = Font(name="Calibri", size=10, color="070B1A")
+        title_font = Font(name="Georgia", size=12, bold=True, color="E8ECF8")
+        img_size = 150
+        img_col = "T"
     else:
         title_fill = PatternFill("solid", fgColor="F3EAF8")
         cream = PatternFill("solid", fgColor="FFF8F2")
@@ -2799,7 +3091,7 @@ def _write_mood_card(
         _style_cell(ws.cell(start_row, c), fill=title_fill, border=BORDER_THIN)
 
     body_row = start_row + 1
-    body_span = 6 if theme_name in {"bmw_night", "tropical_yacht"} else 4
+    body_span = 6 if theme_name in {"bmw_night", "tropical_yacht", "deep_space"} else 4
     ws.merge_cells(
         start_row=body_row,
         start_column=col_start,
@@ -2823,7 +3115,7 @@ def _write_mood_card(
         ws.row_dimensions[r].height = max(ws.row_dimensions[r].height or 15, 20)
 
     col_widths = (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 18), ("U", 4))
-    if theme_name == "tropical_yacht":
+    if theme_name in {"tropical_yacht", "deep_space"}:
         col_widths = (("O", 20), ("P", 16), ("Q", 16), ("R", 16), ("S", 14), ("T", 24), ("U", 4))
     for letter, width in col_widths:
         ws.column_dimensions[letter].width = max(ws.column_dimensions[letter].width or 0, width)
@@ -3403,6 +3695,122 @@ def decorate_bmw_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
         _add_image(wb["Отгружено"], BMW_LIGHTS, "AV1", width=80, height=80)
 
 
+def space_cover_epigraph(report_date: date, in_work: int, shipped: int) -> str:
+    options = [
+        (
+            "глубокий космос: чёрные дыры, спирали галактик и золотые звёзды — "
+            "тот же люкс, только в отчёте по заказам ✦"
+        ),
+        (
+            f"сегодня у горизонта событий — статус {report_date.strftime('%d.%m')}: "
+            f"{in_work} в работе, {shipped} finished-отгрузок. курс на дальний мир включён ✨"
+        ),
+        (
+            "не тормозим на цифрах — держим орбиту ясности, терпения и покорения дальних миров 🌌"
+        ),
+        (
+            "SHIPPED дрейфует как «в работе»; FINISHED — уже на новой планете ✦"
+        ),
+        (
+            "инструкция deep space: смотреть кассу без суеты, "
+            "хвалить команду, не гасить маяк раньше времени ✦"
+        ),
+    ]
+    digest = hashlib.md5(report_date.isoformat().encode()).hexdigest()
+    return options[int(digest[:8], 16) % len(options)]
+
+
+def write_space_cover_sheet(
+    ws,
+    client: str,
+    report_date: date,
+    summary_title: str,
+    in_work_count: int,
+    shipped_count: int,
+) -> None:
+    ws.sheet_view.showGridLines = False
+    cream = PatternFill("solid", fgColor="F8F1DC")
+    navy = PatternFill("solid", fgColor="070B1A")
+    mist = PatternFill("solid", fgColor="E8ECF8")
+    for row in range(1, 48):
+        ws.row_dimensions[row].height = 18
+        for col in range(1, 15):
+            cell = ws.cell(row, col)
+            if row < 6:
+                cell.fill = cream
+            elif row < 23:
+                cell.fill = navy
+            else:
+                cell.fill = mist
+    for col in range(1, 15):
+        ws.column_dimensions[get_column_letter(col)].width = 11
+
+    ws.merge_cells("A2:N2")
+    title = ws["A2"]
+    title.value = f"✦  {client}  ✦"
+    _style_cell(
+        title,
+        font=Font(name="Georgia", size=28, bold=True, color="E8ECF8"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+    ws.row_dimensions[2].height = 42
+
+    ws.merge_cells("A3:N3")
+    subtitle = ws["A3"]
+    subtitle.value = "космос · чёрные дыры · галактики · звёзды · покорение дальних миров"
+    _style_cell(
+        subtitle,
+        font=Font(name="Georgia", size=13, italic=True, color="C9A227"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    ws.merge_cells("A4:N4")
+    meta = ws["A4"]
+    meta.value = (
+        f"{summary_title}  ·  {report_date.strftime('%d.%m.%Y')}  ·  "
+        f"в работе {in_work_count}  ·  отгружено (FINISHED) {shipped_count}"
+    )
+    _style_cell(
+        meta,
+        font=Font(name="Calibri", size=11, color="A8B0CC"),
+        fill=navy,
+        alignment=Alignment(horizontal="center", vertical="center"),
+    )
+
+    _add_image(ws, SPACE_BANNER, "B6", width=720, height=405)
+    _add_image(ws, SPACE_BLACKHOLE, "L6", width=140, height=140)
+    _add_image(ws, SPACE_GALAXY, "L14", width=120, height=120)
+    _add_image(ws, SPACE_NEBULA, "B25", width=520, height=300)
+    _add_image(ws, SPACE_STARS, "J25", width=130, height=130)
+    _add_image(ws, SPACE_VOYAGE, "L25", width=130, height=130)
+
+    ws.merge_cells("A42:I45")
+    note = ws["A42"]
+    note.value = space_cover_epigraph(report_date, in_work_count, shipped_count)
+    _style_cell(
+        note,
+        font=Font(name="Georgia", size=11, italic=True, color="E8ECF8"),
+        fill=PatternFill("solid", fgColor="1A2A6B"),
+        alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
+    )
+    for r in (42, 43, 44, 45):
+        ws.row_dimensions[r].height = 20
+
+
+def decorate_space_sheets(wb: Workbook, summary_sheet_name: str | None) -> None:
+    if "Total" in wb.sheetnames:
+        _add_image(wb["Total"], SPACE_GALAXY, "I1", width=120, height=120)
+        _add_image(wb["Total"], SPACE_STARS, "K1", width=88, height=88)
+    if "В работе" in wb.sheetnames:
+        _add_image(wb["В работе"], SPACE_BLACKHOLE, "AT1", width=96, height=96)
+        _add_image(wb["В работе"], SPACE_VOYAGE, "AV1", width=80, height=80)
+    if "Отгружено" in wb.sheetnames:
+        _add_image(wb["Отгружено"], SPACE_GALAXY, "AT1", width=96, height=96)
+        _add_image(wb["Отгружено"], SPACE_STARS, "AV1", width=80, height=80)
+
+
 def generate_report(
     input_path: Path,
     output_path: Path,
@@ -3505,6 +3913,19 @@ def generate_report(
             len(shipped_df),
         )
         total_ws = wb.create_sheet("Total", 1)
+    elif theme.name == "deep_space":
+        cover = wb.active
+        cover.title = "Обложка ✦"
+        cover.sheet_properties.tabColor = "1A2A6B"
+        write_space_cover_sheet(
+            cover,
+            display_client,
+            report_date,
+            summary_title,
+            len(in_work_df),
+            len(shipped_df),
+        )
+        total_ws = wb.create_sheet("Total", 1)
     elif theme.name == "lavender_raf":
         cover = wb.active
         cover.title = "Обложка ♡"
@@ -3595,6 +4016,8 @@ def generate_report(
         decorate_yacht_sheets(wb, summary_sheet_name)
     elif theme.name == "bmw_night":
         decorate_bmw_sheets(wb, summary_sheet_name)
+    elif theme.name == "deep_space":
+        decorate_space_sheets(wb, summary_sheet_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_path)
