@@ -1312,15 +1312,93 @@ def median(values: list[float]) -> float | None:
     return statistics.median(values) if values else None
 
 
-def load_taz_invoice_money(path: Path) -> dict[str, dict[str, Any]]:
-    """Per-invoice TAZ money from ORDERS + PRESALE.
+def normalize_pn_key(value) -> str:
+    if value in (None, ""):
+        return ""
+    text = str(value).strip().upper().replace(" ", "")
+    if text.endswith(".0") and text[:-2].replace("-", "").replace(".", "").isalnum():
+        text = text[:-2]
+    return text
 
-    Multiple ORDERS lines with the same invoice (split shipments) are summed.
-    countable=True only for ORDERS in the active report period excl. Cancel/Refund/warranty.
-    """
-    by_invoice: dict[str, dict[str, Any]] = {}
+
+def normalize_desc_key(value) -> str:
+    if value in (None, ""):
+        return ""
+    text = re.sub(r"\s+", " ", str(value).strip().upper())
+    return text
+
+
+def normalize_cond_key(value) -> str:
+    if value in (None, ""):
+        return ""
+    raw = str(value).strip().upper().split()[0]
+    aliases = {
+        "NE": "NEW",
+        "FN": "NEW",
+        "NEW": "NEW",
+        "OH": "OH",
+        "OVERHAUL": "OH",
+        "SV": "SV",
+        "SERVICEABLE": "SV",
+        "RP": "RP",
+        "REPAIR": "RP",
+        "INSP": "INSP",
+        "TEST": "INSP",
+        "AR": "AR",
+        "NS": "NEW",
+    }
+    return aliases.get(raw, raw)
+
+
+def descs_compatible(a: str | None, b: str | None) -> bool:
+    na, nb = normalize_desc_key(a), normalize_desc_key(b)
+    if not na or not nb:
+        return True  # missing desc is not a hard fail
+    if na == nb:
+        return True
+    if na in nb or nb in na:
+        return True
+    ta, tb = set(na.split()), set(nb.split())
+    if not ta or not tb:
+        return True
+    return len(ta & tb) / max(1, min(len(ta), len(tb))) >= 0.5
+
+
+def conds_compatible(a: str | None, b: str | None) -> bool:
+    na, nb = normalize_cond_key(a), normalize_cond_key(b)
+    if not na or not nb:
+        return True
+    return na == nb
+
+
+def prices_compatible(tuz_price: float | None, taz_price: float | None, strict: bool) -> bool:
+    if tuz_price is None or taz_price is None:
+        return not strict
+    if tuz_price <= 0 or taz_price <= 0:
+        return False
+    rel = abs(tuz_price - taz_price) / max(tuz_price, taz_price)
+    return rel <= (0.05 if strict else 0.15) or abs(tuz_price - taz_price) <= 1.0
+
+
+def line_request_dt(line: RequestLine) -> datetime | None:
+    dts = [o.request_dt for o in line.offers if o.request_dt]
+    return min(dts) if dts else None
+
+
+def line_agreed_offer(line: RequestLine) -> OfferRow | None:
+    agreed = [
+        o for o in line.offers if o.status == "7. Клиент согласовал" and o.offered is not None
+    ]
+    if agreed:
+        return sorted(agreed, key=lambda o: o.offered)[0]
+    return line.selected_offer()
+
+
+def load_taz_lines(path: Path) -> list[dict[str, Any]]:
+    """Load ORDERS+PRESALE as individual lines (no blind invoice summing)."""
+    rows: list[dict[str, Any]] = []
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-
+    seq = 0
     for sheet_name in TAZ_LOOKUP_SHEETS:
         if sheet_name not in wb.sheetnames:
             continue
@@ -1331,90 +1409,167 @@ def load_taz_invoice_money(path: Path) -> dict[str, dict[str, Any]]:
             invoice = normalize_invoice(row[0])
             if not invoice:
                 continue
-            work_dt = row[16]
-            work_year = work_dt.year if isinstance(work_dt, datetime) else None
+            work_dt = row[16] if isinstance(row[16], datetime) else None
             status = str(row[4]).strip() if row[4] else ""
             costs = taz_row_costs(row)
-            qty = parse_num(row[13]) or 0.0
-            sale_ea = parse_num(row[32])
             warranty = is_taz_warranty_row(row)
-            countable_line = (
+            countable = (
                 sheet_name == "ORDERS"
-                and in_period_dt(work_dt if isinstance(work_dt, datetime) else None)
+                and in_period_dt(work_dt)
                 and status not in TAZ_EXCLUDED_STATUSES
                 and not warranty
             )
-            prev = by_invoice.get(invoice)
-            if prev is None:
-                by_invoice[invoice] = {
+            seq += 1
+            pn_raw = str(row[10]).strip() if row[10] not in (None, "") else ""
+            desc_raw = str(row[12]).strip() if len(row) > 12 and row[12] not in (None, "") else ""
+            cond_raw = str(row[24]).strip() if len(row) > 24 and row[24] not in (None, "") else ""
+            rows.append(
+                {
+                    "id": f"{sheet_name}:{seq}",
+                    "invoice": invoice,
+                    "sheet": sheet_name,
+                    "pn": pn_raw,
+                    "pn_key": normalize_pn_key(pn_raw),
+                    "description": desc_raw,
+                    "desc_key": normalize_desc_key(desc_raw),
+                    "condition": cond_raw,
+                    "cond_key": normalize_cond_key(cond_raw),
+                    "qty": parse_num(row[13]) or 0.0,
+                    "sale_ea": parse_num(row[32]),
                     "revenue": costs["revenue"],
                     "purchase": costs["purchase"],
                     "transport_fact": costs["transport_fact"],
                     "fee": costs["fee"],
                     "customs": costs["customs"],
-                    "qty": qty,
-                    "sale_ea": sale_ea,
+                    "margin": (
+                        costs["revenue"]
+                        - costs["purchase"]
+                        - costs["transport_fact"]
+                        - costs["fee"]
+                        - costs["customs"]
+                    ),
+                    "work_dt": work_dt,
                     "status": status or "—",
-                    "statuses": {status or "—"},
-                    "sheet": sheet_name,
-                    "work_year": work_year,
-                    "countable": countable_line,
+                    "category": str(row[15]).strip() if row[15] else "",
+                    "countable": countable,
                     "warranty": warranty,
-                    "line_count": 1,
                 }
-                continue
-
-            # Prefer ORDERS over PRESALE as base sheet label; always sum same-sheet lines.
-            if prev["sheet"] != "ORDERS" and sheet_name == "ORDERS":
-                # Replace PRESALE stub with ORDERS aggregate starting point
-                prev.update(
-                    {
-                        "revenue": costs["revenue"],
-                        "purchase": costs["purchase"],
-                        "transport_fact": costs["transport_fact"],
-                        "fee": costs["fee"],
-                        "customs": costs["customs"],
-                        "qty": qty,
-                        "sale_ea": sale_ea,
-                        "status": status or "—",
-                        "statuses": {status or "—"},
-                        "sheet": sheet_name,
-                        "work_year": work_year,
-                        "countable": countable_line,
-                        "warranty": warranty,
-                        "line_count": 1,
-                    }
-                )
-                continue
-
-            if prev["sheet"] != sheet_name:
-                continue
-
-            prev["revenue"] += costs["revenue"]
-            prev["purchase"] += costs["purchase"]
-            prev["transport_fact"] += costs["transport_fact"]
-            prev["fee"] += costs["fee"]
-            prev["customs"] += costs["customs"]
-            prev["qty"] = (prev.get("qty") or 0) + qty
-            prev["statuses"].add(status or "—")
-            prev["status"] = " / ".join(sorted(prev["statuses"]))
-            prev["countable"] = bool(prev["countable"] or countable_line)
-            prev["line_count"] = prev.get("line_count", 1) + 1
-            if sale_ea is not None:
-                prev["sale_ea"] = sale_ea
-
-    for entry in by_invoice.values():
-        entry["margin"] = (
-            entry["revenue"]
-            - entry["purchase"]
-            - entry["transport_fact"]
-            - entry["fee"]
-            - entry["customs"]
-        )
-        entry.pop("statuses", None)
-
+            )
     wb.close()
-    return by_invoice
+    return rows
+
+
+def load_taz_invoice_money(path: Path) -> list[dict[str, Any]]:
+    """Backward-compatible name: returns TAZ lines list for matching."""
+    return load_taz_lines(path)
+
+
+def match_taz_lines_for_tuz(
+    line: RequestLine, taz_lines: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Match TAZ line(s) to a TUZ won offer.
+
+    Hard checks: P/N, invoice (when present on TUZ), work date not before request.
+    Soft checks: description, condition, unit price. Same invoice + same P/N + compatible
+    price may be split across several TAZ rows (partial shipments) and are summed.
+    Other P/Ns / expendables on the same invoice are never pulled in.
+    """
+    if not taz_lines:
+        return []
+    offer = line_agreed_offer(line)
+    pn_key = normalize_pn_key(line.pn)
+    if not pn_key:
+        return []
+    invoices = line_invoices(line)
+    req_dt = line_request_dt(line)
+    tuz_price = offer.offered if offer else None
+    tuz_cond = offer.cond if offer else None
+    tuz_desc = line.description
+    offer_qty = line.offer_qty(offer)
+
+    candidates: list[tuple[float, dict[str, Any]]] = []
+    for taz in taz_lines:
+        if taz["pn_key"] != pn_key:
+            continue
+        if invoices and taz["invoice"] not in invoices:
+            continue
+        if taz["work_dt"] and req_dt and taz["work_dt"].date() < req_dt.date():
+            continue
+
+        has_invoice = bool(invoices and taz["invoice"] in invoices)
+        desc_ok = descs_compatible(tuz_desc, taz.get("description"))
+        cond_ok = conds_compatible(tuz_cond, taz.get("condition"))
+        price_strict = prices_compatible(tuz_price, taz.get("sale_ea"), strict=True)
+        price_loose = prices_compatible(tuz_price, taz.get("sale_ea"), strict=False)
+
+        if not has_invoice:
+            # No invoice on TUZ: require tight commercial identity.
+            if not price_strict or not desc_ok or not cond_ok:
+                continue
+        else:
+            # Invoice + P/N already link the deal (incl. trouble renegotiation).
+            # Still reject clearly wrong commercial lines.
+            if tuz_price is not None and taz.get("sale_ea") is not None and not price_loose:
+                continue
+            # Description mismatch without price lock is suspicious.
+            if not desc_ok and not price_strict:
+                continue
+            # Condition can change after renegotiation when invoice+PN(+desc/price) match.
+
+        score = 0.0
+        if has_invoice:
+            score += 100
+        if price_strict:
+            score += 40
+        elif price_loose:
+            score += 20
+        if cond_ok:
+            score += 15
+        if desc_ok:
+            score += 15
+        if offer_qty and taz.get("qty"):
+            if abs((taz["qty"] or 0) - offer_qty) < 1e-6:
+                score += 10
+            elif (taz["qty"] or 0) <= offer_qty + 1e-6:
+                score += 5
+        candidates.append((score, taz))
+
+    if not candidates:
+        return []
+
+    candidates.sort(key=lambda item: -item[0])
+    best_score = candidates[0][0]
+    top = [t for s, t in candidates if s >= best_score - 20]
+    # Prefer commercial lines over warranty replacements when both exist.
+    non_warranty = [t for t in top if not t.get("warranty")]
+    if non_warranty:
+        top = non_warranty
+    groups: dict[tuple[str, float | None], list[dict[str, Any]]] = {}
+    for taz in top:
+        sale = taz.get("sale_ea")
+        key = (taz["invoice"], round(sale, 2) if isinstance(sale, (int, float)) else None)
+        groups.setdefault(key, []).append(taz)
+
+    def group_score(items: list[dict[str, Any]]) -> tuple:
+        qty_sum = sum(t.get("qty") or 0 for t in items)
+        qty_fit = 0
+        if offer_qty:
+            if abs(qty_sum - offer_qty) < 1e-6:
+                qty_fit = 2
+            elif qty_sum <= offer_qty + 1e-6:
+                qty_fit = 1
+        rev = sum(t.get("revenue") or 0 for t in items)
+        return (qty_fit, len(items), rev)
+
+    best_group = max(groups.values(), key=group_score)
+    seen: set[str] = set()
+    matched: list[dict[str, Any]] = []
+    for taz in best_group:
+        if taz["id"] in seen:
+            continue
+        seen.add(taz["id"])
+        matched.append(taz)
+    return matched
 
 
 def normalize_supplier_name(value: str | None) -> str:
@@ -1559,25 +1714,26 @@ def build_category_focus(group: list[RequestLine], limit: int = 10) -> list[dict
 
 
 def bucket_money_from_taz(
-    group: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
+    group: list[RequestLine], taz_lines: list[dict[str, Any]]
 ) -> dict[str, float]:
-    invoices: set[str] = set()
+    """TAZ money for won TUZ lines in a bucket — only matched component lines."""
+    revenue = purchase = transport = fee = customs = 0.0
+    matched_ids: set[str] = set()
+    matched_n = 0
     for line in group:
         if not line.won():
             continue
-        invoices |= line_invoices(line)
-    revenue = purchase = transport = fee = customs = 0.0
-    matched = 0
-    for invoice in invoices:
-        row = invoice_money.get(invoice)
-        if not row or not row.get("countable"):
-            continue
-        matched += 1
-        revenue += row["revenue"]
-        purchase += row["purchase"]
-        transport += row["transport_fact"]
-        fee += row["fee"]
-        customs += row["customs"]
+        hits = match_taz_lines_for_tuz(line, taz_lines)
+        for row in hits:
+            if not row.get("countable") or row["id"] in matched_ids:
+                continue
+            matched_ids.add(row["id"])
+            matched_n += 1
+            revenue += row["revenue"]
+            purchase += row["purchase"]
+            transport += row["transport_fact"]
+            fee += row["fee"]
+            customs += row["customs"]
     margin = revenue - purchase - transport - fee - customs
     return {
         "revenue": revenue,
@@ -1587,19 +1743,15 @@ def bucket_money_from_taz(
         "customs": customs,
         "margin": margin,
         "margin_pct": (margin / revenue * 100) if revenue else 0.0,
-        "matched_invoices": matched,
+        "matched_invoices": matched_n,
     }
 
 
 def line_taz_match(
-    line: RequestLine, invoice_money: dict[str, dict[str, Any]]
+    line: RequestLine, taz_lines: list[dict[str, Any]]
 ) -> dict[str, Any] | None:
-    """Best TAZ ORDERS/PRESALE row(s) for a won TUZ line, summed by invoice."""
-    matched: list[dict[str, Any]] = []
-    for invoice in sorted(line_invoices(line)):
-        row = invoice_money.get(invoice)
-        if row:
-            matched.append(row)
+    """Aggregate only TAZ lines matched to this TUZ offer (not whole invoice)."""
+    matched = match_taz_lines_for_tuz(line, taz_lines)
     if not matched:
         return None
     revenue = sum(r["revenue"] for r in matched)
@@ -1608,30 +1760,35 @@ def line_taz_match(
     fee = sum(r["fee"] for r in matched)
     customs = sum(r["customs"] for r in matched)
     margin = revenue - purchase - transport - fee - customs
-    qty = sum(r["qty"] or 0 for r in matched) or None
-    sale_ea = matched[0].get("sale_ea")
-    if len(matched) == 1 and matched[0].get("qty"):
-        sale_ea = matched[0].get("sale_ea")
+    qty = sum(r.get("qty") or 0 for r in matched) or None
+    sale_eas = [r.get("sale_ea") for r in matched if r.get("sale_ea") is not None]
+    sale_ea = sale_eas[0] if sale_eas else None
+    if sale_ea is None and qty and revenue:
+        sale_ea = revenue / qty
     statuses = sorted({r.get("status") or "—" for r in matched})
     sheets = sorted({r.get("sheet") or "—" for r in matched})
+    countable_rev = sum(r["revenue"] for r in matched if r.get("countable"))
+    countable_margin = sum(r["margin"] for r in matched if r.get("countable"))
     return {
         "revenue": revenue,
         "purchase": purchase,
         "transport_fact": transport,
         "fee": fee,
         "customs": customs,
-        "margin": margin,
-        "margin_pct": (margin / revenue * 100) if revenue else None,
+        "margin": countable_margin if any(r.get("countable") for r in matched) else margin,
+        "margin_pct": (countable_margin / countable_rev * 100) if countable_rev else None,
         "qty": qty,
         "sale_ea": sale_ea,
         "status": " / ".join(statuses),
         "sheet": " / ".join(sheets),
         "countable": any(r.get("countable") for r in matched),
+        "matched_lines": len(matched),
+        "category": " / ".join(sorted({r.get("category") or "—" for r in matched})),
     }
 
 
 def build_won_order_rows(
-    group: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
+    group: list[RequestLine], taz_lines: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for line in group:
@@ -1653,15 +1810,16 @@ def build_won_order_rows(
             else line.order_value()
         )
 
-        taz = line_taz_match(line, invoice_money)
+        taz = line_taz_match(line, taz_lines)
         if taz:
             sale_ea = taz.get("sale_ea") if taz.get("sale_ea") is not None else tuz_sale_ea
             qty = taz.get("qty") if taz.get("qty") is not None else tuz_qty
             sale_total = taz["revenue"]
             margin = taz["margin"] if taz.get("countable") else None
             margin_pct = taz["margin_pct"] if taz.get("countable") else None
+            extra = f" · {taz['matched_lines']} стр." if taz.get("matched_lines", 0) > 1 else ""
             taz_status = taz["status"]
-            taz_sheet = taz["sheet"]
+            taz_sheet = f"{taz['sheet']}{extra}"
         else:
             sale_ea = tuz_sale_ea
             qty = tuz_qty
@@ -1691,11 +1849,11 @@ def build_won_order_rows(
 
 
 def line_bucket_sale(
-    line: RequestLine, invoice_money: dict[str, dict[str, Any]]
+    line: RequestLine, taz_lines: list[dict[str, Any]]
 ) -> float | None:
-    """Sale used for price-category bucketing: TAZ AH when invoice matches, else TUZ."""
+    """Sale used for price-category bucketing: matched TAZ lines, else TUZ."""
     if line.won():
-        taz = line_taz_match(line, invoice_money)
+        taz = line_taz_match(line, taz_lines)
         if taz and taz.get("revenue") is not None:
             return taz["revenue"]
     return line.sale_value()
@@ -1713,7 +1871,7 @@ def classify_refusal_reason(note: str | None) -> str:
 
 
 def requester_analytics(
-    lines: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
+    lines: list[RequestLine], taz_lines: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """RFQ source from column K (contact / Assets), filled ~from late April 2026."""
     buckets: dict[str, dict[str, Any]] = {}
@@ -1733,7 +1891,7 @@ def requester_analytics(
             slot["sent"] += 1
         if line.won():
             slot["won"] += 1
-            slot["revenue"] += line_bucket_sale(line, invoice_money) or 0
+            slot["revenue"] += line_bucket_sale(line, taz_lines) or 0
         if any(o.status == "6. Клиент отказал" for o in line.offers):
             slot["refused"] += 1
 
@@ -1808,10 +1966,10 @@ def refusal_analytics(lines: list[RequestLine]) -> dict[str, Any]:
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     by_bucket: dict[str, list[RequestLine]] = {label: [] for label, _, _ in PRICE_BUCKETS}
     unpriced: list[RequestLine] = []
-    invoice_money = load_taz_invoice_money(TAZ_PATH) if TAZ_PATH.exists() else {}
+    taz_lines = load_taz_lines(TAZ_PATH) if TAZ_PATH.exists() else []
 
     for line in lines:
-        sale = line_bucket_sale(line, invoice_money)
+        sale = line_bucket_sale(line, taz_lines)
         bucket = bucket_for_sale(sale)
         if bucket:
             by_bucket[bucket].append(line)
@@ -1828,14 +1986,14 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         supplier_no_offer = sum(1 for line in group if line.supplier_without_offer())
         won = sum(1 for line in group if line.won())
         tuz_orders_total = sum(
-            (line_bucket_sale(line, invoice_money) or 0) for line in group if line.won()
+            (line_bucket_sale(line, taz_lines) or 0) for line in group if line.won()
         )
         sent = sum(1 for line in group if any(o.sent_dt for o in line.offers))
         pending_proc = in_procurement
         quote_counts = [len(line.quote_rows()) for line in group]
         quotes_total = sum(quote_counts)
         markups = [line.markup_pct() for line in group if line.markup_pct() is not None]
-        money = bucket_money_from_taz(group, invoice_money)
+        money = bucket_money_from_taz(group, taz_lines)
         mix = supplier_mix(group)
 
         return {
@@ -1861,7 +2019,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
             "suppliers_chip": top_suppliers_chip(mix),
             "focus": build_category_focus(group),
             "won_lines": [line for line in group if line.won()],
-            "won_orders": build_won_order_rows(group, invoice_money),
+            "won_orders": build_won_order_rows(group, taz_lines),
             "median_markup": median(markups),
             "median_proc": median(proc),
             "median_sales": median(sales),
@@ -1918,14 +2076,14 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         subset = [
             line
             for line in critical_lines
-            if bucket_for_sale(line_bucket_sale(line, invoice_money)) == label
+            if bucket_for_sale(line_bucket_sale(line, taz_lines)) == label
         ]
         if subset:
             critical_by_price[label] = summarize(subset)
     unpriced_crit = [
         line
         for line in critical_lines
-        if bucket_for_sale(line_bucket_sale(line, invoice_money)) is None
+        if bucket_for_sale(line_bucket_sale(line, taz_lines)) is None
     ]
     if unpriced_crit:
         critical_by_price["Без продажной оценки"] = summarize(unpriced_crit)
@@ -1958,7 +2116,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "taz_orders": taz_orders,
         "won_deals": reconciliation.get("won_deals") if reconciliation else [],
         "critical_aog": critical_block,
-        "requesters": requester_analytics(lines, invoice_money),
+        "requesters": requester_analytics(lines, taz_lines),
         "refusals": refusal_analytics(lines),
     }
 
@@ -2697,7 +2855,7 @@ tr:hover td {{ background:#fafcfd; }}
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ ORDERS 2026 (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется; Cancel/Refund и гарантии исключены. PRESALE в выручку шапки не входит.<br/>
       <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
-      <b>Категории</b> — по продажной: Offered × min(J,X); J = запрос клиента, X = предложено/в наличии. Согласованные сверяются с ТАЗ ORDERS+PRESALE; строки одного счёта суммируются.<br/>
+      <b>Категории</b> — по продажной: Offered × min(J,X); J = запрос клиента, X = предложено/в наличии. Согласованные сверяются с ТАЗ по P/N + description + condition + price + qty + № счёта и датам (work date не раньше запроса). Несколько строк одного счёта суммируются только если это тот же компонент (split shipment); соседние P/N / expendable на том же счёте не примешиваются.<br/>
       <b>Столбец K</b> — контакт/отдел клиента (с конца апреля). <b>Отказы</b> — статус «6. Клиент отказал», причины из Remarks (AA).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
