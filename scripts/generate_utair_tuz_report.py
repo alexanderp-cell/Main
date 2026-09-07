@@ -61,6 +61,37 @@ def configure_client(client_key: str) -> None:
     ZIP_PATH = CLIENT["output_zip"]
     TUZ_INVOICE_OVERRIDES = dict(CLIENT["invoice_overrides"])
     TAZ_PRIOR_TUZ_PN = CLIENT["prior_tuz_pn"]
+    apply_period_outputs()
+
+
+def configure_period(period_key: str) -> None:
+    global PERIOD
+    if period_key not in PERIOD_PRESETS:
+        raise SystemExit(f"Unknown period: {period_key}. Choose from {sorted(PERIOD_PRESETS)}")
+    PERIOD = dict(PERIOD_PRESETS[period_key])
+    apply_period_outputs()
+
+
+def apply_period_outputs() -> None:
+    global OUTPUT_PATH, ZIP_PATH
+    if PERIOD["key"] == "2026":
+        OUTPUT_PATH = CLIENT["output_html"]
+        ZIP_PATH = CLIENT["output_zip"]
+        return
+    stem = CLIENT["output_html"].stem + f"_{PERIOD['key'].replace('-', '_')}"
+    OUTPUT_PATH = CLIENT["output_html"].with_name(stem + ".html")
+    ZIP_PATH = CLIENT["output_zip"].with_name(stem + ".zip")
+
+
+def in_period_dt(value: datetime | None) -> bool:
+    if value is None:
+        return False
+    if value.year != REPORT_YEAR:
+        return False
+    months = PERIOD.get("months")
+    if months is None:
+        return True
+    return value.month in months
 
 
 EARLY_STATUSES = {
@@ -91,6 +122,23 @@ TROUBLE_ONLY_REQUEST_RE = re.compile(r"^troubles?$", re.IGNORECASE)
 ORDER_NUM_DT_RE = re.compile(r"^№\s*(\d+)$", re.IGNORECASE)
 REPORT_YEAR = 2026
 TAZ_LOOKUP_SHEETS = ("ORDERS", "PRESALE")
+PERIOD: dict[str, Any] = {
+    "key": "2026",
+    "label": "2026 год",
+    "months": None,  # None = all months of REPORT_YEAR
+}
+PERIOD_PRESETS: dict[str, dict[str, Any]] = {
+    "2026": {"key": "2026", "label": "2026 год", "months": None},
+    "jun-aug": {"key": "jun-aug", "label": "июнь–август 2026", "months": (6, 7, 8)},
+}
+FIRST_REPEAT_TOKENS = {"first", "repeat", "1", "2", "1st", "2nd"}
+REFUSAL_REASON_RULES = [
+    ("Цена / таргет", r"(цен|таргет|дорог|дешев|не проход|мимо|\$|usd|китайц|дешевле)"),
+    ("Купили у других", r"(купил|заказал у|у других|уже купил|закрыт|выбрал|другое предлож)"),
+    ("Серт / тэг / DER", r"(серт|тэг|tag|der|док|cert|arc|nis|ppwk|trace)"),
+    ("Ждут ремонт / стоп", r"(ремонт|останов|ждать|не будут брать)"),
+    ("Условие / комплектность", r"(не подход|покрышк|доставк|без достав|exw|ddp|предоплат)"),
+]
 
 GROUP_SHEETS = [
     "Группа A",
@@ -254,6 +302,32 @@ def extract_order_refs(*texts: str | None) -> list[str]:
                 seen.add(token)
                 refs.append(token)
     return refs
+
+
+def normalize_requester(value) -> str | None:
+    """Column K: email / surname / assets department. Skip legacy first/repeat."""
+    if value in (None, ""):
+        return None
+    text = str(value).strip().splitlines()[0].strip()
+    if not text:
+        return None
+    low = text.lower()
+    if low in FIRST_REPEAT_TOKENS:
+        return None
+    if "@" in text:
+        email = text.lower()
+        local = email.split("@", 1)[0]
+        if local == "assets" or "assets@" in email:
+            return "Assets (отдел)"
+        # Title-case local part for display, keep stable key via email in paren? Use readable label.
+        pretty = local.replace(".", " ").replace("_", " ").title()
+        return pretty
+    if low in {"assets", "rotables", "warranty"}:
+        return text.strip().title() if low != "assets" else "Assets (отдел)"
+    # Surname / free text
+    if len(text) <= 2:
+        return None
+    return text
 
 
 def normalize_invoice(value) -> str | None:
@@ -440,7 +514,7 @@ def load_taz_money_2026(path: Path) -> dict[str, Any]:
         if not row or not is_utair(row[6]):
             continue
         work_dt = row[16]
-        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+        if not isinstance(work_dt, datetime) or not in_period_dt(work_dt):
             continue
         status = str(row[4]).strip() if row[4] else "—"
         costs = taz_row_costs(row)
@@ -507,6 +581,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
             "alt_pn": 8,
             "description": 9,
             "qty": 10,  # J — qty requested by client
+            "requester": 11,  # K — contact/department (from ~Apr 2026)
             "quote_dt": 12,
             "root_price": 14,
             "root": 15,
@@ -532,6 +607,7 @@ def sheet_columns(sheet: str) -> dict[str, int]:
         "alt_pn": 8,
         "description": 9,
         "qty": 10,  # J — qty requested by client
+        "requester": 11,  # K — contact/department (from ~Apr 2026)
         "quote_dt": 15,
         "root_price": 17,
         "root": 18,
@@ -636,6 +712,7 @@ class RequestLine:
     alt_pn: str | None
     description: str | None
     qty: float | None  # J — client requested qty
+    requester: str | None = None  # K — client contact / department
     offers: list[OfferRow] = field(default_factory=list)
 
     @property
@@ -873,11 +950,11 @@ class RequestLine:
                 return offer.supplier_price * qty
         return None
 
-    def in_report_year(self, year: int = REPORT_YEAR) -> bool:
-        years = {o.request_dt.year for o in self.offers if o.request_dt}
-        if not years:
+    def in_report_period(self) -> bool:
+        dts = [o.request_dt for o in self.offers if o.request_dt]
+        if not dts:
             return True
-        return year in years
+        return any(in_period_dt(dt) for dt in dts)
 
     def timing(self) -> dict[str, float | None]:
         request_dt = next((o.request_dt for o in self.offers if o.request_dt), None)
@@ -926,6 +1003,10 @@ def load_request_lines(path: Path) -> list[RequestLine]:
             request_no_s = format_request_no(request_no)
             pn_s = str(pn).strip()
             key = (sheet, request_no_s, pn_s)
+            requester = None
+            if "requester" in cols:
+                requester = normalize_requester(val("requester"))
+
             if key not in grouped:
                 grouped[key] = RequestLine(
                     sheet=sheet,
@@ -934,8 +1015,11 @@ def load_request_lines(path: Path) -> list[RequestLine]:
                     alt_pn=str(val("alt_pn")).strip() if val("alt_pn") not in (None, "") else None,
                     description=str(val("description")).strip() if val("description") else None,
                     qty=parse_num(val("qty")),
+                    requester=requester,
                     offers=[],
                 )
+            elif requester and not grouped[key].requester:
+                grouped[key].requester = requester
 
             pn_cell = row_fmt[cols["pn"] - 1]
             alt_cell = row_fmt[cols["alt_pn"] - 1]
@@ -974,7 +1058,7 @@ def load_request_lines(path: Path) -> list[RequestLine]:
 
     wb_vals.close()
     wb_fmt.close()
-    return [line for line in grouped.values() if line.in_report_year(REPORT_YEAR)]
+    return [line for line in grouped.values() if line.in_report_period()]
 
 
 def load_taz_orders_2026(path: Path) -> dict[str, Any]:
@@ -993,7 +1077,7 @@ def load_taz_orders_2026(path: Path) -> dict[str, Any]:
         if not is_utair(customer):
             continue
         work_dt = row[16]
-        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+        if not isinstance(work_dt, datetime) or not in_period_dt(work_dt):
             continue
         amount = taz_line_amount(row)
         status = str(row[4]).strip() if row[4] else "—"
@@ -1053,9 +1137,9 @@ def reconcile_taz_tuz(lines: list[RequestLine], path: Path) -> dict[str, Any]:
         work_dt = row[16]
         if invoice:
             invoice_amounts_any[invoice] += amount
-            if isinstance(work_dt, datetime) and work_dt.year == 2026:
+            if isinstance(work_dt, datetime) and in_period_dt(work_dt):
                 invoice_amounts_2026[invoice] += amount
-        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+        if not isinstance(work_dt, datetime) or not in_period_dt(work_dt):
             continue
         status = str(row[4]).strip() if row[4] else ""
         category = str(row[15]).strip() if row[15] else ""
@@ -1184,7 +1268,7 @@ def load_won_money_reconciliation(lines: list[RequestLine], path: Path) -> dict[
         if not row or not is_utair(row[6]):
             continue
         work_dt = row[16]
-        if not isinstance(work_dt, datetime) or work_dt.year != 2026:
+        if not isinstance(work_dt, datetime) or not in_period_dt(work_dt):
             continue
         invoice = normalize_invoice(row[0])
         if not invoice or invoice not in won_invoices:
@@ -1231,8 +1315,8 @@ def median(values: list[float]) -> float | None:
 def load_taz_invoice_money(path: Path) -> dict[str, dict[str, Any]]:
     """Per-invoice TAZ money from ORDERS + PRESALE.
 
-    countable=True only for ORDERS in REPORT_YEAR excluding Cancel/Refund/warranty.
-    All matched invoices (any year, incl. PRESALE/Cancel) are kept for won-order display.
+    Multiple ORDERS lines with the same invoice (split shipments) are summed.
+    countable=True only for ORDERS in the active report period excl. Cancel/Refund/warranty.
     """
     by_invoice: dict[str, dict[str, Any]] = {}
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -1251,44 +1335,83 @@ def load_taz_invoice_money(path: Path) -> dict[str, dict[str, Any]]:
             work_year = work_dt.year if isinstance(work_dt, datetime) else None
             status = str(row[4]).strip() if row[4] else ""
             costs = taz_row_costs(row)
-            qty = parse_num(row[13])
+            qty = parse_num(row[13]) or 0.0
             sale_ea = parse_num(row[32])
             warranty = is_taz_warranty_row(row)
-            countable = (
+            countable_line = (
                 sheet_name == "ORDERS"
-                and work_year == REPORT_YEAR
+                and in_period_dt(work_dt if isinstance(work_dt, datetime) else None)
                 and status not in TAZ_EXCLUDED_STATUSES
                 and not warranty
             )
-            entry = {
-                "revenue": costs["revenue"],
-                "purchase": costs["purchase"],
-                "transport_fact": costs["transport_fact"],
-                "fee": costs["fee"],
-                "customs": costs["customs"],
-                "margin": (
-                    costs["revenue"]
-                    - costs["purchase"]
-                    - costs["transport_fact"]
-                    - costs["fee"]
-                    - costs["customs"]
-                ),
-                "qty": qty,
-                "sale_ea": sale_ea,
-                "status": status or "—",
-                "sheet": sheet_name,
-                "work_year": work_year,
-                "countable": countable,
-                "warranty": warranty,
-            }
             prev = by_invoice.get(invoice)
-            # Prefer ORDERS over PRESALE; prefer countable over non-countable.
             if prev is None:
-                by_invoice[invoice] = entry
-            elif prev["sheet"] != "ORDERS" and sheet_name == "ORDERS":
-                by_invoice[invoice] = entry
-            elif prev["sheet"] == sheet_name and not prev["countable"] and countable:
-                by_invoice[invoice] = entry
+                by_invoice[invoice] = {
+                    "revenue": costs["revenue"],
+                    "purchase": costs["purchase"],
+                    "transport_fact": costs["transport_fact"],
+                    "fee": costs["fee"],
+                    "customs": costs["customs"],
+                    "qty": qty,
+                    "sale_ea": sale_ea,
+                    "status": status or "—",
+                    "statuses": {status or "—"},
+                    "sheet": sheet_name,
+                    "work_year": work_year,
+                    "countable": countable_line,
+                    "warranty": warranty,
+                    "line_count": 1,
+                }
+                continue
+
+            # Prefer ORDERS over PRESALE as base sheet label; always sum same-sheet lines.
+            if prev["sheet"] != "ORDERS" and sheet_name == "ORDERS":
+                # Replace PRESALE stub with ORDERS aggregate starting point
+                prev.update(
+                    {
+                        "revenue": costs["revenue"],
+                        "purchase": costs["purchase"],
+                        "transport_fact": costs["transport_fact"],
+                        "fee": costs["fee"],
+                        "customs": costs["customs"],
+                        "qty": qty,
+                        "sale_ea": sale_ea,
+                        "status": status or "—",
+                        "statuses": {status or "—"},
+                        "sheet": sheet_name,
+                        "work_year": work_year,
+                        "countable": countable_line,
+                        "warranty": warranty,
+                        "line_count": 1,
+                    }
+                )
+                continue
+
+            if prev["sheet"] != sheet_name:
+                continue
+
+            prev["revenue"] += costs["revenue"]
+            prev["purchase"] += costs["purchase"]
+            prev["transport_fact"] += costs["transport_fact"]
+            prev["fee"] += costs["fee"]
+            prev["customs"] += costs["customs"]
+            prev["qty"] = (prev.get("qty") or 0) + qty
+            prev["statuses"].add(status or "—")
+            prev["status"] = " / ".join(sorted(prev["statuses"]))
+            prev["countable"] = bool(prev["countable"] or countable_line)
+            prev["line_count"] = prev.get("line_count", 1) + 1
+            if sale_ea is not None:
+                prev["sale_ea"] = sale_ea
+
+    for entry in by_invoice.values():
+        entry["margin"] = (
+            entry["revenue"]
+            - entry["purchase"]
+            - entry["transport_fact"]
+            - entry["fee"]
+            - entry["customs"]
+        )
+        entry.pop("statuses", None)
 
     wb.close()
     return by_invoice
@@ -1578,6 +1701,110 @@ def line_bucket_sale(
     return line.sale_value()
 
 
+
+def classify_refusal_reason(note: str | None) -> str:
+    text = (note or "").lower()
+    if not text.strip():
+        return "Без комментария"
+    for label, pattern in REFUSAL_REASON_RULES:
+        if re.search(pattern, text, re.IGNORECASE):
+            return label
+    return "Прочее"
+
+
+def requester_analytics(
+    lines: list[RequestLine], invoice_money: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """RFQ source from column K (contact / Assets), filled ~from late April 2026."""
+    buckets: dict[str, dict[str, Any]] = {}
+    marked = 0
+    for line in lines:
+        key = line.requester or "Не указан (до апреля / empty K)"
+        if line.requester:
+            marked += 1
+        slot = buckets.setdefault(
+            key,
+            {"name": key, "requests": 0, "found": 0, "sent": 0, "won": 0, "refused": 0, "revenue": 0.0},
+        )
+        slot["requests"] += 1
+        if line.found_on_market():
+            slot["found"] += 1
+        if any(o.sent_dt for o in line.offers):
+            slot["sent"] += 1
+        if line.won():
+            slot["won"] += 1
+            slot["revenue"] += line_bucket_sale(line, invoice_money) or 0
+        if any(o.status == "6. Клиент отказал" for o in line.offers):
+            slot["refused"] += 1
+
+    rows = sorted(buckets.values(), key=lambda r: (-r["revenue"], -r["requests"]))
+    for row in rows:
+        req = row["requests"] or 1
+        row["win_pct"] = row["won"] / req * 100
+        row["found_pct"] = row["found"] / req * 100
+    return {
+        "marked": marked,
+        "total": len(lines),
+        "marked_pct": (marked / len(lines) * 100) if lines else 0,
+        "rows": rows[:20],
+    }
+
+
+def refusal_analytics(lines: list[RequestLine]) -> dict[str, Any]:
+    """Quotes where client refused after our offer (status 6)."""
+    refused_lines = [
+        line for line in lines if any(o.status == "6. Клиент отказал" for o in line.offers)
+    ]
+    reason_counts: Counter[str] = Counter()
+    samples: list[dict[str, Any]] = []
+    with_notes = 0
+    for line in refused_lines:
+        notes = []
+        for offer in line.offers:
+            if offer.status != "6. Клиент отказал":
+                continue
+            if offer.remarks:
+                notes.append(offer.remarks)
+            elif offer.ppwk:
+                notes.append(offer.ppwk)
+        note = "\n".join(notes).strip()
+        if note:
+            with_notes += 1
+        reason = classify_refusal_reason(note)
+        reason_counts[reason] += 1
+        offer = line.selected_offer()
+        samples.append(
+            {
+                "request_no": line.request_no,
+                "pn": line.pn,
+                "description": line.description,
+                "sale": line.sale_value(),
+                "requester": line.requester,
+                "reason": reason,
+                "note": (note[:220] + ("…" if len(note) > 220 else "")) if note else "—",
+            }
+        )
+    samples.sort(key=lambda s: s.get("sale") or 0, reverse=True)
+    reasons = [
+        {"reason": name, "count": count, "pct": count / len(refused_lines) * 100 if refused_lines else 0}
+        for name, count in reason_counts.most_common()
+    ]
+    return {
+        "count": len(refused_lines),
+        "with_notes": with_notes,
+        "note_pct": (with_notes / len(refused_lines) * 100) if refused_lines else 0,
+        "reasons": reasons,
+        "samples": samples[:25],
+        "feasible": True,
+        "summary": (
+            "Статус «6. Клиент отказал» заполнен стабильно; в Remarks (AA) почти всегда есть "
+            "комментарий. По тексту можно выделить причины: цена/таргет, купили у других, "
+            "серт/DER, ждут ремонт, условия поставки. Это рабочая аналитика, не 100% точная "
+            "классификация — часть заметок смешанные."
+        ),
+    }
+
+
 def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
     by_bucket: dict[str, list[RequestLine]] = {label: [] for label, _, _ in PRICE_BUCKETS}
     unpriced: list[RequestLine] = []
@@ -1721,6 +1948,7 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "generated_at": datetime.now().strftime("%d.%m.%Y %H:%M"),
         "source": TUZ_PATH.name,
         "taz_source": TAZ_PATH.name if TAZ_PATH.exists() else None,
+        "period": dict(PERIOD),
         "overall": overall,
         "buckets": buckets,
         "funnel": funnel,
@@ -1730,6 +1958,8 @@ def aggregate(lines: list[RequestLine]) -> dict[str, Any]:
         "taz_orders": taz_orders,
         "won_deals": reconciliation.get("won_deals") if reconciliation else [],
         "critical_aog": critical_block,
+        "requesters": requester_analytics(lines, invoice_money),
+        "refusals": refusal_analytics(lines),
     }
 
 
@@ -2137,6 +2367,82 @@ def render_category_focus(items: list[dict[str, Any]]) -> str:
     )
 
 
+
+def render_requester_section(data: dict[str, Any]) -> str:
+    block = data.get("requesters") or {}
+    rows = block.get("rows") or []
+    if not rows:
+        return ""
+    body = []
+    for row in rows:
+        body.append(
+            "<tr>"
+            f"<td>{html.escape(row['name'])}</td>"
+            f"<td>{row['requests']}</td>"
+            f"<td>{row['found_pct']:.0f}%</td>"
+            f"<td>{row['sent']}</td>"
+            f"<td>{row['won']} <span class='sub'>({row['win_pct']:.1f}%)</span></td>"
+            f"<td>{row['refused']}</td>"
+            f"<td>{fmt_money(row['revenue'])}</td>"
+            "</tr>"
+        )
+    return f"""
+  <div class="panel">
+    <h2>Откуда приходит запрос (столбец K)</h2>
+    <p class="lead-sm">С конца апреля в K пишут контакт или отдел (email / фамилия / Assets). Заполнено у {block.get('marked', 0)} из {block.get('total', 0)} запросов периода ({block.get('marked_pct', 0):.0f}%). Топ по выручке согласованных заказов.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Контакт / отдел</th><th>Запросов</th><th>Найдено</th><th>Отправлено</th><th>Заказов</th><th>Отказов</th><th>Выручка заказов</th></tr></thead>
+      <tbody>{''.join(body)}</tbody>
+    </table></div>
+  </div>"""
+
+
+def render_refusal_section(data: dict[str, Any]) -> str:
+    block = data.get("refusals") or {}
+    if not block:
+        return ""
+    reason_rows = []
+    for row in block.get("reasons") or []:
+        reason_rows.append(
+            "<tr>"
+            f"<td>{html.escape(row['reason'])}</td>"
+            f"<td>{row['count']}</td>"
+            f"<td>{row['pct']:.0f}%</td>"
+            "</tr>"
+        )
+    sample_rows = []
+    for row in block.get("samples") or []:
+        sample_rows.append(
+            "<tr>"
+            f"<td>{html.escape(row['request_no'])}</td>"
+            f"<td><b>{html.escape(row['pn'])}</b></td>"
+            f"<td>{fmt_money(row.get('sale'))}</td>"
+            f"<td>{html.escape(row.get('requester') or '—')}</td>"
+            f"<td>{html.escape(row['reason'])}</td>"
+            f"<td class='note-cell'>{html.escape(row['note'])}</td>"
+            "</tr>"
+        )
+    return f"""
+  <div class="panel">
+    <h2>Отказы клиента (статус «6. Клиент отказал»)</h2>
+    <p class="lead-sm">{html.escape(block.get('summary') or '')}</p>
+    <div class="mini-grid" style="margin-bottom:14px">
+      <div class="mini"><div class="k">Отказов</div><div class="v">{block.get('count', 0)}</div></div>
+      <div class="mini"><div class="k">С комментарием AA</div><div class="v">{block.get('with_notes', 0)} <span class="sub">({block.get('note_pct', 0):.0f}%)</span></div></div>
+    </div>
+    <h3 style="margin:8px 0 6px;font-size:1rem;color:var(--teal-deep)">Причины по тексту Remarks</h3>
+    <div class="table-wrap" style="max-width:520px;margin-bottom:16px"><table>
+      <thead><tr><th>Причина</th><th>Шт</th><th>Доля</th></tr></thead>
+      <tbody>{''.join(reason_rows) if reason_rows else '<tr><td colspan=3>Нет данных</td></tr>'}</tbody>
+    </table></div>
+    <h3 style="margin:8px 0 6px;font-size:1rem;color:var(--teal-deep)">Примеры отказов</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Request</th><th>P/N</th><th>Sale</th><th>K</th><th>Причина</th><th>Комментарий</th></tr></thead>
+      <tbody>{''.join(sample_rows) if sample_rows else '<tr><td colspan=6>Нет отказов в периоде</td></tr>'}</tbody>
+    </table></div>
+  </div>"""
+
+
 def render_won_orders_table(orders: list[dict[str, Any]]) -> str:
     if not orders:
         return "<p class='muted'>В этом сегменте заказов пока нет.</p>"
@@ -2369,8 +2675,8 @@ tr:hover td {{ background:#fafcfd; }}
 <body>
 <div class="wrap">
   <h1>{html.escape(CLIENT['brand'])} — оценка работы по ТУЗ</h1>
-  <p class="lead">Анализ проработки запросов {html.escape(CLIENT['genitive'])} по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × qty предложения; для согласованных — сверка с ТАЗ ORDERS/PRESALE). Запросы {REPORT_YEAR} года.</p>
-  <div class="meta">Источник: {html.escape(data['source'])} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
+  <p class="lead">Анализ проработки запросов {html.escape(CLIENT['genitive'])} по групповым листам ТУЗ: скорость закупок и продаж, качество проценки, наценка и конверсия в заказы. Категории — по продажной стоимости (Offered × qty предложения; для согласованных — сверка с ТАЗ ORDERS/PRESALE). Период: <b>{html.escape((data.get('period') or PERIOD).get('label', PERIOD['label']))}</b>.</p>
+  <div class="meta">Источник: {html.escape(data['source'])} · ТАЗ: {html.escape(data.get('taz_source') or '—')} · сформировано {html.escape(data['generated_at'])} · Questions v2 не включён</div>
 
   {render_funnel_section(data)}
 
@@ -2380,6 +2686,10 @@ tr:hover td {{ background:#fafcfd; }}
 
   {render_critical_aog_section(data)}
 
+  {render_requester_section(data)}
+
+  {render_refusal_section(data)}
+
   <div class="panel">
     <h2>Как читать отчёт</h2>
     <div class="note">
@@ -2387,7 +2697,8 @@ tr:hover td {{ background:#fafcfd; }}
       <b>B→O</b> — от внесения запроса (B) до получения цены с рынка (O). · <b>O→AC</b> — от цены до отправки оффера (AC). · <b>B→AC</b> — полный цикл до отправки.<br/>
       <b>Деньги</b> — только ТАЗ ORDERS 2026 (продажная AH, закупка, транспорт, fee, таможня, маржа). Offered×Qty из ТУЗ в шапке не используется; Cancel/Refund и гарантии исключены. PRESALE в выручку шапки не входит.<br/>
       <b>Critical / AOG</b> — срочность из колонки D. Пусто и Expedite = стандарт; Critical/AOG — отдельный блок со скоростью, деньгами и заказами.<br/>
-      <b>Категории</b> — по продажной: Offered × min(J,X); J = запрос клиента, X = предложено/в наличии. Согласованные сверяются с ТАЗ ORDERS+PRESALE (qty/AH/статус). Внутри — заказы и до 10 P/N. Только запросы 2026 года.<br/>
+      <b>Категории</b> — по продажной: Offered × min(J,X); J = запрос клиента, X = предложено/в наличии. Согласованные сверяются с ТАЗ ORDERS+PRESALE; строки одного счёта суммируются.<br/>
+      <b>Столбец K</b> — контакт/отдел клиента (с конца апреля). <b>Отказы</b> — статус «6. Клиент отказал», причины из Remarks (AA).<br/>
       <b>alt P/N</b> — P/N выделен жирным в ТУЗ (часто предложен альтернативный номер).
     </div>
   </div>
@@ -2410,8 +2721,15 @@ def main(argv: list[str] | None = None):
         default="utair",
         help="Airline client to filter in TUZ/TAZ",
     )
+    parser.add_argument(
+        "--period",
+        choices=sorted(PERIOD_PRESETS),
+        default="2026",
+        help="Report period: full year or jun-aug",
+    )
     args = parser.parse_args(argv)
     configure_client(args.client)
+    configure_period(args.period)
 
     lines = load_request_lines(TUZ_PATH)
     data = aggregate(lines)
@@ -2426,6 +2744,7 @@ def main(argv: list[str] | None = None):
         json.dumps(
             {
                 "client": CLIENT["key"],
+                "period": PERIOD["key"],
                 **{k: data["overall"][k] for k in ["count", "found", "won", "pending_proc"]},
             },
             ensure_ascii=False,
