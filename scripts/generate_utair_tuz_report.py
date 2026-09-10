@@ -1913,8 +1913,7 @@ def refusal_analytics(lines: list[RequestLine]) -> dict[str, Any]:
     refused_lines = [
         line for line in lines if any(o.status == "6. Клиент отказал" for o in line.offers)
     ]
-    reason_counts: Counter[str] = Counter()
-    samples: list[dict[str, Any]] = []
+    by_reason: dict[str, list[dict[str, Any]]] = defaultdict(list)
     with_notes = 0
     for line in refused_lines:
         notes = []
@@ -1929,9 +1928,7 @@ def refusal_analytics(lines: list[RequestLine]) -> dict[str, Any]:
         if note:
             with_notes += 1
         reason = classify_refusal_reason(note)
-        reason_counts[reason] += 1
-        offer = line.selected_offer()
-        samples.append(
+        by_reason[reason].append(
             {
                 "request_no": line.request_no,
                 "pn": line.pn,
@@ -1942,23 +1939,29 @@ def refusal_analytics(lines: list[RequestLine]) -> dict[str, Any]:
                 "note": (note[:220] + ("…" if len(note) > 220 else "")) if note else "—",
             }
         )
-    samples.sort(key=lambda s: s.get("sale") or 0, reverse=True)
-    reasons = [
-        {"reason": name, "count": count, "pct": count / len(refused_lines) * 100 if refused_lines else 0}
-        for name, count in reason_counts.most_common()
-    ]
+
+    total = len(refused_lines)
+    reasons: list[dict[str, Any]] = []
+    for name, samples in by_reason.items():
+        samples.sort(key=lambda s: s.get("sale") or 0, reverse=True)
+        reasons.append(
+            {
+                "reason": name,
+                "count": len(samples),
+                "pct": (len(samples) / total * 100) if total else 0,
+                "samples": samples[:12],
+            }
+        )
+    reasons.sort(key=lambda r: -r["count"])
     return {
-        "count": len(refused_lines),
+        "count": total,
         "with_notes": with_notes,
-        "note_pct": (with_notes / len(refused_lines) * 100) if refused_lines else 0,
+        "note_pct": (with_notes / total * 100) if total else 0,
         "reasons": reasons,
-        "samples": samples[:25],
         "feasible": True,
         "summary": (
             "Статус «6. Клиент отказал» заполнен стабильно; в Remarks (AA) почти всегда есть "
-            "комментарий. По тексту можно выделить причины: цена/таргет, купили у других, "
-            "серт/DER, ждут ремонт, условия поставки. Это рабочая аналитика, не 100% точная "
-            "классификация — часть заметок смешанные."
+            "комментарий. Причины — по тексту заметок (рабочая классификация, не 100% точная)."
         ),
     }
 
@@ -2559,45 +2562,52 @@ def render_refusal_section(data: dict[str, Any]) -> str:
     block = data.get("refusals") or {}
     if not block:
         return ""
-    reason_rows = []
+    reason_blocks: list[str] = []
     for row in block.get("reasons") or []:
-        reason_rows.append(
-            "<tr>"
-            f"<td>{html.escape(row['reason'])}</td>"
-            f"<td>{row['count']}</td>"
-            f"<td>{row['pct']:.0f}%</td>"
-            "</tr>"
+        sample_rows = []
+        for sample in row.get("samples") or []:
+            sample_rows.append(
+                "<tr>"
+                f"<td>{html.escape(sample['request_no'])}</td>"
+                f"<td><b>{html.escape(sample['pn'])}</b>"
+                f"<div class='muted'>{html.escape(sample.get('description') or '—')}</div></td>"
+                f"<td>{fmt_money(sample.get('sale'))}</td>"
+                f"<td>{html.escape(sample.get('requester') or '—')}</td>"
+                f"<td class='note-cell'>{html.escape(sample['note'])}</td>"
+                "</tr>"
+            )
+        examples = (
+            "<div class='table-wrap'><table>"
+            "<thead><tr><th>Request</th><th>P/N</th><th>Sale</th><th>K</th><th>Комментарий</th></tr></thead>"
+            f"<tbody>{''.join(sample_rows)}</tbody></table></div>"
+            if sample_rows
+            else "<p class='muted'>Нет примеров.</p>"
         )
-    sample_rows = []
-    for row in block.get("samples") or []:
-        sample_rows.append(
-            "<tr>"
-            f"<td>{html.escape(row['request_no'])}</td>"
-            f"<td><b>{html.escape(row['pn'])}</b></td>"
-            f"<td>{fmt_money(row.get('sale'))}</td>"
-            f"<td>{html.escape(row.get('requester') or '—')}</td>"
-            f"<td>{html.escape(row['reason'])}</td>"
-            f"<td class='note-cell'>{html.escape(row['note'])}</td>"
-            "</tr>"
+        reason_blocks.append(
+            "<details class='refusal-reason'>"
+            "<summary>"
+            f"<span class='refusal-name'>{html.escape(row['reason'])}</span>"
+            f"<span class='refusal-meta'>{row['count']} · {row['pct']:.0f}%</span>"
+            "</summary>"
+            f"<div class='refusal-body'>{examples}</div>"
+            "</details>"
         )
+    reasons_html = (
+        "".join(reason_blocks)
+        if reason_blocks
+        else "<p class='muted'>Нет отказов в периоде.</p>"
+    )
     return f"""
   <div class="panel">
     <h2>Отказы клиента (статус «6. Клиент отказал»)</h2>
-    <p class="lead-sm">{html.escape(block.get('summary') or '')}</p>
+    <p class="lead-sm">{html.escape(block.get('summary') or '')} Раскройте причину, чтобы увидеть примеры.</p>
     <div class="mini-grid" style="margin-bottom:14px">
       <div class="mini"><div class="k">Отказов</div><div class="v">{block.get('count', 0)}</div></div>
       <div class="mini"><div class="k">С комментарием AA</div><div class="v">{block.get('with_notes', 0)} <span class="sub">({block.get('note_pct', 0):.0f}%)</span></div></div>
     </div>
-    <h3 style="margin:8px 0 6px;font-size:1rem;color:var(--teal-deep)">Причины по тексту Remarks</h3>
-    <div class="table-wrap" style="max-width:520px;margin-bottom:16px"><table>
-      <thead><tr><th>Причина</th><th>Шт</th><th>Доля</th></tr></thead>
-      <tbody>{''.join(reason_rows) if reason_rows else '<tr><td colspan=3>Нет данных</td></tr>'}</tbody>
-    </table></div>
-    <h3 style="margin:8px 0 6px;font-size:1rem;color:var(--teal-deep)">Примеры отказов</h3>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Request</th><th>P/N</th><th>Sale</th><th>K</th><th>Причина</th><th>Комментарий</th></tr></thead>
-      <tbody>{''.join(sample_rows) if sample_rows else '<tr><td colspan=6>Нет отказов в периоде</td></tr>'}</tbody>
-    </table></div>
+    <div class="refusal-list">
+      {reasons_html}
+    </div>
   </div>"""
 
 
@@ -2828,6 +2838,26 @@ tr:hover td {{ background:#fafcfd; }}
 .tag.critical {{ background:#ffe4e0; color:#9b1c1c; }}
 .tag.growth {{ background:#dcfce7; color:#166534; }}
 .tag.skip {{ background:#f3f4f6; color:#4b5563; }}
+.refusal-list {{ display:flex; flex-direction:column; gap:8px; }}
+details.refusal-reason {{
+  background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+}}
+details.refusal-reason > summary {{
+  list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:12px 14px; font-weight:700; color:var(--ink);
+}}
+details.refusal-reason > summary::-webkit-details-marker {{ display:none; }}
+details.refusal-reason > summary::before {{
+  content:"▸"; color:var(--muted); font-size:.85rem; margin-right:2px;
+}}
+details.refusal-reason[open] > summary::before {{ content:"▾"; }}
+details.refusal-reason[open] > summary {{ border-bottom:1px solid var(--line); background:#f8fafb; }}
+.refusal-name {{ flex:1 1 auto; }}
+.refusal-meta {{
+  flex:0 0 auto; font-size:.82rem; font-weight:700; color:var(--teal-deep);
+  background:#e8f5f3; border-radius:999px; padding:3px 10px;
+}}
+.refusal-body {{ padding:10px 12px 14px; }}
 </style>
 </head>
 <body>
