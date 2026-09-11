@@ -2915,6 +2915,15 @@ def main(argv: list[str] | None = None):
         default="2026",
         help="Report period: full year or jun-aug",
     )
+    parser.add_argument(
+        "--zip",
+        action="store_true",
+        help=(
+            "Also write a .zip next to the HTML. Off by default: Windows Defender "
+            "often false-positives ZIP archives that contain only an HTML file "
+            "(HTML-smuggling heuristic). Prefer distributing the .html directly."
+        ),
+    )
     args = parser.parse_args(argv)
     configure_client(args.client)
     configure_period(args.period)
@@ -2924,10 +2933,15 @@ def main(argv: list[str] | None = None):
     data["client"] = CLIENT["key"]
     data["brand"] = CLIENT["brand"]
     OUTPUT_PATH.write_text(render_html(data), encoding="utf-8")
-    with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        archive.write(OUTPUT_PATH, OUTPUT_PATH.name)
     print(f"Generated {OUTPUT_PATH}")
-    print(f"Generated {ZIP_PATH}")
+    if args.zip:
+        with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.write(OUTPUT_PATH, OUTPUT_PATH.name)
+        print(f"Generated {ZIP_PATH}")
+    elif ZIP_PATH.exists():
+        # Avoid leaving stale archives that Windows may flag on download.
+        ZIP_PATH.unlink()
+        print(f"Removed stale {ZIP_PATH}")
     print(
         json.dumps(
             {
