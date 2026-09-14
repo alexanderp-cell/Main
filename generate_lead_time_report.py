@@ -140,7 +140,15 @@ def n_cell(count: int) -> str:
     return f'<td class="num" data-value="{int(count)}">{int(count)}</td>'
 
 
-def render_html(table: pd.DataFrame, overall: dict, source_name: str) -> str:
+def render_html(
+    table: pd.DataFrame,
+    overall: dict,
+    source_name: str,
+    *,
+    title: str,
+    subtitle: str,
+    period_hint: str,
+) -> str:
     rows_html = []
     for rec in table.itertuples(index=False):
         client = html_escape(rec.client)
@@ -157,13 +165,16 @@ def render_html(table: pd.DataFrame, overall: dict, source_name: str) -> str:
     o_e = fmt_avg(overall["expendable_avg"])
     o_avg = fmt_avg(overall["avg"])
     o_med = fmt_avg(overall["median"])
+    title_e = html_escape(title)
+    subtitle_e = html_escape(subtitle)
+    period_e = html_escape(period_hint)
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Средний срок поставки — лето 2026</title>
+<title>{title_e}</title>
 <style>
 :root {{
   --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
@@ -209,7 +220,7 @@ tbody.summary-top td, tfoot td {{ background:#e8f2f5; font-weight:700; border-to
 <div class="wrap">
   <div class="brand">not so fastair</div>
   <h1>Средний срок поставки</h1>
-  <div class="sub">Лето 2026 · FINISHED · Lead time = STK · факт поставки июнь–август · клик по заголовку — сортировка</div>
+  <div class="sub">{subtitle_e}</div>
 
   <section class="card">
     <div class="kpis">
@@ -254,7 +265,7 @@ tbody.summary-top td, tfoot td {{ background:#e8f2f5; font-weight:700; border-to
 
     <p class="hint">
       Срок = факт. дата поставки (столбец W) − дата взятия в работу (столбец Q), в днях.
-      Выборка: статус FINISHED, столбец S (Lead time) = STK, факт поставки в июне–августе 2026,
+      Выборка: статус FINISHED, столбец S (Lead time) = STK, факт поставки {period_e},
       обе даты заполнены, срок ≥ 0. n = число позиций в среднем. Источник: {html_escape(source_name)}.
       Нажмите на заголовок столбца, чтобы отсортировать.
     </p>
@@ -310,12 +321,18 @@ tbody.summary-top td, tfoot td {{ background:#e8f2f5; font-weight:700; border-to
 """
 
 
-def render_markdown(table: pd.DataFrame, overall: dict) -> str:
+def render_markdown(
+    table: pd.DataFrame,
+    overall: dict,
+    *,
+    title: str,
+    period_hint: str,
+) -> str:
     lines = [
-        "# Средний срок поставки — лето 2026",
+        f"# {title}",
         "",
         "Заказы со статусом **FINISHED**, столбец S (**Lead time**) = **STK**, "
-        "факт поставки в **июнь–август 2026**. Дни = факт поставки (W) − взятие в работу (Q).",
+        f"факт поставки в **{period_hint}**. Дни = факт поставки (W) − взятие в работу (Q).",
         "",
         "## Сводка",
         "",
@@ -349,6 +366,14 @@ def main() -> None:
     parser.add_argument("--out-dir", type=Path, default=Path("output"))
     parser.add_argument("--start", default="2026-06-01")
     parser.add_argument("--end", default="2026-08-31")
+    parser.add_argument("--stem", default="lead_time_summer_2026")
+    parser.add_argument("--ru-stem", default="средний_срок_поставки_лето_2026")
+    parser.add_argument("--title", default="Средний срок поставки — лето 2026")
+    parser.add_argument(
+        "--subtitle",
+        default="Лето 2026 · FINISHED · Lead time = STK · факт поставки июнь–август · клик по заголовку — сортировка",
+    )
+    parser.add_argument("--period-hint", default="июнь–август 2026")
     args = parser.parse_args()
 
     start = date.fromisoformat(args.start)
@@ -358,7 +383,6 @@ def main() -> None:
     rows = prepare(df, start, end)
     table, overall = build_table(rows)
 
-    # Sanity: Азур
     azur = table[table["client"].str.contains("Азур", case=False, na=False)]
     if not azur.empty:
         a = azur.iloc[0]
@@ -374,22 +398,34 @@ def main() -> None:
     )
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    html = render_html(table, overall, args.taz.name)
-    md = render_markdown(table, overall)
+    html = render_html(
+        table,
+        overall,
+        args.taz.name,
+        title=args.title,
+        subtitle=args.subtitle,
+        period_hint=args.period_hint,
+    )
+    md = render_markdown(
+        table,
+        overall,
+        title=args.title,
+        period_hint=args.period_hint,
+    )
 
-    ascii_html = args.out_dir / "lead_time_summer_2026.html"
-    ascii_md = args.out_dir / "lead_time_summer_2026.md"
-    ru_html = args.out_dir / "средний_срок_поставки_лето_2026.html"
+    ascii_html = args.out_dir / f"{args.stem}.html"
+    ascii_md = args.out_dir / f"{args.stem}.md"
+    ru_html = args.out_dir / f"{args.ru_stem}.html"
     ascii_html.write_text(html, encoding="utf-8")
     ru_html.write_text(html, encoding="utf-8")
     ascii_md.write_text(md, encoding="utf-8")
 
-    zip_path = args.out_dir / "lead_time_summer_2026.zip"
+    zip_path = args.out_dir / f"{args.stem}.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("lead_time_summer_2026.html", html)
-    ru_zip = args.out_dir / "средний_срок_поставки_лето_2026.zip"
+        zf.writestr(f"{args.stem}.html", html)
+    ru_zip = args.out_dir / f"{args.ru_stem}.zip"
     with zipfile.ZipFile(ru_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("средний_срок_поставки_лето_2026.html", html)
+        zf.writestr(f"{args.ru_stem}.html", html)
 
     print(f"wrote {ascii_html}")
     print(f"wrote {ascii_md}")

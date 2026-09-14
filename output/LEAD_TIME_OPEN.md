@@ -1,15 +1,16 @@
-# Открыть отчёт (без Excel)
+# Открыть отчёты по среднему сроку поставки (без Excel)
 
 Правила:
 - статус **FINISHED**
 - столбец S (**Lead time**) = **STK**
-- факт поставки (**W**) в июне–августе 2026
 - срок = W − Q
 
-## Сортируемая таблица
+## Лето 2026 (июнь–август)
 
-https://litter.catbox.moe/o81ou6.html
+- HTML: https://litter.catbox.moe/o81ou6.html
+- GitHub: https://github.com/alexanderp-cell/Main/blob/cursor/utair-excel-report-df20/output/lead_time_summer_2026.md
 
-## Таблица на GitHub
+## Весь 2026 (январь–декабрь)
 
-https://github.com/alexanderp-cell/Main/blob/cursor/utair-excel-report-df20/output/lead_time_summer_2026.md
+- HTML: https://litter.catbox.moe/jkt6hl.html
+- GitHub: https://github.com/alexanderp-cell/Main/blob/cursor/utair-excel-report-df20/output/lead_time_year_2026.md
