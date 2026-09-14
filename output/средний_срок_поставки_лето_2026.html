@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Средний срок поставки — лето 2026</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
+  --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
+  line-height:1.45;
+}
+.wrap { max-width:980px; margin:0 auto; padding:28px 20px 64px; }
+.brand { color:#fff; font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+  background:var(--cyan); color:var(--navy); display:inline-block; padding:6px 10px; font-weight:700; margin-bottom:14px; }
+h1 { color:#fff; font-size:28px; margin:0 0 6px; }
+.sub { color:#d5fbff; margin:0 0 18px; font-size:14px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:18px; }
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:10px 8px; text-align:left; vertical-align:middle; }
+th {
+  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+th.sorted .arrow { opacity:1; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.empty { color:#9a9a9a; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+tfoot td { background:#e8f2f5; font-weight:700; border-top:2px solid var(--navy); }
+.hint { margin-top:14px; color:var(--muted); font-size:12px; }
+@media (max-width:800px) { .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">not so fastair</div>
+  <h1>Средний срок поставки</h1>
+  <div class="sub">Лето 2026 · июнь–август · клик по заголовку — сортировка</div>
+
+  <section class="card">
+    <div class="kpis">
+      <div><div class="label">Всего среднее</div><div class="value">38.8 дн.</div><div class="muted">медиана 40.0</div></div>
+      <div><div class="label">Ротабл</div><div class="value">37.1 дн.</div><div class="muted">87 поз.</div></div>
+      <div><div class="label">Расходка</div><div class="value">39.2 дн.</div><div class="muted">357 поз.</div></div>
+      <div><div class="label">Клиентов</div><div class="value">42</div><div class="muted">444 позиций в выборке</div></div>
+    </div>
+
+    <table id="leadTable">
+      <thead>
+        <tr>
+          <th data-type="str" data-col="0">Клиент <span class="arrow">↕</span></th>
+          <th data-type="num" data-col="1">Ротабл, дн. <span class="arrow">↕</span></th>
+          <th data-type="num" data-col="2">Ротабл n <span class="arrow">↕</span></th>
+          <th data-type="num" data-col="3">Расходка, дн. <span class="arrow">↕</span></th>
+          <th data-type="num" data-col="4">Расходка n <span class="arrow">↕</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="client" data-value="407 техникс">407 Техникс</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="48.0">48.0</td><td class="num" data-value="2">2</td></tr><tr><td class="client" data-value="cft aviation">CFT Aviation</td><td class="num" data-value="17.5">17.5</td><td class="num" data-value="2">2</td><td class="num" data-value="57.7">57.7</td><td class="num" data-value="3">3</td></tr><tr><td class="client" data-value="flagavia">FLAGAVIA</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="23.0">23.0</td><td class="num" data-value="2">2</td></tr><tr><td class="client" data-value="jetica">Jetica</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="28.0">28.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="nordwind">Nordwind</td><td class="num" data-value="48.0">48.0</td><td class="num" data-value="1">1</td><td class="num" data-value="37.5">37.5</td><td class="num" data-value="6">6</td></tr><tr><td class="client" data-value="s7 engineering">S7 Engineering</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="30.4">30.4</td><td class="num" data-value="9">9</td></tr><tr><td class="client" data-value="utair">Utair</td><td class="num" data-value="43.2">43.2</td><td class="num" data-value="14">14</td><td class="num" data-value="31.6">31.6</td><td class="num" data-value="61">61</td></tr><tr><td class="client" data-value="utg">UTG</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="18.3">18.3</td><td class="num" data-value="6">6</td></tr><tr><td class="client" data-value="vdt">VDT</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="47.0">47.0</td><td class="num" data-value="26">26</td></tr><tr><td class="client" data-value="авексима лимитед">Авексима Лимитед</td><td class="num" data-value="32.0">32.0</td><td class="num" data-value="1">1</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="авиа менеджмент груп">Авиа Менеджмент Груп</td><td class="num" data-value="0.0">0.0</td><td class="num" data-value="1">1</td><td class="num" data-value="0.0">0.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="авиакомплекс">Авиакомплекс</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="3.0">3.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="авиастар-ту">Авиастар-ТУ</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="58.0">58.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="азур эйр">Азур Эйр</td><td class="num" data-value="12.0">12.0</td><td class="num" data-value="1">1</td><td class="num" data-value="49.0">49.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="ак сибирь">АК Сибирь</td><td class="num" data-value="38.8">38.8</td><td class="num" data-value="6">6</td><td class="num" data-value="60.2">60.2</td><td class="num" data-value="5">5</td></tr><tr><td class="client" data-value="ак тулпар">АК Тулпар</td><td class="num" data-value="37.0">37.0</td><td class="num" data-value="1">1</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="алроса">Алроса</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="1.0">1.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="альянс джет">Альянс Джет</td><td class="num" data-value="21.0">21.0</td><td class="num" data-value="1">1</td><td class="num" data-value="11.0">11.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="атран">АТРАН</td><td class="num" data-value="18.0">18.0</td><td class="num" data-value="3">3</td><td class="num" data-value="26.3">26.3</td><td class="num" data-value="23">23</td></tr><tr><td class="client" data-value="аэрофлот">Аэрофлот</td><td class="num" data-value="40.7">40.7</td><td class="num" data-value="15">15</td><td class="num" data-value="49.3">49.3</td><td class="num" data-value="59">59</td></tr><tr><td class="client" data-value="аэрофлот техникс">Аэрофлот Техникс</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="33.3">33.3</td><td class="num" data-value="15">15</td></tr><tr><td class="client" data-value="белавиа">Белавиа</td><td class="num" data-value="52.7">52.7</td><td class="num" data-value="7">7</td><td class="num" data-value="34.8">34.8</td><td class="num" data-value="24">24</td></tr><tr><td class="client" data-value="газпром авиа">Газпром Авиа</td><td class="num" data-value="25.0">25.0</td><td class="num" data-value="1">1</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="глобал скай">Глобал Скай</td><td class="num" data-value="62.3">62.3</td><td class="num" data-value="3">3</td><td class="num" data-value="52.9">52.9</td><td class="num" data-value="43">43</td></tr><tr><td class="client" data-value="дримджет">Дримджет</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="2.5">2.5</td><td class="num" data-value="2">2</td></tr><tr><td class="client" data-value="закупка на склад">Закупка на склад</td><td class="num" data-value="24.0">24.0</td><td class="num" data-value="1">1</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="икар (nordwind)">ИКАР (Nordwind)</td><td class="num" data-value="38.0">38.0</td><td class="num" data-value="2">2</td><td class="num" data-value="38.3">38.3</td><td class="num" data-value="3">3</td></tr><tr><td class="client" data-value="ираэро">Ираэро</td><td class="num" data-value="32.0">32.0</td><td class="num" data-value="1">1</td><td class="num" data-value="35.9">35.9</td><td class="num" data-value="10">10</td></tr><tr><td class="client" data-value="компонентс (utg)">Компонентс (UTG)</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="44.0">44.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="красавиа">Красавиа</td><td class="num" data-value="37.0">37.0</td><td class="num" data-value="1">1</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="победа">Победа</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="36.4">36.4</td><td class="num" data-value="12">12</td></tr><tr><td class="client" data-value="русджет техник">Русджет Техник</td><td class="num" data-value="15.5">15.5</td><td class="num" data-value="2">2</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td></tr><tr><td class="client" data-value="руслайн">Руслайн</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="23.4">23.4</td><td class="num" data-value="8">8</td></tr><tr><td class="client" data-value="северсталь">Северсталь</td><td class="num" data-value="24.2">24.2</td><td class="num" data-value="4">4</td><td class="num" data-value="40.8">40.8</td><td class="num" data-value="8">8</td></tr><tr><td class="client" data-value="скай партнер">Скай Партнер</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="1.0">1.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="скайпро техникс">Скайпро Техникс</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="3.3">3.3</td><td class="num" data-value="3">3</td></tr><tr><td class="client" data-value="смартавиа">Смартавиа</td><td class="num" data-value="20.0">20.0</td><td class="num" data-value="6">6</td><td class="num" data-value="86.0">86.0</td><td class="num" data-value="7">7</td></tr><tr><td class="client" data-value="тарп авиэйшн">ТАРП Авиэйшн</td><td class="num" data-value="40.2">40.2</td><td class="num" data-value="5">5</td><td class="num" data-value="20.0">20.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="тулпар техник">Тулпар Техник</td><td class="num" data-value="39.2">39.2</td><td class="num" data-value="4">4</td><td class="num" data-value="24.0">24.0</td><td class="num" data-value="5">5</td></tr><tr><td class="client" data-value="уральские авиалинии">Уральские Авиалинии</td><td class="num" data-value="46.8">46.8</td><td class="num" data-value="4">4</td><td class="num" data-value="30.0">30.0</td><td class="num" data-value="1">1</td></tr><tr><td class="client" data-value="ювт">ЮВТ</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="2.5">2.5</td><td class="num" data-value="2">2</td></tr><tr><td class="client" data-value="ямал">Ямал</td><td class="num empty" data-value="">—</td><td class="num empty" data-value="">—</td><td class="num" data-value="40.0">40.0</td><td class="num" data-value="2">2</td></tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Итого / среднее</td>
+          <td class="num">37.1</td>
+          <td class="num">87</td>
+          <td class="num">39.2</td>
+          <td class="num">357</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p class="hint">
+      Срок = факт. дата поставки (столбец W) − дата взятия в работу (столбец Q), в днях.
+      Выборка: заказ взят в работу в июне–августе 2026, обе даты заполнены, срок ≥ 0.
+      Источник: ТАЗ 11.09.2026. Нажмите на заголовок столбца, чтобы отсортировать.
+    </p>
+  </section>
+</div>
+<script>
+(function () {
+  const table = document.getElementById('leadTable');
+  const tbody = table.tBodies[0];
+  const headers = [...table.tHead.rows[0].cells];
+  let sortCol = 0;
+  let asc = true;
+
+  function cellValue(td, type) {
+    const raw = td.getAttribute('data-value');
+    if (raw === '' || raw === null) return type === 'num' ? Number.POSITIVE_INFINITY : '';
+    return type === 'num' ? Number(raw) : raw;
+  }
+
+  function sortBy(col, type) {
+    if (sortCol === col) asc = !asc;
+    else { sortCol = col; asc = true; }
+
+    headers.forEach((th, i) => {
+      th.classList.toggle('sorted', i === col);
+      th.querySelector('.arrow').textContent = i === col ? (asc ? '↑' : '↓') : '↕';
+    });
+
+    const rows = [...tbody.rows];
+    rows.sort((a, b) => {
+      const av = cellValue(a.cells[col], type);
+      const bv = cellValue(b.cells[col], type);
+      let cmp = 0;
+      if (type === 'num') cmp = av - bv;
+      else cmp = String(av).localeCompare(String(bv), 'ru');
+      // empty numeric (Infinity) always last
+      if (type === 'num') {
+        const aEmpty = !isFinite(av);
+        const bEmpty = !isFinite(bv);
+        if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+      }
+      return asc ? cmp : -cmp;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  headers.forEach(th => {
+    th.addEventListener('click', () => sortBy(Number(th.dataset.col), th.dataset.type));
+  });
+})();
+</script>
+</body>
+</html>
