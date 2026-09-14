@@ -2,6 +2,8 @@
 """Average delivery lead time by client for a delivery-date window.
 
 Rules:
+- Status must be FINISHED (e.g. «4 FINISHED»).
+- Column S («Lead time») must be exactly STK (other lead-time values excluded).
 - Keep rows whose actual delivery date (W) falls in [start, end] inclusive.
 - Lead time days = W − Q (order taken into work).
 - Require both dates; drop negative lead times.
@@ -17,8 +19,10 @@ from pathlib import Path
 
 import pandas as pd
 
+COL_STATUS = "Status"
 COL_CUSTOMER = "Customer"
 COL_CATEGORY = "Category"
+COL_LEAD_TIME = "Lead time"  # column S
 COL_ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
 COL_DELIVERY = "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)"
 
@@ -39,9 +43,13 @@ def prepare(df: pd.DataFrame, start: date, end: date) -> pd.DataFrame:
     out["_days"] = (out["_w"] - out["_q"]).dt.days
     out["_cat"] = out[COL_CATEGORY].astype(str).str.strip().str.upper()
     out["_client"] = out[COL_CUSTOMER].astype(str).str.strip()
+    out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
+    out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
 
     mask = (
-        out["_w"].notna()
+        out["_status"].str.contains("FINISHED", na=False)
+        & out["_lead"].eq("STK")
+        & out["_w"].notna()
         & out["_q"].notna()
         & (out["_w"].dt.date >= start)
         & (out["_w"].dt.date <= end)
@@ -201,7 +209,7 @@ tbody.summary-top td, tfoot td {{ background:#e8f2f5; font-weight:700; border-to
 <div class="wrap">
   <div class="brand">not so fastair</div>
   <h1>Средний срок поставки</h1>
-  <div class="sub">Лето 2026 · факт поставки июнь–август · клик по заголовку — сортировка</div>
+  <div class="sub">Лето 2026 · FINISHED · Lead time = STK · факт поставки июнь–август · клик по заголовку — сортировка</div>
 
   <section class="card">
     <div class="kpis">
@@ -246,8 +254,9 @@ tbody.summary-top td, tfoot td {{ background:#e8f2f5; font-weight:700; border-to
 
     <p class="hint">
       Срок = факт. дата поставки (столбец W) − дата взятия в работу (столбец Q), в днях.
-      Выборка: факт поставки в июне–августе 2026, обе даты заполнены, срок ≥ 0.
-      n = число позиций в среднем. Источник: {html_escape(source_name)}. Нажмите на заголовок столбца, чтобы отсортировать.
+      Выборка: статус FINISHED, столбец S (Lead time) = STK, факт поставки в июне–августе 2026,
+      обе даты заполнены, срок ≥ 0. n = число позиций в среднем. Источник: {html_escape(source_name)}.
+      Нажмите на заголовок столбца, чтобы отсортировать.
     </p>
   </section>
 </div>
@@ -305,7 +314,8 @@ def render_markdown(table: pd.DataFrame, overall: dict) -> str:
     lines = [
         "# Средний срок поставки — лето 2026",
         "",
-        "Заказы с **фактом поставки** в **июнь–август 2026**. Дни = факт поставки (W) − взятие в работу (Q).",
+        "Заказы со статусом **FINISHED**, столбец S (**Lead time**) = **STK**, "
+        "факт поставки в **июнь–август 2026**. Дни = факт поставки (W) − взятие в работу (Q).",
         "",
         "## Сводка",
         "",
