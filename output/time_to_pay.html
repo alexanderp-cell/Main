@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TIME TO PAY — JT &amp; KT</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
+  --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
+  --jt:#022f40; --kt:#c45c26;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
+  line-height:1.45;
+}
+.wrap { max-width:1100px; margin:0 auto; padding:28px 20px 64px; }
+.brand {
+  background:var(--cyan); color:var(--navy); display:inline-block;
+  padding:6px 10px; font-weight:700; margin-bottom:14px;
+  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+}
+h1 { color:#fff; font-size:28px; margin:0 0 6px; }
+.sub { color:#d5fbff; margin:0 0 18px; font-size:14px; }
+.card {
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:18px; margin-bottom:18px;
+}
+h2 { margin:0 0 6px; color:var(--navy); font-size:22px; }
+h3 { margin:22px 0 10px; color:var(--navy); font-size:16px; }
+.period-range { margin:0 0 14px; color:var(--muted); font-size:13px; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.kpis.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.kpis > div.highlight { background:#e8f6f8; border-color:#9ed7e0; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }
+th {
+  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+th.sorted .arrow { opacity:1; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+tr.channel-jt td { background:#e8f2f5 !important; font-weight:700; }
+tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
+.hint { margin-top:12px; color:var(--muted); font-size:12px; }
+.hint.warn { color:#8a3b12; background:#fff4ec; border:1px solid #f0c7a8; padding:10px 12px; border-radius:8px; }
+.chart-wrap { margin-top:8px; }
+.legend { display:flex; gap:16px; align-items:center; margin-bottom:8px; font-size:13px; }
+.swatch { display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+.swatch.jt { background:var(--jt); }
+.swatch.kt { background:var(--kt); }
+.chart-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:#fff; padding:8px; }
+svg .axis { font-size:10px; fill:#757575; font-family: Arial, sans-serif; }
+@media (max-width:800px) {
+  .kpis, .kpis.three { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">not so fastair</div>
+  <h1>TIME TO PAY</h1>
+  <div class="sub">Доли поставщиков · скорость оплаты JT / KT · платежи по дням · источник ТАЗ 18.09.2026.xlsx</div>
+  
+<section class="card period" id="period-0">
+  <h2>Весь ТАЗ 2026</h2>
+  <p class="period-range">01.01.2026 — 31.12.2026 · заказы по дате Q · 2576 поз.</p>
+  <p class="hint warn">KT MNT не найден в столбце Z (Поставщик) в этом ТАЗ — в долях и скорости оплаты по KT показатели нулевые. Учтён только JET TECHNIC.</p>
+
+  <h3>1. Доли поставщиков</h3>
+  <div class="kpis">
+    <div class="highlight"><div class="label">Выручка всего</div><div class="value">46 058 496</div><div class="muted">USD · продажная итого</div></div>
+    <div><div class="label">Маржа всего</div><div class="value">10 355 160</div><div class="muted">продажа − закупка</div></div>
+    <div><div class="label">JT выручка</div><div class="value">12.8%</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">KT выручка</div><div class="value">0.0%</div><div class="muted">доля от выручки</div></div>
+  </div>
+  <div class="table-scroll">
+  <table class="sortable" data-table="shares-0">
+    <thead>
+      <tr>
+        <th data-type="str" data-col="0">Поставщик <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="1">Выручка, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="2">% выручки <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="3">Маржа, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="4">% маржи <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="5">n <span class="arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class=""><td>LUFTHANSA</td><td class="num" data-value="25798910.074">25 798 910</td><td class="num" data-value="56.013">56.0%</td><td class="num" data-value="4253406.404">4 253 406</td><td class="num" data-value="41.075">41.1%</td><td class="num" data-value="940">940</td></tr><tr class=""><td>IBERIA</td><td class="num" data-value="10932087.711">10 932 088</td><td class="num" data-value="23.735">23.7%</td><td class="num" data-value="3465161.9020000002">3 465 162</td><td class="num" data-value="33.463">33.5%</td><td class="num" data-value="476">476</td></tr><tr class="channel-jt"><td>JET TECHNIC</td><td class="num" data-value="5908128.4">5 908 128</td><td class="num" data-value="12.827">12.8%</td><td class="num" data-value="1618773.6199999999">1 618 774</td><td class="num" data-value="15.633">15.6%</td><td class="num" data-value="324">324</td></tr><tr class=""><td>CAESAR</td><td class="num" data-value="1970000.0">1 970 000</td><td class="num" data-value="4.277">4.3%</td><td class="num" data-value="502500.0">502 500</td><td class="num" data-value="4.853">4.9%</td><td class="num" data-value="3">3</td></tr><tr class=""><td>BLUE OCEAN SOLUTIONS</td><td class="num" data-value="886435.806">886 436</td><td class="num" data-value="1.925">1.9%</td><td class="num" data-value="321244.12">321 244</td><td class="num" data-value="3.102">3.1%</td><td class="num" data-value="675">675</td></tr><tr class=""><td>ФЭИ</td><td class="num" data-value="525644.64">525 645</td><td class="num" data-value="1.141">1.1%</td><td class="num" data-value="175355.72">175 356</td><td class="num" data-value="1.693">1.7%</td><td class="num" data-value="146">146</td></tr><tr class=""><td>nan</td><td class="num" data-value="16614.0">16 614</td><td class="num" data-value="0.036">0.0%</td><td class="num" data-value="8301.4">8 301</td><td class="num" data-value="0.080">0.1%</td><td class="num" data-value="7">7</td></tr><tr class=""><td>RUSLINE</td><td class="num" data-value="15000.0">15 000</td><td class="num" data-value="0.033">0.0%</td><td class="num" data-value="9000.0">9 000</td><td class="num" data-value="0.087">0.1%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>AERO 24/7</td><td class="num" data-value="4700.0">4 700</td><td class="num" data-value="0.010">0.0%</td><td class="num" data-value="1350.0">1 350</td><td class="num" data-value="0.013">0.0%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>PRIMUS AVIATION</td><td class="num" data-value="711.0">711</td><td class="num" data-value="0.002">0.0%</td><td class="num" data-value="312.0">312</td><td class="num" data-value="0.003">0.0%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>UTG</td><td class="num" data-value="264.0">264</td><td class="num" data-value="0.001">0.0%</td><td class="num" data-value="-144.0">-144</td><td class="num" data-value="-0.001">-0.0%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>AIRCRAFT SPRUCE &amp; SPECIALTY CO.</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="-101.0">-101</td><td class="num" data-value="-0.001">-0.0%</td><td class="num" data-value="1">1</td></tr><tr class="channel-kt"><td>KT MNT</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="0">0</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>2. Time to pay (только JT + KT, STK)</h3>
+  <div class="kpis three">
+    
+        <div>
+          <div class="label">JT + KT</div>
+          <div class="value">14.2 дн.</div>
+          <div class="muted">медиана 10.0 · n=216</div>
+        </div>
+    
+        <div>
+          <div class="label">JET TECHNIC</div>
+          <div class="value">14.2 дн.</div>
+          <div class="muted">медиана 10.0 · n=216</div>
+        </div>
+    
+        <div>
+          <div class="label">KT MNT</div>
+          <div class="value">— дн.</div>
+          <div class="muted">медиана — · n=0</div>
+        </div>
+  </div>
+  <p class="hint">
+    Срок = дата оплаты поставщику (AW) − дата взятия в работу (Q).
+    В среднее: только Lead time = STK; исключены постоплата (есть дата начала движения BA раньше оплаты AW)
+    и заказы с ненулевым lead time (оплата после LT — норма).
+    Исключено как постоплата: JT 42, KT 0;
+    как lead-time: JT 44, KT 0.
+  </p>
+
+  <h3>3. Платежи по дням (AW)</h3>
+  
+<div class="chart-wrap" id="chart-0">
+  <div class="legend">
+    <span><i class="swatch jt"></i>JET TECHNIC</span>
+    <span><i class="swatch kt"></i>KT MNT</span>
+    <span class="muted">розовый фон = сб/вс</span>
+  </div>
+  <div class="chart-scroll">
+    <svg viewBox="0 0 2619 180" width="2619" height="180" role="img" aria-label="Платежи поставщикам по дням">
+      <rect x="61.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="68.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="110.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="117.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="159.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="166.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="208.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="215.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="257.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="264.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="306.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="313.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="355.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="362.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="404.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="411.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="453.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="460.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="502.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="509.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="551.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="558.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="600.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="607.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="649.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="656.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="698.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="705.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="747.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="754.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="796.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="803.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="845.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="852.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="894.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="901.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="943.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="950.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="992.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="999.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1041.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1048.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1090.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1097.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1139.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1146.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1188.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1195.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1237.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1244.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1286.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1293.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1335.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1342.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1384.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1391.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1433.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1440.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1482.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1489.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1531.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1538.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1580.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1587.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1629.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1636.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1678.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1685.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1727.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1734.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1776.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1783.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1825.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1832.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1874.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1881.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1923.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1930.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1972.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="1979.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2021.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2028.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2070.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2077.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2119.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2126.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2168.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2175.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2217.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2224.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2266.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2273.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2315.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2322.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2364.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2371.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2413.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2420.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2462.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2469.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2511.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2518.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2560.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="2567.5" y="16" width="7" height="144" fill="#f3e8e8"/>
+      <text x="42" y="163" text-anchor="end" class="axis">0</text><line x1="48" y1="160" x2="2611" y2="160" stroke="#e5e5e5" stroke-width="1"/><text x="42" y="92.0" text-anchor="end" class="axis">450 000</text><line x1="48" y1="89.0" x2="2611" y2="89.0" stroke="#e5e5e5" stroke-width="1"/><text x="42" y="21.0" text-anchor="end" class="axis">900 000</text><line x1="48" y1="18.0" x2="2611" y2="18.0" stroke="#e5e5e5" stroke-width="1"/>
+      <rect x="83" y="156.35788617777777" width="6" height="3.642113822222222" fill="#022f40"><title>2026-01-06: JT 23 084</title></rect><rect x="90" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-01-07: JT 3 300</title></rect><rect x="97" y="155.85833333333332" width="6" height="4.141666666666667" fill="#022f40"><title>2026-01-08: JT 26 250</title></rect><rect x="146" y="158.30515111111112" width="6" height="1.6948488888888888" fill="#022f40"><title>2026-01-15: JT 10 742</title></rect><rect x="174" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-01-19: JT 150</title></rect><rect x="230" y="152.65276222222224" width="6" height="7.347237777777778" fill="#022f40"><title>2026-01-27: JT 46 567</title></rect><rect x="237" y="158.20133333333334" width="6" height="1.7986666666666666" fill="#022f40"><title>2026-01-28: JT 11 400</title></rect><rect x="300" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-02-06: JT 899</title></rect><rect x="370" y="152.11111111111111" width="6" height="7.888888888888888" fill="#022f40"><title>2026-02-16: JT 50 000</title></rect><rect x="377" y="158.97444444444446" width="6" height="1.0255555555555556" fill="#022f40"><title>2026-02-17: JT 6 500</title></rect><rect x="433" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-02-25: JT 1 725</title></rect><rect x="440" y="138.5131911111111" width="6" height="21.48680888888889" fill="#022f40"><title>2026-02-26: JT 136 184</title></rect><rect x="517" y="154.66316666666665" width="6" height="5.336833333333334" fill="#022f40"><title>2026-03-09: JT 33 825</title></rect><rect x="524" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-03-10: JT 3 600</title></rect><rect x="531" y="155.52242444444445" width="6" height="4.477575555555556" fill="#022f40"><title>2026-03-11: JT 28 379</title></rect><rect x="538" y="155.36221057777777" width="6" height="4.637789422222222" fill="#022f40"><title>2026-03-12: JT 29 394</title></rect><rect x="545" y="157.5938888888889" width="6" height="2.4061111111111115" fill="#022f40"><title>2026-03-13: JT 15 250</title></rect><rect x="566" y="157.0811111111111" width="6" height="2.918888888888889" fill="#022f40"><title>2026-03-16: JT 18 500</title></rect><rect x="573" y="157.4361111111111" width="6" height="2.5638888888888887" fill="#022f40"><title>2026-03-17: JT 16 250</title></rect><rect x="615" y="153.80075333333332" width="6" height="6.199246666666667" fill="#022f40"><title>2026-03-23: JT 39 291</title></rect><rect x="643" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-03-27: JT 5 500</title></rect><rect x="664" y="156.14233333333334" width="6" height="3.8576666666666664" fill="#022f40"><title>2026-03-30: JT 24 450</title></rect><rect x="671" y="158.80693177777778" width="6" height="1.1930682222222222" fill="#022f40"><title>2026-03-31: JT 7 562</title></rect><rect x="678" y="157.0258888888889" width="6" height="2.974111111111111" fill="#022f40"><title>2026-04-01: JT 18 850</title></rect><rect x="727" y="158.86463111111112" width="6" height="1.1353688888888889" fill="#022f40"><title>2026-04-08: JT 7 196</title></rect><rect x="734" y="149.64977777777779" width="6" height="10.350222222222223" fill="#022f40"><title>2026-04-09: JT 65 600</title></rect><rect x="762" y="157.79111111111112" width="6" height="2.2088888888888887" fill="#022f40"><title>2026-04-13: JT 14 000</title></rect><rect x="769" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-04-14: JT 1 634</title></rect><rect x="776" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-04-15: JT 5 250</title></rect><rect x="783" y="158.6352222222222" width="6" height="1.3647777777777779" fill="#022f40"><title>2026-04-16: JT 8 650</title></rect><rect x="790" y="158.58" width="6" height="1.42" fill="#022f40"><title>2026-04-17: JT 9 000</title></rect><rect x="811" y="155.986654" width="6" height="4.013346" fill="#022f40"><title>2026-04-20: JT 25 437</title></rect><rect x="818" y="158.54844444444444" width="6" height="1.4515555555555557" fill="#022f40"><title>2026-04-21: JT 9 200</title></rect><rect x="825" y="152.42666666666668" width="6" height="7.573333333333334" fill="#022f40"><title>2026-04-22: JT 48 000</title></rect><rect x="860" y="137.5071936888889" width="6" height="22.49280631111111" fill="#022f40"><title>2026-04-27: JT 142 560</title></rect><rect x="881" y="140.07529997777777" width="6" height="19.924700022222222" fill="#022f40"><title>2026-04-30: JT 126 283</title></rect><rect x="909" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-05-04: JT 3 300</title></rect><rect x="916" y="154.23537115555555" width="6" height="5.764628844444445" fill="#022f40"><title>2026-05-05: JT 36 536</title></rect><rect x="923" y="138.95260222222223" width="6" height="21.04739777777778" fill="#022f40"><title>2026-05-06: JT 133 399</title></rect><rect x="930" y="148.97922222222223" width="6" height="11.020777777777779" fill="#022f40"><title>2026-05-07: JT 69 850</title></rect><rect x="937" y="123.71111111111111" width="6" height="36.288888888888884" fill="#022f40"><title>2026-05-08: JT 230 000</title></rect><rect x="958" y="158.6051908" width="6" height="1.3948092" fill="#022f40"><title>2026-05-11: JT 8 840</title></rect><rect x="972" y="156.11945555555556" width="6" height="3.8805444444444444" fill="#022f40"><title>2026-05-13: JT 24 595</title></rect><rect x="979" y="157.47555555555556" width="6" height="2.5244444444444443" fill="#022f40"><title>2026-05-14: JT 16 000</title></rect><rect x="1007" y="144.9286248888889" width="6" height="15.071375111111111" fill="#022f40"><title>2026-05-18: JT 95 523</title></rect><rect x="1021" y="129.89600000000002" width="6" height="30.104" fill="#022f40"><title>2026-05-20: JT 190 800</title></rect><rect x="1028" y="18.0" width="6" height="142.0" fill="#022f40"><title>2026-05-21: JT 900 000</title></rect><rect x="1035" y="140.17343144444445" width="6" height="19.826568555555554" fill="#022f40"><title>2026-05-22: JT 125 661</title></rect><rect x="1056" y="146.93442222222222" width="6" height="13.065577777777778" fill="#022f40"><title>2026-05-25: JT 82 810</title></rect><rect x="1112" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-02: JT 147</title></rect><rect x="1126" y="137.0089283111111" width="6" height="22.991071688888887" fill="#022f40"><title>2026-06-04: JT 145 718</title></rect><rect x="1133" y="140.34893555555556" width="6" height="19.651064444444444" fill="#022f40"><title>2026-06-05: JT 124 549</title></rect><rect x="1154" y="122.56889939999999" width="6" height="37.43110060000001" fill="#022f40"><title>2026-06-08: JT 237 239</title></rect><rect x="1161" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-09: JT 1 405</title></rect><rect x="1203" y="147.45666666666668" width="6" height="12.543333333333333" fill="#022f40"><title>2026-06-15: JT 79 500</title></rect><rect x="1224" y="152.48619937777778" width="6" height="7.513800622222223" fill="#022f40"><title>2026-06-18: JT 47 623</title></rect><rect x="1259" y="143.5064522888889" width="6" height="16.493547711111106" fill="#022f40"><title>2026-06-23: JT 104 537</title></rect><rect x="1266" y="138.97721555555555" width="6" height="21.022784444444444" fill="#022f40"><title>2026-06-24: JT 133 243</title></rect><rect x="1273" y="158.13822222222223" width="6" height="1.8617777777777778" fill="#022f40"><title>2026-06-25: JT 11 800</title></rect><rect x="1280" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-26: JT 1 700</title></rect><rect x="1287" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-27: JT 2 200</title></rect><rect x="1301" y="158.62733333333333" width="6" height="1.3726666666666667" fill="#022f40"><title>2026-06-29: JT 8 700</title></rect><rect x="1357" y="158.38147295555555" width="6" height="1.6185270444444444" fill="#022f40"><title>2026-07-07: JT 10 258</title></rect><rect x="1378" y="157.2302758" width="6" height="2.7697242" fill="#022f40"><title>2026-07-10: JT 17 555</title></rect><rect x="1399" y="151.1447222222222" width="6" height="8.855277777777777" fill="#022f40"><title>2026-07-13: JT 56 125</title></rect><rect x="1427" y="151.00666666666666" width="6" height="8.993333333333334" fill="#022f40"><title>2026-07-17: JT 57 000</title></rect><rect x="1476" y="150.36782444444444" width="6" height="9.632175555555555" fill="#022f40"><title>2026-07-24: JT 61 049</title></rect><rect x="1497" y="145.96192733333334" width="6" height="14.038072666666668" fill="#022f40"><title>2026-07-27: JT 88 974</title></rect><rect x="1567" y="144.157486" width="6" height="15.842514" fill="#022f40"><title>2026-08-06: JT 100 410</title></rect><rect x="1574" y="153.45222222222222" width="6" height="6.547777777777777" fill="#022f40"><title>2026-08-07: JT 41 500</title></rect><rect x="1595" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-08-10: JT 539</title></rect><rect x="1693" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-08-24: JT 2 400</title></rect><rect x="1700" y="154.91166666666666" width="6" height="5.088333333333334" fill="#022f40"><title>2026-08-25: JT 32 250</title></rect><rect x="1707" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-08-26: JT 5 168</title></rect><rect x="1714" y="154.4541111111111" width="6" height="5.545888888888889" fill="#022f40"><title>2026-08-27: JT 35 150</title></rect><rect x="1777" y="158.89634444444445" width="6" height="1.1036555555555556" fill="#022f40"><title>2026-09-05: JT 6 995</title></rect>
+      <text x="48" y="174" class="axis">Jan</text><text x="265" y="174" class="axis">Feb</text><text x="461" y="174" class="axis">Mar</text><text x="678" y="174" class="axis">Apr</text><text x="888" y="174" class="axis">May</text><text x="1105" y="174" class="axis">Jun</text><text x="1315" y="174" class="axis">Jul</text><text x="1532" y="174" class="axis">Aug</text><text x="1749" y="174" class="axis">Sep</text><text x="1959" y="174" class="axis">Oct</text><text x="2176" y="174" class="axis">Nov</text><text x="2386" y="174" class="axis">Dec</text>
+    </svg>
+  </div>
+</div>
+
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. Несколько заказов в один день суммируются; JT и KT в одном дне — сегменты одной колонки.</p>
+</section>
+
+
+<section class="card period" id="period-1">
+  <h2>01.06 — 18.09.2026</h2>
+  <p class="period-range">01.06.2026 — 18.09.2026 · заказы по дате Q · 1446 поз.</p>
+  <p class="hint warn">KT MNT не найден в столбце Z (Поставщик) в этом ТАЗ — в долях и скорости оплаты по KT показатели нулевые. Учтён только JET TECHNIC.</p>
+
+  <h3>1. Доли поставщиков</h3>
+  <div class="kpis">
+    <div class="highlight"><div class="label">Выручка всего</div><div class="value">11 460 847</div><div class="muted">USD · продажная итого</div></div>
+    <div><div class="label">Маржа всего</div><div class="value">3 329 375</div><div class="muted">продажа − закупка</div></div>
+    <div><div class="label">JT выручка</div><div class="value">12.5%</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">KT выручка</div><div class="value">0.0%</div><div class="muted">доля от выручки</div></div>
+  </div>
+  <div class="table-scroll">
+  <table class="sortable" data-table="shares-1">
+    <thead>
+      <tr>
+        <th data-type="str" data-col="0">Поставщик <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="1">Выручка, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="2">% выручки <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="3">Маржа, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="4">% маржи <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="5">n <span class="arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class=""><td>IBERIA</td><td class="num" data-value="6562950.125">6 562 950</td><td class="num" data-value="57.264">57.3%</td><td class="num" data-value="1985166.966">1 985 167</td><td class="num" data-value="59.626">59.6%</td><td class="num" data-value="296">296</td></tr><tr class=""><td>LUFTHANSA</td><td class="num" data-value="1495807.584">1 495 808</td><td class="num" data-value="13.051">13.1%</td><td class="num" data-value="420812.854">420 813</td><td class="num" data-value="12.639">12.6%</td><td class="num" data-value="558">558</td></tr><tr class="channel-jt"><td>JET TECHNIC</td><td class="num" data-value="1431279.4">1 431 279</td><td class="num" data-value="12.488">12.5%</td><td class="num" data-value="410102.71">410 103</td><td class="num" data-value="12.318">12.3%</td><td class="num" data-value="152">152</td></tr><tr class=""><td>CAESAR</td><td class="num" data-value="1360000.0">1 360 000</td><td class="num" data-value="11.866">11.9%</td><td class="num" data-value="290000.0">290 000</td><td class="num" data-value="8.710">8.7%</td><td class="num" data-value="2">2</td></tr><tr class=""><td>BLUE OCEAN SOLUTIONS</td><td class="num" data-value="441433.83">441 434</td><td class="num" data-value="3.852">3.9%</td><td class="num" data-value="156702.354">156 702</td><td class="num" data-value="4.707">4.7%</td><td class="num" data-value="367">367</td></tr><tr class=""><td>ФЭИ</td><td class="num" data-value="152062.13">152 062</td><td class="num" data-value="1.327">1.3%</td><td class="num" data-value="55978.04">55 978</td><td class="num" data-value="1.681">1.7%</td><td class="num" data-value="66">66</td></tr><tr class=""><td>RUSLINE</td><td class="num" data-value="15000.0">15 000</td><td class="num" data-value="0.131">0.1%</td><td class="num" data-value="9000.0">9 000</td><td class="num" data-value="0.270">0.3%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>nan</td><td class="num" data-value="2050.0">2 050</td><td class="num" data-value="0.018">0.0%</td><td class="num" data-value="1856.9">1 857</td><td class="num" data-value="0.056">0.1%</td><td class="num" data-value="2">2</td></tr><tr class=""><td>UTG</td><td class="num" data-value="264.0">264</td><td class="num" data-value="0.002">0.0%</td><td class="num" data-value="-144.0">-144</td><td class="num" data-value="-0.004">-0.0%</td><td class="num" data-value="1">1</td></tr><tr class=""><td>AIRCRAFT SPRUCE &amp; SPECIALTY CO.</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="-101.0">-101</td><td class="num" data-value="-0.003">-0.0%</td><td class="num" data-value="1">1</td></tr><tr class="channel-kt"><td>KT MNT</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="0.0">0</td><td class="num" data-value="0.000">0.0%</td><td class="num" data-value="0">0</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>2. Time to pay (только JT + KT, STK)</h3>
+  <div class="kpis three">
+    
+        <div>
+          <div class="label">JT + KT</div>
+          <div class="value">14.1 дн.</div>
+          <div class="muted">медиана 8.0 · n=87</div>
+        </div>
+    
+        <div>
+          <div class="label">JET TECHNIC</div>
+          <div class="value">14.1 дн.</div>
+          <div class="muted">медиана 8.0 · n=87</div>
+        </div>
+    
+        <div>
+          <div class="label">KT MNT</div>
+          <div class="value">— дн.</div>
+          <div class="muted">медиана — · n=0</div>
+        </div>
+  </div>
+  <p class="hint">
+    Срок = дата оплаты поставщику (AW) − дата взятия в работу (Q).
+    В среднее: только Lead time = STK; исключены постоплата (есть дата начала движения BA раньше оплаты AW)
+    и заказы с ненулевым lead time (оплата после LT — норма).
+    Исключено как постоплата: JT 35, KT 0;
+    как lead-time: JT 15, KT 0.
+  </p>
+
+  <h3>3. Платежи по дням (AW)</h3>
+  
+<div class="chart-wrap" id="chart-1">
+  <div class="legend">
+    <span><i class="swatch jt"></i>JET TECHNIC</span>
+    <span><i class="swatch kt"></i>KT MNT</span>
+    <span class="muted">розовый фон = сб/вс</span>
+  </div>
+  <div class="chart-scroll">
+    <svg viewBox="0 0 834 180" width="834" height="180" role="img" aria-label="Платежи поставщикам по дням">
+      <rect x="82.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="89.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="131.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="138.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="180.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="187.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="229.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="236.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="278.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="285.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="327.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="334.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="376.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="383.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="425.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="432.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="474.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="481.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="523.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="530.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="572.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="579.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="621.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="628.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="670.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="677.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="719.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="726.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="768.5" y="16" width="7" height="144" fill="#f3e8e8"/><rect x="775.5" y="16" width="7" height="144" fill="#f3e8e8"/>
+      <text x="42" y="163" text-anchor="end" class="axis">0</text><line x1="48" y1="160" x2="826" y2="160" stroke="#e5e5e5" stroke-width="1"/><text x="42" y="92.0" text-anchor="end" class="axis">118 620</text><line x1="48" y1="89.0" x2="826" y2="89.0" stroke="#e5e5e5" stroke-width="1"/><text x="42" y="21.0" text-anchor="end" class="axis">237 239</text><line x1="48" y1="18.0" x2="826" y2="18.0" stroke="#e5e5e5" stroke-width="1"/>
+      <rect x="55" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-02: JT 147</title></rect><rect x="69" y="72.78022479995627" width="6" height="87.21977520004373" fill="#022f40"><title>2026-06-04: JT 145 718</title></rect><rect x="76" y="85.45099913222667" width="6" height="74.54900086777333" fill="#022f40"><title>2026-06-05: JT 124 549</title></rect><rect x="97" y="18.0" width="6" height="142.0" fill="#022f40"><title>2026-06-08: JT 237 239</title></rect><rect x="104" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-06-09: JT 1 405</title></rect><rect x="146" y="112.41514930679509" width="6" height="47.58485069320492" fill="#022f40"><title>2026-06-15: JT 79 500</title></rect><rect x="167" y="131.49536959232358" width="6" height="28.50463040767643" fill="#022f40"><title>2026-06-18: JT 47 623</title></rect><rect x="202" y="97.42947074931115" width="6" height="62.57052925068886" fill="#022f40"><title>2026-06-23: JT 104 537</title></rect><rect x="209" y="80.24719168660751" width="6" height="79.75280831339249" fill="#022f40"><title>2026-06-24: JT 133 243</title></rect><rect x="216" y="152.93709134365008" width="6" height="7.062908656349912" fill="#022f40"><title>2026-06-25: JT 11 800</title></rect><rect x="223" y="158.98246231222078" width="6" height="1.0175376877792248" fill="#022f40"><title>2026-06-26: JT 1 700</title></rect><rect x="230" y="158.68318652169748" width="6" height="1.316813478302526" fill="#022f40"><title>2026-06-27: JT 2 200</title></rect><rect x="244" y="154.79260124489457" width="6" height="5.2073987551054435" fill="#022f40"><title>2026-06-29: JT 8 700</title></rect><rect x="300" y="153.85989627269706" width="6" height="6.140103727302934" fill="#022f40"><title>2026-07-07: JT 10 258</title></rect><rect x="321" y="149.4926724008751" width="6" height="10.507327599124883" fill="#022f40"><title>2026-07-10: JT 17 555</title></rect><rect x="342" y="126.40629251375941" width="6" height="33.59370748624058" fill="#022f40"><title>2026-07-13: JT 56 125</title></rect><rect x="370" y="125.88255988034365" width="6" height="34.11744011965636" fill="#022f40"><title>2026-07-17: JT 57 000</title></rect><rect x="419" y="123.45902452868594" width="6" height="36.540975471314056" fill="#022f40"><title>2026-07-24: JT 61 049</title></rect><rect x="440" y="106.74465119343387" width="6" height="53.255348806566126" fill="#022f40"><title>2026-07-27: JT 88 974</title></rect><rect x="510" y="99.8992561816363" width="6" height="60.1007438183637" fill="#022f40"><title>2026-08-06: JT 100 410</title></rect><rect x="517" y="135.16010938656598" width="6" height="24.839890613434015" fill="#022f40"><title>2026-08-07: JT 41 500</title></rect><rect x="538" y="159.0" width="6" height="1.0" fill="#022f40"><title>2026-08-10: JT 539</title></rect><rect x="636" y="158.56347620548814" width="6" height="1.4365237945118465" fill="#022f40"><title>2026-08-24: JT 2 400</title></rect><rect x="643" y="140.69671151124706" width="6" height="19.30328848875294" fill="#022f40"><title>2026-08-25: JT 32 250</title></rect><rect x="650" y="156.90668542915117" width="6" height="3.093314570848843" fill="#022f40"><title>2026-08-26: JT 5 168</title></rect><rect x="657" y="138.9609119262119" width="6" height="21.03908807378809" fill="#022f40"><title>2026-08-27: JT 35 150</title></rect><rect x="720" y="155.813131690579" width="6" height="4.186868309420987" fill="#022f40"><title>2026-09-05: JT 6 995</title></rect>
+      <text x="48" y="174" class="axis">Jun</text><text x="258" y="174" class="axis">Jul</text><text x="475" y="174" class="axis">Aug</text><text x="692" y="174" class="axis">Sep</text>
+    </svg>
+  </div>
+</div>
+
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. Несколько заказов в один день суммируются; JT и KT в одном дне — сегменты одной колонки.</p>
+</section>
+
+  <p class="hint">
+    Выручка = «Продажная, итого»; маржа = продажа − закупка.
+    Каналы JT/KT определяются по столбцу Z (Поставщик). Root supplier (AA) — контрагент, которому платят JT/KT.
+  </p>
+</div>
+<script>
+(function () {
+  function cellValue(td, type) {
+    const raw = td.getAttribute('data-value');
+    if (raw === null || raw === '') {
+      const t = td.textContent.trim();
+      if (type === 'num') {
+        const n = Number(t.replace(/\s/g,'').replace('%','').replace('—',''));
+        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+      }
+      return t.toLowerCase();
+    }
+    return type === 'num' ? Number(raw) : String(raw);
+  }
+  document.querySelectorAll('table.sortable').forEach(table => {
+    const tbody = table.tBodies[0];
+    const headers = [...table.tHead.rows[0].cells];
+    let sortCol = -1;
+    let asc = true;
+    headers.forEach(th => {
+      th.addEventListener('click', () => {
+        const col = Number(th.dataset.col);
+        const type = th.dataset.type;
+        if (sortCol === col) asc = !asc;
+        else { sortCol = col; asc = type !== 'num'; }
+        headers.forEach((h, i) => {
+          h.classList.toggle('sorted', i === col);
+          const arrow = h.querySelector('.arrow');
+          if (arrow) arrow.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
+        });
+        const rows = [...tbody.rows];
+        rows.sort((a, b) => {
+          const av = cellValue(a.cells[col], type);
+          const bv = cellValue(b.cells[col], type);
+          let cmp = type === 'num' ? (av - bv) : String(av).localeCompare(String(bv), 'ru');
+          if (type === 'num') {
+            const aEmpty = !isFinite(av);
+            const bEmpty = !isFinite(bv);
+            if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+          }
+          return asc ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
