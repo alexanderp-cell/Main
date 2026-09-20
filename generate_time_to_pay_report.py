@@ -24,7 +24,7 @@ COL_PAY_AMOUNT = "Сумма оплаты поставщику"
 COL_MOVEMENT = "Дата начала движения"
 
 JT_LABEL = "JET TECHNIC"
-KT_LABEL = "KT MNT"
+KT_LABEL = "KT MNT (IBERIA)"
 
 
 def parse_numeric(value) -> float:
@@ -74,8 +74,10 @@ def classify_channel(name: str) -> str | None:
     u = re.sub(r"\s+", " ", str(name or "").strip().upper())
     if "JET TECHNIC" in u or u in {"JT", "JETTECHNIC", "JET-TECHNIC"}:
         return "JT"
+    # KT MNT channel is recorded in TAZ column Z as IBERIA
     if (
-        "KT MNT" in u
+        "IBERIA" in u
+        or "KT MNT" in u
         or "KT MAINTENANCE" in u
         or "KT MAINTEN" in u
         or u in {"KT", "KTMNT", "KT-MNT", "KT_MNT"}
@@ -312,7 +314,7 @@ def build_payments(df: pd.DataFrame, start: date, end: date) -> list[DayPay]:
 
 
 def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodReport:
-    q_ok = df["_q"].notna() & df["_q"].map(lambda d: start <= d <= end)
+    q_ok = df["_q"].map(lambda d: in_period(d, start, end))
     by_q = df.loc[q_ok].copy()
     shares, total_rev, total_m, total_n = build_shares(by_q)
     channels = by_q[by_q["_channel"].isin(["JT", "KT"])].copy()

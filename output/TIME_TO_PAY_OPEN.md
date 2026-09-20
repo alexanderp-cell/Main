@@ -1,6 +1,6 @@
 # TIME TO PAY
 
-**Открыть HTML:** https://litter.catbox.moe/t2pxrq.html
+**Открыть HTML:** https://litter.catbox.moe/dh8hqu.html
 
 KT MNT в ТАЗ = **IBERIA** (столбец Z). JT = JET TECHNIC.
 
