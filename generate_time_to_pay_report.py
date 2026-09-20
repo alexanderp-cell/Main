@@ -99,8 +99,15 @@ def load_taz(path: Path) -> pd.DataFrame:
 def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
-    out["_supplier"] = out[COL_SUPPLIER].astype(str).str.strip()
-    out.loc[out["_supplier"].str.lower().isin({"nan", "none", ""}), "_supplier"] = "— без поставщика —"
+    out["_supplier"] = (
+        out[COL_SUPPLIER]
+        .fillna("")
+        .map(lambda v: "" if (isinstance(v, float) and pd.isna(v)) else str(v).strip())
+    )
+    out.loc[
+        out["_supplier"].eq("") | out["_supplier"].str.lower().isin({"nan", "none", "<na>"}),
+        "_supplier",
+    ] = "— без поставщика —"
     out["_channel"] = out["_supplier"].map(classify_channel)
     out["_q"] = out[COL_ORDER_DATE].map(parse_date)
     out["_aw"] = out[COL_PAY_DATE].map(parse_date)
@@ -182,7 +189,9 @@ def build_shares(rows: pd.DataFrame) -> tuple[list[SupplierShare], float, float,
     shares: list[SupplierShare] = []
     seen_channels = set()
     for _, rec in grouped.iterrows():
-        name = str(rec["_supplier"])
+        name = str(rec["_supplier"]).strip()
+        if name.lower() in {"nan", "none", "", "<na>"}:
+            name = "— без поставщика —"
         ch = classify_channel(name)
         if ch:
             seen_channels.add(ch)
@@ -297,7 +306,8 @@ def build_payments(df: pd.DataFrame, start: date, end: date) -> list[DayPay]:
 
 
 def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodReport:
-    by_q = df[df["_q"].map(lambda d: in_period(d, start, end))].copy()
+    q_ok = df["_q"].notna() & df["_q"].map(lambda d: start <= d <= end)
+    by_q = df.loc[q_ok].copy()
     shares, total_rev, total_m, total_n = build_shares(by_q)
     channels = by_q[by_q["_channel"].isin(["JT", "KT"])].copy()
     kt_found = bool((df["_channel"] == "KT").any())
