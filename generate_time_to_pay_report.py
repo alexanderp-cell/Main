@@ -375,92 +375,77 @@ def render_histogram(payments: list[DayPay], chart_id: str) -> str:
     if not payments:
         return '<p class="hint">Нет платежей JT/KT за период.</p>'
 
-    max_amt = max((max(p.jt, p.kt) for p in payments), default=0.0) or 1.0
+    # Stacked JT+KT; whole period fits page width. Money axis is HTML (always readable).
+    max_amt = max((p.jt + p.kt for p in payments), default=0.0) or 1.0
     n = len(payments)
-    # Wider / taller chart: side-by-side JT+KT bars, adaptive slot width
-    if n <= 120:
-        slot = 18
-        half = 7
-    elif n <= 200:
-        slot = 12
-        half = 5
-    else:
-        slot = 10
-        half = 4
-    gap_pair = 2
-    left = 72
-    top = 28
-    bottom = 48
-    height = 420
-    width = left + n * slot + 24
-    plot_h = height - top - bottom
+    plot_h = 100  # viewBox units; CSS sets real pixel height
+    width = max(n, 1)
 
     bars = []
     weekend_bg = []
     for i, p in enumerate(payments):
-        x0 = left + i * slot
-        is_we = p.day.weekday() >= 5
-        if is_we:
+        if p.day.weekday() >= 5:
             weekend_bg.append(
-                f'<rect x="{x0}" y="{top}" width="{slot}" height="{plot_h}" fill="#f7ecec"/>'
+                f'<rect x="{i}" y="0" width="1" height="{plot_h}" fill="#f3e8e8"/>'
             )
+        total = p.jt + p.kt
+        if total <= 0:
+            continue
         tip = (
             f"{p.day.strftime('%d.%m.%Y')}"
             f" · JT {fmt_money(p.jt)} · KT {fmt_money(p.kt)}"
-            f" · всего {fmt_money(p.jt + p.kt)}"
+            f" · всего {fmt_money(total)}"
         )
-        # JT left, KT right — paired columns for readability
-        if p.jt > 0:
-            h_jt = max(2.0, p.jt / max_amt * (plot_h - 4))
-            y_jt = top + plot_h - h_jt
+        x = i + 0.15
+        bw = 0.7
+        h = max(0.8, total / max_amt * (plot_h - 1))
+        y = plot_h - h
+        if p.kt > 0 and p.jt > 0:
+            h_kt = h * (p.kt / total)
+            h_jt = h - h_kt
             bars.append(
-                f'<rect x="{x0 + 1}" y="{y_jt}" width="{half}" height="{h_jt}" '
-                f'rx="1" fill="#022f40"><title>{html_escape(tip)}</title></rect>'
+                f'<rect x="{x}" y="{y + h_jt}" width="{bw}" height="{h_kt}" fill="#c45c26">'
+                f"<title>{html_escape(tip)}</title></rect>"
             )
-        if p.kt > 0:
-            h_kt = max(2.0, p.kt / max_amt * (plot_h - 4))
-            y_kt = top + plot_h - h_kt
             bars.append(
-                f'<rect x="{x0 + 1 + half + gap_pair}" y="{y_kt}" width="{half}" height="{h_kt}" '
-                f'rx="1" fill="#c45c26"><title>{html_escape(tip)}</title></rect>'
+                f'<rect x="{x}" y="{y}" width="{bw}" height="{h_jt}" fill="#022f40">'
+                f"<title>{html_escape(tip)}</title></rect>"
+            )
+        elif p.kt > 0:
+            bars.append(
+                f'<rect x="{x}" y="{y}" width="{bw}" height="{h}" fill="#c45c26">'
+                f"<title>{html_escape(tip)}</title></rect>"
+            )
+        else:
+            bars.append(
+                f'<rect x="{x}" y="{y}" width="{bw}" height="{h}" fill="#022f40">'
+                f"<title>{html_escape(tip)}</title></rect>"
             )
 
-    # y-axis grid + labels (0 / 25 / 50 / 75 / 100%)
-    y_labels = []
-    for frac in (0, 0.25, 0.5, 0.75, 1.0):
-        yy = top + plot_h - frac * (plot_h - 2)
-        val = max_amt * frac
-        y_labels.append(
-            f'<line x1="{left}" y1="{yy}" x2="{width - 12}" y2="{yy}" '
-            f'stroke="#dde3e6" stroke-width="1"/>'
-            f'<text x="{left - 8}" y="{yy + 4}" text-anchor="end" class="axis">'
-            f"{fmt_money(val)}</text>"
+    grid = []
+    for frac in (0.25, 0.5, 0.75, 1.0):
+        yy = plot_h * (1.0 - frac)
+        grid.append(
+            f'<line x1="0" y1="{yy}" x2="{width}" y2="{yy}" '
+            f'stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/>'
         )
-
-    # baseline
-    y_labels.append(
-        f'<line x1="{left}" y1="{top + plot_h}" x2="{width - 12}" y2="{top + plot_h}" '
-        f'stroke="#9aa6ab" stroke-width="1.5"/>'
+    grid.append(
+        f'<line x1="0" y1="{plot_h}" x2="{width}" y2="{plot_h}" '
+        f'stroke="#9aa6ab" stroke-width="1" vector-effect="non-scaling-stroke"/>'
     )
 
-    # x labels: month names + day ticks for short periods
-    x_labels = []
+    yaxis_html = "".join(
+        f'<span>{fmt_money(max_amt * frac)}</span>' for frac in (1.0, 0.75, 0.5, 0.25, 0.0)
+    )
+
+    month_marks = []
     last_month = None
     for i, p in enumerate(payments):
-        x = left + i * slot + slot / 2
         if p.day.month != last_month:
             last_month = p.day.month
-            label = p.day.strftime("%b")
-            x_labels.append(
-                f'<text x="{x}" y="{height - 8}" text-anchor="middle" class="axis-month">'
-                f"{html_escape(label)}</text>"
-            )
-        # day-of-month ticks every ~7 days (or every day if few)
-        step = 1 if n <= 45 else (7 if n <= 160 else 14)
-        if i % step == 0:
-            x_labels.append(
-                f'<text x="{x}" y="{height - 26}" text-anchor="middle" class="axis">'
-                f"{p.day.day}</text>"
+            pct = (i / n) * 100.0
+            month_marks.append(
+                f'<span style="left:{pct:.2f}%">{html_escape(p.day.strftime("%b"))}</span>'
             )
 
     totals_jt = sum(p.jt for p in payments)
@@ -473,25 +458,31 @@ def render_histogram(payments: list[DayPay], chart_id: str) -> str:
   <div class="legend">
     <span><i class="swatch jt"></i>JET TECHNIC · {fmt_money(totals_jt)}</span>
     <span><i class="swatch kt"></i>KT MNT (IBERIA) · {fmt_money(totals_kt)}</span>
-    <span class="muted">розовый фон = сб/вс · {html_escape(peak_tip)}</span>
+    <span class="muted">розовый = сб/вс · {html_escape(peak_tip)}</span>
   </div>
-  <div class="chart-scroll">
-    <svg viewBox="0 0 {width} {height}" width="100%" height="{height}"
-         preserveAspectRatio="xMinYMid meet"
-         role="img" aria-label="Платежи поставщикам по дням">
-      {''.join(weekend_bg)}
-      {''.join(y_labels)}
-      {''.join(bars)}
-      {''.join(x_labels)}
-    </svg>
+  <div class="chart-frame">
+    <div class="chart-yaxis" aria-hidden="true">{yaxis_html}</div>
+    <div class="chart-plot">
+      <svg viewBox="0 0 {width} {plot_h}" preserveAspectRatio="none"
+           role="img" aria-label="Платежи поставщикам по дням">
+        {''.join(weekend_bg)}
+        {''.join(grid)}
+        {''.join(bars)}
+      </svg>
+    </div>
+    <div class="chart-xaxis">{''.join(month_marks)}</div>
   </div>
 </div>
 """
 
 
+
 def render_period_section(period: PeriodReport, idx: int) -> str:
+    jt_pct = next((s.revenue_pct for s in period.shares if s.channel == "JT"), 0.0)
+    kt_pct = next((s.revenue_pct for s in period.shares if s.channel == "KT"), 0.0)
+    top_shares = period.shares[:5]
     shares_rows = []
-    for s in period.shares:
+    for s in top_shares:
         cls = "channel-jt" if s.channel == "JT" else ("channel-kt" if s.channel == "KT" else "")
         shares_rows.append(
             f'<tr class="{cls}">'
@@ -528,12 +519,12 @@ def render_period_section(period: PeriodReport, idx: int) -> str:
   <p class="period-range">{period.start.strftime('%d.%m.%Y')} — {period.end.strftime('%d.%m.%Y')} · только «Продажа от поставщика» · заказы по дате Q · {period.total_n} поз.</p>
   {kt_note}
 
-  <h3>1. Доли поставщиков</h3>
+  <h3>1. Топ-5 поставщиков</h3>
   <div class="kpis">
     <div class="highlight"><div class="label">Выручка всего</div><div class="value">{fmt_money(period.total_revenue)}</div><div class="muted">USD · продажная итого</div></div>
     <div><div class="label">Маржа всего</div><div class="value">{fmt_money(period.total_margin)}</div><div class="muted">продажа − закупка</div></div>
-    <div><div class="label">JT выручка</div><div class="value">{fmt_pct(next((s.revenue_pct for s in period.shares if s.channel=='JT'), 0.0))}</div><div class="muted">доля от выручки</div></div>
-    <div><div class="label">KT выручка</div><div class="value">{fmt_pct(next((s.revenue_pct for s in period.shares if s.channel=='KT'), 0.0))}</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">JT выручка</div><div class="value">{fmt_pct(jt_pct)}</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">KT выручка</div><div class="value">{fmt_pct(kt_pct)}</div><div class="muted">доля от выручки</div></div>
   </div>
   <div class="table-scroll">
   <table class="sortable" data-table="shares-{idx}">
@@ -569,7 +560,7 @@ def render_period_section(period: PeriodReport, idx: int) -> str:
 
   <h3>3. Платежи по дням (AW)</h3>
   {render_histogram(period.payments, f"chart-{idx}")}
-  <p class="hint">Суммы оплат поставщику (AX) по дате AW. JT и KT — парные колонки на каждый день; наведите на столбец для суммы.</p>
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. JT (верх) + KT (низ) в одном столбце дня; весь период на ширину страницы, без прокрутки.</p>
 </section>
 """
 
@@ -594,7 +585,7 @@ body {{
   color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
   line-height:1.45;
 }}
-.wrap {{ max-width:min(1480px, 96vw); margin:0 auto; padding:28px 16px 64px; }}
+.wrap {{ max-width:1100px; margin:0 auto; padding:28px 20px 64px; }}
 .brand {{
   background:var(--cyan); color:var(--navy); display:inline-block;
   padding:6px 10px; font-weight:700; margin-bottom:14px;
@@ -634,19 +625,62 @@ tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
 .hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}
 .hint.warn {{ color:#8a3b12; background:#fff4ec; border:1px solid #f0c7a8; padding:10px 12px; border-radius:8px; }}
 .chart-wrap {{ margin-top:8px; }}
-.legend {{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:10px; font-size:14px; }}
-.swatch {{ display:inline-block; width:14px; height:14px; border-radius:2px; margin-right:6px; vertical-align:middle; }}
+.legend {{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:10px; font-size:13px; }}
+.swatch {{ display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px; vertical-align:middle; }}
 .swatch.jt {{ background:var(--jt); }}
 .swatch.kt {{ background:var(--kt); }}
-.chart-scroll {{
-  overflow-x:auto; border:1px solid var(--line); border-radius:8px;
-  background:#fff; padding:12px 8px 8px; min-height:440px;
+.chart-frame {{
+  display:grid;
+  grid-template-columns:72px 1fr;
+  grid-template-rows:260px auto;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  overflow:hidden;
 }}
-.chart-scroll svg {{ display:block; min-width:100%; }}
-svg .axis {{ font-size:11px; fill:#6b7578; font-family: Arial, sans-serif; }}
-svg .axis-month {{ font-size:12px; fill:#022f40; font-weight:700; font-family: Arial, sans-serif; }}
+.chart-yaxis {{
+  grid-row:1;
+  grid-column:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:6px 8px 6px 4px;
+  font-size:11px;
+  color:#5a5a5a;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  background:#fafcfd;
+  border-right:1px solid #e5e5e5;
+  line-height:1.1;
+}}
+.chart-plot {{
+  grid-row:1;
+  grid-column:2;
+  min-width:0;
+  height:260px;
+}}
+.chart-plot svg {{ width:100%; height:100%; display:block; }}
+.chart-xaxis {{
+  grid-row:2;
+  grid-column:2;
+  position:relative;
+  height:28px;
+  border-top:1px solid #e8e8e8;
+  background:#fafcfd;
+}}
+.chart-xaxis span {{
+  position:absolute;
+  top:6px;
+  transform:translateX(2px);
+  font-size:11px;
+  font-weight:700;
+  color:var(--navy);
+  white-space:nowrap;
+}}
 @media (max-width:800px) {{
   .kpis, .kpis.three {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+  .chart-frame {{ grid-template-columns:56px 1fr; grid-template-rows:220px auto; }}
+  .chart-plot {{ height:220px; }}
 }}
 </style>
 </head>
