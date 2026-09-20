@@ -100,6 +100,7 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
     out["_supplier"] = out[COL_SUPPLIER].astype(str).str.strip()
+    out.loc[out["_supplier"].str.lower().isin({"nan", "none", ""}), "_supplier"] = "— без поставщика —"
     out["_channel"] = out["_supplier"].map(classify_channel)
     out["_q"] = out[COL_ORDER_DATE].map(parse_date)
     out["_aw"] = out[COL_PAY_DATE].map(parse_date)
