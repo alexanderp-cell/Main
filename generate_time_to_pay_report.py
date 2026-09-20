@@ -206,7 +206,14 @@ def build_shares(rows: pd.DataFrame) -> tuple[list[SupplierShare], float, float,
                 n=int(rec["n"]),
             )
         )
-    # ensure KT row exists even if absent in TAZ
+    # ensure display names for channels are clear in the shares table
+    for s in shares:
+        if s.channel == "KT" and s.name.upper() == "IBERIA":
+            s.name = "IBERIA (KT MNT)"
+        if s.channel == "JT" and "JET TECHNIC" in s.name.upper():
+            s.name = "JET TECHNIC (JT)"
+
+    # ensure KT/JT rows exist even if absent in TAZ
     if "KT" not in seen_channels:
         shares.append(
             SupplierShare(
@@ -219,7 +226,6 @@ def build_shares(rows: pd.DataFrame) -> tuple[list[SupplierShare], float, float,
                 n=0,
             )
         )
-    # keep JT/KT near top after majors: sort by revenue but pin channels after sort
     shares.sort(key=lambda s: (-s.revenue, s.name.casefold()))
     return shares, total_rev, total_m, total_n
 
@@ -428,7 +434,7 @@ def render_histogram(payments: list[DayPay], chart_id: str) -> str:
 <div class="chart-wrap" id="{html_escape(chart_id)}">
   <div class="legend">
     <span><i class="swatch jt"></i>JET TECHNIC</span>
-    <span><i class="swatch kt"></i>KT MNT</span>
+    <span><i class="swatch kt"></i>KT MNT (IBERIA)</span>
     <span class="muted">розовый фон = сб/вс</span>
   </div>
   <div class="chart-scroll">
@@ -469,8 +475,11 @@ def render_period_section(period: PeriodReport, idx: int) -> str:
     kt_note = ""
     if not period.kt_found:
         kt_note = (
-            '<p class="hint warn">KT MNT не найден в столбце Z (Поставщик) в этом ТАЗ — '
-            "в долях и скорости оплаты по KT показатели нулевые. Учтён только JET TECHNIC.</p>"
+            '<p class="hint warn">KT MNT (IBERIA) не найден в столбце Z за этот период.</p>'
+        )
+    else:
+        kt_note = (
+            '<p class="hint">KT MNT в ТАЗ = поставщик <strong>IBERIA</strong> (столбец Z).</p>'
         )
 
     return f"""
@@ -604,7 +613,7 @@ svg .axis {{ font-size:10px; fill:#757575; font-family: Arial, sans-serif; }}
   {sections}
   <p class="hint">
     Выручка = «Продажная, итого»; маржа = продажа − закупка.
-    Каналы JT/KT определяются по столбцу Z (Поставщик). Root supplier (AA) — контрагент, которому платят JT/KT.
+    Каналы: JT = JET TECHNIC, KT MNT = IBERIA (столбец Z). Root supplier (AA) — контрагент, которому платят JT/KT.
   </p>
 </div>
 <script>
