@@ -22,9 +22,11 @@ COL_LEAD_TIME = "Lead time"
 COL_PAY_DATE = "Дата оплаты поставщику"
 COL_PAY_AMOUNT = "Сумма оплаты поставщику"
 COL_MOVEMENT = "Дата начала движения"
+COL_DELIVERY_TYPE = "Тип поставки"
 
 JT_LABEL = "JET TECHNIC"
 KT_LABEL = "KT MNT (IBERIA)"
+DELIVERY_TYPE_KEEP = "продажа от поставщика"
 
 
 def parse_numeric(value) -> float:
@@ -98,6 +100,11 @@ def load_taz(path: Path) -> pd.DataFrame:
     return df
 
 
+def is_sale_from_supplier(value) -> bool:
+    text = re.sub(r"\s+", " ", str(value or "").strip().lower())
+    return text == DELIVERY_TYPE_KEEP
+
+
 def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
@@ -125,9 +132,14 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_days_pay"] = [
         (aw - q).days if aw and q else None for aw, q in zip(out["_aw"], out["_q"])
     ]
+    # only «Продажа от поставщика» (Тип поставки)
+    if COL_DELIVERY_TYPE in out.columns:
+        keep_type = out[COL_DELIVERY_TYPE].map(is_sale_from_supplier)
+    else:
+        keep_type = pd.Series(True, index=out.index)
     # drop cancelled-like
     bad = out["_status"].str.contains("CANCELLED|REFUND|WARRANTY", na=False)
-    return out.loc[~bad].copy()
+    return out.loc[keep_type & ~bad].copy()
 
 
 @dataclass
@@ -363,84 +375,110 @@ def render_histogram(payments: list[DayPay], chart_id: str) -> str:
     if not payments:
         return '<p class="hint">Нет платежей JT/KT за период.</p>'
 
-    max_amt = max((p.jt + p.kt) for p in payments) or 1.0
-    # SVG geometry
-    bar_w = 6
-    gap = 1
-    left = 48
-    top = 16
-    height = 180
-    width = left + len(payments) * (bar_w + gap) + 16
-    plot_h = height - 36
+    max_amt = max((max(p.jt, p.kt) for p in payments), default=0.0) or 1.0
+    n = len(payments)
+    # Wider / taller chart: side-by-side JT+KT bars, adaptive slot width
+    if n <= 120:
+        slot = 18
+        half = 7
+    elif n <= 200:
+        slot = 12
+        half = 5
+    else:
+        slot = 10
+        half = 4
+    gap_pair = 2
+    left = 72
+    top = 28
+    bottom = 48
+    height = 420
+    width = left + n * slot + 24
+    plot_h = height - top - bottom
 
     bars = []
     weekend_bg = []
     for i, p in enumerate(payments):
-        x = left + i * (bar_w + gap)
+        x0 = left + i * slot
         is_we = p.day.weekday() >= 5
         if is_we:
             weekend_bg.append(
-                f'<rect x="{x - 0.5}" y="{top}" width="{bar_w + gap}" height="{plot_h}" fill="#f3e8e8"/>'
+                f'<rect x="{x0}" y="{top}" width="{slot}" height="{plot_h}" fill="#f7ecec"/>'
             )
-        total = p.jt + p.kt
-        if total <= 0:
-            continue
-        h = max(1.0, total / max_amt * (plot_h - 2))
-        y = top + plot_h - h
-        if p.kt > 0 and p.jt > 0:
-            h_kt = h * (p.kt / total)
-            h_jt = h - h_kt
+        tip = (
+            f"{p.day.strftime('%d.%m.%Y')}"
+            f" · JT {fmt_money(p.jt)} · KT {fmt_money(p.kt)}"
+            f" · всего {fmt_money(p.jt + p.kt)}"
+        )
+        # JT left, KT right — paired columns for readability
+        if p.jt > 0:
+            h_jt = max(2.0, p.jt / max_amt * (plot_h - 4))
+            y_jt = top + plot_h - h_jt
             bars.append(
-                f'<rect x="{x}" y="{y + h_jt}" width="{bar_w}" height="{h_kt}" fill="#c45c26">'
-                f'<title>{p.day.isoformat()}: KT {fmt_money(p.kt)} · JT {fmt_money(p.jt)}</title></rect>'
+                f'<rect x="{x0 + 1}" y="{y_jt}" width="{half}" height="{h_jt}" '
+                f'rx="1" fill="#022f40"><title>{html_escape(tip)}</title></rect>'
             )
+        if p.kt > 0:
+            h_kt = max(2.0, p.kt / max_amt * (plot_h - 4))
+            y_kt = top + plot_h - h_kt
             bars.append(
-                f'<rect x="{x}" y="{y}" width="{bar_w}" height="{h_jt}" fill="#022f40">'
-                f'<title>{p.day.isoformat()}: KT {fmt_money(p.kt)} · JT {fmt_money(p.jt)}</title></rect>'
-            )
-        elif p.kt > 0:
-            bars.append(
-                f'<rect x="{x}" y="{y}" width="{bar_w}" height="{h}" fill="#c45c26">'
-                f'<title>{p.day.isoformat()}: KT {fmt_money(p.kt)}</title></rect>'
-            )
-        else:
-            bars.append(
-                f'<rect x="{x}" y="{y}" width="{bar_w}" height="{h}" fill="#022f40">'
-                f'<title>{p.day.isoformat()}: JT {fmt_money(p.jt)}</title></rect>'
+                f'<rect x="{x0 + 1 + half + gap_pair}" y="{y_kt}" width="{half}" height="{h_kt}" '
+                f'rx="1" fill="#c45c26"><title>{html_escape(tip)}</title></rect>'
             )
 
-    # y-axis labels
+    # y-axis grid + labels (0 / 25 / 50 / 75 / 100%)
     y_labels = []
-    for frac in (0, 0.5, 1.0):
+    for frac in (0, 0.25, 0.5, 0.75, 1.0):
         yy = top + plot_h - frac * (plot_h - 2)
         val = max_amt * frac
         y_labels.append(
-            f'<text x="{left - 6}" y="{yy + 3}" text-anchor="end" class="axis">{fmt_money(val)}</text>'
-            f'<line x1="{left}" y1="{yy}" x2="{width - 8}" y2="{yy}" stroke="#e5e5e5" stroke-width="1"/>'
+            f'<line x1="{left}" y1="{yy}" x2="{width - 12}" y2="{yy}" '
+            f'stroke="#dde3e6" stroke-width="1"/>'
+            f'<text x="{left - 8}" y="{yy + 4}" text-anchor="end" class="axis">'
+            f"{fmt_money(val)}</text>"
         )
 
-    # month ticks on x
+    # baseline
+    y_labels.append(
+        f'<line x1="{left}" y1="{top + plot_h}" x2="{width - 12}" y2="{top + plot_h}" '
+        f'stroke="#9aa6ab" stroke-width="1.5"/>'
+    )
+
+    # x labels: month names + day ticks for short periods
     x_labels = []
     last_month = None
     for i, p in enumerate(payments):
-        if p.day.day == 1 or (last_month is None):
-            if p.day.month != last_month:
-                last_month = p.day.month
-                x = left + i * (bar_w + gap)
-                label = p.day.strftime("%b")
-                x_labels.append(
-                    f'<text x="{x}" y="{height - 6}" class="axis">{html_escape(label)}</text>'
-                )
+        x = left + i * slot + slot / 2
+        if p.day.month != last_month:
+            last_month = p.day.month
+            label = p.day.strftime("%b")
+            x_labels.append(
+                f'<text x="{x}" y="{height - 8}" text-anchor="middle" class="axis-month">'
+                f"{html_escape(label)}</text>"
+            )
+        # day-of-month ticks every ~7 days (or every day if few)
+        step = 1 if n <= 45 else (7 if n <= 160 else 14)
+        if i % step == 0:
+            x_labels.append(
+                f'<text x="{x}" y="{height - 26}" text-anchor="middle" class="axis">'
+                f"{p.day.day}</text>"
+            )
+
+    totals_jt = sum(p.jt for p in payments)
+    totals_kt = sum(p.kt for p in payments)
+    peak = max(payments, key=lambda p: p.jt + p.kt)
+    peak_tip = f"пик {peak.day.strftime('%d.%m')}: {fmt_money(peak.jt + peak.kt)}"
 
     return f"""
 <div class="chart-wrap" id="{html_escape(chart_id)}">
   <div class="legend">
-    <span><i class="swatch jt"></i>JET TECHNIC</span>
-    <span><i class="swatch kt"></i>KT MNT (IBERIA)</span>
-    <span class="muted">розовый фон = сб/вс</span>
+    <span><i class="swatch jt"></i>JET TECHNIC · {fmt_money(totals_jt)}</span>
+    <span><i class="swatch kt"></i>KT MNT (IBERIA) · {fmt_money(totals_kt)}</span>
+    <span class="muted">розовый фон = сб/вс · {html_escape(peak_tip)}</span>
   </div>
   <div class="chart-scroll">
-    <svg viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" aria-label="Платежи поставщикам по дням">
+    <svg viewBox="0 0 {width} {height}" width="100%" height="{height}"
+         preserveAspectRatio="xMinYMid meet"
+         role="img" aria-label="Платежи поставщикам по дням">
       {''.join(weekend_bg)}
       {''.join(y_labels)}
       {''.join(bars)}
@@ -487,7 +525,7 @@ def render_period_section(period: PeriodReport, idx: int) -> str:
     return f"""
 <section class="card period" id="period-{idx}">
   <h2>{html_escape(period.title)}</h2>
-  <p class="period-range">{period.start.strftime('%d.%m.%Y')} — {period.end.strftime('%d.%m.%Y')} · заказы по дате Q · {period.total_n} поз.</p>
+  <p class="period-range">{period.start.strftime('%d.%m.%Y')} — {period.end.strftime('%d.%m.%Y')} · только «Продажа от поставщика» · заказы по дате Q · {period.total_n} поз.</p>
   {kt_note}
 
   <h3>1. Доли поставщиков</h3>
@@ -531,7 +569,7 @@ def render_period_section(period: PeriodReport, idx: int) -> str:
 
   <h3>3. Платежи по дням (AW)</h3>
   {render_histogram(period.payments, f"chart-{idx}")}
-  <p class="hint">Суммы оплат поставщику (AX) по дате AW. Несколько заказов в один день суммируются; JT и KT в одном дне — сегменты одной колонки.</p>
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. JT и KT — парные колонки на каждый день; наведите на столбец для суммы.</p>
 </section>
 """
 
@@ -556,7 +594,7 @@ body {{
   color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
   line-height:1.45;
 }}
-.wrap {{ max-width:1100px; margin:0 auto; padding:28px 20px 64px; }}
+.wrap {{ max-width:min(1480px, 96vw); margin:0 auto; padding:28px 16px 64px; }}
 .brand {{
   background:var(--cyan); color:var(--navy); display:inline-block;
   padding:6px 10px; font-weight:700; margin-bottom:14px;
@@ -596,12 +634,17 @@ tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
 .hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}
 .hint.warn {{ color:#8a3b12; background:#fff4ec; border:1px solid #f0c7a8; padding:10px 12px; border-radius:8px; }}
 .chart-wrap {{ margin-top:8px; }}
-.legend {{ display:flex; gap:16px; align-items:center; margin-bottom:8px; font-size:13px; }}
-.swatch {{ display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px; vertical-align:middle; }}
+.legend {{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:10px; font-size:14px; }}
+.swatch {{ display:inline-block; width:14px; height:14px; border-radius:2px; margin-right:6px; vertical-align:middle; }}
 .swatch.jt {{ background:var(--jt); }}
 .swatch.kt {{ background:var(--kt); }}
-.chart-scroll {{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:#fff; padding:8px; }}
-svg .axis {{ font-size:10px; fill:#757575; font-family: Arial, sans-serif; }}
+.chart-scroll {{
+  overflow-x:auto; border:1px solid var(--line); border-radius:8px;
+  background:#fff; padding:12px 8px 8px; min-height:440px;
+}}
+.chart-scroll svg {{ display:block; min-width:100%; }}
+svg .axis {{ font-size:11px; fill:#6b7578; font-family: Arial, sans-serif; }}
+svg .axis-month {{ font-size:12px; fill:#022f40; font-weight:700; font-family: Arial, sans-serif; }}
 @media (max-width:800px) {{
   .kpis, .kpis.three {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
@@ -611,9 +654,10 @@ svg .axis {{ font-size:10px; fill:#757575; font-family: Arial, sans-serif; }}
 <div class="wrap">
   <div class="brand">not so fastair</div>
   <h1>TIME TO PAY</h1>
-  <div class="sub">Доли поставщиков · скорость оплаты JT / KT · платежи по дням · источник {html_escape(source_name)}</div>
+  <div class="sub">Только «Продажа от поставщика» · доли · скорость оплаты JT / KT · платежи по дням · источник {html_escape(source_name)}</div>
   {sections}
   <p class="hint">
+    Фильтр: Тип поставки = «Продажа от поставщика».
     Выручка = «Продажная, итого»; маржа = продажа − закупка.
     Каналы: JT = JET TECHNIC, KT MNT = IBERIA (столбец Z). Root supplier (AA) — контрагент, которому платят JT/KT.
   </p>
