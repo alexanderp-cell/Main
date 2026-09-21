@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FASTAIR — Скайпро Техникс · воронка</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
+  --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
+  line-height:1.45;
+}
+.wrap { max-width:1100px; margin:0 auto; padding:28px 20px 64px; }
+.brand {
+  background:var(--cyan); color:var(--navy); display:inline-block;
+  padding:6px 10px; font-weight:700; margin-bottom:10px;
+  font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+}
+h1 { color:#fff; font-size:28px; margin:0 0 6px; font-weight:700; }
+.sub { color:#d5fbff; margin:0 0 18px; font-size:14px; }
+details.period {
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  margin-bottom:14px; overflow:hidden;
+}
+details.period > summary {
+  cursor:pointer; list-style:none; padding:14px 16px;
+  background:#f3f8fa; border-bottom:1px solid transparent;
+  display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline;
+}
+details.period[open] > summary { border-bottom-color:var(--line); }
+details.period > summary::-webkit-details-marker { display:none; }
+.period-title { font-size:17px; font-weight:700; color:var(--navy); }
+.period-meta { font-size:13px; color:var(--muted); }
+.period-body { padding:12px 16px 16px; }
+details.block, details.subblock {
+  border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
+}
+details.block > summary, details.subblock > summary {
+  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
+  list-style:none; background:#f7fbfc;
+}
+details.block > summary::-webkit-details-marker,
+details.subblock > summary::-webkit-details-marker { display:none; }
+details.block > summary::before,
+details.subblock > summary::before { content:"▸ "; color:#7a8a90; }
+details.block[open] > summary::before,
+details.subblock[open] > summary::before { content:"▾ "; }
+.block-body { padding:12px; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.kpis.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.kpis > div.highlight { background:#e8f6f8; border-color:#9ed7e0; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+.funnel-bar {
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0 16px;
+}
+.funnel-bar .stage {
+  background:var(--navy); color:#fff; border-radius:8px; padding:10px 14px; min-width:120px;
+}
+.funnel-bar .stage.s2 { background:#03425a; }
+.funnel-bar .stage.s3 { background:#0a5c4c; }
+.funnel-bar .stage span { display:block; font-size:11px; opacity:.85; text-transform:uppercase; letter-spacing:.04em; }
+.funnel-bar .stage b { font-size:20px; }
+.funnel-bar .arrow { color:var(--muted); font-size:13px; font-weight:700; }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }
+th {
+  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+th.sorted .arrow { opacity:1; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.empty, .empty { color:#9a9a9a; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+.hint { margin-top:12px; color:var(--muted); font-size:12px; }
+.rules {
+  background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
+  padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
+}
+.note-box {
+  background:#fff8f2; border:1px solid #f0c7a8; border-radius:8px;
+  padding:12px 14px; margin-top:12px; font-size:13px; color:#5a3a22;
+}
+.note-box ul { margin:8px 0 0; padding-left:18px; }
+.note-box li { margin:4px 0; }
+@media (max-width:800px) {
+  .kpis, .kpis.three { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">FASTAIR</div>
+  <h1>Скайпро Техникс — воронка</h1>
+  <div class="sub">Запрос → предложение → заказ · период 01.06.2026 – 21.09.2026 · два потока: ТУЗ и Expendables</div>
+  <div class="rules">
+    <strong>Клиент:</strong> Скайпро Техникс / Скайпро (без «Глобал Скай» и «Скай Партнер»).
+    <br/>
+    <strong>1 запрос</strong> = уникальная пара <strong>P/N + дата из столбца B</strong>
+    (в EXP — Date of RFQ).
+    <br/>
+    <strong>ТУЗ · предложение:</strong> Offered / Sent to client / статусы 4–7
+    (как в анализе UTair). <strong>Заказ:</strong> статус «7. Клиент согласовал» или заполнен Invoice.
+    <br/>
+    <strong>Expendables · предложение:</strong> DDP-цена клиенту &gt; 0 (или market price + supplier).
+    <strong>Заказ:</strong> тот же P/N в ТАЗ Category=EXPENDABLE, дата заказа ≥ даты RFQ
+    (логика UTair EXP).
+  </div>
+  
+<details class="period" open>
+  <summary>
+    <span class="period-title">1. ТУЗ (rotables / компоненты)</span>
+    <span class="period-meta">листы групп · ТУЗ 21.09.2026.xlsx</span>
+    <span class="period-meta">110 запросов · 55 предложений · 2 заказов</span>
+  </summary>
+  <div class="period-body">
+    
+    <div class="kpis three">
+      <div class="highlight">
+        <div class="label">Запросы</div>
+        <div class="value">110</div>
+        <div class="muted">уник. P/N + дата B</div>
+      </div>
+      <div>
+        <div class="label">Предложения</div>
+        <div class="value">55</div>
+        <div class="muted">50% от запросов</div>
+      </div>
+      <div>
+        <div class="label">Заказы</div>
+        <div class="value">2</div>
+        <div class="muted">4% от предложений · 2% от запросов</div>
+      </div>
+    </div>
+    <div class="funnel-bar">
+      <div class="stage s1"><span>Запрос</span><b>110</b></div>
+      <div class="arrow">→ 50%</div>
+      <div class="stage s2"><span>Предложение</span><b>55</b></div>
+      <div class="arrow">→ 4%</div>
+      <div class="stage s3"><span>Заказ</span><b>2</b></div>
+    </div>
+    
+    <p class='hint'>Найдено на рынке (цена поставщика, без Backup / not-found): <b>51</b> из 110 (46%).</p>
+    <details class="block" open>
+      <summary>1. Воронка по месяцам</summary>
+      <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="m1">
+      <thead><tr>
+        <th>Месяц <span class="arrow">↕</span></th>
+        <th>Запросы <span class="arrow">↕</span></th>
+        <th>Предложения <span class="arrow">↕</span></th>
+        <th>Запрос→Предл. <span class="arrow">↕</span></th>
+        <th>Заказы <span class="arrow">↕</span></th>
+        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2026-06</td><td class='num'>40</td><td class='num'>10</td><td class='num'>25%</td><td class='num'>1</td><td class='num'>10%</td></tr>
+<tr><td>2026-07</td><td class='num'>24</td><td class='num'>11</td><td class='num'>46%</td><td class='num'>0</td><td class='num'>0%</td></tr>
+<tr><td>2026-08</td><td class='num'>34</td><td class='num'>27</td><td class='num'>79%</td><td class='num'>1</td><td class='num'>4%</td></tr>
+<tr><td>2026-09</td><td class='num'>12</td><td class='num'>7</td><td class='num'>58%</td><td class='num'>0</td><td class='num'>0%</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+    </details>
+    
+    <details class="subblock" open>
+      <summary>Статусы запросов (ТУЗ)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="s1">
+          <thead><tr>
+            <th>Статус <span class="arrow">↕</span></th>
+            <th>Запросов <span class="arrow">↕</span></th>
+            <th>Доля <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>1. Проценка у поставщиков</td><td class='num'>46</td><td class='num'>42%</td></tr><tr><td>4. Квотация направлена клиенту</td><td class='num'>33</td><td class='num'>30%</td></tr><tr><td>3. Цена на деталь получена</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>8. Backup</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>5. Есть интерес</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>7. Клиент согласовал</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>0. Начальный этап</td><td class='num'>1</td><td class='num'>1%</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    
+    <details class="subblock">
+      <summary>Примеры запросов (первые 80)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="r1">
+          <thead><tr>
+            <th>Дата B <span class="arrow">↕</span></th>
+            <th>P/N <span class="arrow">↕</span></th>
+            <th>Описание <span class="arrow">↕</span></th>
+            <th>Qty <span class="arrow">↕</span></th>
+            <th>Статус <span class='arrow'>↕</span></th>
+            <th>Предложение <span class="arrow">↕</span></th>
+            <th>Заказ <span class="arrow">↕</span></th>
+            <th>Счёт / ссылка <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>2026-06-04</td><td>135-05158-001</td><td>JOINT</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>135-05286-902</td><td>LENS WINGLET-RH</td><td class='num'>1.0</td><td>8. Backup</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>135-07904-009</td><td>SEALING</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>1C7-33</td><td>PUMP, ELECTRICAL-FUEL SYSTEM</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>21507-03</td><td>OXYGEN CYLINDER</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>234-040</td><td>CARTRIDGE, AIR FILTER</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>60ULO-B01-1-105</td><td>Winslow Ultra-Light™ Offshore Life Raft</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>80ULO-B01-1-105</td><td>Winslow Ultra-Light™ Offshore Life Raft</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-04</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK
+DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал</td><td>да</td><td>да</td><td>—</td></tr>
+<tr><td>2026-06-08</td><td>02C33K08-01-144</td><td>NEBULIZER KIT</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>30840002.0</td><td>DISCHARGE BOSS</td><td class='num'>1.0</td><td>8. Backup</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>8126300.0</td><td>RECHARGE STAND</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83000346.0</td><td>CRADLE, FIRE EXTINGUISHER</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83330118.0</td><td>SAFETY CHAMBER, CARTRIDGE</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>A6-06-2000-75-0</td><td>HALON RECOVERY RECYCLE SYSTEM</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>13253.0</td><td>VALVE PLUG, INSERTION TOOL</td><td class='num'>1.0</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>13254.0</td><td>STEM HOLDING TOOL</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>31670509.0</td><td>PRESSURE GAUGE FITTING</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>367-934-002</td><td>FUEL CONDITIONING UNIT</td><td class='num'>1.0</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>367-934-004</td><td>FUEL CONDITIONING UNIT</td><td class='num'>2.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>59000015-1</td><td>TEST FITTING, BANJO</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>59000060.0</td><td>DISCHARGE RECOVERY TOOL</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>8126300.0</td><td>RECHARGE STAND</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>83000346.0</td><td>CRADLE, FIRE EXTINGUISHER</td><td class='num'>1.0</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>833300001.0</td><td>MAGNET</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>83330118.0</td><td>SAFETY CHAMBER, CARTRIDGE</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>83330247.0</td><td>FITTING, HYDROTEST</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>83330670-2</td><td>PLUG, HYDROTEST</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>83330679-2</td><td>CAP, HYDROTEST</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>94202200.0</td><td>SHIM, WASHER</td><td class='num'>1.0</td><td>8. Backup</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-16</td><td>A6-06-2000-75-0</td><td>HALON RECOVERY RECYCLE SYSTEM</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-18</td><td>617-6347-001</td><td>BATTERY</td><td class='num'>1.0</td><td>0. Начальный этап</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-22</td><td>895-48077</td><td>CYLINDER ASSY</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-22</td><td>N0R8003-3168</td><td>DUCT ASSY</td><td class='num'>2.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>2113A010101</td><td>PNEUMATIC VALVE</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>2114A010101</td><td>MANUAL CONTROLLER</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-30</td><td>13-16560</td><td>LIFE RAFT</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-30</td><td>RAF1108-303</td><td>LIFE RAFT</td><td class='num'>1.0</td><td>5. Есть интерес</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-30</td><td>RAF1212-303</td><td>LIFE RAFT</td><td class='num'>1.0</td><td>5. Есть интерес</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-02</td><td>MMS02-001TYPEIII</td><td>LAMAGUARD 12 Film</td><td class='num'>—</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-02</td><td>MMS03-001TYPEI,CLASSAA,1</td><td>Fiberglass Insulation</td><td class='num'>—</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-02</td><td>MMS04-001TYPEII,1</td><td>SOLIMIDE AC550 Foam</td><td class='num'>—</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-06</td><td>WB3888401-1</td><td>PLUG, IGNITER</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-10</td><td>R0101A601</td><td>T4 EAM Life Raft</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-16</td><td>145-04134-401</td><td>SHIM</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-16</td><td>DTS455-270</td><td>OXYGEN HOSE</td><td class='num'>1.0</td><td>8. Backup</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-28</td><td>F65-0-4834</td><td>THERMAL RELIEF BLOCKING TOOL</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>0132AFU-2</td><td>SENSOR, BRAKE TEMPERATURE INDICATOR</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>064-1016-03</td><td>CONTROL BOX KCU 951</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>145-30609-401</td><td>PRE,COOLER ASSY</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>163600-03</td><td>TRANSPARENCY</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>30903870</td><td>CARTRIDGE,BOTTLE</td><td class='num'>2.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>30903920</td><td>CARTRIDGE,BOTTLE-FIRE EXTINGUISHING</td><td class='num'>4.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>31-8835-1</td><td>LIGHT ASSY-STROBE</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>360440-1009</td><td>ACTUATOR</td><td class='num'>2.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>4E3176-1</td><td>HEATER ASSY-WATER/WASTE SYS</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>588-4D63</td><td>VALVE,CHECK</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>8-527-01</td><td>PROXIMITY SWITCH</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>816603-3</td><td>VALVE CHECK</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>816630-1</td><td>EXCHANGER,HEAT</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>990-4150-002</td><td>MONITOR,VIDEO ASSY</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>DTS455-270</td><td>Oxygen hose</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-29</td><td>ELT96A2560000000</td><td>TRANSMITTER/LOCATOR</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-10</td><td>4951542</td><td>ELEMENT, FILTER - OIL</td><td class='num'>1.0</td><td>7. Клиент согласовал</td><td>да</td><td>да</td><td>11082613526-1</td></tr>
+<tr><td>2026-08-13</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>2000034-102</td><td>VALVE,CHECK-TYPE BUTTERFLY,INT. TAN</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>363350-1003</td><td>SENSOR ASSY-VELOCITY,FLAP</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>367-934-002</td><td>UNIT,SIGNAL CONDITIONING</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>367-934-004</td><td>UNIT,SIGNAL CONDITIONING</td><td class='num'>2.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>368197-1001</td><td>INDICATOR, DIFFERENTIAL PRESSURE</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-19</td><td>869A12BT</td><td>VALVE ASSY, CHECK</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-20</td><td>23093279.0</td><td>PARTS KIT, MAG SEAL (FPMU, GENERATORS, BREATHER)</td><td class='num'>4.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-25</td><td>81710136.0</td><td>FILTER</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-25</td><td>GG431-2031-1</td><td>FILTER, RECIRCULATION</td><td class='num'>4.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-25</td><td>GG433-2129-1</td><td>FILTER, AVIONICS RACK</td><td class='num'>2.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-28</td><td>16128-1</td><td>PIN-AXLE CROSS</td><td class='num'>1.0</td><td>3. Цена на деталь получена</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-28</td><td>16400-105</td><td>BRACE ASSY, DRESSED DRAG</td><td class='num'>1.0</td><td>4. Квотация направлена клиенту</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-28</td><td>172900-01</td><td>SERVICE / EMERGENCY EXIT DOOR WINDOW</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-08-28</td><td>2925229.0</td><td>ELECTRIC MOTOR ASSEMBLY</td><td class='num'>1.0</td><td>1. Проценка у поставщиков</td><td>нет</td><td>нет</td><td>—</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    <div class='note-box'><strong>Примечания</strong><ul><li>Уникальность запроса: P/N + дата Request date&amp;time (столбец B), не Request №.</li><li>Несколько строк поставщиков по одному P/N+дате схлопываются в один запрос.</li></ul></div>
+  </div>
+</details>
+
+<details class="period" open>
+  <summary>
+    <span class="period-title">2. Expendables</span>
+    <span class="period-meta">CSV · EXPENDABLES 21.09.2026.csv</span>
+    <span class="period-meta">257 запросов · 196 предложений · 15 заказов</span>
+  </summary>
+  <div class="period-body">
+    
+    <div class="kpis three">
+      <div class="highlight">
+        <div class="label">Запросы</div>
+        <div class="value">257</div>
+        <div class="muted">уник. P/N + дата B</div>
+      </div>
+      <div>
+        <div class="label">Предложения</div>
+        <div class="value">196</div>
+        <div class="muted">76% от запросов</div>
+      </div>
+      <div>
+        <div class="label">Заказы</div>
+        <div class="value">15</div>
+        <div class="muted">8% от предложений · 6% от запросов</div>
+      </div>
+    </div>
+    <div class="funnel-bar">
+      <div class="stage s1"><span>Запрос</span><b>257</b></div>
+      <div class="arrow">→ 76%</div>
+      <div class="stage s2"><span>Предложение</span><b>196</b></div>
+      <div class="arrow">→ 8%</div>
+      <div class="stage s3"><span>Заказ</span><b>15</b></div>
+    </div>
+    
+    
+    <details class="block" open>
+      <summary>1. Воронка по месяцам</summary>
+      <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="m2">
+      <thead><tr>
+        <th>Месяц <span class="arrow">↕</span></th>
+        <th>Запросы <span class="arrow">↕</span></th>
+        <th>Предложения <span class="arrow">↕</span></th>
+        <th>Запрос→Предл. <span class="arrow">↕</span></th>
+        <th>Заказы <span class="arrow">↕</span></th>
+        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2026-06</td><td class='num'>48</td><td class='num'>25</td><td class='num'>52%</td><td class='num'>14</td><td class='num'>56%</td></tr>
+<tr><td>2026-07</td><td class='num'>85</td><td class='num'>71</td><td class='num'>84%</td><td class='num'>0</td><td class='num'>0%</td></tr>
+<tr><td>2026-08</td><td class='num'>74</td><td class='num'>58</td><td class='num'>78%</td><td class='num'>1</td><td class='num'>2%</td></tr>
+<tr><td>2026-09</td><td class='num'>50</td><td class='num'>42</td><td class='num'>84%</td><td class='num'>0</td><td class='num'>0%</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+    </details>
+    
+    
+    <details class="subblock">
+      <summary>Примеры запросов (первые 80)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="r2">
+          <thead><tr>
+            <th>Дата B <span class="arrow">↕</span></th>
+            <th>P/N <span class="arrow">↕</span></th>
+            <th>Описание <span class="arrow">↕</span></th>
+            <th>Qty <span class="arrow">↕</span></th>
+            
+            <th>Предложение <span class="arrow">↕</span></th>
+            <th>Заказ <span class="arrow">↕</span></th>
+            <th>Счёт / ссылка <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>2026-06-02</td><td>P50015-005</td><td>O-RING</td><td class='num'>2.0</td><td>да</td><td>да</td><td>2062618346.0</td></tr>
+<tr><td>2026-06-07</td><td>135-05158-001</td><td>JOINT</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>135-07904-009</td><td>SEALING</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>135-07904-011</td><td>SEALING</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td>да</td><td>да</td><td>19082613516-1</td></tr>
+<tr><td>2026-06-07</td><td>145-73130-903</td><td>LENS WINGLET-LH</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>145-73130-904</td><td>LENS WINGLET-RH</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>4951542</td><td>ELEMENT, FILTER - OIL</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK DISCONNECT</td><td class='num'>8.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-07</td><td>NAS2833T8PT</td><td>BOLT-COUNTERSUNK HEAD,TORQ SET</td><td class='num'>40.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>13253</td><td>VALVE PLUG, INSERTION TOOL</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>13254</td><td>STEM HOLDING TOOL</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>30840002</td><td>DISCHARGE BOSS</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>31670509</td><td>PRESSURE GAUGE FITTING</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>59000015-1</td><td>TEST FITTING, BANJO</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>59000060</td><td>DISCHARGE RECOVERY TOOL</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>8126300</td><td>RECHARGE STAND</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83000346</td><td>CRADLE, FIRE EXTINGUISHER</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>833300001</td><td>MAGNET</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83330118</td><td>SAFETY CHAMBER, CARTRIDGE</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83330247</td><td>FITTING, HYDROTEST</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83330670-2</td><td>PLUG, HYDROTEST</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>83330679-2</td><td>CAP, HYDROTEST</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>94202200</td><td>SHIM, WASHER</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-11</td><td>A6-06-2000-75-0</td><td>HALON RECOVERY RECYCLE SYSTEM</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>145-11424-003</td><td>WASHER</td><td class='num'>8.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-21644-501</td><td>PROFILE</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-21644-503</td><td>SEAL</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-21644-504</td><td>PROFILE</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-25921-901</td><td>SHAPE-SEAL,FAIRING,RUBBER</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-25921-902</td><td>SHAPE-SEAL</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>145-53562-001</td><td>SHIM</td><td class='num'>8.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>2309-2021-001</td><td>PEELABLE SHIM-SPD</td><td class='num'>2.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>93495A130</td><td>NUT,WELL- RIVET TYPE,NEOPRENE/BRASS</td><td class='num'>120.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>990-9103-001</td><td>BEZEL</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>BDS0004-031</td><td>HINGE ASSY</td><td class='num'>5.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>MS21133-08</td><td>NUT-EXTERNAL WRENCHING,SPLINE DRIVE</td><td class='num'>16.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>MS21299-8</td><td>WASHER,FLAT</td><td class='num'>4.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>MS3367-3-9</td><td>STRAP,TIE DOWN</td><td class='num'>10.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>NAS1836-3-14</td><td>INSERT</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>NAS514P832-7</td><td>SCREW CSK HD,SLOT CROSS, SSTEEL</td><td class='num'>14.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>NAS514P832-8P</td><td>SCREW</td><td class='num'>10.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>NAS6205-8D</td><td>BOLT-HEXAGON HEAD,STEEL</td><td class='num'>8.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>PE88001-5BB6-5E</td><td>JUMPER ASSY</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>PE88001-5BF6</td><td>JUMPER ASSY</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>SJ8665FP303</td><td>PROTECTIVE BOOT,POLYURETHANE CLEAR</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-06-25</td><td>SJ8665FP304</td><td>PROTECTIVE BOOT,POLUYRETHANE CLEAR</td><td class='num'>1.0</td><td>да</td><td>да</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>SJ8665FP305</td><td>PROTECTIVE BOOT,POLUYRETHANE CLEAR</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-06</td><td>S5172</td><td>PLACARD MARKER</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-13</td><td>145-04134-401</td><td>SHIM</td><td class='num'>1.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-13</td><td>69494J148</td><td>PACKING</td><td class='num'>2.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-15</td><td>N331-3827</td><td>MICROLITE</td><td class='num'>3.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-012</td><td>PACKING, PREFORMED, O-RING</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-016</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-023</td><td>PACKING, PREFORMED</td><td class='num'>16.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-138</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-140</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>8.0</td><td>нет</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461-1-142</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461/1-018</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M83461/1-126</td><td>PACKING, PREFORMED, HYDRAULIC</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M8791-1-010</td><td>RETAINER</td><td class='num'>8.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M8791-1-011</td><td>RETAINER</td><td class='num'>8.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>M8791/1-010</td><td>RETAINER</td><td class='num'>8.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-132</td><td>PIN, COTTER</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-134</td><td>PIN, COTTER</td><td class='num'>10.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-136</td><td>PIN, COTTER, SPLIT</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-151</td><td>PIN, COTTER</td><td class='num'>6.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-153</td><td>PIN, COTTER</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-283</td><td>PIN, COTTER</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-285</td><td>PIN, COTTER</td><td class='num'>8.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-306</td><td>PIN, COTTER</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-361</td><td>PIN, COTTER, SPLIT</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-374</td><td>PIN, COTTER</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS24665-86</td><td>PIN, COTTER</td><td class='num'>6.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS9581-09</td><td>WASHER</td><td class='num'>5.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS9581-10</td><td>WASHER, KEY, LOCKING</td><td class='num'>2.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>MS9581-11</td><td>WASHER, KEY</td><td class='num'>1.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>NAS1611-010A</td><td>PACKING, PREFORMED, O-RING</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>NAS1611-011</td><td>PACKING, PREFORMED</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr>
+<tr><td>2026-07-21</td><td>SP90B3</td><td>PIN, COTTER SPLIT</td><td class='num'>4.0</td><td>да</td><td>нет</td><td>—</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    <div class='note-box'><strong>Примечания</strong><ul><li>Предложение: DDP-цена клиенту &gt; 0, иначе market price + supplier (как в UTair EXP).</li><li>Заказы сверстаны с ТАЗ EXPENDABLE (ТАЗ полный файл 28.08.2026.xlsx): строк Скайпро в периоде — EXPENDABLE 21, ROTABLE 4 (ROTABLE в эту воронку не входят).</li><li>Срез ТАЗ от 28.08.2026: заказы сентября после этой даты могут быть неполными.</li></ul></div>
+  </div>
+</details>
+
+  <p class="hint">
+    Источники: ТУЗ — ТУЗ 21.09.2026.xlsx;
+    Expendables — EXPENDABLES 21.09.2026.csv;
+    ТАЗ (для заказов EXP) — ТАЗ полный файл 28.08.2026.xlsx.
+    Скачивайте HTML напрямую (ZIP+HTML Windows часто помечает ложно).
+  </p>
+</div>
+<script>
+document.querySelectorAll('table[data-sortable]').forEach((table) => {
+  const headers = table.querySelectorAll('th');
+  headers.forEach((th, idx) => {
+    th.addEventListener('click', () => {
+      const tbody = table.tBodies[0];
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const asc = th.dataset.asc !== '1';
+      headers.forEach(h => { h.classList.remove('sorted'); h.dataset.asc = ''; });
+      th.classList.add('sorted');
+      th.dataset.asc = asc ? '1' : '0';
+      const parse = (td) => {
+        const t = (td?.textContent || '').trim().replace(/\s/g, '').replace('%','');
+        const n = Number(t.replace(',', '.'));
+        return Number.isFinite(n) && t !== '' && t !== '—' ? n : t;
+      };
+      rows.sort((a, b) => {
+        const av = parse(a.children[idx]);
+        const bv = parse(b.children[idx]);
+        if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
+        return asc ? String(av).localeCompare(String(bv), 'ru') : String(bv).localeCompare(String(av), 'ru');
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+});
+</script>
+</body>
+</html>
