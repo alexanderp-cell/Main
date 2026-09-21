@@ -1,9 +1,9 @@
 # FASTAIR — Скайпро Техникс · воронка
 
-**Открыть HTML:** https://litter.catbox.moe/jtmwsw.html
+**Открыть HTML:** https://litter.catbox.moe/d303sz.html
 
 Период: 01.06.2026 – 21.09.2026.  
 1 запрос = P/N + дата B + Request № (C). В Expendables вместо Request № — Unicode/ExpR.  
-Два раздела: ТУЗ и Expendables.
+Два раздела: ТУЗ и Expendables. Вместо примеров запросов — таблица заказов.
 
 [HTML в репозитории](https://github.com/alexanderp-cell/Main/blob/cursor/skypro-technics-funnel-3296/SKYPRO_Technics_funnel_report.html)

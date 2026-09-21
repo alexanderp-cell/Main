@@ -313,7 +313,7 @@ class FunnelBlock:
     found: int = 0
     by_month: list[tuple[str, int, int, int]] = field(default_factory=list)
     by_status: list[tuple[str, int]] = field(default_factory=list)
-    sample_rows: list[dict[str, Any]] = field(default_factory=list)
+    order_rows: list[dict[str, Any]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -588,20 +588,36 @@ def build_funnel(
         c = Counter(r.primary_status for r in requests)
         by_status = sorted(c.items(), key=lambda x: (-x[1], x[0]))
 
-    samples = []
-    for r in requests[:80]:
-        samples.append(
+    order_rows = []
+    for r in requests:
+        if not r.has_order:
+            continue
+        offered = None
+        if r.source == "tuz":
+            for offer in r.offers:
+                if getattr(offer, "offered", None) is not None:
+                    offered = offer.offered
+                    break
+                if getattr(offer, "supplier_price", None) is not None and offered is None:
+                    offered = offer.supplier_price
+        else:
+            for row in r.offers:
+                if isinstance(row, dict):
+                    if row.get("ddp") is not None:
+                        offered = row["ddp"]
+                        break
+                    if row.get("market") is not None and offered is None:
+                        offered = row["market"]
+        order_rows.append(
             {
                 "date": r.request_date.isoformat(),
                 "request_no": r.request_no or "—",
                 "pn": r.pn,
                 "description": r.description or "—",
                 "qty": r.qty if r.qty is not None else "—",
-                "status": r.primary_status if include_status else ("да" if r.has_offer else "нет"),
-                "offer": "да" if r.has_offer else "нет",
-                "order": "да" if r.has_order else "нет",
-                "refs": ", ".join(r.order_refs[:3]) if r.order_refs else "—",
-                "extra": r.expr or "",
+                "status": r.primary_status if include_status else "—",
+                "price": f"{offered:,.2f}".replace(",", " ") if isinstance(offered, (int, float)) else "—",
+                "refs": ", ".join(r.order_refs[:5]) if r.order_refs else "—",
             }
         )
 
@@ -614,7 +630,7 @@ def build_funnel(
         found=found_n,
         by_month=by_month,
         by_status=by_status,
-        sample_rows=samples,
+        order_rows=order_rows,
         notes=notes or [],
     )
 
@@ -710,10 +726,10 @@ def render_status_table(block: FunnelBlock, table_id: str) -> str:
     """
 
 
-def render_sample_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
+def render_orders_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
     rows = []
     req_col = "Request №" if tuz else "ExpR"
-    for item in block.sample_rows:
+    for item in block.order_rows:
         rows.append(
             "<tr>"
             f"<td>{html.escape(item['date'])}</td>"
@@ -722,29 +738,29 @@ def render_sample_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
             f"<td>{html.escape(str(item['description']))}</td>"
             f"<td class='num'>{html.escape(str(item['qty']))}</td>"
             + (f"<td>{html.escape(str(item['status']))}</td>" if tuz else "")
-            + f"<td>{html.escape(item['offer'])}</td>"
-            f"<td>{html.escape(item['order'])}</td>"
+            + f"<td class='num'>{html.escape(str(item['price']))}</td>"
             f"<td>{html.escape(str(item['refs']))}</td>"
             "</tr>"
         )
     status_col = "<th>Статус <span class='arrow'>↕</span></th>" if tuz else ""
-    body = "\n".join(rows) or "<tr><td colspan='9' class='empty'>Нет строк</td></tr>"
+    cols = 8 if tuz else 7
+    body = "\n".join(rows) or f"<tr><td colspan='{cols}' class='empty'>Нет заказов в периоде</td></tr>"
+    open_attr = " open" if block.order_rows else ""
     return f"""
-    <details class="subblock">
-      <summary>Примеры запросов (первые {len(block.sample_rows)})</summary>
+    <details class="block"{open_attr}>
+      <summary>Заказы ({len(block.order_rows)})</summary>
       <div class="block-body">
         <div class="table-scroll">
         <table data-sortable id="{html.escape(table_id)}">
           <thead><tr>
-            <th>Дата B <span class="arrow">↕</span></th>
+            <th>Дата запроса <span class="arrow">↕</span></th>
             <th>{html.escape(req_col)} <span class="arrow">↕</span></th>
             <th>P/N <span class="arrow">↕</span></th>
             <th>Описание <span class="arrow">↕</span></th>
             <th>Qty <span class="arrow">↕</span></th>
             {status_col}
-            <th>Предложение <span class="arrow">↕</span></th>
-            <th>Заказ <span class="arrow">↕</span></th>
-            <th>Счёт / ссылка <span class="arrow">↕</span></th>
+            <th>Цена $ <span class="arrow">↕</span></th>
+            <th>Счёт <span class="arrow">↕</span></th>
           </tr></thead>
           <tbody>{body}</tbody>
         </table>
@@ -781,7 +797,7 @@ def render_section(block: FunnelBlock, *, opened: bool, tuz: bool, idx: int) -> 
       <div class="block-body">{render_month_table(block, f"m{idx}")}</div>
     </details>
     {render_status_table(block, f"s{idx}") if tuz else ""}
-    {render_sample_table(block, f"r{idx}", tuz=tuz)}
+    {render_orders_table(block, f"o{idx}", tuz=tuz)}
     {notes}
   </div>
 </details>
