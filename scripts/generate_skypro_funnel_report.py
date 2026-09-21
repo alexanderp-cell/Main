@@ -2,7 +2,8 @@
 """FASTAIR — Скайпро Техникс: воронка запросов (ТУЗ + Expendables).
 
 Период: 01.06.2026 — текущая дата (по дате запроса / RFQ).
-1 запрос = уникальная пара (P/N + дата столбца B).
+1 запрос = уникальная тройка (P/N + дата столбца B + Request № столбца C).
+В Expendables вместо Request № — Unicode (ExpR).
 
 Воронка: запрос → предложение → заказ.
 Логика статусов/цен — как в отчётах UTair (ТУЗ / EXP).
@@ -266,10 +267,22 @@ class OfferRow:
     invoice: str | None
 
 
+def normalize_request_no(value: Any) -> str:
+    text = clean_text(value)
+    if not text:
+        return ""
+    # Excel often stores Request № as 3411.0
+    num = to_number(text)
+    if num is not None and num == int(num):
+        return str(int(num))
+    return text
+
+
 @dataclass
 class RequestAgg:
     pn: str
     request_date: date
+    request_no: str
     source: str  # tuz | exp
     offers: list[Any] = field(default_factory=list)
     description: str | None = None
@@ -357,17 +370,19 @@ def load_tuz_offers(path: Path) -> list[OfferRow]:
 
 
 def aggregate_tuz(offers: list[OfferRow], start: date, end: date) -> list[RequestAgg]:
-    grouped: dict[tuple[str, date], RequestAgg] = {}
+    grouped: dict[tuple[str, date, str], RequestAgg] = {}
     for offer in offers:
         req_date = offer.request_dt.date() if offer.request_dt else None
         if not in_period(req_date, start, end):
             continue
-        key = (offer.pn, req_date)  # type: ignore[arg-type]
+        req_no = normalize_request_no(offer.request_no)
+        key = (offer.pn, req_date, req_no)  # type: ignore[arg-type]
         agg = grouped.get(key)
         if not agg:
             agg = RequestAgg(
                 pn=offer.pn,
                 request_date=req_date,  # type: ignore[arg-type]
+                request_no=req_no,
                 source="tuz",
                 description=offer.description,
                 qty=offer.qty,
@@ -401,7 +416,7 @@ def aggregate_tuz(offers: list[OfferRow], start: date, end: date) -> list[Reques
             if offer.invoice:
                 agg.order_refs.append(offer.invoice)
 
-    return sorted(grouped.values(), key=lambda r: (r.request_date, r.pn))
+    return sorted(grouped.values(), key=lambda r: (r.request_date, r.request_no, r.pn))
 
 
 def load_exp_rows(path: Path) -> list[dict[str, Any]]:
@@ -445,16 +460,19 @@ def load_exp_rows(path: Path) -> list[dict[str, Any]]:
 
 
 def aggregate_exp(rows: list[dict[str, Any]], start: date, end: date) -> list[RequestAgg]:
-    grouped: dict[tuple[str, date], RequestAgg] = {}
+    # В EXP нет Request №: третьим ключом берём Unicode/ExpR (аналог номера запроса).
+    grouped: dict[tuple[str, date, str], RequestAgg] = {}
     for row in rows:
         if not in_period(row["request_date"], start, end):
             continue
-        key = (row["pn"], row["request_date"])
+        req_no = normalize_request_no(row.get("expr"))
+        key = (row["pn"], row["request_date"], req_no)
         agg = grouped.get(key)
         if not agg:
             agg = RequestAgg(
                 pn=row["pn"],
                 request_date=row["request_date"],
+                request_no=req_no,
                 source="exp",
                 description=row["description"],
                 qty=row["qty"],
@@ -469,7 +487,7 @@ def aggregate_exp(rows: list[dict[str, Any]], start: date, end: date) -> list[Re
         # UTair EXP: предложение = DDP > 0 (иначе market price как мягкий сигнал оффера)
         if row["ddp"] is not None or (row["market"] is not None and row["supplier"]):
             agg.has_offer = True
-    return sorted(grouped.values(), key=lambda r: (r.request_date, r.pn))
+    return sorted(grouped.values(), key=lambda r: (r.request_date, r.request_no, r.pn))
 
 
 @dataclass
@@ -575,6 +593,7 @@ def build_funnel(
         samples.append(
             {
                 "date": r.request_date.isoformat(),
+                "request_no": r.request_no or "—",
                 "pn": r.pn,
                 "description": r.description or "—",
                 "qty": r.qty if r.qty is not None else "—",
@@ -606,7 +625,7 @@ def render_funnel_kpis(block: FunnelBlock) -> str:
       <div class="highlight">
         <div class="label">Запросы</div>
         <div class="value">{fmt_int(block.requests)}</div>
-        <div class="muted">уник. P/N + дата B</div>
+        <div class="muted">уник. P/N + дата B + Request №</div>
       </div>
       <div>
         <div class="label">Предложения</div>
@@ -693,10 +712,12 @@ def render_status_table(block: FunnelBlock, table_id: str) -> str:
 
 def render_sample_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
     rows = []
+    req_col = "Request №" if tuz else "ExpR"
     for item in block.sample_rows:
         rows.append(
             "<tr>"
             f"<td>{html.escape(item['date'])}</td>"
+            f"<td>{html.escape(str(item['request_no']))}</td>"
             f"<td>{html.escape(item['pn'])}</td>"
             f"<td>{html.escape(str(item['description']))}</td>"
             f"<td class='num'>{html.escape(str(item['qty']))}</td>"
@@ -707,7 +728,7 @@ def render_sample_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
             "</tr>"
         )
     status_col = "<th>Статус <span class='arrow'>↕</span></th>" if tuz else ""
-    body = "\n".join(rows) or "<tr><td colspan='8' class='empty'>Нет строк</td></tr>"
+    body = "\n".join(rows) or "<tr><td colspan='9' class='empty'>Нет строк</td></tr>"
     return f"""
     <details class="subblock">
       <summary>Примеры запросов (первые {len(block.sample_rows)})</summary>
@@ -716,6 +737,7 @@ def render_sample_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
         <table data-sortable id="{html.escape(table_id)}">
           <thead><tr>
             <th>Дата B <span class="arrow">↕</span></th>
+            <th>{html.escape(req_col)} <span class="arrow">↕</span></th>
             <th>P/N <span class="arrow">↕</span></th>
             <th>Описание <span class="arrow">↕</span></th>
             <th>Qty <span class="arrow">↕</span></th>
@@ -885,8 +907,8 @@ tbody tr:hover {{ background:#eef7f9; }}
   <div class="rules">
     <strong>Клиент:</strong> Скайпро Техникс / Скайпро (без «Глобал Скай» и «Скай Партнер»).
     <br/>
-    <strong>1 запрос</strong> = уникальная пара <strong>P/N + дата из столбца B</strong>
-    (в EXP — Date of RFQ).
+    <strong>1 запрос</strong> = уникальная тройка <strong>P/N + дата из столбца B + Request № (столбец C)</strong>.
+    В Expendables вместо Request № используется <strong>Unicode / ExpR</strong>.
     <br/>
     <strong>ТУЗ · предложение:</strong> Offered / Sent to client / статусы 4–7
     (как в анализе UTair). <strong>Заказ:</strong> статус «7. Клиент согласовал» или заполнен Invoice.
@@ -957,8 +979,8 @@ def main() -> None:
         tuz_reqs,
         include_status=True,
         notes=[
-            "Уникальность запроса: P/N + дата Request date&time (столбец B), не Request №.",
-            "Несколько строк поставщиков по одному P/N+дате схлопываются в один запрос.",
+            "Уникальность запроса: P/N + дата Request date&time (B) + Request № (C).",
+            "Несколько строк поставщиков по одному P/N+дате+Request № схлопываются в один запрос.",
         ],
     )
 
@@ -973,6 +995,7 @@ def main() -> None:
         f"CSV · {args.exp.name}",
         exp_reqs,
         notes=[
+            "Уникальность: P/N + Date of RFQ + Unicode/ExpR (в EXP нет столбца Request №).",
             "Предложение: DDP-цена клиенту > 0, иначе market price + supplier (как в UTair EXP).",
             f"Заказы сверстаны с ТАЗ EXPENDABLE ({args.taz.name}): строк Скайпро в периоде — "
             f"EXPENDABLE {exp_expendable}, ROTABLE {exp_rotable} (ROTABLE в эту воронку не входят).",
