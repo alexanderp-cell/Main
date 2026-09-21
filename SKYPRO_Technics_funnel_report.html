@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FASTAIR — Скайпро Техникс · воронка</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
+  --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
+  line-height:1.45;
+}
+.wrap { max-width:1100px; margin:0 auto; padding:28px 20px 64px; }
+.brand {
+  background:var(--cyan); color:var(--navy); display:inline-block;
+  padding:6px 10px; font-weight:700; margin-bottom:10px;
+  font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+}
+h1 { color:#fff; font-size:28px; margin:0 0 6px; font-weight:700; }
+.sub { color:#d5fbff; margin:0 0 18px; font-size:14px; }
+details.period {
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  margin-bottom:14px; overflow:hidden;
+}
+details.period > summary {
+  cursor:pointer; list-style:none; padding:14px 16px;
+  background:#f3f8fa; border-bottom:1px solid transparent;
+  display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline;
+}
+details.period[open] > summary { border-bottom-color:var(--line); }
+details.period > summary::-webkit-details-marker { display:none; }
+.period-title { font-size:17px; font-weight:700; color:var(--navy); }
+.period-meta { font-size:13px; color:var(--muted); }
+.period-body { padding:12px 16px 16px; }
+details.block, details.subblock {
+  border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
+}
+details.block > summary, details.subblock > summary {
+  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
+  list-style:none; background:#f7fbfc;
+}
+details.block > summary::-webkit-details-marker,
+details.subblock > summary::-webkit-details-marker { display:none; }
+details.block > summary::before,
+details.subblock > summary::before { content:"▸ "; color:#7a8a90; }
+details.block[open] > summary::before,
+details.subblock[open] > summary::before { content:"▾ "; }
+.block-body { padding:12px; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.kpis.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.kpis > div.highlight { background:#e8f6f8; border-color:#9ed7e0; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+.funnel-bar {
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0 16px;
+}
+.funnel-bar .stage {
+  background:var(--navy); color:#fff; border-radius:8px; padding:10px 14px; min-width:120px;
+}
+.funnel-bar .stage.s2 { background:#03425a; }
+.funnel-bar .stage.s3 { background:#0a5c4c; }
+.funnel-bar .stage span { display:block; font-size:11px; opacity:.85; text-transform:uppercase; letter-spacing:.04em; }
+.funnel-bar .stage b { font-size:20px; }
+.funnel-bar .arrow { color:var(--muted); font-size:13px; font-weight:700; }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }
+th {
+  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+th.sorted .arrow { opacity:1; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.empty, .empty { color:#9a9a9a; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+.hint { margin-top:12px; color:var(--muted); font-size:12px; }
+.rules {
+  background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
+  padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
+}
+.note-box {
+  background:#fff8f2; border:1px solid #f0c7a8; border-radius:8px;
+  padding:12px 14px; margin-top:12px; font-size:13px; color:#5a3a22;
+}
+.note-box ul { margin:8px 0 0; padding-left:18px; }
+.note-box li { margin:4px 0; }
+@media (max-width:800px) {
+  .kpis, .kpis.three { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">FASTAIR</div>
+  <h1>Скайпро Техникс — воронка</h1>
+  <div class="sub">Запрос → предложение → заказ · период 01.06.2026 – 21.09.2026 · два потока: ТУЗ и Expendables</div>
+  <div class="rules">
+    <strong>Клиент:</strong> Скайпро Техникс / Скайпро (без «Глобал Скай» и «Скай Партнер»).
+    <br/>
+    <strong>1 запрос</strong> = уникальная тройка <strong>P/N + дата из столбца B + Request № (столбец C)</strong>.
+    В Expendables вместо Request № используется <strong>Unicode / ExpR</strong>.
+    <br/>
+    <strong>ТУЗ · предложение:</strong> Offered / Sent to client / статусы 4–7
+    (как в анализе UTair). <strong>Заказ:</strong> статус «7. Клиент согласовал» или заполнен Invoice.
+    <br/>
+    <strong>Expendables · предложение:</strong> DDP-цена клиенту &gt; 0 (или market price + supplier).
+    <strong>Заказ:</strong> тот же P/N в ТАЗ Category=EXPENDABLE, дата заказа ≥ даты RFQ
+    (логика UTair EXP).
+  </div>
+  
+<details class="period" open>
+  <summary>
+    <span class="period-title">1. ТУЗ (rotables / компоненты)</span>
+    <span class="period-meta">листы групп · ТУЗ 21.09.2026.xlsx</span>
+    <span class="period-meta">110 запросов · 55 предложений · 2 заказов</span>
+  </summary>
+  <div class="period-body">
+    
+    <div class="kpis three">
+      <div class="highlight">
+        <div class="label">Запросы</div>
+        <div class="value">110</div>
+        <div class="muted">уник. P/N + дата B + Request №</div>
+      </div>
+      <div>
+        <div class="label">Предложения</div>
+        <div class="value">55</div>
+        <div class="muted">50% от запросов</div>
+      </div>
+      <div>
+        <div class="label">Заказы</div>
+        <div class="value">2</div>
+        <div class="muted">4% от предложений · 2% от запросов</div>
+      </div>
+    </div>
+    <div class="funnel-bar">
+      <div class="stage s1"><span>Запрос</span><b>110</b></div>
+      <div class="arrow">→ 50%</div>
+      <div class="stage s2"><span>Предложение</span><b>55</b></div>
+      <div class="arrow">→ 4%</div>
+      <div class="stage s3"><span>Заказ</span><b>2</b></div>
+    </div>
+    
+    <p class='hint'>Найдено на рынке (цена поставщика, без Backup / not-found): <b>51</b> из 110 (46%).</p>
+    <details class="block" open>
+      <summary>1. Воронка по месяцам</summary>
+      <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="m1">
+      <thead><tr>
+        <th>Месяц <span class="arrow">↕</span></th>
+        <th>Запросы <span class="arrow">↕</span></th>
+        <th>Предложения <span class="arrow">↕</span></th>
+        <th>Запрос→Предл. <span class="arrow">↕</span></th>
+        <th>Заказы <span class="arrow">↕</span></th>
+        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2026-06</td><td class='num'>40</td><td class='num'>10</td><td class='num'>25%</td><td class='num'>1</td><td class='num'>10%</td></tr>
+<tr><td>2026-07</td><td class='num'>24</td><td class='num'>11</td><td class='num'>46%</td><td class='num'>0</td><td class='num'>0%</td></tr>
+<tr><td>2026-08</td><td class='num'>34</td><td class='num'>27</td><td class='num'>79%</td><td class='num'>1</td><td class='num'>4%</td></tr>
+<tr><td>2026-09</td><td class='num'>12</td><td class='num'>7</td><td class='num'>58%</td><td class='num'>0</td><td class='num'>0%</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+    </details>
+    
+    <details class="subblock" open>
+      <summary>Статусы запросов (ТУЗ)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="s1">
+          <thead><tr>
+            <th>Статус <span class="arrow">↕</span></th>
+            <th>Запросов <span class="arrow">↕</span></th>
+            <th>Доля <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>1. Проценка у поставщиков</td><td class='num'>46</td><td class='num'>42%</td></tr><tr><td>4. Квотация направлена клиенту</td><td class='num'>33</td><td class='num'>30%</td></tr><tr><td>3. Цена на деталь получена</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>8. Backup</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>5. Есть интерес</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>7. Клиент согласовал</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>0. Начальный этап</td><td class='num'>1</td><td class='num'>1%</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    
+    <details class="block" open>
+      <summary>Заказы (2)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="o1">
+          <thead><tr>
+            <th>Дата запроса <span class="arrow">↕</span></th>
+            <th>Request № <span class="arrow">↕</span></th>
+            <th>P/N <span class="arrow">↕</span></th>
+            <th>Описание <span class="arrow">↕</span></th>
+            <th>Qty <span class="arrow">↕</span></th>
+            <th>Статус <span class='arrow'>↕</span></th>
+            <th>Цена $ <span class="arrow">↕</span></th>
+            <th>Счёт <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>2026-06-04</td><td>13303</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK
+DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал</td><td class='num'>2 156.00</td><td>—</td></tr>
+<tr><td>2026-08-10</td><td>307</td><td>4951542</td><td>ELEMENT, FILTER - OIL</td><td class='num'>1.0</td><td>7. Клиент согласовал</td><td class='num'>1 700.00</td><td>11082613526-1</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    <div class='note-box'><strong>Примечания</strong><ul><li>Уникальность запроса: P/N + дата Request date&amp;time (B) + Request № (C).</li><li>Несколько строк поставщиков по одному P/N+дате+Request № схлопываются в один запрос.</li></ul></div>
+  </div>
+</details>
+
+<details class="period" open>
+  <summary>
+    <span class="period-title">2. Expendables</span>
+    <span class="period-meta">CSV · EXPENDABLES 21.09.2026.csv</span>
+    <span class="period-meta">259 запросов · 197 предложений · 15 заказов</span>
+  </summary>
+  <div class="period-body">
+    
+    <div class="kpis three">
+      <div class="highlight">
+        <div class="label">Запросы</div>
+        <div class="value">259</div>
+        <div class="muted">уник. P/N + дата B + Request №</div>
+      </div>
+      <div>
+        <div class="label">Предложения</div>
+        <div class="value">197</div>
+        <div class="muted">76% от запросов</div>
+      </div>
+      <div>
+        <div class="label">Заказы</div>
+        <div class="value">15</div>
+        <div class="muted">8% от предложений · 6% от запросов</div>
+      </div>
+    </div>
+    <div class="funnel-bar">
+      <div class="stage s1"><span>Запрос</span><b>259</b></div>
+      <div class="arrow">→ 76%</div>
+      <div class="stage s2"><span>Предложение</span><b>197</b></div>
+      <div class="arrow">→ 8%</div>
+      <div class="stage s3"><span>Заказ</span><b>15</b></div>
+    </div>
+    
+    
+    <details class="block" open>
+      <summary>1. Воронка по месяцам</summary>
+      <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="m2">
+      <thead><tr>
+        <th>Месяц <span class="arrow">↕</span></th>
+        <th>Запросы <span class="arrow">↕</span></th>
+        <th>Предложения <span class="arrow">↕</span></th>
+        <th>Запрос→Предл. <span class="arrow">↕</span></th>
+        <th>Заказы <span class="arrow">↕</span></th>
+        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2026-06</td><td class='num'>49</td><td class='num'>25</td><td class='num'>51%</td><td class='num'>14</td><td class='num'>56%</td></tr>
+<tr><td>2026-07</td><td class='num'>86</td><td class='num'>72</td><td class='num'>84%</td><td class='num'>0</td><td class='num'>0%</td></tr>
+<tr><td>2026-08</td><td class='num'>74</td><td class='num'>58</td><td class='num'>78%</td><td class='num'>1</td><td class='num'>2%</td></tr>
+<tr><td>2026-09</td><td class='num'>50</td><td class='num'>42</td><td class='num'>84%</td><td class='num'>0</td><td class='num'>0%</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+    </details>
+    
+    
+    <details class="block" open>
+      <summary>Заказы (15)</summary>
+      <div class="block-body">
+        <div class="table-scroll">
+        <table data-sortable id="o2">
+          <thead><tr>
+            <th>Дата запроса <span class="arrow">↕</span></th>
+            <th>ExpR <span class="arrow">↕</span></th>
+            <th>P/N <span class="arrow">↕</span></th>
+            <th>Описание <span class="arrow">↕</span></th>
+            <th>Qty <span class="arrow">↕</span></th>
+            
+            <th>Цена $ <span class="arrow">↕</span></th>
+            <th>Счёт <span class="arrow">↕</span></th>
+          </tr></thead>
+          <tbody><tr><td>2026-06-02</td><td>ExpW8383</td><td>P50015-005</td><td>O-RING</td><td class='num'>2.0</td><td class='num'>110.79</td><td>2062618346.0</td></tr>
+<tr><td>2026-06-07</td><td>ExpW8414</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td class='num'>111.91</td><td>19082613516-1</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8820</td><td>NAS6205-8D</td><td>BOLT-HEXAGON HEAD,STEEL</td><td class='num'>8.0</td><td class='num'>3.65</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8821</td><td>145-11424-003</td><td>WASHER</td><td class='num'>8.0</td><td class='num'>33.08</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8826</td><td>MS21133-08</td><td>NUT-EXTERNAL WRENCHING,SPLINE DRIVE</td><td class='num'>16.0</td><td class='num'>45.34</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8827</td><td>MS21299-8</td><td>WASHER,FLAT</td><td class='num'>4.0</td><td class='num'>1.76</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8830</td><td>NAS514P832-7</td><td>SCREW CSK HD,SLOT CROSS, SSTEEL</td><td class='num'>14.0</td><td class='num'>2.10</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8832</td><td>NAS1836-3-14</td><td>INSERT</td><td class='num'>1.0</td><td class='num'>3.53</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8834</td><td>145-25921-901</td><td>SHAPE-SEAL,FAIRING,RUBBER</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8835</td><td>145-25921-902</td><td>SHAPE-SEAL</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8837</td><td>SJ8665FP304</td><td>PROTECTIVE BOOT,POLUYRETHANE CLEAR</td><td class='num'>1.0</td><td class='num'>1 520.76</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8840</td><td>145-21644-501</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>344.63</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8841</td><td>145-21644-503</td><td>SEAL</td><td class='num'>1.0</td><td class='num'>120.83</td><td>11082613526.0</td></tr>
+<tr><td>2026-06-25</td><td>ExpW8842</td><td>145-21644-504</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>140.66</td><td>11082613526.0</td></tr>
+<tr><td>2026-08-12</td><td>ExpW9641</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>5.0</td><td class='num'>64.00</td><td>19082613516-1</td></tr></tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+    
+    <div class='note-box'><strong>Примечания</strong><ul><li>Уникальность: P/N + Date of RFQ + Unicode/ExpR (в EXP нет столбца Request №).</li><li>Предложение: DDP-цена клиенту &gt; 0, иначе market price + supplier (как в UTair EXP).</li><li>Заказы сверстаны с ТАЗ EXPENDABLE (ТАЗ полный файл 28.08.2026.xlsx): строк Скайпро в периоде — EXPENDABLE 21, ROTABLE 4 (ROTABLE в эту воронку не входят).</li><li>Срез ТАЗ от 28.08.2026: заказы сентября после этой даты могут быть неполными.</li></ul></div>
+  </div>
+</details>
+
+  <p class="hint">
+    Источники: ТУЗ — ТУЗ 21.09.2026.xlsx;
+    Expendables — EXPENDABLES 21.09.2026.csv;
+    ТАЗ (для заказов EXP) — ТАЗ полный файл 28.08.2026.xlsx.
+    Скачивайте HTML напрямую (ZIP+HTML Windows часто помечает ложно).
+  </p>
+</div>
+<script>
+document.querySelectorAll('table[data-sortable]').forEach((table) => {
+  const headers = table.querySelectorAll('th');
+  headers.forEach((th, idx) => {
+    th.addEventListener('click', () => {
+      const tbody = table.tBodies[0];
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const asc = th.dataset.asc !== '1';
+      headers.forEach(h => { h.classList.remove('sorted'); h.dataset.asc = ''; });
+      th.classList.add('sorted');
+      th.dataset.asc = asc ? '1' : '0';
+      const parse = (td) => {
+        const t = (td?.textContent || '').trim().replace(/\s/g, '').replace('%','');
+        const n = Number(t.replace(',', '.'));
+        return Number.isFinite(n) && t !== '' && t !== '—' ? n : t;
+      };
+      rows.sort((a, b) => {
+        const av = parse(a.children[idx]);
+        const bv = parse(b.children[idx]);
+        if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
+        return asc ? String(av).localeCompare(String(bv), 'ru') : String(bv).localeCompare(String(av), 'ru');
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+});
+</script>
+</body>
+</html>
