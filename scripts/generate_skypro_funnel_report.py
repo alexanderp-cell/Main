@@ -682,12 +682,12 @@ def render_month_table(block: FunnelBlock, table_id: str) -> str:
     <div class="table-scroll">
     <table data-sortable id="{html.escape(table_id)}">
       <thead><tr>
-        <th>Месяц <span class="arrow">↕</span></th>
-        <th>Запросы <span class="arrow">↕</span></th>
-        <th>Предложения <span class="arrow">↕</span></th>
-        <th>Запрос→Предл. <span class="arrow">↕</span></th>
-        <th>Заказы <span class="arrow">↕</span></th>
-        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+        <th class="label-col">Месяц <span class="arrow">↕</span></th>
+        <th class="num">Запросы <span class="arrow">↕</span></th>
+        <th class="num">Предложения <span class="arrow">↕</span></th>
+        <th class="num">Запрос→Предл. <span class="arrow">↕</span></th>
+        <th class="num">Заказы <span class="arrow">↕</span></th>
+        <th class="num">Предл.→Заказ <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody>{body}</tbody>
     </table>
@@ -714,9 +714,9 @@ def render_status_table(block: FunnelBlock, table_id: str) -> str:
         <div class="table-scroll">
         <table data-sortable id="{html.escape(table_id)}">
           <thead><tr>
-            <th>Статус <span class="arrow">↕</span></th>
-            <th>Запросов <span class="arrow">↕</span></th>
-            <th>Доля <span class="arrow">↕</span></th>
+            <th class="label-col">Статус <span class="arrow">↕</span></th>
+            <th class="num">Запросов <span class="arrow">↕</span></th>
+            <th class="num">Доля <span class="arrow">↕</span></th>
           </tr></thead>
           <tbody>{''.join(rows)}</tbody>
         </table>
@@ -732,17 +732,17 @@ def render_orders_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
     for item in block.order_rows:
         rows.append(
             "<tr>"
-            f"<td>{html.escape(item['date'])}</td>"
-            f"<td>{html.escape(str(item['request_no']))}</td>"
+            f"<td class='num'>{html.escape(item['date'])}</td>"
+            f"<td class='num'>{html.escape(str(item['request_no']))}</td>"
             f"<td>{html.escape(item['pn'])}</td>"
             f"<td>{html.escape(str(item['description']))}</td>"
             f"<td class='num'>{html.escape(str(item['qty']))}</td>"
             + (f"<td>{html.escape(str(item['status']))}</td>" if tuz else "")
             + f"<td class='num'>{html.escape(str(item['price']))}</td>"
-            f"<td>{html.escape(str(item['refs']))}</td>"
+            f"<td class='num'>{html.escape(str(item['refs']))}</td>"
             "</tr>"
         )
-    status_col = "<th>Статус <span class='arrow'>↕</span></th>" if tuz else ""
+    status_col = "<th class='label-col'>Статус <span class='arrow'>↕</span></th>" if tuz else ""
     cols = 8 if tuz else 7
     body = "\n".join(rows) or f"<tr><td colspan='{cols}' class='empty'>Нет заказов в периоде</td></tr>"
     open_attr = " open" if block.order_rows else ""
@@ -753,14 +753,14 @@ def render_orders_table(block: FunnelBlock, table_id: str, *, tuz: bool) -> str:
         <div class="table-scroll">
         <table data-sortable id="{html.escape(table_id)}">
           <thead><tr>
-            <th>Дата запроса <span class="arrow">↕</span></th>
-            <th>{html.escape(req_col)} <span class="arrow">↕</span></th>
-            <th>P/N <span class="arrow">↕</span></th>
-            <th>Описание <span class="arrow">↕</span></th>
-            <th>Qty <span class="arrow">↕</span></th>
+            <th class="num">Дата запроса <span class="arrow">↕</span></th>
+            <th class="num">{html.escape(req_col)} <span class="arrow">↕</span></th>
+            <th class="label-col">P/N <span class="arrow">↕</span></th>
+            <th class="label-col">Описание <span class="arrow">↕</span></th>
+            <th class="num">Qty <span class="arrow">↕</span></th>
             {status_col}
-            <th>Цена $ <span class="arrow">↕</span></th>
-            <th>Счёт <span class="arrow">↕</span></th>
+            <th class="num">Цена $ <span class="arrow">↕</span></th>
+            <th class="num">Счёт <span class="arrow">↕</span></th>
           </tr></thead>
           <tbody>{body}</tbody>
         </table>
@@ -886,17 +886,29 @@ details.subblock[open] > summary::before {{ content:"▾ "; }}
 .funnel-bar .stage b {{ font-size:20px; }}
 .funnel-bar .arrow {{ color:var(--muted); font-size:13px; font-weight:700; }}
 .table-scroll {{ overflow-x:auto; }}
-table {{ width:100%; border-collapse:collapse; font-size:14px; }}
-th, td {{ border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }}
+table {{
+  width:100%; border-collapse:collapse; font-size:14px;
+  border:1px solid #b7c8cf;
+}}
+th, td {{
+  border:1px solid #c5d4da;
+  padding:10px 12px; text-align:left; vertical-align:middle;
+}}
 th {{
   font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
   background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+  text-align:center;
 }}
+th.label-col {{ text-align:left; }}
 th:hover {{ background:#03425a; }}
 th .arrow {{ opacity:.45; margin-left:6px; font-size:11px; }}
 th.sorted .arrow {{ opacity:1; }}
-td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-td.empty, .empty {{ color:#9a9a9a; }}
+td.num, th.num {{
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}}
+td.empty, .empty {{ color:#9a9a9a; text-align:center; }}
 tbody tr:nth-child(even) {{ background:var(--zebra); }}
 tbody tr:hover {{ background:#eef7f9; }}
 .hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}

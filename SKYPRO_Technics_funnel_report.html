@@ -70,17 +70,29 @@ details.subblock[open] > summary::before { content:"▾ "; }
 .funnel-bar .stage b { font-size:20px; }
 .funnel-bar .arrow { color:var(--muted); font-size:13px; font-weight:700; }
 .table-scroll { overflow-x:auto; }
-table { width:100%; border-collapse:collapse; font-size:14px; }
-th, td { border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }
+table {
+  width:100%; border-collapse:collapse; font-size:14px;
+  border:1px solid #b7c8cf;
+}
+th, td {
+  border:1px solid #c5d4da;
+  padding:10px 12px; text-align:left; vertical-align:middle;
+}
 th {
   font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
   background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+  text-align:center;
 }
+th.label-col { text-align:left; }
 th:hover { background:#03425a; }
 th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
 th.sorted .arrow { opacity:1; }
-td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-td.empty, .empty { color:#9a9a9a; }
+td.num, th.num {
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+td.empty, .empty { color:#9a9a9a; text-align:center; }
 tbody tr:nth-child(even) { background:var(--zebra); }
 tbody tr:hover { background:#eef7f9; }
 .hint { margin-top:12px; color:var(--muted); font-size:12px; }
@@ -158,12 +170,12 @@ tbody tr:hover { background:#eef7f9; }
     <div class="table-scroll">
     <table data-sortable id="m1">
       <thead><tr>
-        <th>Месяц <span class="arrow">↕</span></th>
-        <th>Запросы <span class="arrow">↕</span></th>
-        <th>Предложения <span class="arrow">↕</span></th>
-        <th>Запрос→Предл. <span class="arrow">↕</span></th>
-        <th>Заказы <span class="arrow">↕</span></th>
-        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+        <th class="label-col">Месяц <span class="arrow">↕</span></th>
+        <th class="num">Запросы <span class="arrow">↕</span></th>
+        <th class="num">Предложения <span class="arrow">↕</span></th>
+        <th class="num">Запрос→Предл. <span class="arrow">↕</span></th>
+        <th class="num">Заказы <span class="arrow">↕</span></th>
+        <th class="num">Предл.→Заказ <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>2026-06</td><td class='num'>40</td><td class='num'>10</td><td class='num'>25%</td><td class='num'>1</td><td class='num'>10%</td></tr>
 <tr><td>2026-07</td><td class='num'>24</td><td class='num'>11</td><td class='num'>46%</td><td class='num'>0</td><td class='num'>0%</td></tr>
@@ -180,9 +192,9 @@ tbody tr:hover { background:#eef7f9; }
         <div class="table-scroll">
         <table data-sortable id="s1">
           <thead><tr>
-            <th>Статус <span class="arrow">↕</span></th>
-            <th>Запросов <span class="arrow">↕</span></th>
-            <th>Доля <span class="arrow">↕</span></th>
+            <th class="label-col">Статус <span class="arrow">↕</span></th>
+            <th class="num">Запросов <span class="arrow">↕</span></th>
+            <th class="num">Доля <span class="arrow">↕</span></th>
           </tr></thead>
           <tbody><tr><td>1. Проценка у поставщиков</td><td class='num'>46</td><td class='num'>42%</td></tr><tr><td>4. Квотация направлена клиенту</td><td class='num'>33</td><td class='num'>30%</td></tr><tr><td>3. Цена на деталь получена</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>8. Backup</td><td class='num'>13</td><td class='num'>12%</td></tr><tr><td>5. Есть интерес</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>7. Клиент согласовал</td><td class='num'>2</td><td class='num'>2%</td></tr><tr><td>0. Начальный этап</td><td class='num'>1</td><td class='num'>1%</td></tr></tbody>
         </table>
@@ -197,18 +209,18 @@ tbody tr:hover { background:#eef7f9; }
         <div class="table-scroll">
         <table data-sortable id="o1">
           <thead><tr>
-            <th>Дата запроса <span class="arrow">↕</span></th>
-            <th>Request № <span class="arrow">↕</span></th>
-            <th>P/N <span class="arrow">↕</span></th>
-            <th>Описание <span class="arrow">↕</span></th>
-            <th>Qty <span class="arrow">↕</span></th>
-            <th>Статус <span class='arrow'>↕</span></th>
-            <th>Цена $ <span class="arrow">↕</span></th>
-            <th>Счёт <span class="arrow">↕</span></th>
+            <th class="num">Дата запроса <span class="arrow">↕</span></th>
+            <th class="num">Request № <span class="arrow">↕</span></th>
+            <th class="label-col">P/N <span class="arrow">↕</span></th>
+            <th class="label-col">Описание <span class="arrow">↕</span></th>
+            <th class="num">Qty <span class="arrow">↕</span></th>
+            <th class='label-col'>Статус <span class='arrow'>↕</span></th>
+            <th class="num">Цена $ <span class="arrow">↕</span></th>
+            <th class="num">Счёт <span class="arrow">↕</span></th>
           </tr></thead>
-          <tbody><tr><td>2026-06-04</td><td>13303</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK
-DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал</td><td class='num'>2 156.00</td><td>—</td></tr>
-<tr><td>2026-08-10</td><td>307</td><td>4951542</td><td>ELEMENT, FILTER - OIL</td><td class='num'>1.0</td><td>7. Клиент согласовал</td><td class='num'>1 700.00</td><td>11082613526-1</td></tr></tbody>
+          <tbody><tr><td class='num'>2026-06-04</td><td class='num'>13303</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK
+DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал</td><td class='num'>2 156.00</td><td class='num'>—</td></tr>
+<tr><td class='num'>2026-08-10</td><td class='num'>307</td><td>4951542</td><td>ELEMENT, FILTER - OIL</td><td class='num'>1.0</td><td>7. Клиент согласовал</td><td class='num'>1 700.00</td><td class='num'>11082613526-1</td></tr></tbody>
         </table>
         </div>
       </div>
@@ -258,12 +270,12 @@ DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал<
     <div class="table-scroll">
     <table data-sortable id="m2">
       <thead><tr>
-        <th>Месяц <span class="arrow">↕</span></th>
-        <th>Запросы <span class="arrow">↕</span></th>
-        <th>Предложения <span class="arrow">↕</span></th>
-        <th>Запрос→Предл. <span class="arrow">↕</span></th>
-        <th>Заказы <span class="arrow">↕</span></th>
-        <th>Предл.→Заказ <span class="arrow">↕</span></th>
+        <th class="label-col">Месяц <span class="arrow">↕</span></th>
+        <th class="num">Запросы <span class="arrow">↕</span></th>
+        <th class="num">Предложения <span class="arrow">↕</span></th>
+        <th class="num">Запрос→Предл. <span class="arrow">↕</span></th>
+        <th class="num">Заказы <span class="arrow">↕</span></th>
+        <th class="num">Предл.→Заказ <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>2026-06</td><td class='num'>49</td><td class='num'>25</td><td class='num'>51%</td><td class='num'>14</td><td class='num'>56%</td></tr>
 <tr><td>2026-07</td><td class='num'>86</td><td class='num'>72</td><td class='num'>84%</td><td class='num'>0</td><td class='num'>0%</td></tr>
@@ -281,30 +293,30 @@ DISCONNECT</td><td class='num'>8.0</td><td>7. Клиент согласовал<
         <div class="table-scroll">
         <table data-sortable id="o2">
           <thead><tr>
-            <th>Дата запроса <span class="arrow">↕</span></th>
-            <th>ExpR <span class="arrow">↕</span></th>
-            <th>P/N <span class="arrow">↕</span></th>
-            <th>Описание <span class="arrow">↕</span></th>
-            <th>Qty <span class="arrow">↕</span></th>
+            <th class="num">Дата запроса <span class="arrow">↕</span></th>
+            <th class="num">ExpR <span class="arrow">↕</span></th>
+            <th class="label-col">P/N <span class="arrow">↕</span></th>
+            <th class="label-col">Описание <span class="arrow">↕</span></th>
+            <th class="num">Qty <span class="arrow">↕</span></th>
             
-            <th>Цена $ <span class="arrow">↕</span></th>
-            <th>Счёт <span class="arrow">↕</span></th>
+            <th class="num">Цена $ <span class="arrow">↕</span></th>
+            <th class="num">Счёт <span class="arrow">↕</span></th>
           </tr></thead>
-          <tbody><tr><td>2026-06-02</td><td>ExpW8383</td><td>P50015-005</td><td>O-RING</td><td class='num'>2.0</td><td class='num'>110.79</td><td>2062618346.0</td></tr>
-<tr><td>2026-06-07</td><td>ExpW8414</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td class='num'>111.91</td><td>19082613516-1</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8820</td><td>NAS6205-8D</td><td>BOLT-HEXAGON HEAD,STEEL</td><td class='num'>8.0</td><td class='num'>3.65</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8821</td><td>145-11424-003</td><td>WASHER</td><td class='num'>8.0</td><td class='num'>33.08</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8826</td><td>MS21133-08</td><td>NUT-EXTERNAL WRENCHING,SPLINE DRIVE</td><td class='num'>16.0</td><td class='num'>45.34</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8827</td><td>MS21299-8</td><td>WASHER,FLAT</td><td class='num'>4.0</td><td class='num'>1.76</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8830</td><td>NAS514P832-7</td><td>SCREW CSK HD,SLOT CROSS, SSTEEL</td><td class='num'>14.0</td><td class='num'>2.10</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8832</td><td>NAS1836-3-14</td><td>INSERT</td><td class='num'>1.0</td><td class='num'>3.53</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8834</td><td>145-25921-901</td><td>SHAPE-SEAL,FAIRING,RUBBER</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8835</td><td>145-25921-902</td><td>SHAPE-SEAL</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8837</td><td>SJ8665FP304</td><td>PROTECTIVE BOOT,POLUYRETHANE CLEAR</td><td class='num'>1.0</td><td class='num'>1 520.76</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8840</td><td>145-21644-501</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>344.63</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8841</td><td>145-21644-503</td><td>SEAL</td><td class='num'>1.0</td><td class='num'>120.83</td><td>11082613526.0</td></tr>
-<tr><td>2026-06-25</td><td>ExpW8842</td><td>145-21644-504</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>140.66</td><td>11082613526.0</td></tr>
-<tr><td>2026-08-12</td><td>ExpW9641</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>5.0</td><td class='num'>64.00</td><td>19082613516-1</td></tr></tbody>
+          <tbody><tr><td class='num'>2026-06-02</td><td class='num'>ExpW8383</td><td>P50015-005</td><td>O-RING</td><td class='num'>2.0</td><td class='num'>110.79</td><td class='num'>2062618346.0</td></tr>
+<tr><td class='num'>2026-06-07</td><td class='num'>ExpW8414</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>4.0</td><td class='num'>111.91</td><td class='num'>19082613516-1</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8820</td><td>NAS6205-8D</td><td>BOLT-HEXAGON HEAD,STEEL</td><td class='num'>8.0</td><td class='num'>3.65</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8821</td><td>145-11424-003</td><td>WASHER</td><td class='num'>8.0</td><td class='num'>33.08</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8826</td><td>MS21133-08</td><td>NUT-EXTERNAL WRENCHING,SPLINE DRIVE</td><td class='num'>16.0</td><td class='num'>45.34</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8827</td><td>MS21299-8</td><td>WASHER,FLAT</td><td class='num'>4.0</td><td class='num'>1.76</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8830</td><td>NAS514P832-7</td><td>SCREW CSK HD,SLOT CROSS, SSTEEL</td><td class='num'>14.0</td><td class='num'>2.10</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8832</td><td>NAS1836-3-14</td><td>INSERT</td><td class='num'>1.0</td><td class='num'>3.53</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8834</td><td>145-25921-901</td><td>SHAPE-SEAL,FAIRING,RUBBER</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8835</td><td>145-25921-902</td><td>SHAPE-SEAL</td><td class='num'>1.0</td><td class='num'>1 149.81</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8837</td><td>SJ8665FP304</td><td>PROTECTIVE BOOT,POLUYRETHANE CLEAR</td><td class='num'>1.0</td><td class='num'>1 520.76</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8840</td><td>145-21644-501</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>344.63</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8841</td><td>145-21644-503</td><td>SEAL</td><td class='num'>1.0</td><td class='num'>120.83</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-06-25</td><td class='num'>ExpW8842</td><td>145-21644-504</td><td>PROFILE</td><td class='num'>1.0</td><td class='num'>140.66</td><td class='num'>11082613526.0</td></tr>
+<tr><td class='num'>2026-08-12</td><td class='num'>ExpW9641</td><td>135-07907-005</td><td>JOINT,SEAL</td><td class='num'>5.0</td><td class='num'>64.00</td><td class='num'>19082613516-1</td></tr></tbody>
         </table>
         </div>
       </div>
