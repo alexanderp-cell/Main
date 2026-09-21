@@ -201,6 +201,69 @@ class EntityLead:
     pay_median: float | None = None
     pay_n: int = 0
     show_pay: bool = False
+    # why pay_n < delivery n (IBERIA / JET TECHNIC)
+    pay_excl_unpaid: int = 0
+    pay_excl_negative: int = 0
+    pay_excl_postpay: int = 0
+
+    @property
+    def delivery_n(self) -> int:
+        return self.rotable.n + self.expendable.n
+
+
+def pay_exclusion_breakdown(part: pd.DataFrame) -> tuple[pd.DataFrame, int, int, int]:
+    """Return usable rows + mutually exclusive exclusion counts vs delivery set."""
+    no_aw = part["_aw"].isna()
+    neg = part["_aw"].notna() & part["_pay_days"].notna() & (part["_pay_days"] < 0)
+    ba = part["_ba"]
+    aw = part["_aw"]
+    post = part["_aw"].notna() & ~neg & ba.notna() & (ba < aw)
+    usable = part.loc[pay_usable_mask(part)]
+    return usable, int(no_aw.sum()), int(neg.sum()), int(post.sum())
+
+
+def side_stats(series: pd.Series) -> SideStats:
+    if series.empty:
+        return SideStats(None, 0)
+    return SideStats(float(series.mean()), int(len(series)))
+
+
+def build_entities(
+    rows: pd.DataFrame, key: str, *, with_pay: bool
+) -> list[EntityLead]:
+    names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
+    out: list[EntityLead] = []
+    for name in names:
+        if not name or str(name).lower() in {"nan", "none"}:
+            continue
+        part = rows[rows[key] == name]
+        ent = EntityLead(
+            name=str(name),
+            rotable=side_stats(part.loc[part["_cat"] == CAT_ROTABLE, "_days"].astype(float)),
+            expendable=side_stats(
+                part.loc[part["_cat"] == CAT_EXPENDABLE, "_days"].astype(float)
+            ),
+        )
+        if with_pay and str(name).upper() in PAY_SUPPLIERS:
+            ent.show_pay = True
+            usable, unpaid, negative, postpay = pay_exclusion_breakdown(part)
+            ent.pay_excl_unpaid = unpaid
+            ent.pay_excl_negative = negative
+            ent.pay_excl_postpay = postpay
+            if not usable.empty:
+                days = usable["_pay_days"].astype(float)
+                ent.pay_avg = float(days.mean())
+                ent.pay_median = float(days.median())
+                ent.pay_n = int(len(days))
+        out.append(ent)
+    # sort by total n desc, then name
+    out.sort(
+        key=lambda e: (
+            -(e.rotable.n + e.expendable.n),
+            e.name.casefold(),
+        )
+    )
+    return out
 
 
 @dataclass
@@ -229,47 +292,6 @@ class PeriodBlock:
     transport_total_fact: float
     transport_n: int
     transport_by_client: list[TransportRow]
-
-
-def side_stats(series: pd.Series) -> SideStats:
-    if series.empty:
-        return SideStats(None, 0)
-    return SideStats(float(series.mean()), int(len(series)))
-
-
-def build_entities(
-    rows: pd.DataFrame, key: str, *, with_pay: bool
-) -> list[EntityLead]:
-    names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
-    out: list[EntityLead] = []
-    for name in names:
-        if not name or str(name).lower() in {"nan", "none"}:
-            continue
-        part = rows[rows[key] == name]
-        ent = EntityLead(
-            name=str(name),
-            rotable=side_stats(part.loc[part["_cat"] == CAT_ROTABLE, "_days"].astype(float)),
-            expendable=side_stats(
-                part.loc[part["_cat"] == CAT_EXPENDABLE, "_days"].astype(float)
-            ),
-        )
-        if with_pay and str(name).upper() in PAY_SUPPLIERS:
-            ent.show_pay = True
-            usable = part.loc[pay_usable_mask(part)]
-            if not usable.empty:
-                days = usable["_pay_days"].astype(float)
-                ent.pay_avg = float(days.mean())
-                ent.pay_median = float(days.median())
-                ent.pay_n = int(len(days))
-        out.append(ent)
-    # sort by total n desc, then name
-    out.sort(
-        key=lambda e: (
-            -(e.rotable.n + e.expendable.n),
-            e.name.casefold(),
-        )
-    )
-    return out
 
 
 def build_transport(rows: pd.DataFrame) -> tuple[float, float, int, list[TransportRow]]:
@@ -344,6 +366,7 @@ def render_lead_table(
     overall_n: int,
 ) -> str:
     rows = []
+    pay_notes = []
     for e in entities:
         cls = ""
         up = e.name.upper()
@@ -358,6 +381,20 @@ def render_lead_table(
                     f"{avg_cell(e.pay_avg, e.pay_n)}"
                     f"{avg_cell(e.pay_median, e.pay_n)}"
                     f"{n_cell(e.pay_n)}"
+                )
+                bits = []
+                if e.pay_excl_unpaid:
+                    bits.append(f"без даты оплаты AW: {e.pay_excl_unpaid}")
+                if e.pay_excl_postpay:
+                    bits.append(f"постоплата (BA&lt;AW): {e.pay_excl_postpay}")
+                if e.pay_excl_negative:
+                    bits.append(f"оплата раньше Q: {e.pay_excl_negative}")
+                excl = "; ".join(bits) if bits else "исключений нет"
+                pay_notes.append(
+                    f"<li><strong>{html_escape(e.name)}</strong>: "
+                    f"поставка n={e.delivery_n} (ротабл {e.rotable.n} + расходка {e.expendable.n}), "
+                    f"в среднее оплаты n={e.pay_n}. "
+                    f"Не входят: {excl}.</li>"
                 )
             else:
                 pay_cells = (
@@ -381,6 +418,17 @@ def render_lead_table(
             '<th data-type="num">Оплата n <span class="arrow">↕</span></th>'
         )
 
+    pay_note_html = ""
+    if pay_notes:
+        pay_note_html = (
+            '<div class="note-box">'
+            "<strong>Почему «Оплата n» ≠ ротабл n + расходка n</strong>"
+            "<p>Ротабл/расходка — все поставки STK в периоде. "
+            "Оплата n — только позиции, по которым считаем AW−Q "
+            "(есть дата оплаты, нет постоплаты BA&lt;AW, оплата не раньше Q).</p>"
+            f"<ul>{''.join(pay_notes)}</ul></div>"
+        )
+
     return f"""
 <div class="table-scroll">
 <table class="sortable" id="{html_escape(table_id)}">
@@ -399,10 +447,12 @@ def render_lead_table(
   </tbody>
 </table>
 </div>
+{pay_note_html}
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: {overall_n}, средний срок {fmt_days(overall_avg)} дн.
-  {"Для IBERIA и JET TECHNIC: срок оплаты = AW − Q; только STK; без постоплаты (BA раньше AW)." if with_pay else ""}
 </p>
 """
 
@@ -605,6 +655,16 @@ tbody tr:hover {{ background:#eef7f9; }}
 tr.channel-jt td {{ background:#e8f2f5 !important; font-weight:700; }}
 tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
 .hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}
+.rules {{
+  background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
+  padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
+}}
+.note-box {{
+  background:#fff8f2; border:1px solid #f0c7a8; border-radius:8px;
+  padding:12px 14px; margin-top:12px; font-size:13px; color:#5a3a22;
+}}
+.note-box ul {{ margin:8px 0 0; padding-left:18px; }}
+.note-box li {{ margin:4px 0; }}
 @media (max-width:800px) {{
   .kpis, .kpis.three {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
@@ -615,11 +675,17 @@ tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
   <div class="brand">FASTAIR</div>
   <h1>Выполненные заказы</h1>
   <div class="sub">Сроки поставки · оплата IBERIA / JET TECHNIC · транспорт план/факт · источник {html_escape(source_name)}</div>
+  <div class="rules">
+    <strong>Правила срока поставки</strong> (как в отчёте по поставкам):
+    статус <strong>FINISHED</strong> · столбец S (Lead time) = <strong>только STK</strong>
+    (заказы с числовым lead time не входят) · период по столбцу <strong>W</strong>
+    · дни = W − Q · категории ROTABLE / EXPENDABLE.
+  </div>
   {sections}
   <p class="hint">
     Попадание в период — по столбцу W (факт. дата поставки).
-    Срок поставки: FINISHED + Lead time = STK, дни = W − Q.
-    Срок оплаты (только IBERIA и JET TECHNIC): AW − Q, STK, без постоплаты.
+    Срок поставки: FINISHED + Lead time = STK (прочие lead time исключены), дни = W − Q.
+    Срок оплаты (IBERIA / JET TECHNIC): подмножество тех же поставок — AW − Q без постоплаты и без оплаты раньше Q.
   </p>
 </div>
 <script>

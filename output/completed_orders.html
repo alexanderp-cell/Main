@@ -83,6 +83,16 @@ tbody tr:hover { background:#eef7f9; }
 tr.channel-jt td { background:#e8f2f5 !important; font-weight:700; }
 tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 .hint { margin-top:12px; color:var(--muted); font-size:12px; }
+.rules {
+  background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
+  padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
+}
+.note-box {
+  background:#fff8f2; border:1px solid #f0c7a8; border-radius:8px;
+  padding:12px 14px; margin-top:12px; font-size:13px; color:#5a3a22;
+}
+.note-box ul { margin:8px 0 0; padding-left:18px; }
+.note-box li { margin:4px 0; }
 @media (max-width:800px) {
   .kpis, .kpis.three { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
@@ -93,6 +103,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   <div class="brand">FASTAIR</div>
   <h1>Выполненные заказы</h1>
   <div class="sub">Сроки поставки · оплата IBERIA / JET TECHNIC · транспорт план/факт · источник ТАЗ 18.09.2026.xlsx</div>
+  <div class="rules">
+    <strong>Правила срока поставки</strong> (как в отчёте по поставкам):
+    статус <strong>FINISHED</strong> · столбец S (Lead time) = <strong>только STK</strong>
+    (заказы с числовым lead time не входят) · период по столбцу <strong>W</strong>
+    · дни = W − Q · категории ROTABLE / EXPENDABLE.
+  </div>
   
 <details class="period" open>
   <summary>
@@ -131,10 +147,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 50, средний срок 49.1 дн.
-  
 </p>
 
           </div>
@@ -161,10 +179,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+<div class="note-box"><strong>Почему «Оплата n» ≠ ротабл n + расходка n</strong><p>Ротабл/расходка — все поставки STK в периоде. Оплата n — только позиции, по которым считаем AW−Q (есть дата оплаты, нет постоплаты BA&lt;AW, оплата не раньше Q).</p><ul><li><strong>IBERIA</strong>: поставка n=5 (ротабл 5 + расходка 0), в среднее оплаты n=5. Не входят: исключений нет.</li><li><strong>JET TECHNIC</strong>: поставка n=1 (ротабл 1 + расходка 0), в среднее оплаты n=0. Не входят: оплата раньше Q: 1.</li></ul></div>
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 50, средний срок 49.1 дн.
-  Для IBERIA и JET TECHNIC: срок оплаты = AW − Q; только STK; без постоплаты (BA раньше AW).
 </p>
 
           </div>
@@ -245,10 +265,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 847, средний срок 49.5 дн.
-  
 </p>
 
           </div>
@@ -275,10 +297,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+<div class="note-box"><strong>Почему «Оплата n» ≠ ротабл n + расходка n</strong><p>Ротабл/расходка — все поставки STK в периоде. Оплата n — только позиции, по которым считаем AW−Q (есть дата оплаты, нет постоплаты BA&lt;AW, оплата не раньше Q).</p><ul><li><strong>JET TECHNIC</strong>: поставка n=152 (ротабл 68 + расходка 84), в среднее оплаты n=112. Не входят: постоплата (BA&lt;AW): 34; оплата раньше Q: 6.</li><li><strong>IBERIA</strong>: поставка n=116 (ротабл 55 + расходка 61), в среднее оплаты n=114. Не входят: без даты оплаты AW: 1; оплата раньше Q: 1.</li></ul></div>
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 847, средний срок 49.5 дн.
-  Для IBERIA и JET TECHNIC: срок оплаты = AW − Q; только STK; без постоплаты (BA раньше AW).
 </p>
 
           </div>
@@ -359,10 +383,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 1711, средний срок 52.8 дн.
-  
 </p>
 
           </div>
@@ -389,10 +415,12 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   </tbody>
 </table>
 </div>
+<div class="note-box"><strong>Почему «Оплата n» ≠ ротабл n + расходка n</strong><p>Ротабл/расходка — все поставки STK в периоде. Оплата n — только позиции, по которым считаем AW−Q (есть дата оплаты, нет постоплаты BA&lt;AW, оплата не раньше Q).</p><ul><li><strong>JET TECHNIC</strong>: поставка n=250 (ротабл 145 + расходка 105), в среднее оплаты n=196. Не входят: постоплата (BA&lt;AW): 43; оплата раньше Q: 11.</li><li><strong>IBERIA</strong>: поставка n=209 (ротабл 145 + расходка 64), в среднее оплаты n=199. Не входят: без даты оплаты AW: 1; постоплата (BA&lt;AW): 5; оплата раньше Q: 4.</li></ul></div>
 <p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, Lead time = STK, категории ROTABLE / EXPENDABLE.
+  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
+  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
+  категории ROTABLE / EXPENDABLE.
   Всего позиций в выборке: 1711, средний срок 52.8 дн.
-  Для IBERIA и JET TECHNIC: срок оплаты = AW − Q; только STK; без постоплаты (BA раньше AW).
 </p>
 
           </div>
@@ -437,8 +465,8 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 
   <p class="hint">
     Попадание в период — по столбцу W (факт. дата поставки).
-    Срок поставки: FINISHED + Lead time = STK, дни = W − Q.
-    Срок оплаты (только IBERIA и JET TECHNIC): AW − Q, STK, без постоплаты.
+    Срок поставки: FINISHED + Lead time = STK (прочие lead time исключены), дни = W − Q.
+    Срок оплаты (IBERIA / JET TECHNIC): подмножество тех же поставок — AW − Q без постоплаты и без оплаты раньше Q.
   </p>
 </div>
 <script>
