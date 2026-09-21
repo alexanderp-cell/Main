@@ -155,11 +155,16 @@ def in_period(d: date | None, start: date, end: date) -> bool:
     return d is not None and start <= d <= end
 
 
+def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
+    """Попадание в отчёт / период: FINISHED + заполненная факт. дата поставки (W) в периоде."""
+    return df["_finished"] & df["_w"].map(lambda d: in_period(d, start, end))
+
+
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
+    """Срок поставки: среди попавших в отчёт — только STK, с Q, W−Q≥0, ROTABLE/EXPENDABLE."""
     return (
-        df["_finished"]
+        report_mask(df, start, end)
         & df["_stk"]
-        & df["_w"].map(lambda d: in_period(d, start, end))
         & df["_q"].notna()
         & df["_days"].notna()
         & (df["_days"] >= 0)
@@ -168,7 +173,8 @@ def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
 
 
 def transport_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    return df["_finished"] & df["_w"].map(lambda d: in_period(d, start, end))
+    """Транспорт: все позиции, попавшие в отчёт (FINISHED + W в периоде)."""
+    return report_mask(df, start, end)
 
 
 def pay_usable_mask(rows: pd.DataFrame) -> pd.Series:
@@ -283,6 +289,7 @@ class PeriodBlock:
     title: str
     start: date
     end: date
+    report_n: int  # FINISHED + W in period
     lead_avg: float | None
     lead_median: float | None
     lead_n: int
@@ -318,6 +325,11 @@ def build_transport(rows: pd.DataFrame) -> tuple[float, float, int, list[Transpo
 
 
 def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodBlock:
+    in_report = report_mask(df, start, end)
+    # safety: nothing without FINISHED or without parseable W
+    assert bool((~df.loc[in_report, "_finished"]).sum() == 0)
+    assert bool(df.loc[in_report, "_w"].notna().all())
+
     lead_rows = df.loc[lead_mask(df, start, end)].copy()
     lead_rows = lead_rows[lead_rows["_client"].ne("")]
     clients = build_entities(lead_rows, "_client", with_pay=False)
@@ -331,6 +343,7 @@ def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> Period
         title=title,
         start=start,
         end=end,
+        report_n=int(in_report.sum()),
         lead_avg=float(days.mean()) if len(days) else None,
         lead_median=float(days.median()) if len(days) else None,
         lead_n=int(len(days)),
@@ -499,8 +512,7 @@ def render_transport(period: PeriodBlock, table_id: str) -> str:
 </table>
 </div>
 <p class="hint">
-  Период по столбцу W. Статус FINISHED (без фильтра STK).
-  План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
+  Период: FINISHED + заполненная W. План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
 </p>
 """
 
@@ -512,7 +524,7 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
 <details class="period"{open_attr}>
   <summary>
     <span class="period-title">{html_escape(period.title)}</span>
-    <span class="period-meta">{range_s} · поставка STK {period.lead_n} поз. · ср. {fmt_days(period.lead_avg)} дн.</span>
+    <span class="period-meta">{range_s} · в отчёте {period.report_n} (FINISHED+W) · срок STK {period.lead_n} поз. · ср. {fmt_days(period.lead_avg)} дн.</span>
   </summary>
   <div class="period-body">
     <details class="block" open>
@@ -520,7 +532,7 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
       <div class="block-body">
         <div class="kpis">
           <div class="highlight"><div class="label">Средний срок</div><div class="value">{fmt_days(period.lead_avg)} дн.</div><div class="muted">медиана {fmt_days(period.lead_median)}</div></div>
-          <div><div class="label">Позиций</div><div class="value">{period.lead_n}</div><div class="muted">FINISHED · STK · по W</div></div>
+          <div><div class="label">Позиций STK</div><div class="value">{period.lead_n}</div><div class="muted">из {period.report_n} FINISHED+W</div></div>
           <div><div class="label">Клиентов</div><div class="value">{len(period.clients)}</div><div class="muted">в таблице</div></div>
           <div><div class="label">Поставщиков</div><div class="value">{len(period.suppliers)}</div><div class="muted">в таблице</div></div>
         </div>
@@ -676,16 +688,18 @@ tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
   <h1>Выполненные заказы</h1>
   <div class="sub">Сроки поставки · оплата IBERIA / JET TECHNIC · транспорт план/факт · источник {html_escape(source_name)}</div>
   <div class="rules">
-    <strong>Правила срока поставки</strong> (как в отчёте по поставкам):
-    статус <strong>FINISHED</strong> · столбец S (Lead time) = <strong>только STK</strong>
-    (заказы с числовым lead time не входят) · период по столбцу <strong>W</strong>
-    · дни = W − Q · категории ROTABLE / EXPENDABLE.
+    <strong>Попадание в отчёт:</strong> статус <strong>FINISHED</strong>
+    и заполненная факт. дата поставки (столбец <strong>W</strong>); период — по дате W.
+    Неразбираемые даты W и строки без W не входят.
+    <br/>
+    <strong>Срок поставки</strong> (как раньше): среди попавших — Lead time = <strong>только STK</strong>,
+    дни = W − Q, категории ROTABLE / EXPENDABLE.
   </div>
   {sections}
   <p class="hint">
-    Попадание в период — по столбцу W (факт. дата поставки).
-    Срок поставки: FINISHED + Lead time = STK (прочие lead time исключены), дни = W − Q.
-    Срок оплаты (IBERIA / JET TECHNIC): подмножество тех же поставок — AW − Q без постоплаты и без оплаты раньше Q.
+    Попадание в отчёт: FINISHED + заполненная факт. дата W; период по W.
+    Срок поставки: среди них только STK, дни = W − Q.
+    Срок оплаты (IBERIA / JET TECHNIC): подмножество STK-поставок — AW − Q без постоплаты и без оплаты раньше Q.
   </p>
 </div>
 <script>
@@ -778,7 +792,7 @@ def main() -> None:
 
     for p in periods:
         print(
-            f"{p.title}: lead_n={p.lead_n} avg={p.lead_avg} "
+            f"{p.title}: report_n={p.report_n} lead_n={p.lead_n} avg={p.lead_avg} "
             f"clients={len(p.clients)} suppliers={len(p.suppliers)} "
             f"transport plan={p.transport_total_plan:.0f} fact={p.transport_total_fact:.0f}"
         )

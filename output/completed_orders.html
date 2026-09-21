@@ -104,16 +104,18 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
   <h1>Выполненные заказы</h1>
   <div class="sub">Сроки поставки · оплата IBERIA / JET TECHNIC · транспорт план/факт · источник ТАЗ 18.09.2026.xlsx</div>
   <div class="rules">
-    <strong>Правила срока поставки</strong> (как в отчёте по поставкам):
-    статус <strong>FINISHED</strong> · столбец S (Lead time) = <strong>только STK</strong>
-    (заказы с числовым lead time не входят) · период по столбцу <strong>W</strong>
-    · дни = W − Q · категории ROTABLE / EXPENDABLE.
+    <strong>Попадание в отчёт:</strong> статус <strong>FINISHED</strong>
+    и заполненная факт. дата поставки (столбец <strong>W</strong>); период — по дате W.
+    Неразбираемые даты W и строки без W не входят.
+    <br/>
+    <strong>Срок поставки</strong> (как раньше): среди попавших — Lead time = <strong>только STK</strong>,
+    дни = W − Q, категории ROTABLE / EXPENDABLE.
   </div>
   
 <details class="period" open>
   <summary>
     <span class="period-title">Прошедшая неделя</span>
-    <span class="period-meta">12.09.2026 — 18.09.2026 · поставка STK 50 поз. · ср. 49.1 дн.</span>
+    <span class="period-meta">12.09.2026 — 18.09.2026 · в отчёте 54 (FINISHED+W) · срок STK 50 поз. · ср. 49.1 дн.</span>
   </summary>
   <div class="period-body">
     <details class="block" open>
@@ -121,7 +123,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
       <div class="block-body">
         <div class="kpis">
           <div class="highlight"><div class="label">Средний срок</div><div class="value">49.1 дн.</div><div class="muted">медиана 43.0</div></div>
-          <div><div class="label">Позиций</div><div class="value">50</div><div class="muted">FINISHED · STK · по W</div></div>
+          <div><div class="label">Позиций STK</div><div class="value">50</div><div class="muted">из 54 FINISHED+W</div></div>
           <div><div class="label">Клиентов</div><div class="value">13</div><div class="muted">в таблице</div></div>
           <div><div class="label">Поставщиков</div><div class="value">4</div><div class="muted">в таблице</div></div>
         </div>
@@ -218,8 +220,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 </table>
 </div>
 <p class="hint">
-  Период по столбцу W. Статус FINISHED (без фильтра STK).
-  План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
+  Период: FINISHED + заполненная W. План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
 </p>
 
       </div>
@@ -231,7 +232,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 <details class="period">
   <summary>
     <span class="period-title">01.06 — 18.09.2026</span>
-    <span class="period-meta">01.06.2026 — 18.09.2026 · поставка STK 847 поз. · ср. 49.5 дн.</span>
+    <span class="period-meta">01.06.2026 — 18.09.2026 · в отчёте 910 (FINISHED+W) · срок STK 847 поз. · ср. 49.5 дн.</span>
   </summary>
   <div class="period-body">
     <details class="block" open>
@@ -239,7 +240,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
       <div class="block-body">
         <div class="kpis">
           <div class="highlight"><div class="label">Средний срок</div><div class="value">49.5 дн.</div><div class="muted">медиана 47.0</div></div>
-          <div><div class="label">Позиций</div><div class="value">847</div><div class="muted">FINISHED · STK · по W</div></div>
+          <div><div class="label">Позиций STK</div><div class="value">847</div><div class="muted">из 910 FINISHED+W</div></div>
           <div><div class="label">Клиентов</div><div class="value">51</div><div class="muted">в таблице</div></div>
           <div><div class="label">Поставщиков</div><div class="value">8</div><div class="muted">в таблице</div></div>
         </div>
@@ -336,8 +337,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 </table>
 </div>
 <p class="hint">
-  Период по столбцу W. Статус FINISHED (без фильтра STK).
-  План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
+  Период: FINISHED + заполненная W. План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
 </p>
 
       </div>
@@ -349,7 +349,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 <details class="period">
   <summary>
     <span class="period-title">Весь 2026</span>
-    <span class="period-meta">01.01.2026 — 31.12.2026 · поставка STK 1711 поз. · ср. 52.8 дн.</span>
+    <span class="period-meta">01.01.2026 — 31.12.2026 · в отчёте 1824 (FINISHED+W) · срок STK 1711 поз. · ср. 52.8 дн.</span>
   </summary>
   <div class="period-body">
     <details class="block" open>
@@ -357,7 +357,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
       <div class="block-body">
         <div class="kpis">
           <div class="highlight"><div class="label">Средний срок</div><div class="value">52.8 дн.</div><div class="muted">медиана 46.0</div></div>
-          <div><div class="label">Позиций</div><div class="value">1711</div><div class="muted">FINISHED · STK · по W</div></div>
+          <div><div class="label">Позиций STK</div><div class="value">1711</div><div class="muted">из 1824 FINISHED+W</div></div>
           <div><div class="label">Клиентов</div><div class="value">61</div><div class="muted">в таблице</div></div>
           <div><div class="label">Поставщиков</div><div class="value">11</div><div class="muted">в таблице</div></div>
         </div>
@@ -454,8 +454,7 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 </table>
 </div>
 <p class="hint">
-  Период по столбцу W. Статус FINISHED (без фильтра STK).
-  План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
+  Период: FINISHED + заполненная W. План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
 </p>
 
       </div>
@@ -464,9 +463,9 @@ tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
 </details>
 
   <p class="hint">
-    Попадание в период — по столбцу W (факт. дата поставки).
-    Срок поставки: FINISHED + Lead time = STK (прочие lead time исключены), дни = W − Q.
-    Срок оплаты (IBERIA / JET TECHNIC): подмножество тех же поставок — AW − Q без постоплаты и без оплаты раньше Q.
+    Попадание в отчёт: FINISHED + заполненная факт. дата W; период по W.
+    Срок поставки: среди них только STK, дни = W − Q.
+    Срок оплаты (IBERIA / JET TECHNIC): подмножество STK-поставок — AW − Q без постоплаты и без оплаты раньше Q.
   </p>
 </div>
 <script>
