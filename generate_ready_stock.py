@@ -82,8 +82,10 @@ CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 # часто являются частью настоящих партномеров (например, "PC" в "PC-1067"),
 # намеренно НЕ включены.
 NOISE_WORDS = [
-    "PART NUMBER", "P/N", "PN", "ALT PN", "ALT", "QTY", "PCS", "EA",
-    "STOCK", "STK", "MOSCOW", "MOW", "SIRIUS", "SIR", "VKO", "FAI", "FEI",
+    "PART NUMBER", "P/N", "PN", "ALT PN", "ALT", "QTY", "PCS", "EA", "EACH",
+    "STOCK", "STK", "MOSCOW", "MOW", "MSK", "SIRIUS", "SIR", "VKO", "FAI", "FEI",
+    # комментарии, встречающиеся в столбце альтернативных номеров
+    "OFFERED", "QUOTED", "MOQ", "REL", "AMDT",
 ]
 # Регэксп для служебных слов как отдельных токенов (без учёта регистра).
 NOISE_RE = re.compile(
@@ -153,10 +155,63 @@ def clean_token(token):
 
 
 def is_valid_pn(token):
-    """Настоящий партийный номер содержит хотя бы одну цифру и одну букву/цифру."""
+    """Проверяет, что токен похож на настоящий партийный номер, а не на комментарий.
+
+    Требования:
+    - есть хотя бы одна цифра;
+    - только допустимые для партномера символы (буквы, цифры, - . /);
+    - чисто числовой токен должен быть длиной >= 4 (короткие числа вроде
+      "100", "146" — это остатки комментариев/количества, а не номера).
+    """
     if not token:
         return False
-    return bool(re.search(r"\d", token))
+    if not re.search(r"\d", token):
+        return False
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9./-]*", token):
+        return False
+    if token.isdigit() and len(token) < 4:
+        return False
+    return True
+
+
+def _complete_pn(piece):
+    """Похоже ли на самостоятельный партномер (цифра + разделитель или длина >= 5)."""
+    return bool(re.search(r"\d", piece) and (re.search(r"[./-]", piece) or len(piece) >= 5))
+
+
+def _short_affix(piece):
+    """Короткий буквенный префикс/суффикс (например 'WC', 'ML'), приклеенный к номеру."""
+    return bool(re.fullmatch(r"[A-Za-z]{1,3}", piece))
+
+
+def _alt_candidates(entry):
+    """Разбивает одну запись Alt PN на кандидаты-партномера с учётом пробелов.
+
+    - Если запись — это несколько полноценных номеров через пробел
+      ("MS24665-91 MS24665-96") — возвращаем их по отдельности.
+    - Если это один номер, случайно разорванный пробелом
+      ("P01074-101 WC", "ML 6180") — склеиваем обратно.
+    - Иначе (обрывки комментария) — оцениваем куски по отдельности,
+      негодные отсеются проверкой is_valid_pn.
+    """
+    pieces = entry.split()
+    if not pieces:
+        return []
+    if len(pieces) == 1:
+        return pieces
+    if all(_complete_pn(p) for p in pieces):
+        return pieces
+    if len(pieces) == 2:
+        a, b = pieces
+        glue = (
+            (_complete_pn(a) and _short_affix(b))
+            or (_short_affix(a) and _complete_pn(b))
+            or (_short_affix(a) and re.fullmatch(r"\d{3,}", b))
+            or (re.fullmatch(r"\d{3,}", a) and _short_affix(b))
+        )
+        if glue:
+            return ["".join(pieces)]
+    return pieces
 
 
 def clean_main_pn(raw):
@@ -184,16 +239,19 @@ def clean_alt_pn(raw, main_pn=""):
     if CYRILLIC_RE.search(text):
         return ""
     main_key = main_pn.strip().upper()
-    parts = re.split(r"[\n,;]+", text)
     result = []
-    for part in parts:
-        token = clean_token(part)
-        if not is_valid_pn(token):
-            continue
-        if token.upper() == main_key:  # повтор основного номера — не альтернатива
-            continue
-        if token not in result:
-            result.append(token)
+    for part in re.split(r"[\n,;]+", text):
+        # Сначала убираем служебные слова (STK, MSK, STOCK, OFFERED, ...),
+        # затем разбираем оставшееся на кандидаты-номера с учётом пробелов.
+        cleaned = NOISE_RE.sub(" ", part)
+        for candidate in _alt_candidates(cleaned):
+            token = candidate.strip(" .-/;,")
+            if not is_valid_pn(token):
+                continue
+            if token.upper() == main_key:  # повтор основного номера — не альтернатива
+                continue
+            if token not in result:
+                result.append(token)
     return ", ".join(result)
 
 
