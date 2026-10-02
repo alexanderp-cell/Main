@@ -556,13 +556,14 @@ def parse_dates(value: Any) -> list[date]:
     return found
 
 
+def fact_delivery_date(row: pd.Series) -> date | None:
+    """Факт. дата поставки (столбец W)."""
+    return parse_date(row.get(COL_DELIVERY_ACTUAL))
+
+
 def utair_ddp_mow_has_delivery(row: pd.Series) -> bool:
-    """DDP MOW + SHIPPED with fact delivery date = отгрузка уже состоялась."""
-    return (
-        row.get(COL_STATUS) == STATUS_SHIPPED
-        and comment_has_ddp_mow(row.get(COL_COMMENT))
-        and parse_date(row.get(COL_DELIVERY_ACTUAL)) is not None
-    )
+    """DDP MOW: если в W есть дата — ориентируемся на неё (отгрузка состоялась)."""
+    return comment_has_ddp_mow(row.get(COL_COMMENT)) and fact_delivery_date(row) is not None
 
 
 def load_taz(path: Path, excluded_invoicers: set[str] | None = None) -> pd.DataFrame:
@@ -1189,27 +1190,32 @@ def client_shipped_counts_as_in_work(client: str) -> bool:
 
 
 def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
-    """Utair: DDP MOW in SHIPPED stays in work until fact delivery date or FINISHED.
+    """Utair DDP MOW: если заполнена факт. дата поставки (W) — не «в работе».
+    Без W статус SHIPPED для DDP MOW остаётся во «в работе».
     Aeroflot / S7: SHIPPED counts as in work; only FINISHED is shipped.
     """
     status = row.get(COL_STATUS)
     if client_shipped_counts_as_in_work(client):
         return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
-    if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
-        # Once W is filled, treat as shipped (not in work)
-        return not utair_ddp_mow_has_delivery(row)
+    if client == "Utair" and comment_has_ddp_mow(row.get(COL_COMMENT)):
+        if fact_delivery_date(row) is not None:
+            return False
+        return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
     return status in STATUSES_IN_WORK
 
 
 def row_counts_as_shipped_status(row: pd.Series, client: str) -> bool:
-    """Utair: SHIPPED+FINISHED are shipped; DDP MOW needs FINISHED or fact delivery date.
+    """Utair DDP MOW: всегда ориентируемся на факт. дату поставки (W), если она есть.
+    Без W для DDP MOW нужен FINISHED. Иначе SHIPPED+FINISHED как обычно.
     Aeroflot / S7: only FINISHED counts as shipped.
     """
     status = row.get(COL_STATUS)
     if client_shipped_counts_as_in_work(client):
         return status == STATUS_FINISHED
-    if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
-        return utair_ddp_mow_has_delivery(row)
+    if client == "Utair" and comment_has_ddp_mow(row.get(COL_COMMENT)):
+        if fact_delivery_date(row) is not None:
+            return True
+        return status == STATUS_FINISHED
     return status in STATUSES_SHIPPED
 
 
