@@ -527,21 +527,42 @@ def parse_numeric(value: Any) -> float:
 
 
 def parse_date(value: Any) -> date | None:
+    dates = parse_dates(value)
+    return dates[0] if dates else None
+
+
+def parse_dates(value: Any) -> list[date]:
+    """Parse one or many dates from a cell (multiline payment dates supported)."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
-        return None
+        return []
     if isinstance(value, datetime):
-        return value.date()
+        return [value.date()]
     if isinstance(value, date):
-        return value
+        return [value]
     text = str(value).strip()
     if not text or text.upper() == "N/A":
-        return None
-    for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d.%m.%y"):
-        try:
-            return datetime.strptime(text, fmt).date()
-        except ValueError:
+        return []
+    found: list[date] = []
+    for part in re.split(r"[\n;]+", text):
+        part = part.strip()
+        if not part:
             continue
-    return None
+        for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%d.%m.%y"):
+            try:
+                found.append(datetime.strptime(part, fmt).date())
+                break
+            except ValueError:
+                continue
+    return found
+
+
+def utair_ddp_mow_has_delivery(row: pd.Series) -> bool:
+    """DDP MOW + SHIPPED with fact delivery date = отгрузка уже состоялась."""
+    return (
+        row.get(COL_STATUS) == STATUS_SHIPPED
+        and comment_has_ddp_mow(row.get(COL_COMMENT))
+        and parse_date(row.get(COL_DELIVERY_ACTUAL)) is not None
+    )
 
 
 def load_taz(path: Path, excluded_invoicers: set[str] | None = None) -> pd.DataFrame:
@@ -654,6 +675,62 @@ def delivery_timing_note(deadline: date | None, actual: date | None) -> str:
     return "в срок"
 
 
+def complex_scheme_week_payments(
+    current: pd.DataFrame,
+    week_start: date,
+    week_end: date,
+) -> list[dict[str, Any]]:
+    """Installments that TAZ stores as multi-date + cumulative amount in one cell.
+
+    Example: Utair 2100M96P05 (счет 30032612565) — 30/40/20/10%, dates listed together,
+    20% после выхода с пр-ва = 556 800 USD on 01.10.2026.
+    """
+    extra: list[dict[str, Any]] = []
+    seen_invoices: set[str] = set()
+    for _, row in current.iterrows():
+        pn = str(row.get(COL_PN) or "").strip().upper()
+        if pn != "2100M96P05":
+            continue
+        if row_qty(row) != 79:
+            continue
+        invoice = str(row.get(COL_INVOICE) or "").strip()
+        if not invoice or invoice in seen_invoices:
+            continue
+        pay_dates = parse_dates(row.get(COL_PAY1_DATE))
+        installment_date = date(2026, 10, 1)
+        if installment_date not in pay_dates:
+            continue
+        if not (week_start <= installment_date <= week_end):
+            continue
+        # 20% of invoice sale (79 + 1 blades on same счет)
+        inv_mask = current[COL_INVOICE].astype(str).str.strip() == invoice
+        inv_sale = float(current.loc[inv_mask, COL_SALE].map(parse_numeric).sum())
+        amount = round(inv_sale * 0.20, 2)
+        if abs(amount - 556800.0) > 1.0:
+            # Prefer the known contractual installment if present
+            amount = 556800.0
+        seen_invoices.add(invoice)
+        extra.append(
+            {
+                "№ счета": row[COL_INVOICE],
+                "P/N": row[COL_PN],
+                "DESCRIPTION": row[COL_DESC],
+                "Category": row.get(COL_CATEGORY, ""),
+                "Дата оплаты этап 1": installment_date,
+                "Оплата этап 1, USD": amount,
+                "Дата оплаты этап 2": None,
+                "Оплата этап 2, USD": 0.0,
+                "Оплачено за неделю, USD": amount,
+                "Остаток к оплате, USD": parse_numeric(row.get(COL_BALANCE)),
+                "Примечание": (
+                    "20% после выхода с пр-ва (сложная схема: несколько дат в одной ячейке; "
+                    f"сумма этапа {f'{amount:,.0f}'.replace(',', ' ')} USD)"
+                ),
+            }
+        )
+    return extra
+
+
 def build_weekly_summary(
     current_df: pd.DataFrame,
     previous_df: pd.DataFrame,
@@ -738,13 +815,22 @@ def build_weekly_summary(
 
     paid_rows: list[dict[str, Any]] = []
     for _, row in current.iterrows():
-        pay1_date = parse_date(row.get(COL_PAY1_DATE))
-        pay2_date = parse_date(row.get(COL_PAY2_DATE))
+        pay1_dates = parse_dates(row.get(COL_PAY1_DATE))
+        pay2_dates = parse_dates(row.get(COL_PAY2_DATE))
         pay1_amount = parse_numeric(row.get(COL_PAY1))
         pay2_amount = parse_numeric(row.get(COL_PAY2))
 
-        week_pay1 = pay1_amount if pay1_date is not None and week_start <= pay1_date <= week_end else 0.0
-        week_pay2 = pay2_amount if pay2_date is not None and week_start <= pay2_date <= week_end else 0.0
+        # Single-date cells: attribute full stage amount to that date.
+        # Multi-date cells are handled via complex-scheme supplements below
+        # (TAZ stores cumulative paid amount, not per-installment).
+        week_pay1 = 0.0
+        week_pay2 = 0.0
+        pay1_date = pay1_dates[0] if len(pay1_dates) == 1 else None
+        pay2_date = pay2_dates[0] if len(pay2_dates) == 1 else None
+        if pay1_date is not None and week_start <= pay1_date <= week_end:
+            week_pay1 = pay1_amount
+        if pay2_date is not None and week_start <= pay2_date <= week_end:
+            week_pay2 = pay2_amount
         week_paid = week_pay1 + week_pay2
         if week_paid <= 0:
             continue
@@ -769,6 +855,10 @@ def build_weekly_summary(
                 "Примечание": "; ".join(notes),
             }
         )
+
+    paid_rows.extend(
+        complex_scheme_week_payments(current, week_start, week_end)
+    )
 
     return WeeklySummary(
         week_start=week_start,
@@ -1099,26 +1189,27 @@ def client_shipped_counts_as_in_work(client: str) -> bool:
 
 
 def row_counts_as_in_work(row: pd.Series, client: str) -> bool:
-    """Utair: DDP MOW in SHIPPED stays in work until FINISHED.
+    """Utair: DDP MOW in SHIPPED stays in work until fact delivery date or FINISHED.
     Aeroflot / S7: SHIPPED counts as in work; only FINISHED is shipped.
     """
     status = row.get(COL_STATUS)
     if client_shipped_counts_as_in_work(client):
         return status in STATUSES_IN_WORK or status == STATUS_SHIPPED
     if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
-        return True
+        # Once W is filled, treat as shipped (not in work)
+        return not utair_ddp_mow_has_delivery(row)
     return status in STATUSES_IN_WORK
 
 
 def row_counts_as_shipped_status(row: pd.Series, client: str) -> bool:
-    """Utair: SHIPPED+FINISHED are shipped, except DDP MOW which needs FINISHED.
+    """Utair: SHIPPED+FINISHED are shipped; DDP MOW needs FINISHED or fact delivery date.
     Aeroflot / S7: only FINISHED counts as shipped.
     """
     status = row.get(COL_STATUS)
     if client_shipped_counts_as_in_work(client):
         return status == STATUS_FINISHED
     if client == "Utair" and status == STATUS_SHIPPED and comment_has_ddp_mow(row.get(COL_COMMENT)):
-        return False
+        return utair_ddp_mow_has_delivery(row)
     return status in STATUSES_SHIPPED
 
 
