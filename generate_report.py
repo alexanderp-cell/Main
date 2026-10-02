@@ -561,11 +561,6 @@ def fact_delivery_date(row: pd.Series) -> date | None:
     return parse_date(row.get(COL_DELIVERY_ACTUAL))
 
 
-def utair_ddp_mow_has_delivery(row: pd.Series) -> bool:
-    """DDP MOW: если в W есть дата — ориентируемся на неё (отгрузка состоялась)."""
-    return comment_has_ddp_mow(row.get(COL_COMMENT)) and fact_delivery_date(row) is not None
-
-
 def load_taz(path: Path, excluded_invoicers: set[str] | None = None) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [col.strip() if isinstance(col, str) else col for col in df.columns]
