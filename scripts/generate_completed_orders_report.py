@@ -67,6 +67,12 @@ EXCLUDED_STATUS_TOKENS = (
 
 CAT_ROTABLE = "ROTABLE"
 CAT_EXPENDABLE = "EXPENDABLE"
+# Группы в выпадающих списках клиентов/поставщиков.
+# GSE → ROTABLE; consumable → EXPENDABLE.
+CAT_BUCKETS = (
+    (CAT_ROTABLE, ("ROTABLE", "GSE")),
+    (CAT_EXPENDABLE, ("EXPENDABLE", "CONSUMABLE")),
+)
 MONTHS_RU = {
     1: "январь",
     2: "февраль",
@@ -191,7 +197,13 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
         out["_supplier"].eq("") | out["_supplier"].str.lower().isin({"nan", "none", "<na>"}),
         "_supplier",
     ] = "— без поставщика —"
-    out["_cat"] = out[COL_CATEGORY].astype(str).str.strip().str.upper()
+    out["_cat"] = [
+        ""
+        if v is None or (isinstance(v, float) and pd.isna(v)) or (isinstance(v, str) and not str(v).strip())
+        else str(v).strip().upper()
+        for v in out[COL_CATEGORY]
+    ]
+    out["_bucket"] = [category_bucket(c) for c in out["_cat"]]
     out["_q"] = out[COL_ORDER_DATE].map(parse_date)
     out["_w"] = out[COL_DELIVERY].map(parse_date)
     out["_aw"] = out[COL_PAY_DATE].map(parse_date) if COL_PAY_DATE in out.columns else None
@@ -242,7 +254,7 @@ def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
         & df["_q"].notna()
         & df["_days"].notna()
         & (df["_days"] >= 0)
-        & df["_cat"].isin({CAT_ROTABLE, CAT_EXPENDABLE})
+        & df["_bucket"].isin({CAT_ROTABLE, CAT_EXPENDABLE})
     )
 
 
@@ -298,6 +310,19 @@ def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
     return start, end, title
 
 
+def category_bucket(cat) -> str:
+    """ROTABLE (+GSE), EXPENDABLE (+consumable); остальное → Прочее."""
+    if cat is None or (isinstance(cat, float) and pd.isna(cat)):
+        return "Прочее"
+    text = str(cat).strip().upper()
+    if text in {"", "NAN", "NONE", "<NA>"}:
+        return "Прочее"
+    for bucket, tokens in CAT_BUCKETS:
+        if any(tok in text for tok in tokens):
+            return bucket
+    return "Прочее"
+
+
 @dataclass
 class LineRow:
     pn: str
@@ -316,6 +341,18 @@ class LineRow:
 
 
 @dataclass
+class CategoryRow:
+    name: str
+    orders: int
+    lines: int
+    revenue: float
+    margin: float
+    lead_avg: float | None
+    lead_n: int
+    positions: list[LineRow] = field(default_factory=list)
+
+
+@dataclass
 class EntityRow:
     name: str
     orders: int
@@ -326,7 +363,7 @@ class EntityRow:
     lead_n: int
     transport_plan: float
     transport_fact: float
-    positions: list[LineRow] = field(default_factory=list)
+    categories: list[CategoryRow] = field(default_factory=list)
 
     @property
     def transport_delta(self) -> float:
@@ -374,27 +411,64 @@ def line_from_row(row: pd.Series) -> LineRow:
     )
 
 
+def _summarize_part(part: pd.DataFrame, lead_part: pd.DataFrame) -> tuple[int, int, float, float, float | None, int, list[LineRow]]:
+    days = lead_part["_days"].astype(float) if not lead_part.empty else pd.Series(dtype=float)
+    invoices = {inv for inv in part["_invoice"] if inv}
+    positions = [line_from_row(r) for _, r in part.sort_values("_sale", ascending=False).iterrows()]
+    return (
+        len(invoices) if invoices else int(len(part)),
+        int(len(part)),
+        as_money(part["_sale"].sum()),
+        as_money(part["_margin"].sum()),
+        float(days.mean()) if not days.empty else None,
+        int(len(days)),
+        positions,
+    )
+
+
 def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> list[EntityRow]:
     names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
     out: list[EntityRow] = []
+    bucket_order = [CAT_ROTABLE, CAT_EXPENDABLE, "Прочее"]
     for name in names:
         part = rows[rows[key] == name]
         lead_part = lead_rows[lead_rows[key] == name]
-        days = lead_part["_days"].astype(float)
-        invoices = {inv for inv in part["_invoice"] if inv}
-        positions = [line_from_row(r) for _, r in part.sort_values("_sale", ascending=False).iterrows()]
+        orders, lines, revenue, margin, lead_avg, lead_n, _ = _summarize_part(part, lead_part)
+
+        categories: list[CategoryRow] = []
+        for bucket in bucket_order:
+            b_part = part[part["_bucket"] == bucket]
+            if b_part.empty:
+                continue
+            b_lead = lead_part[lead_part["_bucket"] == bucket]
+            b_orders, b_lines, b_rev, b_margin, b_lead_avg, b_lead_n, positions = _summarize_part(
+                b_part, b_lead
+            )
+            categories.append(
+                CategoryRow(
+                    name=bucket,
+                    orders=b_orders,
+                    lines=b_lines,
+                    revenue=b_rev,
+                    margin=b_margin,
+                    lead_avg=b_lead_avg,
+                    lead_n=b_lead_n,
+                    positions=positions,
+                )
+            )
+
         out.append(
             EntityRow(
                 name=str(name),
-                orders=len(invoices) if invoices else int(len(part)),
-                lines=int(len(part)),
-                revenue=as_money(part["_sale"].sum()),
-                margin=as_money(part["_margin"].sum()),
-                lead_avg=float(days.mean()) if not days.empty else None,
-                lead_n=int(len(days)),
+                orders=orders,
+                lines=lines,
+                revenue=revenue,
+                margin=margin,
+                lead_avg=lead_avg,
+                lead_n=lead_n,
                 transport_plan=as_money(part["_plan"].sum()),
                 transport_fact=as_money(part["_fact"].sum()),
-                positions=positions,
+                categories=categories,
             )
         )
     out.sort(key=lambda e: (-e.revenue, -e.orders, e.name.casefold()))
@@ -466,6 +540,27 @@ def render_positions_table(positions: list[LineRow], table_id: str) -> str:
 def render_entity_dropdowns(entities: list[EntityRow], table_prefix: str) -> str:
     blocks = []
     for i, ent in enumerate(entities):
+        cat_blocks = []
+        for j, cat in enumerate(ent.categories):
+            hint = ""
+            if cat.name == CAT_ROTABLE:
+                hint = " · вкл. GSE"
+            elif cat.name == CAT_EXPENDABLE:
+                hint = " · вкл. consumable"
+            cat_blocks.append(
+                f"""
+<details class="catblock" open>
+  <summary>
+    <span class="cat-name">{html_escape(cat.name)}{html_escape(hint)}</span>
+    <span class="ent-meta">{fmt_int(cat.orders)} зак. · {fmt_int(cat.lines)} поз. · ${fmt_money(cat.revenue)} · маржа ${fmt_money(cat.margin)} · срок {fmt_days(cat.lead_avg)} дн.</span>
+  </summary>
+  <div class="block-body">
+    {render_positions_table(cat.positions, f"{table_prefix}-{i}-{j}")}
+  </div>
+</details>
+"""
+            )
+        inner = "\n".join(cat_blocks) if cat_blocks else "<p class='empty'>Нет позиций</p>"
         blocks.append(
             f"""
 <details class="subblock">
@@ -474,7 +569,7 @@ def render_entity_dropdowns(entities: list[EntityRow], table_prefix: str) -> str
     <span class="ent-meta">{fmt_int(ent.orders)} зак. · {fmt_int(ent.lines)} поз. · ${fmt_money(ent.revenue)} · маржа ${fmt_money(ent.margin)} · срок {fmt_days(ent.lead_avg)} дн.</span>
   </summary>
   <div class="block-body">
-    {render_positions_table(ent.positions, f"{table_prefix}-{i}")}
+    {inner}
   </div>
 </details>
 """
@@ -591,22 +686,31 @@ details.period > summary::-webkit-details-marker {{ display:none; }}
 .period-title {{ font-size:17px; font-weight:700; color:var(--navy); }}
 .period-meta {{ font-size:13px; color:var(--muted); }}
 .period-body {{ padding:12px 16px 16px; }}
-details.block, details.subblock {{
+details.block, details.subblock, details.catblock {{
   border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
 }}
-details.block > summary, details.subblock > summary {{
+details.catblock {{
+  margin:8px 0; border-color:#c5d4da; background:#fafcfd;
+}}
+details.block > summary, details.subblock > summary, details.catblock > summary {{
   cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
   list-style:none; background:#f7fbfc;
   display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
 }}
+details.catblock > summary {{
+  background:#eef5f7; font-size:13px;
+}}
 details.block > summary::-webkit-details-marker,
-details.subblock > summary::-webkit-details-marker {{ display:none; }}
+details.subblock > summary::-webkit-details-marker,
+details.catblock > summary::-webkit-details-marker {{ display:none; }}
 details.block > summary::before,
-details.subblock > summary::before {{ content:"▸ "; color:#7a8a90; }}
+details.subblock > summary::before,
+details.catblock > summary::before {{ content:"▸ "; color:#7a8a90; }}
 details.block[open] > summary::before,
-details.subblock[open] > summary::before {{ content:"▾ "; }}
+details.subblock[open] > summary::before,
+details.catblock[open] > summary::before {{ content:"▾ "; }}
 .block-body {{ padding:12px; }}
-.ent-name {{ font-weight:700; }}
+.ent-name, .cat-name {{ font-weight:700; }}
 .ent-meta {{ font-size:12px; color:var(--muted); font-weight:600; }}
 .kpis {{
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
@@ -672,7 +776,8 @@ tbody tr:hover {{ background:#eef7f9; }}
     Для <strong>IBERIA / JET TECHNIC</strong> в шапке дополнительно ср. срок оплаты AW−Q (STK, без постоплаты).
     <br/>
     <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − transaction fee.
-    В выпадающих списках клиентов/поставщиков внутри — позиции с <strong>P/N + Description</strong>.
+    В списках клиентов/поставщиков позиции разбиты на <strong>ROTABLE</strong> (вкл. GSE)
+    и <strong>EXPENDABLE</strong> (вкл. consumable); по транспорту только Δ (красно/зелёно).
   </div>
   {sections}
   <p class="hint">Скачивайте / открывайте HTML напрямую. ZIP+HTML Windows часто помечает ложно.</p>
