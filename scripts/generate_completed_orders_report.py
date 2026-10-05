@@ -430,6 +430,8 @@ def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> Period
 def render_positions_table(positions: list[LineRow], table_id: str) -> str:
     body = []
     for r in positions:
+        delta = r.transport_delta
+        delta_cls = "bad" if delta > 0 else "ok"
         body.append(
             "<tr>"
             f"<td>{html_escape(r.pn)}</td>"
@@ -437,14 +439,12 @@ def render_positions_table(positions: list[LineRow], table_id: str) -> str:
             f"<td class='num'>{fmt_money(r.revenue)}</td>"
             f"<td class='num'>{fmt_money(r.margin)}</td>"
             f"<td class='num'>{fmt_days(r.lead_days) if r.is_stk else '—'}</td>"
-            f"<td class='num'>{fmt_money(r.transport_plan)}</td>"
-            f"<td class='num'>{fmt_money(r.transport_fact)}</td>"
-            f"<td class='num'>{fmt_money(r.transport_delta)}</td>"
+            f"<td class='num {delta_cls}'>{fmt_money(delta)}</td>"
             f"<td class='num'>{html_escape(r.invoice or '—')}</td>"
             "</tr>"
         )
     if not body:
-        body.append("<tr><td colspan='9' class='empty'>Нет позиций</td></tr>")
+        body.append("<tr><td colspan='7' class='empty'>Нет позиций</td></tr>")
     return f"""
     <div class="table-scroll">
     <table data-sortable id="{html_escape(table_id)}">
@@ -454,9 +454,7 @@ def render_positions_table(positions: list[LineRow], table_id: str) -> str:
         <th class="num">Выручка $ <span class="arrow">↕</span></th>
         <th class="num">Маржа $ <span class="arrow">↕</span></th>
         <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">Тр. план <span class="arrow">↕</span></th>
-        <th class="num">Тр. факт <span class="arrow">↕</span></th>
-        <th class="num">Δ тр. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody>{''.join(body)}</tbody>
@@ -620,8 +618,8 @@ details.subblock[open] > summary::before {{ content:"▾ "; }}
 .value {{ font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }}
 .value.transport {{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:baseline; font-size:20px; }}
 .value.transport .op {{ color:var(--muted); font-weight:600; }}
-.value.transport .bad {{ color:#9b2c2c; }}
-.value.transport .ok {{ color:#0a5c4c; }}
+.bad {{ color:#9b2c2c; font-weight:700; }}
+.ok {{ color:#0a5c4c; font-weight:700; }}
 .muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
 .muted.pay {{ color:#0a5c4c; font-weight:600; }}
 .table-scroll {{ overflow-x:auto; }}
