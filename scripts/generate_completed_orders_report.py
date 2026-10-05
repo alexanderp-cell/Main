@@ -7,7 +7,9 @@
   3) прошедший полный квартал (например при срезе 02.10 → Q3)
   4) прошедший год = текущий календарный год с 01.01 по дату среза
 
-Попадание в отчёт: Status содержит FINISHED + заполненная W.
+Попадание в отчёт: заполненная факт. дата поставки W; период по W.
+Исключаем статусы CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST и т.п.
+Фильтр FINISHED не используем (это оформление отгрузочных документов, не факт выполнения).
 
 Шапка периода:
   · выполнено заказов (уник. номер счёта)
@@ -54,6 +56,14 @@ COL_TRANSPORT_PLAN = (
 )
 COL_TRANSPORT_FACT = "Стоимость доставки факт"
 PAY_SUPPLIERS = {"IBERIA", "JET TECHNIC"}
+# Не считаем выполнением: отмены, возвраты, гарантия, списание, потеря.
+EXCLUDED_STATUS_TOKENS = (
+    "CANCEL",
+    "REFUND",
+    "WARRANTY",
+    "SCRAP",
+    "LOST",
+)
 
 CAT_ROTABLE = "ROTABLE"
 CAT_EXPENDABLE = "EXPENDABLE"
@@ -147,7 +157,9 @@ def load_taz(path: Path) -> pd.DataFrame:
 def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
-    out["_finished"] = out["_status"].str.contains("FINISHED", na=False)
+    out["_excluded"] = out["_status"].apply(
+        lambda s: any(tok in s for tok in EXCLUDED_STATUS_TOKENS)
+    )
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
     out["_stk"] = out["_lead"].eq("STK")
     out["_invoice"] = out[COL_INVOICE].map(clean_str)
@@ -199,7 +211,11 @@ def in_period(d: date | None, start: date, end: date) -> bool:
 
 
 def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    return df["_finished"] & df["_w"].map(lambda d: in_period(d, start, end))
+    """Попадание: заполненная W в периоде; без cancel/refund/warranty/scrap/lost."""
+    return (
+        df["_w"].map(lambda d: in_period(d, start, end))
+        & ~df["_excluded"]
+    )
 
 
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
@@ -473,7 +489,7 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">{fmt_int(period.orders)}</div>
-        <div class="muted">{fmt_int(period.lines)} позиций FINISHED+W</div>
+        <div class="muted">{fmt_int(period.lines)} позиций с датой W</div>
       </div>
       <div>
         <div class="label">Выручка общ.</div>
@@ -500,7 +516,7 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
           <span class="op">=</span>
           <span class="{'bad' if period.transport_delta > 0 else 'ok'}">{fmt_money(period.transport_delta)}</span>
         </div>
-        <div class="muted">USD · по всем FINISHED+W</div>
+        <div class="muted">USD · по всем позициям с W</div>
       </div>
     </div>
 
@@ -630,7 +646,9 @@ tbody tr:hover {{ background:#eef7f9; }}
   <h1>Выполненные заказы</h1>
   <div class="sub">Срез ТАЗ {html_escape(as_of.strftime('%d.%m.%Y'))} · источник {html_escape(source_name)}</div>
   <div class="rules">
-    <strong>Попадание:</strong> статус <strong>FINISHED</strong> + заполненная факт. дата поставки <strong>W</strong>; период по W.
+    <strong>Попадание:</strong> заполненная факт. дата поставки <strong>W</strong>; период по W.
+    Исключаем статусы <strong>CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST</strong>.
+    Фильтр FINISHED не используем (это оформление отгрузочных документов, не факт выполнения).
     <br/>
     <strong>Периоды:</strong> 1) прошедшая неделя · 2) последний <em>полный</em> месяц ·
     3) последний <em>полный</em> квартал · 4) текущий год с 01.01 по дату среза.

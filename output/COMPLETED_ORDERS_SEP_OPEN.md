@@ -2,6 +2,6 @@
 
 **Открыть HTML:** https://fars.ee/1taI.html
 
-В шапке сроков — оплата IBERIA+JT. В выпадающих клиентах/поставщиках — позиции P/N + Description.
+Попадание: заполненная W; без CANCELLED/REFUND/WARRANTY/SCRAPPED/LOST. Фильтр FINISHED не используется.
 
 Источник: ТАЗ 02.10.2026.xlsx
