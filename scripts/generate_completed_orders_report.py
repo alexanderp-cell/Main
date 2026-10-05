@@ -1,30 +1,38 @@
 #!/usr/bin/env python3
-"""FASTAIR — Выполненные заказы: сроки поставки + оплата JT/KT + транспорт.
+"""FASTAIR — Выполненные заказы (пересобранная шапка KPI).
 
-Периоды (по столбцу W — факт. дата поставки):
-  1) сентябрь 2026
-  2) прошедшая неделя (7 дней, заканчивая датой среза ТАЗ)
-  3) 01.06 — дата среза ТАЗ
-  4) весь 2026 (до даты среза)
+Периоды (по столбцу W — факт. дата поставки), дата среза = дата из имени ТАЗ:
+  1) прошедшая неделя (7 дней, включая дату среза)
+  2) прошедший полный месяц (например при срезе 02.10 → сентябрь)
+  3) прошедший полный квартал (например при срезе 02.10 → Q3)
+  4) прошедший год = текущий календарный год с 01.01 по дату среза
 
-В каждом периоде:
-  1) срок поставок по клиентам и по поставщикам (STK, FINISHED, W−Q);
-     для IBERIA и JET TECHNIC дополнительно срок оплаты (AW−Q, STK, без постоплаты)
-  2) стоимость транспорта план vs факт
+Попадание в отчёт: Status содержит FINISHED + заполненная W.
+
+Шапка периода:
+  · выполнено заказов (уник. номер счёта)
+  · выручка = Σ «Продажная, итого»
+  · маржа = выручка − закупка − транспорт − transaction fee
+    (транспорт: факт, если ячейка заполнена вкл. 0; иначе план)
+  · сроки поставок факт: среднее W−Q, только STK (исключая лид-таймы)
+  · транспорт: план / факт / дельта
+
+Под шапкой — выпадающие списки по клиентам и по поставщикам.
 """
 
 from __future__ import annotations
 
 import argparse
+import calendar
 import math
 import re
-import zipfile
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
 
+COL_INVOICE = "Номер счета"
 COL_STATUS = "Status"
 COL_CUSTOMER = "Customer"
 COL_CATEGORY = "Category"
@@ -32,8 +40,9 @@ COL_LEAD_TIME = "Lead time"
 COL_ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
 COL_DELIVERY = "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)"
 COL_SUPPLIER = "Поставщик"
-COL_PAY_DATE = "Дата оплаты поставщику"
-COL_MOVEMENT = "Дата начала движения"
+COL_SALE = "Продажная, итого"
+COL_BUY = "Закупка, итого"
+COL_FEE = "Transaction fee"
 COL_TRANSPORT_PLAN = (
     "Стоимость доставки ПЛАН, за весь счет! Если в счете несколько строк, "
     "то \"размазываем\" равномерно планируюмую стоиомость транспорта на все позиции из счета."
@@ -42,8 +51,20 @@ COL_TRANSPORT_FACT = "Стоимость доставки факт"
 
 CAT_ROTABLE = "ROTABLE"
 CAT_EXPENDABLE = "EXPENDABLE"
-
-PAY_SUPPLIERS = {"IBERIA", "JET TECHNIC"}
+MONTHS_RU = {
+    1: "январь",
+    2: "февраль",
+    3: "март",
+    4: "апрель",
+    5: "май",
+    6: "июнь",
+    7: "июль",
+    8: "август",
+    9: "сентябрь",
+    10: "октябрь",
+    11: "ноябрь",
+    12: "декабрь",
+}
 
 
 def parse_numeric(value) -> float:
@@ -91,21 +112,13 @@ def fmt_money(v: float) -> str:
     return f"{v:,.0f}".replace(",", " ")
 
 
-def fmt_pct(v: float | None) -> str:
-    if v is None:
-        return "—"
-    return f"{v:.1f}%"
+def fmt_int(v: int) -> str:
+    return f"{v:,}".replace(",", " ")
 
 
 def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
-    for c in list(df.columns):
-        if isinstance(c, str) and c.startswith("Дата начала движения"):
-            if c != COL_MOVEMENT:
-                df = df.rename(columns={c: COL_MOVEMENT})
-            break
-    # transport plan column may differ slightly — match by prefix
     if COL_TRANSPORT_PLAN not in df.columns:
         for c in df.columns:
             if isinstance(c, str) and c.startswith("Стоимость доставки ПЛАН"):
@@ -120,10 +133,13 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_finished"] = out["_status"].str.contains("FINISHED", na=False)
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
     out["_stk"] = out["_lead"].eq("STK")
+    out["_invoice"] = out[COL_INVOICE].map(
+        lambda v: "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v).strip()
+    )
     out["_client"] = out[COL_CUSTOMER].fillna("").map(
         lambda v: "" if (isinstance(v, float) and pd.isna(v)) else str(v).strip()
     )
-    out.loc[out["_client"].str.lower().isin({"", "nan", "none", "<na>"}), "_client"] = ""
+    out.loc[out["_client"].str.lower().isin({"", "nan", "none", "<na>"}), "_client"] = "— без клиента —"
     out["_supplier"] = out[COL_SUPPLIER].fillna("").map(
         lambda v: "" if (isinstance(v, float) and pd.isna(v)) else str(v).strip()
     )
@@ -134,21 +150,32 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_cat"] = out[COL_CATEGORY].astype(str).str.strip().str.upper()
     out["_q"] = out[COL_ORDER_DATE].map(parse_date)
     out["_w"] = out[COL_DELIVERY].map(parse_date)
-    out["_aw"] = out[COL_PAY_DATE].map(parse_date)
-    if COL_MOVEMENT in out.columns:
-        out["_ba"] = out[COL_MOVEMENT].map(parse_date)
-    else:
-        out["_ba"] = None
     out["_days"] = [
         (w - q).days if w and q else None for w, q in zip(out["_w"], out["_q"])
     ]
-    out["_pay_days"] = [
-        (aw - q).days if aw and q else None for aw, q in zip(out["_aw"], out["_q"])
-    ]
+    out["_sale"] = out[COL_SALE].map(parse_numeric) if COL_SALE in out.columns else 0.0
+    out["_buy"] = out[COL_BUY].map(parse_numeric) if COL_BUY in out.columns else 0.0
+    out["_fee"] = out[COL_FEE].map(parse_numeric) if COL_FEE in out.columns else 0.0
     plan_col = COL_TRANSPORT_PLAN if COL_TRANSPORT_PLAN in out.columns else None
     fact_col = COL_TRANSPORT_FACT if COL_TRANSPORT_FACT in out.columns else None
     out["_plan"] = out[plan_col].map(parse_numeric) if plan_col else 0.0
-    out["_fact"] = out[fact_col].map(parse_numeric) if fact_col else 0.0
+    # fact: blank → use plan; explicit 0 stays 0
+    if fact_col:
+        fact_raw = out[fact_col]
+        fact_parsed = fact_raw.map(
+            lambda v: None
+            if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == ""
+            else parse_numeric(v)
+        )
+        out["_fact"] = [
+            float(f) if f is not None else float(p) for f, p in zip(fact_parsed, out["_plan"])
+        ]
+        out["_fact_filled"] = fact_parsed.notna()
+    else:
+        out["_fact"] = out["_plan"]
+        out["_fact_filled"] = False
+    out["_transport_used"] = out["_fact"]
+    out["_margin"] = out["_sale"] - out["_buy"] - out["_transport_used"] - out["_fee"]
     return out
 
 
@@ -157,12 +184,11 @@ def in_period(d: date | None, start: date, end: date) -> bool:
 
 
 def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Попадание в отчёт / период: FINISHED + заполненная факт. дата поставки (W) в периоде."""
     return df["_finished"] & df["_w"].map(lambda d: in_period(d, start, end))
 
 
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Срок поставки: среди попавших в отчёт — только STK, с Q, W−Q≥0, ROTABLE/EXPENDABLE."""
+    """Сроки факт: FINISHED+W, только STK (без лид-таймов), W−Q≥0, ROTABLE/EXPENDABLE."""
     return (
         report_mask(df, start, end)
         & df["_stk"]
@@ -173,116 +199,58 @@ def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
     )
 
 
-def transport_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Транспорт: все позиции, попавшие в отчёт (FINISHED + W в периоде)."""
-    return report_mask(df, start, end)
+def infer_taz_end(path: Path) -> date:
+    m = re.search(r"(\d{2})\.(\d{2})\.(\d{4})", path.name)
+    if m:
+        d, mo, y = map(int, m.groups())
+        try:
+            return date(y, mo, d)
+        except ValueError:
+            pass
+    return date.today()
 
 
-def pay_usable_mask(rows: pd.DataFrame) -> pd.Series:
-    """STK payment speed: AW−Q, exclude postpay and unknown/positive LT."""
-    ba = rows["_ba"]
-    aw = rows["_aw"]
-    postpay = ba.notna() & (aw.isna() | (ba < aw))
-    return (
-        aw.notna()
-        & rows["_q"].notna()
-        & rows["_pay_days"].notna()
-        & (rows["_pay_days"] >= 0)
-        & ~postpay
-        & rows["_stk"]
-    )
+def last_complete_month(as_of: date) -> tuple[date, date, str]:
+    first_this = as_of.replace(day=1)
+    last_prev = first_this - timedelta(days=1)
+    first_prev = last_prev.replace(day=1)
+    title = f"{MONTHS_RU[first_prev.month].capitalize()} {first_prev.year}"
+    return first_prev, last_prev, title
+
+
+def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
+    q = (as_of.month - 1) // 3 + 1  # current quarter 1..4
+    if q == 1:
+        year = as_of.year - 1
+        start_m = 10
+        q_label = 4
+    else:
+        year = as_of.year
+        start_m = (q - 2) * 3 + 1
+        q_label = q - 1
+    start = date(year, start_m, 1)
+    end_m = start_m + 2
+    last_day = calendar.monthrange(year, end_m)[1]
+    end = date(year, end_m, last_day)
+    title = f"Q{q_label} {year} ({MONTHS_RU[start_m]}–{MONTHS_RU[end_m]})"
+    return start, end, title
 
 
 @dataclass
-class SideStats:
-    avg: float | None = None
-    n: int = 0
-
-
-@dataclass
-class EntityLead:
+class EntityRow:
     name: str
-    rotable: SideStats = field(default_factory=SideStats)
-    expendable: SideStats = field(default_factory=SideStats)
-    pay_avg: float | None = None
-    pay_median: float | None = None
-    pay_n: int = 0
-    show_pay: bool = False
-    # why pay_n < delivery n (IBERIA / JET TECHNIC)
-    pay_excl_unpaid: int = 0
-    pay_excl_negative: int = 0
-    pay_excl_postpay: int = 0
+    orders: int
+    lines: int
+    revenue: float
+    margin: float
+    lead_avg: float | None
+    lead_n: int
+    transport_plan: float
+    transport_fact: float
 
     @property
-    def delivery_n(self) -> int:
-        return self.rotable.n + self.expendable.n
-
-
-def pay_exclusion_breakdown(part: pd.DataFrame) -> tuple[pd.DataFrame, int, int, int]:
-    """Return usable rows + mutually exclusive exclusion counts vs delivery set."""
-    no_aw = part["_aw"].isna()
-    neg = part["_aw"].notna() & part["_pay_days"].notna() & (part["_pay_days"] < 0)
-    ba = part["_ba"]
-    aw = part["_aw"]
-    post = part["_aw"].notna() & ~neg & ba.notna() & (ba < aw)
-    usable = part.loc[pay_usable_mask(part)]
-    return usable, int(no_aw.sum()), int(neg.sum()), int(post.sum())
-
-
-def side_stats(series: pd.Series) -> SideStats:
-    if series.empty:
-        return SideStats(None, 0)
-    return SideStats(float(series.mean()), int(len(series)))
-
-
-def build_entities(
-    rows: pd.DataFrame, key: str, *, with_pay: bool
-) -> list[EntityLead]:
-    names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
-    out: list[EntityLead] = []
-    for name in names:
-        if not name or str(name).lower() in {"nan", "none"}:
-            continue
-        part = rows[rows[key] == name]
-        ent = EntityLead(
-            name=str(name),
-            rotable=side_stats(part.loc[part["_cat"] == CAT_ROTABLE, "_days"].astype(float)),
-            expendable=side_stats(
-                part.loc[part["_cat"] == CAT_EXPENDABLE, "_days"].astype(float)
-            ),
-        )
-        if with_pay and str(name).upper() in PAY_SUPPLIERS:
-            ent.show_pay = True
-            usable, unpaid, negative, postpay = pay_exclusion_breakdown(part)
-            ent.pay_excl_unpaid = unpaid
-            ent.pay_excl_negative = negative
-            ent.pay_excl_postpay = postpay
-            if not usable.empty:
-                days = usable["_pay_days"].astype(float)
-                ent.pay_avg = float(days.mean())
-                ent.pay_median = float(days.median())
-                ent.pay_n = int(len(days))
-        out.append(ent)
-    # sort by total n desc, then name
-    out.sort(
-        key=lambda e: (
-            -(e.rotable.n + e.expendable.n),
-            e.name.casefold(),
-        )
-    )
-    return out
-
-
-@dataclass
-class TransportRow:
-    name: str
-    plan: float
-    fact: float
-    n: int
-
-    @property
-    def delta(self) -> float:
-        return self.fact - self.plan
+    def transport_delta(self) -> float:
+        return self.transport_fact - self.transport_plan
 
 
 @dataclass
@@ -290,298 +258,170 @@ class PeriodBlock:
     title: str
     start: date
     end: date
-    report_n: int  # FINISHED + W in period
+    orders: int
+    lines: int
+    revenue: float
+    margin: float
     lead_avg: float | None
-    lead_median: float | None
     lead_n: int
-    clients: list[EntityLead]
-    suppliers: list[EntityLead]
-    transport_total_plan: float
-    transport_total_fact: float
-    transport_n: int
-    transport_by_client: list[TransportRow]
+    transport_plan: float
+    transport_fact: float
+    clients: list[EntityRow] = field(default_factory=list)
+    suppliers: list[EntityRow] = field(default_factory=list)
+
+    @property
+    def transport_delta(self) -> float:
+        return self.transport_fact - self.transport_plan
 
 
-def build_transport(rows: pd.DataFrame) -> tuple[float, float, int, list[TransportRow]]:
-    total_plan = float(rows["_plan"].sum())
-    total_fact = float(rows["_fact"].sum())
-    total_n = int(len(rows))
-    grouped = (
-        rows.groupby("_client", dropna=False)
-        .agg(plan=("_plan", "sum"), fact=("_fact", "sum"), n=("_plan", "size"))
-        .reset_index()
-    )
-    items: list[TransportRow] = []
-    for _, rec in grouped.iterrows():
-        name = str(rec["_client"]).strip() or "— без клиента —"
-        if name.lower() in {"nan", "none", "<na>"}:
-            name = "— без клиента —"
-        plan = float(rec["plan"])
-        fact = float(rec["fact"])
-        if plan == 0 and fact == 0:
-            continue
-        items.append(TransportRow(name=name, plan=plan, fact=fact, n=int(rec["n"])))
-    items.sort(key=lambda r: (-abs(r.delta), -r.fact, r.name.casefold()))
-    return total_plan, total_fact, total_n, items
+def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> list[EntityRow]:
+    names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
+    out: list[EntityRow] = []
+    for name in names:
+        part = rows[rows[key] == name]
+        lead_part = lead_rows[lead_rows[key] == name]
+        days = lead_part["_days"].astype(float)
+        invoices = {inv for inv in part["_invoice"] if inv}
+        out.append(
+            EntityRow(
+                name=str(name),
+                orders=len(invoices) if invoices else int(len(part)),
+                lines=int(len(part)),
+                revenue=float(part["_sale"].sum()),
+                margin=float(part["_margin"].sum()),
+                lead_avg=float(days.mean()) if not days.empty else None,
+                lead_n=int(len(days)),
+                transport_plan=float(part["_plan"].sum()),
+                transport_fact=float(part["_fact"].sum()),
+            )
+        )
+    out.sort(key=lambda e: (-e.revenue, -e.orders, e.name.casefold()))
+    return out
 
 
 def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodBlock:
-    in_report = report_mask(df, start, end)
-    # safety: nothing without FINISHED or without parseable W
-    assert bool((~df.loc[in_report, "_finished"]).sum() == 0)
-    assert bool(df.loc[in_report, "_w"].notna().all())
-
+    rows = df.loc[report_mask(df, start, end)].copy()
     lead_rows = df.loc[lead_mask(df, start, end)].copy()
-    lead_rows = lead_rows[lead_rows["_client"].ne("")]
-    clients = build_entities(lead_rows, "_client", with_pay=False)
-    suppliers = build_entities(lead_rows, "_supplier", with_pay=True)
-
-    tr_rows = df.loc[transport_mask(df, start, end)].copy()
-    plan, fact, n, by_client = build_transport(tr_rows)
-
-    days = lead_rows["_days"].astype(float) if not lead_rows.empty else pd.Series(dtype=float)
+    invoices = {inv for inv in rows["_invoice"] if inv}
+    days = lead_rows["_days"].astype(float)
     return PeriodBlock(
         title=title,
         start=start,
         end=end,
-        report_n=int(in_report.sum()),
-        lead_avg=float(days.mean()) if len(days) else None,
-        lead_median=float(days.median()) if len(days) else None,
+        orders=len(invoices) if invoices else int(len(rows)),
+        lines=int(len(rows)),
+        revenue=float(rows["_sale"].sum()),
+        margin=float(rows["_margin"].sum()),
+        lead_avg=float(days.mean()) if not days.empty else None,
         lead_n=int(len(days)),
-        clients=clients,
-        suppliers=suppliers,
-        transport_total_plan=plan,
-        transport_total_fact=fact,
-        transport_n=n,
-        transport_by_client=by_client,
+        transport_plan=float(rows["_plan"].sum()),
+        transport_fact=float(rows["_fact"].sum()),
+        clients=summarize_group(rows, lead_rows, "_client"),
+        suppliers=summarize_group(rows, lead_rows, "_supplier"),
     )
 
 
-def avg_cell(avg: float | None, n: int) -> str:
-    if n == 0 or avg is None:
-        return '<td class="num empty" data-value="">—</td>'
-    shown = f"{float(avg):.1f}"
-    return f'<td class="num" data-value="{shown}">{shown}</td>'
-
-
-def n_cell(n: int) -> str:
-    if not n:
-        return '<td class="num empty" data-value="">—</td>'
-    return f'<td class="num" data-value="{n}">{n}</td>'
-
-
-def render_lead_table(
-    entities: list[EntityLead],
-    *,
-    name_header: str,
-    table_id: str,
-    with_pay: bool,
-    overall_avg: float | None,
-    overall_n: int,
-) -> str:
-    rows = []
-    pay_notes = []
-    for e in entities:
-        cls = ""
-        up = e.name.upper()
-        if up == "JET TECHNIC":
-            cls = "channel-jt"
-        elif up == "IBERIA":
-            cls = "channel-kt"
-        pay_cells = ""
-        if with_pay:
-            if e.show_pay:
-                pay_cells = (
-                    f"{avg_cell(e.pay_avg, e.pay_n)}"
-                    f"{avg_cell(e.pay_median, e.pay_n)}"
-                    f"{n_cell(e.pay_n)}"
-                )
-                bits = []
-                if e.pay_excl_unpaid:
-                    bits.append(f"без даты оплаты AW: {e.pay_excl_unpaid}")
-                if e.pay_excl_postpay:
-                    bits.append(f"постоплата (BA&lt;AW): {e.pay_excl_postpay}")
-                if e.pay_excl_negative:
-                    bits.append(f"оплата раньше Q: {e.pay_excl_negative}")
-                excl = "; ".join(bits) if bits else "исключений нет"
-                pay_notes.append(
-                    f"<li><strong>{html_escape(e.name)}</strong>: "
-                    f"поставка n={e.delivery_n} (ротабл {e.rotable.n} + расходка {e.expendable.n}), "
-                    f"в среднее оплаты n={e.pay_n}. "
-                    f"Не входят: {excl}.</li>"
-                )
-            else:
-                pay_cells = (
-                    '<td class="num empty" data-value="">—</td>'
-                    '<td class="num empty" data-value="">—</td>'
-                    '<td class="num empty" data-value="">—</td>'
-                )
-        rows.append(
-            f'<tr class="{cls}">'
-            f'<td data-value="{html_escape(e.name.casefold())}">{html_escape(e.name)}</td>'
-            f"{avg_cell(e.rotable.avg, e.rotable.n)}{n_cell(e.rotable.n)}"
-            f"{avg_cell(e.expendable.avg, e.expendable.n)}{n_cell(e.expendable.n)}"
-            f"{pay_cells}</tr>"
-        )
-
-    pay_headers = ""
-    if with_pay:
-        pay_headers = (
-            '<th data-type="num">Оплата ср., дн. <span class="arrow">↕</span></th>'
-            '<th data-type="num">Оплата мед. <span class="arrow">↕</span></th>'
-            '<th data-type="num">Оплата n <span class="arrow">↕</span></th>'
-        )
-
-    pay_note_html = ""
-    if pay_notes:
-        pay_note_html = (
-            '<div class="note-box">'
-            "<strong>Почему «Оплата n» ≠ ротабл n + расходка n</strong>"
-            "<p>Ротабл/расходка — все поставки STK в периоде. "
-            "Оплата n — только позиции, по которым считаем AW−Q "
-            "(есть дата оплаты, нет постоплаты BA&lt;AW, оплата не раньше Q).</p>"
-            f"<ul>{''.join(pay_notes)}</ul></div>"
-        )
-
-    return f"""
-<div class="table-scroll">
-<table class="sortable" id="{html_escape(table_id)}">
-  <thead>
-    <tr>
-      <th data-type="str">{html_escape(name_header)} <span class="arrow">↕</span></th>
-      <th data-type="num">Ротабл, дн. <span class="arrow">↕</span></th>
-      <th data-type="num">Ротабл n <span class="arrow">↕</span></th>
-      <th data-type="num">Расходка, дн. <span class="arrow">↕</span></th>
-      <th data-type="num">Расходка n <span class="arrow">↕</span></th>
-      {pay_headers}
-    </tr>
-  </thead>
-  <tbody>
-    {''.join(rows) if rows else '<tr><td colspan="8" class="empty">Нет позиций</td></tr>'}
-  </tbody>
-</table>
-</div>
-{pay_note_html}
-<p class="hint">
-  Срок поставки = W − Q (дн.), статус FINISHED, столбец S (Lead time) = <strong>только STK</strong>
-  (числовые lead time / «5 days» и т.п. не входят — как в отчёте по срокам поставки),
-  категории ROTABLE / EXPENDABLE.
-  Всего позиций в выборке: {overall_n}, средний срок {fmt_days(overall_avg)} дн.
-</p>
-"""
-
-
-def render_transport(period: PeriodBlock, table_id: str) -> str:
-    delta = period.transport_total_fact - period.transport_total_plan
-    pct = (
-        (delta / period.transport_total_plan * 100.0)
-        if period.transport_total_plan
-        else None
-    )
-    rows = []
-    for r in period.transport_by_client:
-        d = r.delta
-        rows.append(
-            f"<tr>"
+def render_entity_table(rows: list[EntityRow], table_id: str) -> str:
+    body = []
+    for r in rows:
+        body.append(
+            "<tr>"
             f"<td>{html_escape(r.name)}</td>"
-            f'<td class="num" data-value="{r.plan}">{fmt_money(r.plan)}</td>'
-            f'<td class="num" data-value="{r.fact}">{fmt_money(r.fact)}</td>'
-            f'<td class="num" data-value="{d}">{fmt_money(d)}</td>'
-            f'<td class="num" data-value="{r.n}">{r.n}</td>'
-            f"</tr>"
+            f"<td class='num'>{fmt_int(r.orders)}</td>"
+            f"<td class='num'>{fmt_int(r.lines)}</td>"
+            f"<td class='num'>{fmt_money(r.revenue)}</td>"
+            f"<td class='num'>{fmt_money(r.margin)}</td>"
+            f"<td class='num'>{fmt_days(r.lead_avg)}</td>"
+            f"<td class='num'>{fmt_int(r.lead_n)}</td>"
+            f"<td class='num'>{fmt_money(r.transport_plan)}</td>"
+            f"<td class='num'>{fmt_money(r.transport_fact)}</td>"
+            f"<td class='num'>{fmt_money(r.transport_delta)}</td>"
+            "</tr>"
         )
+    if not body:
+        body.append("<tr><td colspan='10' class='empty'>Нет данных</td></tr>")
     return f"""
-<div class="kpis three">
-  <div class="highlight"><div class="label">План</div><div class="value">{fmt_money(period.transport_total_plan)}</div><div class="muted">USD · сумма по строкам</div></div>
-  <div><div class="label">Факт</div><div class="value">{fmt_money(period.transport_total_fact)}</div><div class="muted">{period.transport_n} поз. FINISHED</div></div>
-  <div><div class="label">Факт − план</div><div class="value">{fmt_money(delta)}</div><div class="muted">{fmt_pct(pct)} к плану</div></div>
-</div>
-<div class="table-scroll">
-<table class="sortable" id="{html_escape(table_id)}">
-  <thead>
-    <tr>
-      <th data-type="str">Клиент <span class="arrow">↕</span></th>
-      <th data-type="num">План, USD <span class="arrow">↕</span></th>
-      <th data-type="num">Факт, USD <span class="arrow">↕</span></th>
-      <th data-type="num">Δ факт−план <span class="arrow">↕</span></th>
-      <th data-type="num">n <span class="arrow">↕</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    {''.join(rows) if rows else '<tr><td colspan="5" class="empty">Нет данных по транспорту</td></tr>'}
-  </tbody>
-</table>
-</div>
-<p class="hint">
-  Период: FINISHED + заполненная W. План уже «размазан» по строкам счёта в ТАЗ — суммируем строки.
-</p>
-"""
+    <div class="table-scroll">
+    <table data-sortable id="{html_escape(table_id)}">
+      <thead><tr>
+        <th class="label-col">Имя <span class="arrow">↕</span></th>
+        <th class="num">Заказы <span class="arrow">↕</span></th>
+        <th class="num">Позиции <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">STK поз. <span class="arrow">↕</span></th>
+        <th class="num">Тр. план <span class="arrow">↕</span></th>
+        <th class="num">Тр. факт <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody>{''.join(body)}</tbody>
+    </table>
+    </div>
+    """
 
 
 def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
     open_attr = " open" if opened else ""
-    range_s = f"{period.start.strftime('%d.%m.%Y')} — {period.end.strftime('%d.%m.%Y')}"
+    range_s = f"{period.start.strftime('%d.%m.%Y')} – {period.end.strftime('%d.%m.%Y')}"
     return f"""
 <details class="period"{open_attr}>
   <summary>
-    <span class="period-title">{html_escape(period.title)}</span>
-    <span class="period-meta">{range_s} · в отчёте {period.report_n} (FINISHED+W) · срок STK {period.lead_n} поз. · ср. {fmt_days(period.lead_avg)} дн.</span>
+    <span class="period-title">{idx}. {html_escape(period.title)}</span>
+    <span class="period-meta">{range_s}</span>
+    <span class="period-meta">{fmt_int(period.orders)} зак. · ${fmt_money(period.revenue)} выр. · маржа ${fmt_money(period.margin)}</span>
   </summary>
   <div class="period-body">
-    <details class="block" open>
-      <summary>1. Срок поставок</summary>
-      <div class="block-body">
-        <div class="kpis">
-          <div class="highlight"><div class="label">Средний срок</div><div class="value">{fmt_days(period.lead_avg)} дн.</div><div class="muted">медиана {fmt_days(period.lead_median)}</div></div>
-          <div><div class="label">Позиций STK</div><div class="value">{period.lead_n}</div><div class="muted">из {period.report_n} FINISHED+W</div></div>
-          <div><div class="label">Клиентов</div><div class="value">{len(period.clients)}</div><div class="muted">в таблице</div></div>
-          <div><div class="label">Поставщиков</div><div class="value">{len(period.suppliers)}</div><div class="muted">в таблице</div></div>
+    <div class="kpis">
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">{fmt_int(period.orders)}</div>
+        <div class="muted">{fmt_int(period.lines)} позиций FINISHED+W</div>
+      </div>
+      <div>
+        <div class="label">Выручка общ.</div>
+        <div class="value">${fmt_money(period.revenue)}</div>
+        <div class="muted">Σ продажная итого</div>
+      </div>
+      <div>
+        <div class="label">Маржа общ.</div>
+        <div class="value">${fmt_money(period.margin)}</div>
+        <div class="muted">продажа − закупка − тр. − fee</div>
+      </div>
+      <div>
+        <div class="label">Сроки поставок факт</div>
+        <div class="value">{fmt_days(period.lead_avg)} дн.</div>
+        <div class="muted">ср. W−Q · только STK · {fmt_int(period.lead_n)} поз.</div>
+      </div>
+      <div class="wide">
+        <div class="label">Транспорт план − факт = дельта</div>
+        <div class="value transport">
+          <span>{fmt_money(period.transport_plan)}</span>
+          <span class="op">−</span>
+          <span>{fmt_money(period.transport_fact)}</span>
+          <span class="op">=</span>
+          <span class="{'bad' if period.transport_delta > 0 else 'ok'}">{fmt_money(period.transport_delta)}</span>
         </div>
-
-        <details class="subblock" open>
-          <summary>По клиентам</summary>
-          <div class="block-body">
-            {render_lead_table(
-                period.clients,
-                name_header="Клиент",
-                table_id=f"clients-{idx}",
-                with_pay=False,
-                overall_avg=period.lead_avg,
-                overall_n=period.lead_n,
-            )}
-          </div>
-        </details>
-
-        <details class="subblock">
-          <summary>По поставщикам <span class="tag">IBERIA / JET TECHNIC — ещё срок оплаты</span></summary>
-          <div class="block-body">
-            {render_lead_table(
-                period.suppliers,
-                name_header="Поставщик",
-                table_id=f"suppliers-{idx}",
-                with_pay=True,
-                overall_avg=period.lead_avg,
-                overall_n=period.lead_n,
-            )}
-          </div>
-        </details>
+        <div class="muted">USD · по всем FINISHED+W</div>
       </div>
+    </div>
+
+    <details class="block" open>
+      <summary>По клиентам ({len(period.clients)})</summary>
+      <div class="block-body">{render_entity_table(period.clients, f"c{idx}")}</div>
     </details>
-
-    <details class="block">
-      <summary>2. Стоимость транспорта: план vs факт</summary>
-      <div class="block-body">
-        {render_transport(period, f"transport-{idx}")}
-      </div>
+    <details class="block" open>
+      <summary>По поставщикам ({len(period.suppliers)})</summary>
+      <div class="block-body">{render_entity_table(period.suppliers, f"s{idx}")}</div>
     </details>
   </div>
 </details>
 """
 
 
-def render_html(periods: list[PeriodBlock], source_name: str) -> str:
+def render_html(periods: list[PeriodBlock], source_name: str, as_of: date) -> str:
     sections = "\n".join(
-        render_period(p, i, opened=(i == 0)) for i, p in enumerate(periods)
+        render_period(p, i + 1, opened=(i == 0)) for i, p in enumerate(periods)
     )
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -593,7 +433,6 @@ def render_html(periods: list[PeriodBlock], source_name: str) -> str:
 :root {{
   --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
   --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
-  --jt:#022f40; --kt:#c45c26;
 }}
 * {{ box-sizing:border-box; }}
 body {{
@@ -601,7 +440,7 @@ body {{
   color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
   line-height:1.45;
 }}
-.wrap {{ max-width:1100px; margin:0 auto; padding:28px 20px 64px; }}
+.wrap {{ max-width:1180px; margin:0 auto; padding:28px 20px 64px; }}
 .brand {{
   background:var(--cyan); color:var(--navy); display:inline-block;
   padding:6px 10px; font-weight:700; margin-bottom:10px;
@@ -623,63 +462,60 @@ details.period > summary::-webkit-details-marker {{ display:none; }}
 .period-title {{ font-size:17px; font-weight:700; color:var(--navy); }}
 .period-meta {{ font-size:13px; color:var(--muted); }}
 .period-body {{ padding:12px 16px 16px; }}
-details.block, details.subblock {{
+details.block {{
   border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
 }}
-details.block > summary, details.subblock > summary {{
+details.block > summary {{
   cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
   list-style:none; background:#f7fbfc;
 }}
-details.block > summary::-webkit-details-marker,
-details.subblock > summary::-webkit-details-marker {{ display:none; }}
-details.block > summary::before,
-details.subblock > summary::before {{
-  content:"▸ "; color:#7a8a90;
-}}
-details.block[open] > summary::before,
-details.subblock[open] > summary::before {{ content:"▾ "; }}
+details.block > summary::-webkit-details-marker {{ display:none; }}
+details.block > summary::before {{ content:"▸ "; color:#7a8a90; }}
+details.block[open] > summary::before {{ content:"▾ "; }}
 .block-body {{ padding:12px; }}
-.tag {{
-  display:inline-block; margin-left:8px; font-size:11px; font-weight:600;
-  color:#8a3b12; background:#fff4ec; border:1px solid #f0c7a8;
-  padding:2px 6px; border-radius:4px;
+.kpis {{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
 }}
-.kpis {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }}
-.kpis.three {{ grid-template-columns:repeat(3,minmax(0,1fr)); }}
 .kpis > div {{ background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }}
 .kpis > div.highlight {{ background:#e8f6f8; border-color:#9ed7e0; }}
+.kpis > div.wide {{ grid-column:1 / -1; }}
 .label {{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }}
 .value {{ font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }}
+.value.transport {{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:baseline; font-size:20px; }}
+.value.transport .op {{ color:var(--muted); font-weight:600; }}
+.value.transport .bad {{ color:#9b2c2c; }}
+.value.transport .ok {{ color:#0a5c4c; }}
 .muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
 .table-scroll {{ overflow-x:auto; }}
-table {{ width:100%; border-collapse:collapse; font-size:14px; }}
-th, td {{ border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }}
-th {{
-  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
-  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+table {{
+  width:100%; border-collapse:collapse; font-size:13px;
+  border:1px solid #b7c8cf;
 }}
+th, td {{
+  border:1px solid #c5d4da; padding:9px 10px; text-align:left; vertical-align:middle;
+}}
+th {{
+  font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+  text-align:center;
+}}
+th.label-col {{ text-align:left; }}
 th:hover {{ background:#03425a; }}
 th .arrow {{ opacity:.45; margin-left:6px; font-size:11px; }}
 th.sorted .arrow {{ opacity:1; }}
-td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-td.empty, .empty {{ color:#9a9a9a; }}
+td.num, th.num {{
+  text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap;
+}}
+td.empty, .empty {{ color:#9a9a9a; text-align:center; }}
 tbody tr:nth-child(even) {{ background:var(--zebra); }}
 tbody tr:hover {{ background:#eef7f9; }}
-tr.channel-jt td {{ background:#e8f2f5 !important; font-weight:700; }}
-tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
 .hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}
 .rules {{
   background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
   padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
 }}
-.note-box {{
-  background:#fff8f2; border:1px solid #f0c7a8; border-radius:8px;
-  padding:12px 14px; margin-top:12px; font-size:13px; color:#5a3a22;
-}}
-.note-box ul {{ margin:8px 0 0; padding-left:18px; }}
-.note-box li {{ margin:4px 0; }}
-@media (max-width:800px) {{
-  .kpis, .kpis.three {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+@media (max-width:900px) {{
+  .kpis {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
 </style>
 </head>
@@ -687,87 +523,64 @@ tr.channel-kt td {{ background:#f8ebe3 !important; font-weight:700; }}
 <div class="wrap">
   <div class="brand">FASTAIR</div>
   <h1>Выполненные заказы</h1>
-  <div class="sub">Сентябрь 2026 · сроки поставки · оплата IBERIA / JET TECHNIC · транспорт план/факт · источник {html_escape(source_name)}</div>
+  <div class="sub">Срез ТАЗ {html_escape(as_of.strftime('%d.%m.%Y'))} · источник {html_escape(source_name)}</div>
   <div class="rules">
-    <strong>Попадание в отчёт:</strong> статус <strong>FINISHED</strong>
-    и заполненная факт. дата поставки (столбец <strong>W</strong>); период — по дате W.
-    Неразбираемые даты W и строки без W не входят.
+    <strong>Попадание:</strong> статус <strong>FINISHED</strong> + заполненная факт. дата поставки <strong>W</strong>; период по W.
     <br/>
-    <strong>Срок поставки</strong> (как раньше): среди попавших — Lead time = <strong>только STK</strong>,
-    дни = W − Q, категории ROTABLE / EXPENDABLE.
+    <strong>Периоды:</strong> 1) прошедшая неделя · 2) последний <em>полный</em> месяц ·
+    3) последний <em>полный</em> квартал · 4) текущий год с 01.01 по дату среза.
+    <br/>
+    <strong>Сроки:</strong> среднее W−Q, только <strong>STK</strong> (лид-таймы исключены), ROTABLE/EXPENDABLE.
+    <br/>
+    <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − transaction fee.
   </div>
   {sections}
-  <p class="hint">
-    Попадание в отчёт: FINISHED + заполненная факт. дата W; период по W.
-    Срок поставки: среди них только STK, дни = W − Q.
-    Срок оплаты (IBERIA / JET TECHNIC): подмножество STK-поставок — AW − Q без постоплаты и без оплаты раньше Q.
-  </p>
+  <p class="hint">Скачивайте / открывайте HTML напрямую. ZIP+HTML Windows часто помечает ложно.</p>
 </div>
 <script>
-(function () {{
-  function cellValue(td, type) {{
-    const raw = td.getAttribute('data-value');
-    if (raw === null || raw === '') {{
-      const t = (td.textContent || '').trim();
-      if (type === 'num') {{
-        const n = Number(t.replace(/\\s/g,'').replace('%','').replace('—',''));
-        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
-      }}
-      return t.toLowerCase();
-    }}
-    return type === 'num' ? Number(raw) : String(raw);
-  }}
-  document.querySelectorAll('table.sortable').forEach(table => {{
-    const tbody = table.tBodies[0];
-    if (!tbody) return;
-    const headers = [...table.tHead.rows[0].cells];
-    let sortCol = -1;
-    let asc = true;
-    headers.forEach((th, idx) => {{
-      th.dataset.col = String(idx);
-      th.addEventListener('click', () => {{
-        const col = Number(th.dataset.col);
-        const type = th.dataset.type || 'str';
-        if (sortCol === col) asc = !asc;
-        else {{ sortCol = col; asc = type !== 'num'; }}
-        headers.forEach((h, i) => {{
-          h.classList.toggle('sorted', i === col);
-          const arrow = h.querySelector('.arrow');
-          if (arrow) arrow.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
-        }});
-        const rows = [...tbody.rows];
-        rows.sort((a, b) => {{
-          const av = cellValue(a.cells[col], type);
-          const bv = cellValue(b.cells[col], type);
-          let cmp = type === 'num' ? (av - bv) : String(av).localeCompare(String(bv), 'ru');
-          if (type === 'num') {{
-            const aEmpty = !isFinite(av);
-            const bEmpty = !isFinite(bv);
-            if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
-          }}
-          return asc ? cmp : -cmp;
-        }});
-        rows.forEach(r => tbody.appendChild(r));
+document.querySelectorAll('table[data-sortable]').forEach((table) => {{
+  const headers = table.querySelectorAll('th');
+  headers.forEach((th, idx) => {{
+    th.addEventListener('click', () => {{
+      const tbody = table.tBodies[0];
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const asc = th.dataset.asc !== '1';
+      headers.forEach(h => {{ h.classList.remove('sorted'); h.dataset.asc = ''; }});
+      th.classList.add('sorted');
+      th.dataset.asc = asc ? '1' : '0';
+      const parse = (td) => {{
+        const t = (td?.textContent || '').trim().replace(/\\s/g, '').replace('%','').replace('$','');
+        const n = Number(t.replace(',', '.'));
+        return Number.isFinite(n) && t !== '' && t !== '—' ? n : t;
+      }};
+      rows.sort((a, b) => {{
+        const av = parse(a.children[idx]);
+        const bv = parse(b.children[idx]);
+        if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
+        return asc ? String(av).localeCompare(String(bv), 'ru') : String(bv).localeCompare(String(av), 'ru');
       }});
+      rows.forEach(r => tbody.appendChild(r));
     }});
   }});
-}})();
+}});
 </script>
 </body>
 </html>
 """
 
 
-def infer_taz_end(path: Path) -> date:
-    """Prefer date embedded in filename like «ТАЗ 18.09.2026.xlsx»."""
-    m = re.search(r"(\d{2})\.(\d{2})\.(\d{4})", path.name)
-    if m:
-        d, mo, y = map(int, m.groups())
-        try:
-            return date(y, mo, d)
-        except ValueError:
-            pass
-    return date(2026, 9, 18)
+def build_periods(df: pd.DataFrame, as_of: date) -> list[PeriodBlock]:
+    week_start = as_of - timedelta(days=6)
+    month_start, month_end, month_title = last_complete_month(as_of)
+    q_start, q_end, q_title = last_complete_quarter(as_of)
+    year_start = date(as_of.year, 1, 1)
+    return [
+        build_period(df, "Прошедшая неделя", week_start, as_of),
+        build_period(df, f"Прошедший месяц · {month_title}", month_start, month_end),
+        build_period(df, f"Прошедший квартал · {q_title}", q_start, q_end),
+        build_period(df, f"Прошедший год · {as_of.year}", year_start, as_of),
+    ]
 
 
 def main() -> None:
@@ -778,28 +591,23 @@ def main() -> None:
         default=Path("/tmp/taz_history/ТАЗ 02.10.2026.xlsx"),
     )
     parser.add_argument("--out-dir", type=Path, default=Path("output"))
-    parser.add_argument("--stem", default="completed_orders_sep_2026")
+    parser.add_argument("--stem", default="completed_orders")
     args = parser.parse_args()
 
-    end = infer_taz_end(args.taz)
-    week_start = end - timedelta(days=6)
-
+    as_of = infer_taz_end(args.taz)
     df = prepare(load_taz(args.taz))
-    periods = [
-        build_period(df, "Сентябрь 2026", date(2026, 9, 1), date(2026, 9, 30)),
-        build_period(df, "Прошедшая неделя", week_start, end),
-        build_period(df, "01.06 — 02.10.2026", date(2026, 6, 1), end),
-        build_period(df, "Весь 2026", date(2026, 1, 1), end),
-    ]
+    periods = build_periods(df, as_of)
 
     for p in periods:
         print(
-            f"{p.title}: report_n={p.report_n} lead_n={p.lead_n} avg={p.lead_avg} "
-            f"clients={len(p.clients)} suppliers={len(p.suppliers)} "
-            f"transport plan={p.transport_total_plan:.0f} fact={p.transport_total_fact:.0f}"
+            f"{p.title}: orders={p.orders} lines={p.lines} "
+            f"rev={p.revenue:.0f} margin={p.margin:.0f} "
+            f"lead_avg={p.lead_avg} lead_n={p.lead_n} "
+            f"tr_plan={p.transport_plan:.0f} tr_fact={p.transport_fact:.0f} "
+            f"delta={p.transport_delta:.0f}"
         )
 
-    html = render_html(periods, args.taz.name)
+    html = render_html(periods, args.taz.name, as_of)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     out_html = args.out_dir / f"{args.stem}.html"
     out_html.write_text(html, encoding="utf-8")
