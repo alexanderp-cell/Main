@@ -13,11 +13,12 @@
   · выполнено заказов (уник. номер счёта)
   · выручка = Σ «Продажная, итого»
   · маржа = выручка − закупка − транспорт − transaction fee
-    (транспорт: факт, если ячейка заполнена вкл. 0; иначе план)
-  · сроки поставок факт: среднее W−Q, только STK (исключая лид-таймы)
+  · сроки поставок факт: среднее W−Q, только STK;
+    для IBERIA + JET TECHNIC дополнительно ср. срок оплаты AW−Q (STK, без постоплаты)
   · транспорт: план / факт / дельта
 
-Под шапкой — выпадающие списки по клиентам и по поставщикам.
+Под шапкой — выпадающие списки по клиентам и по поставщикам
+(внутри — позиции с P/N + Description).
 """
 
 from __future__ import annotations
@@ -40,6 +41,10 @@ COL_LEAD_TIME = "Lead time"
 COL_ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
 COL_DELIVERY = "ФАКТИЧЕСКАЯ ДАТА ПОСТАВКИ (СОГЛАСНО УСЛОВИЯМ ПОСТАВКИ)"
 COL_SUPPLIER = "Поставщик"
+COL_PN = "p/n"
+COL_DESC = "DESCRIPTION"
+COL_PAY_DATE = "Дата оплаты поставщику"
+COL_MOVEMENT = "Дата начала движения"
 COL_SALE = "Продажная, итого"
 COL_BUY = "Закупка, итого"
 COL_FEE = "Transaction fee"
@@ -48,6 +53,7 @@ COL_TRANSPORT_PLAN = (
     "то \"размазываем\" равномерно планируюмую стоиомость транспорта на все позиции из счета."
 )
 COL_TRANSPORT_FACT = "Стоимость доставки факт"
+PAY_SUPPLIERS = {"IBERIA", "JET TECHNIC"}
 
 CAT_ROTABLE = "ROTABLE"
 CAT_EXPENDABLE = "EXPENDABLE"
@@ -92,6 +98,12 @@ def parse_date(value) -> date | None:
     return ts.date()
 
 
+def clean_str(value) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value).strip()
+
+
 def html_escape(text: str) -> str:
     return (
         str(text)
@@ -124,6 +136,11 @@ def load_taz(path: Path) -> pd.DataFrame:
             if isinstance(c, str) and c.startswith("Стоимость доставки ПЛАН"):
                 df = df.rename(columns={c: COL_TRANSPORT_PLAN})
                 break
+    if COL_MOVEMENT not in df.columns:
+        for c in df.columns:
+            if isinstance(c, str) and c.startswith("Дата начала движения"):
+                df = df.rename(columns={c: COL_MOVEMENT})
+                break
     return df
 
 
@@ -133,9 +150,9 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_finished"] = out["_status"].str.contains("FINISHED", na=False)
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
     out["_stk"] = out["_lead"].eq("STK")
-    out["_invoice"] = out[COL_INVOICE].map(
-        lambda v: "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v).strip()
-    )
+    out["_invoice"] = out[COL_INVOICE].map(clean_str)
+    out["_pn"] = out[COL_PN].map(clean_str) if COL_PN in out.columns else ""
+    out["_desc"] = out[COL_DESC].map(clean_str) if COL_DESC in out.columns else ""
     out["_client"] = out[COL_CUSTOMER].fillna("").map(
         lambda v: "" if (isinstance(v, float) and pd.isna(v)) else str(v).strip()
     )
@@ -150,8 +167,11 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_cat"] = out[COL_CATEGORY].astype(str).str.strip().str.upper()
     out["_q"] = out[COL_ORDER_DATE].map(parse_date)
     out["_w"] = out[COL_DELIVERY].map(parse_date)
-    out["_days"] = [
-        (w - q).days if w and q else None for w, q in zip(out["_w"], out["_q"])
+    out["_aw"] = out[COL_PAY_DATE].map(parse_date) if COL_PAY_DATE in out.columns else None
+    out["_ba"] = out[COL_MOVEMENT].map(parse_date) if COL_MOVEMENT in out.columns else None
+    out["_days"] = [(w - q).days if w and q else None for w, q in zip(out["_w"], out["_q"])]
+    out["_pay_days"] = [
+        (aw - q).days if aw and q else None for aw, q in zip(out["_aw"], out["_q"])
     ]
     out["_sale"] = out[COL_SALE].map(parse_numeric) if COL_SALE in out.columns else 0.0
     out["_buy"] = out[COL_BUY].map(parse_numeric) if COL_BUY in out.columns else 0.0
@@ -159,10 +179,8 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     plan_col = COL_TRANSPORT_PLAN if COL_TRANSPORT_PLAN in out.columns else None
     fact_col = COL_TRANSPORT_FACT if COL_TRANSPORT_FACT in out.columns else None
     out["_plan"] = out[plan_col].map(parse_numeric) if plan_col else 0.0
-    # fact: blank → use plan; explicit 0 stays 0
     if fact_col:
-        fact_raw = out[fact_col]
-        fact_parsed = fact_raw.map(
+        fact_parsed = out[fact_col].map(
             lambda v: None
             if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == ""
             else parse_numeric(v)
@@ -170,12 +188,9 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
         out["_fact"] = [
             float(f) if f is not None else float(p) for f, p in zip(fact_parsed, out["_plan"])
         ]
-        out["_fact_filled"] = fact_parsed.notna()
     else:
         out["_fact"] = out["_plan"]
-        out["_fact_filled"] = False
-    out["_transport_used"] = out["_fact"]
-    out["_margin"] = out["_sale"] - out["_buy"] - out["_transport_used"] - out["_fee"]
+    out["_margin"] = out["_sale"] - out["_buy"] - out["_fact"] - out["_fee"]
     return out
 
 
@@ -188,7 +203,6 @@ def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
 
 
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Сроки факт: FINISHED+W, только STK (без лид-таймов), W−Q≥0, ROTABLE/EXPENDABLE."""
     return (
         report_mask(df, start, end)
         & df["_stk"]
@@ -196,6 +210,22 @@ def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
         & df["_days"].notna()
         & (df["_days"] >= 0)
         & df["_cat"].isin({CAT_ROTABLE, CAT_EXPENDABLE})
+    )
+
+
+def pay_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
+    """IBERIA/JET TECHNIC: STK, AW−Q≥0, без постоплаты (движение раньше оплаты)."""
+    suppliers = df["_supplier"].astype(str).str.strip().str.upper()
+    ba = df["_ba"]
+    aw = df["_aw"]
+    postpay = ba.notna() & (aw.isna() | (ba < aw))
+    return (
+        lead_mask(df, start, end)
+        & suppliers.isin(PAY_SUPPLIERS)
+        & aw.notna()
+        & df["_pay_days"].notna()
+        & (df["_pay_days"] >= 0)
+        & ~postpay
     )
 
 
@@ -219,7 +249,7 @@ def last_complete_month(as_of: date) -> tuple[date, date, str]:
 
 
 def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
-    q = (as_of.month - 1) // 3 + 1  # current quarter 1..4
+    q = (as_of.month - 1) // 3 + 1
     if q == 1:
         year = as_of.year - 1
         start_m = 10
@@ -230,10 +260,26 @@ def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
         q_label = q - 1
     start = date(year, start_m, 1)
     end_m = start_m + 2
-    last_day = calendar.monthrange(year, end_m)[1]
-    end = date(year, end_m, last_day)
+    end = date(year, end_m, calendar.monthrange(year, end_m)[1])
     title = f"Q{q_label} {year} ({MONTHS_RU[start_m]}–{MONTHS_RU[end_m]})"
     return start, end, title
+
+
+@dataclass
+class LineRow:
+    pn: str
+    description: str
+    revenue: float
+    margin: float
+    lead_days: float | None
+    is_stk: bool
+    transport_plan: float
+    transport_fact: float
+    invoice: str
+
+    @property
+    def transport_delta(self) -> float:
+        return self.transport_fact - self.transport_plan
 
 
 @dataclass
@@ -247,6 +293,7 @@ class EntityRow:
     lead_n: int
     transport_plan: float
     transport_fact: float
+    positions: list[LineRow] = field(default_factory=list)
 
     @property
     def transport_delta(self) -> float:
@@ -264,6 +311,8 @@ class PeriodBlock:
     margin: float
     lead_avg: float | None
     lead_n: int
+    pay_avg: float | None
+    pay_n: int
     transport_plan: float
     transport_fact: float
     clients: list[EntityRow] = field(default_factory=list)
@@ -274,6 +323,24 @@ class PeriodBlock:
         return self.transport_fact - self.transport_plan
 
 
+def line_from_row(row: pd.Series) -> LineRow:
+    days = row["_days"]
+    lead_days = None
+    if days is not None and not (isinstance(days, float) and pd.isna(days)):
+        lead_days = float(days)
+    return LineRow(
+        pn=str(row["_pn"] or "—"),
+        description=str(row["_desc"] or "—"),
+        revenue=float(row["_sale"] or 0),
+        margin=float(row["_margin"] or 0),
+        lead_days=lead_days,
+        is_stk=bool(row["_stk"]),
+        transport_plan=float(row["_plan"] or 0),
+        transport_fact=float(row["_fact"] or 0),
+        invoice=str(row["_invoice"] or ""),
+    )
+
+
 def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> list[EntityRow]:
     names = sorted(rows[key].unique(), key=lambda s: str(s).casefold())
     out: list[EntityRow] = []
@@ -282,6 +349,7 @@ def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> li
         lead_part = lead_rows[lead_rows[key] == name]
         days = lead_part["_days"].astype(float)
         invoices = {inv for inv in part["_invoice"] if inv}
+        positions = [line_from_row(r) for _, r in part.sort_values("_sale", ascending=False).iterrows()]
         out.append(
             EntityRow(
                 name=str(name),
@@ -293,6 +361,7 @@ def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> li
                 lead_n=int(len(days)),
                 transport_plan=float(part["_plan"].sum()),
                 transport_fact=float(part["_fact"].sum()),
+                positions=positions,
             )
         )
     out.sort(key=lambda e: (-e.revenue, -e.orders, e.name.casefold()))
@@ -302,8 +371,10 @@ def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> li
 def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodBlock:
     rows = df.loc[report_mask(df, start, end)].copy()
     lead_rows = df.loc[lead_mask(df, start, end)].copy()
+    pay_rows = df.loc[pay_mask(df, start, end)].copy()
     invoices = {inv for inv in rows["_invoice"] if inv}
     days = lead_rows["_days"].astype(float)
+    pay_days = pay_rows["_pay_days"].astype(float)
     return PeriodBlock(
         title=title,
         start=start,
@@ -314,6 +385,8 @@ def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> Period
         margin=float(rows["_margin"].sum()),
         lead_avg=float(days.mean()) if not days.empty else None,
         lead_n=int(len(days)),
+        pay_avg=float(pay_days.mean()) if not pay_days.empty else None,
+        pay_n=int(len(pay_days)),
         transport_plan=float(rows["_plan"].sum()),
         transport_fact=float(rows["_fact"].sum()),
         clients=summarize_group(rows, lead_rows, "_client"),
@@ -321,39 +394,37 @@ def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> Period
     )
 
 
-def render_entity_table(rows: list[EntityRow], table_id: str) -> str:
+def render_positions_table(positions: list[LineRow], table_id: str) -> str:
     body = []
-    for r in rows:
+    for r in positions:
         body.append(
             "<tr>"
-            f"<td>{html_escape(r.name)}</td>"
-            f"<td class='num'>{fmt_int(r.orders)}</td>"
-            f"<td class='num'>{fmt_int(r.lines)}</td>"
+            f"<td>{html_escape(r.pn)}</td>"
+            f"<td>{html_escape(r.description)}</td>"
             f"<td class='num'>{fmt_money(r.revenue)}</td>"
             f"<td class='num'>{fmt_money(r.margin)}</td>"
-            f"<td class='num'>{fmt_days(r.lead_avg)}</td>"
-            f"<td class='num'>{fmt_int(r.lead_n)}</td>"
+            f"<td class='num'>{fmt_days(r.lead_days) if r.is_stk else '—'}</td>"
             f"<td class='num'>{fmt_money(r.transport_plan)}</td>"
             f"<td class='num'>{fmt_money(r.transport_fact)}</td>"
             f"<td class='num'>{fmt_money(r.transport_delta)}</td>"
+            f"<td class='num'>{html_escape(r.invoice or '—')}</td>"
             "</tr>"
         )
     if not body:
-        body.append("<tr><td colspan='10' class='empty'>Нет данных</td></tr>")
+        body.append("<tr><td colspan='9' class='empty'>Нет позиций</td></tr>")
     return f"""
     <div class="table-scroll">
     <table data-sortable id="{html_escape(table_id)}">
       <thead><tr>
-        <th class="label-col">Имя <span class="arrow">↕</span></th>
-        <th class="num">Заказы <span class="arrow">↕</span></th>
-        <th class="num">Позиции <span class="arrow">↕</span></th>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
         <th class="num">Выручка $ <span class="arrow">↕</span></th>
         <th class="num">Маржа $ <span class="arrow">↕</span></th>
         <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">STK поз. <span class="arrow">↕</span></th>
         <th class="num">Тр. план <span class="arrow">↕</span></th>
         <th class="num">Тр. факт <span class="arrow">↕</span></th>
         <th class="num">Δ тр. <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody>{''.join(body)}</tbody>
     </table>
@@ -361,9 +432,35 @@ def render_entity_table(rows: list[EntityRow], table_id: str) -> str:
     """
 
 
+def render_entity_dropdowns(entities: list[EntityRow], table_prefix: str) -> str:
+    blocks = []
+    for i, ent in enumerate(entities):
+        blocks.append(
+            f"""
+<details class="subblock">
+  <summary>
+    <span class="ent-name">{html_escape(ent.name)}</span>
+    <span class="ent-meta">{fmt_int(ent.orders)} зак. · {fmt_int(ent.lines)} поз. · ${fmt_money(ent.revenue)} · маржа ${fmt_money(ent.margin)} · срок {fmt_days(ent.lead_avg)} дн.</span>
+  </summary>
+  <div class="block-body">
+    {render_positions_table(ent.positions, f"{table_prefix}-{i}")}
+  </div>
+</details>
+"""
+        )
+    if not blocks:
+        return "<p class='empty'>Нет данных</p>"
+    return "\n".join(blocks)
+
+
 def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
     open_attr = " open" if opened else ""
     range_s = f"{period.start.strftime('%d.%m.%Y')} – {period.end.strftime('%d.%m.%Y')}"
+    pay_line = (
+        f"оплата IBERIA+JT: {fmt_days(period.pay_avg)} дн. · {fmt_int(period.pay_n)} поз."
+        if period.pay_n
+        else "оплата IBERIA+JT: нет данных"
+    )
     return f"""
 <details class="period"{open_attr}>
   <summary>
@@ -392,6 +489,7 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
         <div class="label">Сроки поставок факт</div>
         <div class="value">{fmt_days(period.lead_avg)} дн.</div>
         <div class="muted">ср. W−Q · только STK · {fmt_int(period.lead_n)} поз.</div>
+        <div class="muted pay">{html_escape(pay_line)}</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -408,11 +506,11 @@ def render_period(period: PeriodBlock, idx: int, *, opened: bool) -> str:
 
     <details class="block" open>
       <summary>По клиентам ({len(period.clients)})</summary>
-      <div class="block-body">{render_entity_table(period.clients, f"c{idx}")}</div>
+      <div class="block-body">{render_entity_dropdowns(period.clients, f"c{idx}")}</div>
     </details>
     <details class="block" open>
       <summary>По поставщикам ({len(period.suppliers)})</summary>
-      <div class="block-body">{render_entity_table(period.suppliers, f"s{idx}")}</div>
+      <div class="block-body">{render_entity_dropdowns(period.suppliers, f"s{idx}")}</div>
     </details>
   </div>
 </details>
@@ -462,17 +560,23 @@ details.period > summary::-webkit-details-marker {{ display:none; }}
 .period-title {{ font-size:17px; font-weight:700; color:var(--navy); }}
 .period-meta {{ font-size:13px; color:var(--muted); }}
 .period-body {{ padding:12px 16px 16px; }}
-details.block {{
+details.block, details.subblock {{
   border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
 }}
-details.block > summary {{
+details.block > summary, details.subblock > summary {{
   cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
   list-style:none; background:#f7fbfc;
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
 }}
-details.block > summary::-webkit-details-marker {{ display:none; }}
-details.block > summary::before {{ content:"▸ "; color:#7a8a90; }}
-details.block[open] > summary::before {{ content:"▾ "; }}
+details.block > summary::-webkit-details-marker,
+details.subblock > summary::-webkit-details-marker {{ display:none; }}
+details.block > summary::before,
+details.subblock > summary::before {{ content:"▸ "; color:#7a8a90; }}
+details.block[open] > summary::before,
+details.subblock[open] > summary::before {{ content:"▾ "; }}
 .block-body {{ padding:12px; }}
+.ent-name {{ font-weight:700; }}
+.ent-meta {{ font-size:12px; color:var(--muted); font-weight:600; }}
 .kpis {{
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
 }}
@@ -486,6 +590,7 @@ details.block[open] > summary::before {{ content:"▾ "; }}
 .value.transport .bad {{ color:#9b2c2c; }}
 .value.transport .ok {{ color:#0a5c4c; }}
 .muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
+.muted.pay {{ color:#0a5c4c; font-weight:600; }}
 .table-scroll {{ overflow-x:auto; }}
 table {{
   width:100%; border-collapse:collapse; font-size:13px;
@@ -530,9 +635,11 @@ tbody tr:hover {{ background:#eef7f9; }}
     <strong>Периоды:</strong> 1) прошедшая неделя · 2) последний <em>полный</em> месяц ·
     3) последний <em>полный</em> квартал · 4) текущий год с 01.01 по дату среза.
     <br/>
-    <strong>Сроки:</strong> среднее W−Q, только <strong>STK</strong> (лид-таймы исключены), ROTABLE/EXPENDABLE.
+    <strong>Сроки:</strong> среднее W−Q, только <strong>STK</strong> (лид-таймы исключены).
+    Для <strong>IBERIA / JET TECHNIC</strong> в шапке дополнительно ср. срок оплаты AW−Q (STK, без постоплаты).
     <br/>
     <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − transaction fee.
+    В выпадающих списках клиентов/поставщиков внутри — позиции с <strong>P/N + Description</strong>.
   </div>
   {sections}
   <p class="hint">Скачивайте / открывайте HTML напрямую. ZIP+HTML Windows часто помечает ложно.</p>
@@ -603,8 +710,8 @@ def main() -> None:
             f"{p.title}: orders={p.orders} lines={p.lines} "
             f"rev={p.revenue:.0f} margin={p.margin:.0f} "
             f"lead_avg={p.lead_avg} lead_n={p.lead_n} "
-            f"tr_plan={p.transport_plan:.0f} tr_fact={p.transport_fact:.0f} "
-            f"delta={p.transport_delta:.0f}"
+            f"pay_avg={p.pay_avg} pay_n={p.pay_n} "
+            f"tr_delta={p.transport_delta:.0f}"
         )
 
     html = render_html(periods, args.taz.name, as_of)
