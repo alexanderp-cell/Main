@@ -156,8 +156,10 @@ def load_taz(path: Path) -> pd.DataFrame:
 
 def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
-    out["_status"] = out[COL_STATUS].astype(str).str.strip().str.upper()
-    out["_excluded"] = out["_status"].apply(
+    out["_status"] = out[COL_STATUS].map(
+        lambda v: "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v).strip().upper()
+    )
+    out["_excluded"] = out["_status"].map(
         lambda s: any(tok in s for tok in EXCLUDED_STATUS_TOKENS)
     )
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
