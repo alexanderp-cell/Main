@@ -130,8 +130,21 @@ def fmt_days(v: float | None) -> str:
     return f"{float(v):.1f}"
 
 
+def as_money(value) -> float:
+    """Число для денег/маржи: NaN/None → 0 (иначе nan truthy ломает `x or 0`)."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return 0.0
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if math.isnan(v) or math.isinf(v):
+        return 0.0
+    return v
+
+
 def fmt_money(v: float) -> str:
-    return f"{v:,.0f}".replace(",", " ")
+    return f"{as_money(v):,.0f}".replace(",", " ")
 
 
 def fmt_int(v: int) -> str:
@@ -194,13 +207,15 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     fact_col = COL_TRANSPORT_FACT if COL_TRANSPORT_FACT in out.columns else None
     out["_plan"] = out[plan_col].map(parse_numeric) if plan_col else 0.0
     if fact_col:
-        fact_parsed = out[fact_col].map(
-            lambda v: None
-            if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == ""
-            else parse_numeric(v)
-        )
+        # Пустой факт → берём план. Нельзя возвращать None через Series.map:
+        # pandas превращает None в NaN, и тогда fallback ломается.
+        def _fact_or_plan(v, plan: float) -> float:
+            if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == "":
+                return float(plan)
+            return parse_numeric(v)
+
         out["_fact"] = [
-            float(f) if f is not None else float(p) for f, p in zip(fact_parsed, out["_plan"])
+            _fact_or_plan(v, p) for v, p in zip(out[fact_col], out["_plan"])
         ]
     else:
         out["_fact"] = out["_plan"]
@@ -349,12 +364,12 @@ def line_from_row(row: pd.Series) -> LineRow:
     return LineRow(
         pn=str(row["_pn"] or "—"),
         description=str(row["_desc"] or "—"),
-        revenue=float(row["_sale"] or 0),
-        margin=float(row["_margin"] or 0),
+        revenue=as_money(row["_sale"]),
+        margin=as_money(row["_margin"]),
         lead_days=lead_days,
         is_stk=bool(row["_stk"]),
-        transport_plan=float(row["_plan"] or 0),
-        transport_fact=float(row["_fact"] or 0),
+        transport_plan=as_money(row["_plan"]),
+        transport_fact=as_money(row["_fact"]),
         invoice=str(row["_invoice"] or ""),
     )
 
@@ -373,12 +388,12 @@ def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> li
                 name=str(name),
                 orders=len(invoices) if invoices else int(len(part)),
                 lines=int(len(part)),
-                revenue=float(part["_sale"].sum()),
-                margin=float(part["_margin"].sum()),
+                revenue=as_money(part["_sale"].sum()),
+                margin=as_money(part["_margin"].sum()),
                 lead_avg=float(days.mean()) if not days.empty else None,
                 lead_n=int(len(days)),
-                transport_plan=float(part["_plan"].sum()),
-                transport_fact=float(part["_fact"].sum()),
+                transport_plan=as_money(part["_plan"].sum()),
+                transport_fact=as_money(part["_fact"].sum()),
                 positions=positions,
             )
         )
@@ -399,14 +414,14 @@ def build_period(df: pd.DataFrame, title: str, start: date, end: date) -> Period
         end=end,
         orders=len(invoices) if invoices else int(len(rows)),
         lines=int(len(rows)),
-        revenue=float(rows["_sale"].sum()),
-        margin=float(rows["_margin"].sum()),
+        revenue=as_money(rows["_sale"].sum()),
+        margin=as_money(rows["_margin"].sum()),
         lead_avg=float(days.mean()) if not days.empty else None,
         lead_n=int(len(days)),
         pay_avg=float(pay_days.mean()) if not pay_days.empty else None,
         pay_n=int(len(pay_days)),
-        transport_plan=float(rows["_plan"].sum()),
-        transport_fact=float(rows["_fact"].sum()),
+        transport_plan=as_money(rows["_plan"].sum()),
+        transport_fact=as_money(rows["_fact"].sum()),
         clients=summarize_group(rows, lead_rows, "_client"),
         suppliers=summarize_group(rows, lead_rows, "_supplier"),
     )
