@@ -564,6 +564,9 @@ def fact_delivery_date(row: pd.Series) -> date | None:
 def load_taz(path: Path, excluded_invoicers: set[str] | None = None) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [col.strip() if isinstance(col, str) else col for col in df.columns]
+    # Newer TAZ exports renamed Customer → Client
+    if COL_CUSTOMER not in df.columns and "Client" in df.columns:
+        df = df.rename(columns={"Client": COL_CUSTOMER})
     invoice_col = get_invoice_col(df)
     if invoice_col != COL_INVOICE:
         df = df.rename(columns={invoice_col: COL_INVOICE})
