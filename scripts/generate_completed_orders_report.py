@@ -37,7 +37,8 @@ import pandas as pd
 
 COL_INVOICE = "Номер счета"
 COL_STATUS = "Status"
-COL_CUSTOMER = "Customer"
+COL_CUSTOMER = "Customer"  # в новых срезах ТАЗ может быть «Client»
+COL_CUSTOMER_ALT = "Client"
 COL_CATEGORY = "Category"
 COL_LEAD_TIME = "Lead time"
 COL_ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
@@ -160,6 +161,8 @@ def fmt_int(v: int) -> str:
 def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
+    if COL_CUSTOMER not in df.columns and COL_CUSTOMER_ALT in df.columns:
+        df = df.rename(columns={COL_CUSTOMER_ALT: COL_CUSTOMER})
     if COL_TRANSPORT_PLAN not in df.columns:
         for c in df.columns:
             if isinstance(c, str) and c.startswith("Стоимость доставки ПЛАН"):
