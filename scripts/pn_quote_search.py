@@ -127,6 +127,26 @@ class QuoteHit:
             remarks,  # AA
         ]
 
+    def to_dict(self) -> dict:
+        return {
+            "pn": self.pn,
+            "uid": self.uid,
+            "date": self.date.strftime("%Y-%m-%d %H:%M") if self.date else "",
+            "from_raw": self.from_raw,
+            "supplier": self.supplier,
+            "subject": self.subject,
+            "price": self.price,
+            "cond": self.cond,
+            "qty": self.qty,
+            "lead_time": self.lead_time,
+            "cert": self.cert,
+            "remarks": self.remarks,
+            "attachments": self.attachments,
+            "snippet": self.snippet,
+            "source_note": self.source_note,
+            "tuz_row": self.tuz_row(),
+        }
+
 
 def load_env(path: Path) -> dict[str, str]:
     if not path.exists():
@@ -735,33 +755,49 @@ def print_tsv(hits: list[QuoteHit]) -> None:
     print("-" * 72)
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Find supplier quotes in Gmail by part number")
-    ap.add_argument("part_numbers", nargs="*", help="One or more P/Ns")
-    ap.add_argument("--file", "-f", help="Text file with P/Ns (one per line)")
-    ap.add_argument("--stdin", action="store_true", help="Read P/Ns from stdin (column)")
-    ap.add_argument("--env", default=str(DEFAULT_ENV), help="Path to gmail.env")
-    ap.add_argument("--limit", type=int, default=40, help="Max emails to inspect per P/N")
-    ap.add_argument("--mailbox", default="INBOX", help="IMAP mailbox (default INBOX)")
-    ap.add_argument("--tsv-only", action="store_true", help="Print only TSV rows")
-    args = ap.parse_args()
+def parse_pn_text(text: str) -> list[str]:
+    """Parse P/Ns from free text (spaces, commas, newlines)."""
+    pns: list[str] = []
+    seen: set[str] = set()
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        for token in re.split(r"[,;\s]+", line):
+            token = token.strip()
+            if not token:
+                continue
+            key = normalize_pn(token)
+            if key in seen:
+                continue
+            seen.add(key)
+            pns.append(token.strip())
+    return pns
 
-    pns = parse_pns(args)
-    env = load_env(Path(args.env))
+
+def search_quotes(
+    pns: list[str],
+    *,
+    env_path: Path | None = None,
+    mailbox: str = "INBOX",
+    limit: int = 40,
+) -> list[dict]:
+    """Search Gmail for quotes. Returns list of per-PN result dicts."""
+    env = load_env(env_path or DEFAULT_ENV)
     address = env.get("GMAIL_ADDRESS", "")
     password = env.get("GMAIL_APP_PASSWORD", "")
     if not address or not password:
-        raise SystemExit("GMAIL_ADDRESS / GMAIL_APP_PASSWORD missing in env file")
+        raise RuntimeError("GMAIL_ADDRESS / GMAIL_APP_PASSWORD missing in env file")
 
     client = gmail_connect(address, password)
+    results: list[dict] = []
     try:
-        typ, _ = client.select(args.mailbox, readonly=True)
+        typ, _ = client.select(mailbox, readonly=True)
         if typ != "OK":
-            raise SystemExit(f"Cannot open mailbox {args.mailbox}")
+            raise RuntimeError(f"Cannot open mailbox {mailbox}")
 
-        all_hits: list[QuoteHit] = []
         for pn in pns:
-            uids = search_uids(client, pn, args.limit)
+            uids = search_uids(client, pn, limit)
             hits: list[QuoteHit] = []
             for uid in uids:
                 typ, msg_data = client.uid("fetch", uid, "(BODY.PEEK[])")
@@ -783,20 +819,92 @@ def main() -> None:
                     parse_quotes_from_message(pn=pn, uid=uid.decode(), msg=msg)
                 )
             hits = dedupe_hits(hits)
-            all_hits.extend(hits)
-            if not args.tsv_only:
-                print_human(pn, hits, mail_hits=len(uids))
-        if args.tsv_only:
-            print("\t".join(TUZ_O_AA_HEADERS))
-            for h in all_hits:
-                print("\t".join(h.tuz_row()))
-        else:
-            print_tsv(all_hits)
+            results.append(
+                {
+                    "pn": normalize_pn(pn),
+                    "mail_hits": len(uids),
+                    "quote_count": len(hits),
+                    "quotes": [h.to_dict() for h in hits],
+                    "tsv": "\t".join(TUZ_O_AA_HEADERS)
+                    + "\n"
+                    + "\n".join("\t".join(h.tuz_row()) for h in hits),
+                }
+            )
     finally:
         try:
             client.logout()
         except Exception:
             pass
+    return results
+
+
+def hits_to_combined_tsv(results: list[dict]) -> str:
+    lines = ["\t".join(TUZ_O_AA_HEADERS)]
+    for block in results:
+        for q in block["quotes"]:
+            lines.append("\t".join(q["tuz_row"]))
+    return "\n".join(lines)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="Find supplier quotes in Gmail by part number")
+    ap.add_argument("part_numbers", nargs="*", help="One or more P/Ns")
+    ap.add_argument("--file", "-f", help="Text file with P/Ns (one per line)")
+    ap.add_argument("--stdin", action="store_true", help="Read P/Ns from stdin (column)")
+    ap.add_argument("--env", default=str(DEFAULT_ENV), help="Path to gmail.env")
+    ap.add_argument("--limit", type=int, default=40, help="Max emails to inspect per P/N")
+    ap.add_argument("--mailbox", default="INBOX", help="IMAP mailbox (default INBOX)")
+    ap.add_argument("--tsv-only", action="store_true", help="Print only TSV rows")
+    args = ap.parse_args()
+
+    pns = parse_pns(args)
+    results = search_quotes(
+        pns,
+        env_path=Path(args.env),
+        mailbox=args.mailbox,
+        limit=args.limit,
+    )
+    all_hits: list[QuoteHit] = []
+    if args.tsv_only:
+        print(hits_to_combined_tsv(results))
+        return
+
+    # Rebuild lightweight objects only for CLI printing via dicts
+    for block in results:
+        print()
+        print("=" * 72)
+        print(f"P/N: {block['pn']}")
+        print(f"Писем в Gmail с этим номером: {block['mail_hits']}")
+        print(f"Распознанных предложений: {block['quote_count']}")
+        if not block["quotes"]:
+            print("Предложений с ценой/вложением не найдено (или только внутренние письма).")
+            continue
+        for i, h in enumerate(block["quotes"], 1):
+            price = f"${h['price']:,.0f}" if h["price"] is not None else "цена не распознана"
+            bits = [
+                f"{i}. {h['supplier']}",
+                price,
+                f"Cond={h['cond'] or '?'}",
+                f"Qty={h['qty'] or '?'}",
+                f"LT={h['lead_time'] or '?'}",
+                f"дата={h['date'] or '?'}",
+            ]
+            print(" | ".join(bits))
+            if h["cert"]:
+                print(f"   Cert: {h['cert']}")
+            if h["attachments"]:
+                print(f"   Вложения: {', '.join(h['attachments'])}")
+            print(f"   Тема: {h['subject'][:120]}")
+            if h["snippet"]:
+                sn = re.sub(r"\s+", " ", h["snippet"])[:180]
+                print(f"   Фрагмент: {sn}")
+
+    print()
+    print("-" * 72)
+    print("TSV для вставки в ТУЗ (колонки O → AA). Скопируйте блок ниже:")
+    print("-" * 72)
+    print(hits_to_combined_tsv(results))
+    print("-" * 72)
 
 
 if __name__ == "__main__":

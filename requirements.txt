@@ -1,4 +1,1 @@
-# No third-party deps required for IMAP quote search (stdlib only).
-# Optional helpers if we extend PDF/Excel parsing later:
-# openpyxl>=3.1.0
-# pypdf>=4.0.0
+flask>=3.0.0

@@ -11,7 +11,21 @@ GMAIL_ADDRESS=you@domain.com
 GMAIL_APP_PASSWORD='xxxx xxxx xxxx xxxx'
 ```
 
-2. Запуск:
+2. Установка зависимостей:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Браузерный интерфейс
+
+```bash
+python3 web/app.py
+```
+
+Откройте http://127.0.0.1:5055 — вставьте P/N, нажмите «Найти предложения», скопируйте TSV в ТУЗ (O–AA).
+
+## CLI
 
 ```bash
 python3 scripts/pn_quote_search.py 7036410-1904
