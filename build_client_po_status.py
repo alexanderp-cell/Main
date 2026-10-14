@@ -877,8 +877,13 @@ def cell_blank(value) -> bool:
 def apply_known_dates(values: list, prev: PrevRow | None, src: SourceRow | None, section: str | None, lock_dates: bool):
     """Дата взятия в работу и крайняя дата не остаются пустыми.
     Есть дата в образце — оставляем её. Пусто — берём из таблицы 1.
-    Новые заказы каждый прогон берут даты из свежей таблицы 1.
+    В «Ожидает аванса» даты не ставим: только срок поставки в днях.
     """
+    if section == "Ожидает аванса":
+        values[10] = None
+        values[12] = None
+        values[13] = None
+        return
     if lock_dates and prev:
         start = prev.values[10]
         deadline = prev.values[12]
@@ -1019,7 +1024,7 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
     elif decision.comment_mode == "keep":
         values[0] = prev.values[0] if prev else None
 
-    if decision.fill_dates or decision.section == "Ожидает аванса":
+    if decision.fill_dates:
         apply_known_dates(values, prev, src, decision.section, decision.lock_dates)
 
     if decision.planned_mode == "clear":
@@ -1073,6 +1078,8 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
 
     if decision.section == "Ожидает аванса":
         values[1] = None
+        values[10] = None
+        values[12] = None
         values[13] = None
 
     if decision.section == "Требует внимания":
@@ -1522,9 +1529,9 @@ def self_check(ordered, output: Path):
             order_text = norm_text(item.values[4])
             if order_text and any(token in order_text.lower() for token in ("предоплат", "доплат", "%", "строк")):
                 errors.append(f"в номере заказа лишний текст: {item.values[5]} {order_text!r}")
-            if item.section == "Ожидает аванса" and item.values[1] not in (None, ""):
-                errors.append(f"у «ожидает аванса» появилась планируемая дата: {item.values[5]}")
-            if item.section not in {"Отменен"} and (cell_blank(item.values[10]) or cell_blank(item.values[12])):
+            if item.section == "Ожидает аванса" and any(not cell_blank(item.values[idx]) for idx in (1, 10, 12, 13)):
+                errors.append(f"в «ожидает аванса» заполнена дата: {item.values[5]}")
+            if item.section not in {"Отменен", "Ожидает аванса"} and (cell_blank(item.values[10]) or cell_blank(item.values[12])):
                 errors.append(f"пустая дата взятия или крайняя дата: {item.section} {item.values[3]} {item.values[5]}")
     with zipfile.ZipFile(output) as book:
         xml = book.read("xl/worksheets/sheet1.xml").decode("utf-8")
@@ -1546,8 +1553,8 @@ def self_check(ordered, output: Path):
     if not closed or closed[0] != "Завершен" or closed[1][10] != "26.03.2026" or closed[1][12] != "25.04.2026":
         errors.append(f"пустые даты R287P04 не взяты из таблицы 1: {None if not closed else (closed[0], closed[1][10], closed[1][12])}")
     advance = index.get(("7102613425", "2116M23P01"))
-    if not advance or advance[1][10] != "07.10.2026" or advance[1][12] != "16.11.2026" or advance[1][1] not in (None, ""):
-        errors.append(f"даты аванса 2116M23P01: {None if not advance else (advance[1][1], advance[1][10], advance[1][12])}")
+    if not advance or any(not cell_blank(advance[1][idx]) for idx in (1, 10, 12, 13)):
+        errors.append(f"в авансе 2116M23P01 стоят даты: {None if not advance else (advance[1][1], advance[1][10], advance[1][12], advance[1][13])}")
     moved = index.get(("22072613105", "3291214-2"))
     if not moved or moved[1][10] != "22.07.2026" or moved[1][12] != "16.08.2026":
         errors.append(f"пустые даты 3291214-2 не взяты из таблицы 1: {None if not moved else (moved[1][10], moved[1][12])}")
