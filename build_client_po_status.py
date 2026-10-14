@@ -860,12 +860,43 @@ def dates_locked_in_history(history: dict, inv: str, pn: str, qty) -> bool:
 
 
 def should_lock_dates(prev: PrevRow | None, history: dict) -> bool:
-    """Даты образца не затираем внутренними. Новые заказы каждый раз берём из таблицы 1."""
+    """Дату, которая уже стоит в образце, не затираем: в таблице 1 заказ часто взят раньше оплаты.
+    Пустую ячейку это не защищает — её заполняем из таблицы 1.
+    """
     if prev is None:
         return False
     if not history_has_date_locks(history):
         return True
     return dates_locked_in_history(history, prev.inv, prev.pn, prev.qty)
+
+
+def cell_blank(value) -> bool:
+    return value in (None, "")
+
+
+def apply_known_dates(values: list, prev: PrevRow | None, src: SourceRow | None, section: str | None, lock_dates: bool):
+    """Дата взятия в работу и крайняя дата не остаются пустыми.
+    Есть дата в образце — оставляем её. Пусто — берём из таблицы 1.
+    Новые заказы каждый прогон берут даты из свежей таблицы 1.
+    """
+    if lock_dates and prev:
+        start = prev.values[10]
+        deadline = prev.values[12]
+    elif src:
+        start = fmt_date(src.start) if src.start else (prev.values[10] if prev else None)
+        deadline = fmt_date(src.deadline) if src.deadline else (prev.values[12] if prev else None)
+    elif prev:
+        start, deadline = prev.values[10], prev.values[12]
+    else:
+        start = deadline = None
+    if cell_blank(start) and src and src.start:
+        start = fmt_date(src.start)
+    if cell_blank(deadline) and src and src.deadline:
+        deadline = fmt_date(src.deadline)
+    values[10] = start or None
+    values[12] = deadline or None
+    if section in {"Отгружен", "Завершен"} and cell_blank(values[13]) and src and src.actual:
+        values[13] = fmt_date(src.actual)
 
 
 def polish_client_row(values: list) -> list:
@@ -903,7 +934,9 @@ def apply_style(cell, snap):
 def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision, file_date: date, history: dict):
     """Возвращает values, метаданные для истории и список человекочитаемых правок."""
     if decision.action == "keep" or (src is None and prev is not None):
-        return list(prev.values), {}, []
+        values = list(prev.values)
+        apply_known_dates(values, prev, src, decision.section or prev.section, decision.lock_dates)
+        return values, {}, []
 
     if (
         prev
@@ -911,7 +944,9 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
         and prev.section == decision.section
         and not decision.refresh_commercial
     ):
-        return list(prev.values), {}, []
+        values = list(prev.values)
+        apply_known_dates(values, prev, src, decision.section, decision.lock_dates)
+        return values, {}, []
 
     if prev and decision.section in {"Завершен", "Отменен"} and not decision.refresh_commercial:
         values = list(prev.values)
@@ -922,12 +957,7 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
             values[0] = decision.comment
         if decision.actual_mode == "set" and decision.actual and not values[13]:
             values[13] = fmt_date(decision.actual)
-        # Даты образца не подставляем из таблицы 1, даже если строка уходит в «Завершен».
-        if decision.fill_dates and src and decision.section == "Завершен" and not decision.lock_dates:
-            if not values[10] and src.start:
-                values[10] = fmt_date(src.start)
-            if not values[12] and src.deadline:
-                values[12] = fmt_date(src.deadline)
+        apply_known_dates(values, prev, src, decision.section, decision.lock_dates)
         return values, {}, []
 
     values = [None] * 24
@@ -989,15 +1019,8 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
     elif decision.comment_mode == "keep":
         values[0] = prev.values[0] if prev else None
 
-    if decision.section == "Ожидает аванса":
-        values[10] = None
-        values[12] = None
-    elif decision.lock_dates and prev:
-        values[10] = prev.values[10]
-        values[12] = prev.values[12]
-    elif decision.fill_dates and src:
-        values[10] = fmt_date(src.start)
-        values[12] = fmt_date(src.deadline)
+    if decision.fill_dates or decision.section == "Ожидает аванса":
+        apply_known_dates(values, prev, src, decision.section, decision.lock_dates)
 
     if decision.planned_mode == "clear":
         values[1] = None
@@ -1050,8 +1073,6 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
 
     if decision.section == "Ожидает аванса":
         values[1] = None
-        values[10] = None
-        values[12] = None
         values[13] = None
 
     if decision.section == "Требует внимания":
@@ -1501,8 +1522,10 @@ def self_check(ordered, output: Path):
             order_text = norm_text(item.values[4])
             if order_text and any(token in order_text.lower() for token in ("предоплат", "доплат", "%", "строк")):
                 errors.append(f"в номере заказа лишний текст: {item.values[5]} {order_text!r}")
-            if item.section == "Ожидает аванса" and any(item.values[idx] not in (None, "") for idx in (1, 10, 12)):
-                errors.append(f"у «ожидает аванса» заполнены лишние даты: {item.values[5]}")
+            if item.section == "Ожидает аванса" and item.values[1] not in (None, ""):
+                errors.append(f"у «ожидает аванса» появилась планируемая дата: {item.values[5]}")
+            if item.section not in {"Отменен"} and (cell_blank(item.values[10]) or cell_blank(item.values[12])):
+                errors.append(f"пустая дата взятия или крайняя дата: {item.section} {item.values[3]} {item.values[5]}")
     with zipfile.ZipFile(output) as book:
         xml = book.read("xl/worksheets/sheet1.xml").decode("utf-8")
         dropdown = book.read("xl/worksheets/sheet2.xml").decode("utf-8")
@@ -1520,8 +1543,17 @@ def self_check(ordered, output: Path):
     if not kept or kept[1][10] != "10.06.2026" or kept[1][12] != "10.07.2026":
         errors.append(f"даты образца 002A0096-1 изменились: {None if not kept else (kept[1][10], kept[1][12])}")
     closed = index.get(("26032611272", "R287P04"))
-    if not closed or closed[0] != "Завершен" or closed[1][10] not in (None, "") or closed[1][12] not in (None, ""):
-        errors.append(f"даты образца R287P04 заполнились из таблицы 1: {None if not closed else (closed[0], closed[1][10], closed[1][12])}")
+    if not closed or closed[0] != "Завершен" or closed[1][10] != "26.03.2026" or closed[1][12] != "25.04.2026":
+        errors.append(f"пустые даты R287P04 не взяты из таблицы 1: {None if not closed else (closed[0], closed[1][10], closed[1][12])}")
+    advance = index.get(("7102613425", "2116M23P01"))
+    if not advance or advance[1][10] != "07.10.2026" or advance[1][12] != "16.11.2026" or advance[1][1] not in (None, ""):
+        errors.append(f"даты аванса 2116M23P01: {None if not advance else (advance[1][1], advance[1][10], advance[1][12])}")
+    moved = index.get(("22072613105", "3291214-2"))
+    if not moved or moved[1][10] != "22.07.2026" or moved[1][12] != "16.08.2026":
+        errors.append(f"пустые даты 3291214-2 не взяты из таблицы 1: {None if not moved else (moved[1][10], moved[1][12])}")
+    kept_doubt = index.get(("27072610055", "69-37325-135"))
+    if not kept_doubt or kept_doubt[1][10] != "15.08.2026" or kept_doubt[1][12] != "15.09.2026":
+        errors.append(f"дата образца 69-37325-135 затёрта таблицей 1: {None if not kept_doubt else (kept_doubt[1][10], kept_doubt[1][12])}")
     fresh = index.get(("7102610555", "J816P086A"))
     if not fresh or fresh[1][10] != "07.10.2026" or fresh[1][12] != "06.12.2026":
         errors.append(f"новый заказ взял не те даты: {None if not fresh else (fresh[1][10], fresh[1][12])}")
