@@ -7,3339 +7,3808 @@
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "12102617405|335-266-400-0|1": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "13102615505|F80076-1|1": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "13102616355|9111M35P08|10": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "13102616355|90012118|4": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "29092616005|BUL216|20": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12082610355|CF2051|7": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21092614525|1150002-1|1": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "26082610155|MS27502B19C|2": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "17072615315|236024-3|3": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "24082615515|T30L9M4|80": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "7092610195|E-329E|1": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "8042616245|0856LU6|1": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "7102610555|J816P086A|4": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "7102610555|9057M92P04|1": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "16092613402|BACR13CF2AB|2": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "1102611065|314U2200-23|1": {
       "section": "Требует внимания",
-      "planned": "",
+      "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "22072613105|3291214-2|1": {
       "section": "Принят в работу",
       "planned": "20.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27072611475|2313M-348-4|1": {
       "section": "Принят в работу",
       "planned": "20.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6102613485|BACC63BN14-4S|1": {
       "section": "Принят в работу",
       "planned": "05.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "9102611215|WL6839|300": {
       "section": "Принят в работу",
       "planned": "08.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "6102615305|NAS1102-3-12|250": {
       "section": "Принят в работу",
       "planned": "05.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "6102615305|BACB30NT3K6|50": {
       "section": "Принят в работу",
       "planned": "05.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "5102612415|40574-4|1": {
       "section": "Принят в работу",
       "planned": "04.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "16092610575|65C27506-3|1": {
       "section": "Отгрузка от поставщика",
       "planned": "30.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "27082616305|82425-00-0060|1": {
       "section": "Отгрузка от поставщика",
       "planned": "20.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "9092611085|CGAB1400-00|1": {
       "section": "Отгрузка от поставщика",
       "planned": "23.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "4092612345|RD-AX7308-01|1": {
       "section": "Отгрузка от поставщика",
       "planned": "20.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "30092610505|GR501BB4-4|4": {
       "section": "Отгрузка от поставщика",
       "planned": "25.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2309268425|3-906S383-70|200": {
       "section": "Отгрузка от поставщика",
       "planned": "23.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8102612465|KT-1257|144": {
       "section": "Отгрузка от поставщика",
       "planned": "07.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "8102612465|KT9109M73P04|144": {
       "section": "Отгрузка от поставщика",
       "planned": "07.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "8102612465|KT9186M37P08|56": {
       "section": "Отгрузка от поставщика",
       "planned": "07.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "8102612465|KT1713M41P09|80": {
       "section": "Отгрузка от поставщика",
       "planned": "07.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "8102612465|KT9318M85P04|60": {
       "section": "Отгрузка от поставщика",
       "planned": "07.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "7102610555|JA9211M39G02|79": {
       "section": "Отгрузка от поставщика",
       "planned": "06.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "7102610555|JA1292M81P01|1": {
       "section": "Отгрузка от поставщика",
       "planned": "06.12.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "10082615365|137-00-870-14GK|1": {
       "section": "Отгрузка от поставщика",
       "planned": "20.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": false
     },
     "21012612372|5100S151|3": {
       "section": "Лид тайм",
       "planned": "N/A",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23092613105|10009255|20": {
       "section": "В транзите",
-      "planned": "23.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 1,
-      "last_planned_change": ""
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "23092613105|10009072|10": {
       "section": "В транзите",
-      "planned": "23.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 1,
-      "last_planned_change": ""
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "16092613402|BACR15FT6AD12C|250": {
       "section": "В транзите",
       "planned": "26.10.2026",
       "comment_kind": "whs",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "17092612085|ST3086-013WE|30": {
       "section": "В транзите",
-      "planned": "17.10.2026",
-      "comment_kind": "point",
+      "planned": "04.11.2026",
+      "comment_kind": "enroute",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "16092613402|BACS12HN3-5|50": {
       "section": "В транзите",
       "planned": "26.10.2026",
       "comment_kind": "whs",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "16092612555|901950-02|1": {
       "section": "В транзите",
       "planned": "16.10.2026",
       "comment_kind": "point",
       "point_date_changes": 1,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2708269485|580-285-152|1": {
       "section": "В транзите",
-      "planned": "23.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "20052610552|BACR13CD2|1": {
       "section": "В транзите",
       "planned": "16.10.2026",
       "comment_kind": "delay",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "1102611295|622-8001-350|2": {
       "section": "В транзите",
       "planned": "01.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "25092613455|121282-25|1": {
       "section": "В транзите",
       "planned": "22.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "29092616005|154MKP275KE|20": {
       "section": "В транзите",
-      "planned": "29.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "29092616005|224MKP275KB|20": {
       "section": "В транзите",
-      "planned": "29.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "29092616005|B32642B0183J|20": {
       "section": "В транзите",
-      "planned": "29.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "11092612015|0851CM-2|1": {
       "section": "В транзите",
       "planned": "01.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "28092614585|RDAA8046-01|1": {
       "section": "В транзите",
       "planned": "23.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24092613345|398908-5|1": {
       "section": "В транзите",
       "planned": "30.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "30092609185|S152-0020-00|1": {
       "section": "В транзите",
       "planned": "30.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2062611445|002A0096-1|1": {
       "section": "В транзите",
       "planned": "23.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "11092613005|3604524-54|3": {
       "section": "В транзите",
       "planned": "25.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "10092610465|301-2640|1": {
       "section": "В транзите",
       "planned": "25.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "1109269415|1002992-309|2": {
       "section": "В транзите",
-      "planned": "23.10.2026",
+      "planned": "30.10.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "27072610055|69-37325-135|1": {
       "section": "В транзите",
-      "planned": "23.10.2026",
+      "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
     },
     "5102611505|46-3145-1|1": {
       "section": "В транзите",
       "planned": "04.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": false
     },
     "5102611165|6364-00|20": {
       "section": "В транзите",
       "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": false
     },
     "5102611165|IPW60R099C6|20": {
       "section": "В транзите",
       "planned": "04.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13"
+      "last_planned_change": "2026-10-13",
+      "dates_locked": false
     },
     "17092615215|1150002-1|1": {
       "section": "Отгружен",
       "planned": "10.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1109269585|BACR15BA2AD5C|64": {
       "section": "Отгружен",
       "planned": "16.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30032612565|2100M96P05|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19052614485|141A4810-39|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19052614485|141A4810-62|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19052614485|141A4810-56|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19052614485|141A4810-42|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13082611355|902862|1": {
       "section": "Отгружен",
       "planned": "05.10.2026",
       "comment_kind": "manual",
       "point_date_changes": 0,
-      "last_planned_change": ""
-    },
-    "24072409372|4051601-938|1": {
-      "section": "Отгружен",
-      "planned": "11.09.2024",
-      "comment_kind": "manual",
-      "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9092611202|123423-3-1|34": {
       "section": "Завершен",
       "planned": "18.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1409268435|7373278|55": {
       "section": "Завершен",
       "planned": "18.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30032612565|2100M96P05|79": {
       "section": "Завершен",
       "planned": "25.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6082611055|7123-19973-02AB|1": {
       "section": "Завершен",
       "planned": "11.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26082610325|M81824-1-2|100": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27072610325|285A1300-1|1": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5082610245|2D2013-3|2": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30072612095|2-8020-3|1": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6082614502|TY26M|1": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10072614325|3601193-8|1": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8072610222|NAS1523AA4N|72": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "508269585|SP2510-00-2028|4": {
       "section": "Завершен",
       "planned": "01.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27072615005|4951351|1": {
       "section": "Завершен",
       "planned": "17.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "11082610555|BACN10KB3CFD|37": {
       "section": "Завершен",
       "planned": "17.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6082611335|R259G11|1": {
       "section": "Завершен",
       "planned": "17.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23072614545|214A3112-3|1": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21072614175|214A3112-3|1": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "260626100185|3604524-29|1": {
       "section": "Завершен",
       "planned": "04.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "508269585|2609573|4": {
       "section": "Завершен",
       "planned": "26.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20072613055|14330-050|1": {
       "section": "Завершен",
       "planned": "11.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5082613325|NAS6609-27|12": {
       "section": "Завершен",
       "planned": "26.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20072612515|BACB30XD3K6|300": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "307269335|90G237|1": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31072610085|E0091-10-200NN|50": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1707269185|38284|5": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16072617212|G565-2|2": {
       "section": "Завершен",
       "planned": "07.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24062616005|002A0096-1|1": {
       "section": "Завершен",
       "planned": "04.09.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22062617152|06-133802-002|1": {
       "section": "Завершен",
       "planned": "23.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6072617302|26S55-5AB|10": {
       "section": "Завершен",
       "planned": "26.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2206269535|G7500-03|1": {
       "section": "Завершен",
       "planned": "06.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19062613055|320362-2-1|1": {
       "section": "Завершен",
       "planned": "06.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22062617152|02-190002-020|2": {
       "section": "Завершен",
       "planned": "25.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22062617152|02-190002-018|2": {
       "section": "Завершен",
       "planned": "25.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15072615075|232T4125-9|1": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13052612025|332A2341-4|1": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "29062614435|S9026T041|15": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2906269205|207330|1": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24062612485|ADS2270-1|8": {
       "section": "Завершен",
       "planned": "23.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23072612105|336-063-102-0|2": {
       "section": "Завершен",
       "planned": "23.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "14072613202|HL77-6|9": {
       "section": "Завершен",
       "planned": "23.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25052613115|8901-326|2": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19062613402|BACS12ER3K14|1": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6072611572|J221P906WE|70": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "14072610515|11-6557-7B|3": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9072614402|A36889|4": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13072611045|MS29513-030|100": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1707269315|121-11632-1|2": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20072612015|2-230S604-70|30": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22072614445|FB016830|40": {
       "section": "Завершен",
       "planned": "18.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "14072611465|BACB30NX12K20|23": {
       "section": "Завершен",
       "planned": "05.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "29062614435|NTA14451-06P048|3": {
       "section": "Завершен",
       "planned": "06.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25062609555|2206400-2|1": {
       "section": "Завершен",
       "planned": "05.08.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22062615375|G7500-03|1": {
       "section": "Завершен",
       "planned": "24.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3062610525|NAS1189E3P7L|12": {
       "section": "Завершен",
       "planned": "19.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3062611585|NAS634-37|2": {
       "section": "Завершен",
       "planned": "19.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30062612225|69-60493-3|5": {
       "section": "Завершен",
       "planned": "19.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052612415|137-00-870-14GK-SR|1": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28042609405|M472001-01|10": {
       "section": "Завершен",
       "planned": "17.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9062615365|MS9557-05|50": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18062610152|596-20629|3": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19062613402|65-90305-38A|5": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9062610045|600-0101-1/4|40": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19062613402|BACS12ER3K14|29": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25052612585|SP2510-00-7031|2": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22052611302|MS25281F3|30": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1006268555|BACW10UB10|500": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15062614235|448|300": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2206269055|638060-77454EA|100": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052610365|DMC50-17|1": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2206269055|638060-77453EA|100": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052613145|3604524-54|1": {
       "section": "Завершен",
       "planned": "22.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15062617405|129694-3|1": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24062616125|1853M33P06|1": {
       "section": "Завершен",
       "planned": "20.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16062612225|11-10865|1": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052610325|HL1187-6|20": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8062612102|BACN10JZ4B2|8": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9062616045|294667|7": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052614015|66-22655-2|5": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3062610525|NAS1804-9|3": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3062610525|NTA11155-9K22|1": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5062612352|69-60723-4|1": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5062612352|SG9632|1": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5062612352|26S55-5AB|3": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5062612352|315A1571-508|1": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052614015|CR3212-6-2|200": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5052611375|BACB30MY6K4|500": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052613465|F18T5CWRS|110": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052614015|7387-600|5": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20052613002|AS3237-11|8": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24022610495|9373M34P03|87": {
       "section": "Завершен",
       "planned": "11.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "270526102205|3604524-54|1": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21052613335|10-631045-2|2": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21052613335|10-631045-2|1": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27042614105|20200-0206|1": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5062612352|638060-77454EA|200": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5052618455|D436-37|200": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20052615115|BACB30NN3K9|150": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18052613005|2602542|20": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13052611235|2608438-1|50": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052613095|27782|1": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18052613005|NSA8206-113|75": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21052610305|649-411-983-0|6": {
       "section": "Завершен",
       "planned": "11.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2062611002|181-8836-09-553|4": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1106268685|67839WE|2": {
       "section": "Завершен",
       "planned": "26.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25032612002|ASNA2313-16B|3": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10022616045|2410M50P02|1": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13072610402|NAS617-6|105": {
       "section": "Завершен",
       "planned": "15.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9072614502|6839|200": {
       "section": "Завершен",
       "planned": "11.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6072613022|SP3832-02-1285|4": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "29062615055|7800000-010|1": {
       "section": "Завершен",
       "planned": "01.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25062618105|MXP210-00|2": {
       "section": "Завершен",
       "planned": "28.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22062614305|GA31538|3": {
       "section": "Завершен",
       "planned": "24.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3062612555|1853M33P06|1": {
       "section": "Завершен",
       "planned": "08.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "906269245|69-38868-3|1": {
       "section": "Завершен",
       "planned": "19.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052612425|3079014-01|2": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052616152|2601066|200": {
       "section": "Завершен",
       "planned": "28.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24032612452|1288M44P05|8": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|9208M51P04|24": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|KT9109M89P04|60": {
       "section": "Завершен",
       "planned": "27.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052614015|BACB30MY6K10|40": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2062610202|MS21083C3|100": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28052613275|NAS1149D0332J|1000": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1062610035|0LN115-18K|100": {
       "section": "Завершен",
       "planned": "10.07.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30426123055|0YX1600A04G01|1": {
       "section": "Завершен",
       "planned": "10.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17042613072|40725|20": {
       "section": "Завершен",
       "planned": "17.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26032610312|2502M08G01|1": {
       "section": "Завершен",
       "planned": "12.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21042613072|AC71-37|10": {
       "section": "Завершен",
       "planned": "12.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27032610005|2028M21P02|3": {
       "section": "Завершен",
       "planned": "12.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "29052613565|4951957|1": {
       "section": "Завершен",
       "planned": "14.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13032612055|AJF13A-104DU|10": {
       "section": "Завершен",
       "planned": "20.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12052612415|137-00-870-14GK|1": {
       "section": "Завершен",
       "planned": "18.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4052611115|S5431301100000|1": {
       "section": "Завершен",
       "planned": "07.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30426123065|898732-02|1": {
       "section": "Завершен",
       "planned": "10.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16042618045|761574B|1": {
       "section": "Завершен",
       "planned": "07.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26032611272|NAS1304-7|50": {
       "section": "Завершен",
       "planned": "20.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2052610125|ATF14|2": {
       "section": "Завершен",
       "planned": "27.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9042612175|69-38829-2|5": {
       "section": "Завершен",
       "planned": "04.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28042609515|2100-1020-02|1": {
       "section": "Завершен",
       "planned": "07.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18052613305|2100-1020-02|1": {
       "section": "Завершен",
       "planned": "07.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19032510242|EN2997KE3N12|3": {
       "section": "Завершен",
       "planned": "13.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18032618082|BACR15DR3-6|50": {
       "section": "Завершен",
       "planned": "22.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17032614455|2084M33P02|72": {
       "section": "Завершен",
       "planned": "16.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2104616165|6237M118A|1": {
       "section": "Завершен",
       "planned": "20.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13032612055|1322M32G01|2": {
       "section": "Завершен",
       "planned": "20.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24032617052|NAS1102-06-8|500": {
       "section": "Завершен",
       "planned": "25.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13032612055|1322M32G03|2": {
       "section": "Завершен",
       "planned": "19.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27032609375|398908-5|1": {
       "section": "Завершен",
       "planned": "19.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26022617505|65C26195-100|1": {
       "section": "Завершен",
       "planned": "19.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27032618075|335-251-809-0|1": {
       "section": "Завершен",
       "planned": "19.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6042615002|ABS-4063P|25": {
       "section": "Завершен",
       "planned": "23.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9022616325|K289P07|2": {
       "section": "Завершен",
       "planned": "10.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25032612512|J1215P16|20": {
       "section": "Завершен",
       "planned": "30.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17042613072|BACB30NN3K6|100": {
       "section": "Завершен",
       "planned": "30.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16032613502|BACB30VF3K4|50": {
       "section": "Завершен",
       "planned": "30.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24032617052|R287P06|10": {
       "section": "Завершен",
       "planned": "30.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23032613232|R287P08|5": {
       "section": "Завершен",
       "planned": "25.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6102514202|TY1878-22|1": {
       "section": "Завершен",
       "planned": "19.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "161225104012|JA9206M79P02|80": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25032612292|0851HT-1|2": {
       "section": "Завершен",
       "planned": "10.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24032617052|AE710243-1|4": {
       "section": "Завершен",
       "planned": "10.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23032612452|AS1895-7-200|6": {
       "section": "Завершен",
       "planned": "10.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6032613002|49380|1": {
       "section": "Завершен",
       "planned": "20.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20032612145|10-60545-127|4": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25032611282|BACC10HS16|3": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23032613232|J522P53|4": {
       "section": "Завершен",
       "planned": "28.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "150126124612|NAS577B8A|5": {
       "section": "Завершен",
       "planned": "28.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18032614002|RS299-1|2": {
       "section": "Завершен",
       "planned": "28.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7102514302|65C28100-1B|2": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12032615255|801A50-0006AATS|10": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9022613202|F045CWBCAC|100": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20226121012|65-90305-20B|40": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022616502|BACR12AG2C|140": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "60226160012|SP2510-00-3029|1": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13042613502|69-43531-26|2": {
       "section": "Завершен",
       "planned": "13.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13032612055|6S6DC120V|40": {
       "section": "Завершен",
       "planned": "20.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "291225090012|315A1583-2|1": {
       "section": "Завершен",
       "planned": "12.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21042613315|07325P000-01|2": {
       "section": "Завершен",
       "planned": "04.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2042610345|11197-5|1": {
       "section": "Завершен",
       "planned": "04.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25032610402|69-50565-3|2": {
       "section": "Завершен",
       "planned": "29.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7042613552|S4933959-503|95": {
       "section": "Завершен",
       "planned": "02.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28012610152|55804|2": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2042616375|BACB28AT06B018A|12": {
       "section": "Завершен",
       "planned": "02.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "221225112012|0R0941|20": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18122513015|65C26839-3208|1": {
       "section": "Завершен",
       "planned": "21.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "11032614405|HST11AG-08-03|20": {
       "section": "Завершен",
       "planned": "21.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10032611095|B03AA1040|1": {
       "section": "Завершен",
       "planned": "21.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26022610565|96019-02|1": {
       "section": "Завершен",
       "planned": "21.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20032613455|65-1797-3|1": {
       "section": "Завершен",
       "planned": "25.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10032617302|9382M26P02|3": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "41225084512|315A1567-3|3": {
       "section": "Завершен",
       "planned": "23.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022610162|9285-13|1": {
       "section": "Завершен",
       "planned": "20.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "11022612155|335-104-602-0|1": {
       "section": "Завершен",
       "planned": "20.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2032616035|OR-0571|10": {
       "section": "Завершен",
       "planned": "14.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19032613302|BACB30LJ4-15|6": {
       "section": "Завершен",
       "planned": "25.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31032615055|65-46140-9|1": {
       "section": "Завершен",
       "planned": "16.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20226093512|396608-1|1": {
       "section": "Завершен",
       "planned": "05.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "25022617002|1151952-18|1": {
       "section": "Завершен",
       "planned": "05.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30062515302|3605812-22|1": {
       "section": "Завершен",
       "planned": "05.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13032611255|69-42193-3|6": {
       "section": "Завершен",
       "planned": "08.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "191225134712|DEC69-069-501|1": {
       "section": "Завершен",
       "planned": "13.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6032611165|214N2520-82|2": {
       "section": "Завершен",
       "planned": "05.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "140126105012|BAC27TLG0005|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022610162|65-68269-33|2": {
       "section": "Завершен",
       "planned": "25.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20226121012|AJF12A114|15": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19022616002|BACN11G3A5CD|8": {
       "section": "Завершен",
       "planned": "23.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23102511302|A3295-1|1": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "91225091512|MS28775-210|100": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "91225091512|7171-00|5": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "171225103012|100PDL1|8": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16012616395|MS29513-153|30": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "150126143912|2C1079|1": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "150126124612|MS28775-015|100": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012613002|SP0224|1": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23012614122|P4-01-0021|25": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "121225105012|021200-04700|5": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "150126124612|WHS10F8TPKL16GY|9": {
       "section": "Завершен",
       "planned": "24.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112516405|65C33970U35|1": {
       "section": "Завершен",
       "planned": "24.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24092513502|NAS1102E08-6|100": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20226091012|GMT4150-1|2": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2022614522|69-39465-20|1": {
       "section": "Завершен",
       "planned": "15.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20022615002|B03AA1040|1": {
       "section": "Завершен",
       "planned": "18.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22012610302|LA4E20608HM0100|1": {
       "section": "Завершен",
       "planned": "27.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2022611112|B03AA1040|1": {
       "section": "Завершен",
       "planned": "07.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022616502|BACN11G3A1CD|50": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31225110712|69272-22|70": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21112516505|MS21047L06|100": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31225110712|AS3209-153|80": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31225110712|801A50-0005A|9": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30012613182|335-011-904-0|8": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21112516505|MS21059L06|50": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "181225095012|BACC30BP12|100": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "14112516155|NAS1801-04-5|300": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2022617002|BACR15FT6D10C|1000": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112510105|2602801|11": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23012611502|9232M90P18|2": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23012611502|1782M85G01|9": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "161225104012|9207M68P14|160": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23012611502|9208M52P04|48": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "140126105012|231-700055-00-3704|300": {
       "section": "Завершен",
       "planned": "26.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4022612302|BR20AXH5V3|1": {
       "section": "Завершен",
       "planned": "01.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5022610102|BACB30YP6K3|32": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4022614402|BACR15FT6D12C|46": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022610162|411A4902-6|1": {
       "section": "Завершен",
       "planned": "04.03.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "160126103212|1151952-18|1": {
       "section": "Завершен",
       "planned": "20.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "60126140012|9111M35P14|3": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "181225120512|SP2510-00-7050|1": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "91225091512|SP2510-00-7030|2": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1122518055|3022383|5": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1122517542|2D2025-12|2": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28112512305|65C33161-2|3": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112510105|81489|2": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112510105|5002742|2": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6112517302|Q4681|16": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112518405|U542648|3": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "1112514505|2602801|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "111225132012|AH090831|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "221225112012|46-3546-5|6": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112518405|R287P06|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "111225132012|9693-03-01 00:00:00|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "180226152912|Q4559X|100": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "160226103512|3112|500": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "130226152012|DHE1148|1": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012610402|NAS1921M05-09|8": {
       "section": "Завершен",
       "planned": "24.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2022615182|4502312|4": {
       "section": "Завершен",
       "planned": "24.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5022611002|69-42193-3|1": {
       "section": "Завершен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26012617252|BAC29PPS3993|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012612002|1012375-001|2": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "160126132012|BACS12HN3-8|50": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23122512315|BACB30MY10K13|20": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "291225090012|315A1583-2|2": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5012615065|66-2396-1|2": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "140126105012|BACJ40AB21-15|5": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20012615445|3A035-0181|2": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012613432|A37040|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012610402|NAS1921M05-03|6": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "21012613432|TE096|6": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "121225113012|CT60-3|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "241225093012|MS28034-3|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23122512315|BACB30NX10K13|50": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23122512315|BACB30VU8K7|100": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23122512315|BACB30NX10K12|50": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "231225103012|MW163|4": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "251225090012|CCR264SS3-4|200": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "111225080012|65-66212-20|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "181225092012|335-105-305-0|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1304M20P04|33": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1539M96P01|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1288M65P01|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1288M65P02|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1288M66P04|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|1304M20P03|27": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|J490P05|46": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "161225104012|9207M68P15|232": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "161225104012|9207M68P13|262": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|9365M41P122|48": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "151225083012|J221P179|4": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "151225083012|J221P977|4": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "161225104012|1647M63P14|80": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|1288M44P03|13": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|1288M44P04|13": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|1639M26P02|48": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|1288M44P01|13": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24122516335|1288M44P02|21": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23122512315|BACB30NX10K21X|8": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12012616355|387LNCISMI|50": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "181225120012|65C25588-19|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6062513202|P608636-1|2": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7052517102|748-722|1": {
       "section": "Завершен",
       "planned": "12.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2012610425|811390-3|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8102516302|3022383|5": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17102514502|18303902-5|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15102512402|411A2117-13|5": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|VL1048GE4-52|9": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|VL1002GE1-007|590": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|9365M41P117|50": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|VL1002GE1-162|20": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|M83248-1-222|20": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|VL1002GE1-017|270": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|VL1002GE1-012|720": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "6112516502|MS9-3911-30ZE4C|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13112516175|65-78955-31|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30102509402|285A1300-1|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10102515402|641137-1|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30102509202|1590M29G01|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22092515502|61-36-2|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26092507502|NAS1149C0332R|1000": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9102511002|BACB30VT10K8X|30": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9102511002|BACB30NY8K12X|30": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27102517002|BACN11AG04|44": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24092510302|139-00-200-05|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3102511402|MS29513-008|500": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26052514402|AS115-06K0346|5": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22082514302|374105|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "5092514302|BACH20X2|10": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "11092511502|M10DE0104R|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|J221P143|6": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "4102511502|9397M82P01|96": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24102516002|9207M68P13|110": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24102516002|9207M68P14|83": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24102516002|9206M79P16|96": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26092507502|335-204-401-0|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18112517502|CR3212-6-2|13": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24092513502|491C1360010-001|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19092514202|MS90354-0603|20": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26092514102|VA-1031|2": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10092515302|3A035-0181|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20062514502|FDC6400-14-10T|85": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16012610165|NAS537B16-044|13": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112517485|CR3213-4-4|50": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112517485|CR3213-5-2|30": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112516585|3034508WFC|6": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17112514155|65C33684-13|1": {
       "section": "Завершен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26032611272|R287P04|10": {
       "section": "Завершен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "19082612405|102LA2AG|1": {
       "section": "Завершен",
       "planned": "05.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10072613152|48559Y|20": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27072619105|C20633000|1": {
       "section": "Отменен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12082611105|RMI-335-011-307-0|1": {
       "section": "Отменен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15052612285|6799A010001|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10042615502|QA10539ISS4|1": {
       "section": "Отменен",
       "planned": "05.05.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8052612585|BACB30NX8K9X|50": {
       "section": "Отменен",
       "planned": "07.06.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9022615052|401205|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8082510502|65C26809-1134|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "3022610162|9686M80P02|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10022618552|CN0966A14A07P8|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "18062511502|50003|9": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22102512202|65C35276-1|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17112517205|NAS509-9|30": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23012611502|1665M56P02|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "190126090712|NAS1399C4A3|33": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8122515155|65C26841-1240|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12112519095|16-0095-1|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "12112519095|A7098A|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20112511005|BACS38K10|670": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "171225084012|BACB28AP12-030|20": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7012512475|31-9292JP-2|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7012512475|31-9299JP-4|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8122515255|65C26841-1130|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "2092516202|1012974-5-002|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "8092510002|A3091A000|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "24112517005|GA63584|4": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13112516175|65-78955-36|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "251225090012|MS24693-C298|90": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "31225162012|BACC2C3D00864FG|3": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "17112517305|69-36600U1|3": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13112510175|311A1016-9|2": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30122510525|BACC45FT14B7S|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13052511502|1180003-416-098|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "14082515102|778000|2": {
       "section": "Отменен",
       "planned": "18.02.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "10022618412|HST11AG8-3|5": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30122517205|649-439-302-0|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "7042510002|65-49652-3|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23032615505|65-46140-9|1": {
       "section": "Отменен",
       "planned": "05.04.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "20226100012|BMS13-65T0G|13": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "26022611495|67839WE|6": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "121225105012|MS21438-106|5": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "9062515202|MS8000E230C|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "27022614555|9373M82G11|6": {
       "section": "Отменен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "23032613552|5911232|1": {
       "section": "Отменен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "16032610165|41F9002|5": {
       "section": "Отменен",
       "planned": "",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "28082610085|PSD40-504M|1": {
       "section": "Отменен",
       "planned": "12.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "30092615555|2116M23P01|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "22072610315|BACC2C4C06720EG|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "13072610495|66-15959-1|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     },
     "15072611055|411A2113-40B|1": {
       "section": "Отменен",
       "planned": "N/A",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": ""
+      "last_planned_change": "",
+      "dates_locked": true
     }
   }
 }

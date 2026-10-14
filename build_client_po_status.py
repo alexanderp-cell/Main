@@ -86,6 +86,10 @@ class SourceRow:
     comment: str
     warranty: bool
     on_hold: bool
+    row_color: str | None = None
+    serial: object = None
+    batch_planned: date | None = None
+    batch_comment: str | None = None
 
 
 @dataclass
@@ -108,6 +112,7 @@ class Decision:
     planned: object = None  # date | "N/A" | None
     planned_mode: str = "keep"  # keep, set, clear
     fill_dates: bool = True  # start + deadline
+    lock_dates: bool = False
     actual: date | None = None
     actual_mode: str = "keep"  # keep, set
     refresh_commercial: bool = False
@@ -222,7 +227,7 @@ def status_kind(value) -> str:
 
 def is_warranty_text(*parts) -> bool:
     blob = "\n".join(str(part or "") for part in parts).lower()
-    return "гарант" in blob or "warranty" in blob
+    return "гарант" in blob or "warranty" in blob or "возврат из ремонта" in blob
 
 
 def is_on_hold(*parts) -> bool:
@@ -289,21 +294,81 @@ def money_amount(value):
 
 
 def order_number(comment: str):
+    """Только базис поставки и номер заказа: «DDP MOW» и «P...»."""
     if not comment:
         return None
-    inco = re.compile(r"\b(DAT|DDP|DAP|EXW|FCA|CIP|CPT|FOB)\b", re.I)
-    po = re.compile(r"^P\d+$", re.I)
-    kept = []
+    basis = None
+    po = None
+    basis_re = re.compile(r"\b(DAT|DDP|DAP|EXW|FCA|CIP|CPT|FOB)\s+([A-ZА-ЯЁ]+)", re.I)
+    po_re = re.compile(r"\bP(\d{4,})\b", re.I)
     for raw in str(comment).replace("\r", "").split("\n"):
         line = raw.strip()
         if not line:
             continue
-        lower = line.lower()
-        if inco.search(line) or po.match(line):
-            kept.append(line)
-        elif "%" in line or "предоплат" in lower or "доплат" in lower:
-            kept.append(line)
-    return "\n".join(kept) if kept else None
+        if basis is None:
+            found = basis_re.search(line)
+            if found:
+                basis = f"{found.group(1).upper()} {found.group(2).upper()}"
+        if po is None:
+            found = po_re.search(line)
+            if found:
+                po = f"P{found.group(1)}"
+    parts = [part for part in (basis, po) if part]
+    return "\n".join(parts) if parts else None
+
+
+def cell_fill(cell) -> str | None:
+    fill = cell.fill
+    if not fill or not fill.patternType or not fill.fgColor or fill.fgColor.type != "rgb":
+        return None
+    rgb = fill.fgColor.rgb
+    if not rgb or rgb in {"00000000", "FF000000"}:
+        return None
+    return rgb
+
+
+def normalize_batch_token(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        if value.year < 2024:
+            return ""
+        return value.strftime("%Y-%m-%d %H:%M") if (value.hour or value.minute) else value.date().isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    text = " ".join(str(value).strip().upper().split())
+    if not text or text.startswith("="):
+        return ""
+    return text
+
+
+def batch_signature(src: SourceRow):
+    if src.section != "PRE TRANSIT" or src.warranty or src.on_hold:
+        return None
+    if not src.row_color:
+        return None
+    track = normalize_batch_token(src.awb)
+    arrival = normalize_batch_token(src.arrival)
+    if not track and not arrival:
+        return None
+    return (src.row_color, track, arrival)
+
+
+def assign_batches(rows: list[SourceRow], file_date: date):
+    """Одинаковый цвет и общие P/Q в PRE TRANSIT — одна консолидированная партия."""
+    groups = defaultdict(list)
+    for src in rows:
+        signature = batch_signature(src)
+        if signature:
+            groups[signature].append(src)
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        shared = max(pretransit_planned(member, file_date) for member in members)
+        comment = COMMENT_POINT if days_between(shared, file_date) < 5 else COMMENT_ENROUTE
+        for member in members:
+            member.batch_planned = shared
+            member.batch_comment = comment
 
 
 def parse_loose_date(value, file_date: date) -> date | None:
@@ -477,9 +542,18 @@ def awb_comment(src: SourceRow):
     return None
 
 
+def find_serial_column(ws) -> int | None:
+    for col in range(1, ws.max_column + 1):
+        header = str(ws.cell(1, col).value or "").lower()
+        if "s/n" in header or "серийн" in header or header.strip() in {"sn", "s.n."}:
+            return col
+    return None
+
+
 def load_source(path: Path) -> list[SourceRow]:
     wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb.active
+    serial_col = find_serial_column(ws)
     section = "PREAMBLE"
     rows: list[SourceRow] = []
     for index in range(2, ws.max_row + 1):
@@ -531,6 +605,8 @@ def load_source(path: Path) -> list[SourceRow]:
             comment=str(comment or ""),
             warranty=is_warranty_text(comment, invoice_raw, pn),
             on_hold=is_on_hold(ws.cell(index, 16).value, ws.cell(index, 17).value, comment),
+            row_color=cell_fill(ws.cell(index, 1)),
+            serial=ws.cell(index, serial_col).value if serial_col else None,
         )
         rows.append(item)
     return rows
@@ -771,6 +847,35 @@ def history_key(inv: str, pn: str, qty) -> str:
     return f"{inv}|{pn}|{norm_qty(qty)}"
 
 
+def history_has_date_locks(history: dict) -> bool:
+    return any(bool(row.get("dates_locked")) for row in (history.get("rows") or {}).values())
+
+
+def dates_locked_in_history(history: dict, inv: str, pn: str, qty) -> bool:
+    rows = history.get("rows") or {}
+    if rows.get(history_key(inv, pn, qty), {}).get("dates_locked"):
+        return True
+    prefix = f"{inv}|{pn}|"
+    return any(key.startswith(prefix) and row.get("dates_locked") for key, row in rows.items())
+
+
+def should_lock_dates(prev: PrevRow | None, history: dict) -> bool:
+    """Даты образца не затираем внутренними. Новые заказы каждый раз берём из таблицы 1."""
+    if prev is None:
+        return False
+    if not history_has_date_locks(history):
+        return True
+    return dates_locked_in_history(history, prev.inv, prev.pn, prev.qty)
+
+
+def polish_client_row(values: list) -> list:
+    if values[4]:
+        values[4] = order_number(values[4])
+    if values[2] == "Требует внимания":
+        values[1] = "N/A"
+    return values
+
+
 def load_history(path: Path) -> dict:
     if not path.exists():
         return {"rows": {}}
@@ -817,7 +922,8 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
             values[0] = decision.comment
         if decision.actual_mode == "set" and decision.actual and not values[13]:
             values[13] = fmt_date(decision.actual)
-        if decision.fill_dates and src and decision.section == "Завершен":
+        # Даты образца не подставляем из таблицы 1, даже если строка уходит в «Завершен».
+        if decision.fill_dates and src and decision.section == "Завершен" and not decision.lock_dates:
             if not values[10] and src.start:
                 values[10] = fmt_date(src.start)
             if not values[12] and src.deadline:
@@ -849,8 +955,11 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
         else:
             values[17] = new_total
         values[18] = map_payment(src.payment)
-        if prev:
+        if src.serial not in (None, ""):
+            values[15] = src.serial
+        elif prev:
             values[15] = prev.values[15]
+        if prev:
             for col in range(19, 24):
                 values[col] = prev.values[col]
     elif prev:
@@ -880,12 +989,15 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
     elif decision.comment_mode == "keep":
         values[0] = prev.values[0] if prev else None
 
-    if decision.fill_dates and src:
-        values[10] = fmt_date(src.start)
-        values[12] = fmt_date(src.deadline)
-    elif decision.section == "Ожидает аванса":
+    if decision.section == "Ожидает аванса":
         values[10] = None
         values[12] = None
+    elif decision.lock_dates and prev:
+        values[10] = prev.values[10]
+        values[12] = prev.values[12]
+    elif decision.fill_dates and src:
+        values[10] = fmt_date(src.start)
+        values[12] = fmt_date(src.deadline)
 
     if decision.planned_mode == "clear":
         values[1] = None
@@ -902,23 +1014,34 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
         planned = accepted_planned(src.deadline, file_date, prev_planned, same_section)
         values[1] = fmt_date(planned)
     elif decision.planned_mode == "compute-transit" and src:
-        if src.section == "PRE TRANSIT":
-            computed = pretransit_planned(src, file_date)
+        if src.batch_planned:
+            planned = src.batch_planned
+            values[1] = fmt_date(planned)
+            values[0] = src.batch_comment
+            changed = prev_planned != planned
+            hist_meta = {
+                "comment_kind": comment_kind(src.batch_comment) or "",
+                "point_date_changes": point_changes,
+                "planned_changed": changed,
+            }
         else:
-            computed = whs_planned(src.deadline, file_date)
-        planned = apply_transit_stability(computed, prev_planned, same_section, last_change, file_date)
-        values[1] = fmt_date(planned)
-        base = transit_base_kind(src, planned, file_date)
-        if not hist and comment_kind(prev_comment) == "delay":
-            point_changes = max(point_changes, 2)
-        changed = prev_planned != planned
-        comment, kind, point_changes = choose_transit_comment(base, prev_comment, changed, point_changes)
-        values[0] = comment
-        hist_meta = {
-            "comment_kind": kind,
-            "point_date_changes": point_changes,
-            "planned_changed": changed,
-        }
+            if src.section == "PRE TRANSIT":
+                computed = pretransit_planned(src, file_date)
+            else:
+                computed = whs_planned(src.deadline, file_date)
+            planned = apply_transit_stability(computed, prev_planned, same_section, last_change, file_date)
+            values[1] = fmt_date(planned)
+            base = transit_base_kind(src, planned, file_date)
+            if not hist and comment_kind(prev_comment) == "delay":
+                point_changes = max(point_changes, 2)
+            changed = prev_planned != planned
+            comment, kind, point_changes = choose_transit_comment(base, prev_comment, changed, point_changes)
+            values[0] = comment
+            hist_meta = {
+                "comment_kind": kind,
+                "point_date_changes": point_changes,
+                "planned_changed": changed,
+            }
 
     if decision.actual_mode == "set" and decision.actual:
         values[13] = fmt_date(decision.actual)
@@ -932,7 +1055,7 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
         values[13] = None
 
     if decision.section == "Требует внимания":
-        values[1] = None
+        values[1] = "N/A"
 
     planned_text = values[1] if isinstance(values[1], str) else fmt_date(parse_client_date(values[1]))
     if hist_meta.get("planned_changed"):
@@ -945,6 +1068,7 @@ def build_values(prev: PrevRow | None, src: SourceRow | None, decision: Decision
     hist_meta.setdefault("point_date_changes", point_changes)
     hist_meta["section"] = decision.section
     hist_meta["planned"] = planned_text or ""
+    hist_meta["dates_locked"] = bool(decision.lock_dates)
     return values, hist_meta, []
 
 
@@ -1008,6 +1132,13 @@ def describe_change(prev: PrevRow | None, section: str, values: list, rule: str)
         bits.append(f"кол-во: {prev.values[8]} → {values[8]}")
     if money_amount(prev.values[16]) != money_amount(values[16]):
         bits.append(f"цена: {prev.values[16]} → {values[16]}")
+    if norm_text(prev.values[4]) != norm_text(values[4]):
+        bits.append(f"заказ: «{norm_text(prev.values[4]) or '—'}» → «{norm_text(values[4]) or '—'}»")
+    if norm_text(prev.values[10]) != norm_text(values[10]) or norm_text(prev.values[12]) != norm_text(values[12]):
+        bits.append(
+            f"даты клиента: {norm_text(prev.values[10]) or '—'} / {norm_text(prev.values[12]) or '—'} "
+            f"→ {norm_text(values[10]) or '—'} / {norm_text(values[12]) or '—'}"
+        )
     return f"ИЗМЕНЕНО  {ident}  {'; '.join(bits)}. {rule}"
 
 
@@ -1104,8 +1235,13 @@ def assemble(previous, source_rows, file_date, history):
             decision.section = prev.section if decision.section is None else decision.section
         if decision.section not in buckets:
             decision.section = prev.section
+        decision.lock_dates = should_lock_dates(prev, history)
+        if src and src.batch_planned and decision.section == "В транзите":
+            decision.rule += f" Консолидированная партия, общая дата {fmt_date(src.batch_planned)}."
         values, hist, _unused = build_values(prev, src, decision, file_date, history)
         values[2] = decision.section
+        polish_client_row(values)
+        hist["dates_locked"] = bool(decision.lock_dates)
         change = describe_change(prev, decision.section, values, decision.rule)
         group = 0 if prev.section == decision.section else 1
         row = BuiltRow(
@@ -1129,8 +1265,13 @@ def assemble(previous, source_rows, file_date, history):
         decision = classify(src, None, file_date, history)
         if decision.action == "skip" or not decision.section:
             continue
+        decision.lock_dates = False
+        if src.batch_planned and decision.section == "В транзите":
+            decision.rule += f" Консолидированная партия, общая дата {fmt_date(src.batch_planned)}."
         values, hist, _unused = build_values(None, src, decision, file_date, history)
         values[2] = decision.section
+        polish_client_row(values)
+        hist["dates_locked"] = False
         change = describe_change(None, decision.section, values, decision.rule)
         row = BuiltRow(
             section=decision.section,
@@ -1275,6 +1416,7 @@ def save_history(path: Path, ordered, file_date: date, source_name: str):
                 "comment_kind": item.hist.get("comment_kind") or "",
                 "point_date_changes": item.hist.get("point_date_changes") or 0,
                 "last_planned_change": item.hist.get("last_planned_change") or "",
+                "dates_locked": bool(item.hist.get("dates_locked")),
             }
             rows[item.key] = payload
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1354,8 +1496,11 @@ def self_check(ordered, output: Path):
         for item in rows:
             if is_warranty_text(item.values[0], item.values[4], item.values[5]):
                 errors.append(f"гарантия в выдаче: {item.values[3]} {item.values[5]}")
-            if item.section == "Требует внимания" and item.values[1] not in (None, ""):
-                errors.append(f"у «требует внимания» заполнена план-дата: {item.values[5]}")
+            if item.section == "Требует внимания" and item.values[1] != "N/A":
+                errors.append(f"у «требует внимания» план должен быть N/A: {item.values[5]} = {item.values[1]!r}")
+            order_text = norm_text(item.values[4])
+            if order_text and any(token in order_text.lower() for token in ("предоплат", "доплат", "%", "строк")):
+                errors.append(f"в номере заказа лишний текст: {item.values[5]} {order_text!r}")
             if item.section == "Ожидает аванса" and any(item.values[idx] not in (None, "") for idx in (1, 10, 12)):
                 errors.append(f"у «ожидает аванса» заполнены лишние даты: {item.values[5]}")
     with zipfile.ZipFile(output) as book:
@@ -1369,6 +1514,33 @@ def self_check(ordered, output: Path):
         errors.append("пропало условное форматирование статуса")
     if "Ожидает аванса" not in dropdown or "Частичная предоплата" not in dropdown:
         errors.append("лист Dropdown поврежден")
+    if index.get(("24072409372", "4051601-938")):
+        errors.append("возврат из ремонта остался в таблице")
+    kept = index.get(("2062611445", "002A0096-1"))
+    if not kept or kept[1][10] != "10.06.2026" or kept[1][12] != "10.07.2026":
+        errors.append(f"даты образца 002A0096-1 изменились: {None if not kept else (kept[1][10], kept[1][12])}")
+    closed = index.get(("26032611272", "R287P04"))
+    if not closed or closed[0] != "Завершен" or closed[1][10] not in (None, "") or closed[1][12] not in (None, ""):
+        errors.append(f"даты образца R287P04 заполнились из таблицы 1: {None if not closed else (closed[0], closed[1][10], closed[1][12])}")
+    fresh = index.get(("7102610555", "J816P086A"))
+    if not fresh or fresh[1][10] != "07.10.2026" or fresh[1][12] != "06.12.2026":
+        errors.append(f"новый заказ взял не те даты: {None if not fresh else (fresh[1][10], fresh[1][12])}")
+    order_cell = index.get(("7102613425", "2116M23P01"))
+    if not order_cell or order_cell[1][4] != "DDP MOW\nP20657726":
+        errors.append(f"номер заказа: {None if not order_cell else order_cell[1][4]!r}")
+    batch = [index.get((inv, pn)) for inv, pn in (
+        ("2708269485", "580-285-152"),
+        ("23092613105", "10009255"),
+        ("5102611165", "6364-00"),
+        ("17092612085", "ST3086-013WE"),
+    )]
+    if any(item is None for item in batch):
+        errors.append("в консолидированной партии не хватает строк")
+    else:
+        plans = {item[1][1] for item in batch}
+        comments = {item[1][0] for item in batch}
+        if len(plans) != 1 or len(comments) != 1:
+            errors.append(f"партия разъехалась: план {plans}, комментарий {comments}")
     if errors:
         raise SystemExit("Проверка не пройдена:\n- " + "\n- ".join(errors))
 
@@ -1388,6 +1560,7 @@ def main():
     changes_path = output.with_name(f"Ready_UT_PO_STATUS_{stamp}_changes.txt")
 
     source_rows = load_source(args.source)
+    assign_batches(source_rows, file_date)
     previous = load_previous(args.previous)
     history = load_history(args.history)
     ordered, changes, dropped, notes = assemble(previous, source_rows, file_date, history)
