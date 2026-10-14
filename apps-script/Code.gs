@@ -20,11 +20,17 @@ var TUZ_HEADERS = [
 ];
 
 function doGet() {
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
+  // createHtmlOutputFromFile is more reliable than Template for a static page
+  return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Quote Desk')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/** Quick self-check from the Apps Script editor: Run → checkDoGet_ */
+function checkDoGet_() {
+  var out = doGet();
+  Logger.log('OK, content length: ' + out.getContent().length);
 }
 
 function include_(filename) {
