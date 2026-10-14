@@ -17,22 +17,23 @@ GMAIL_APP_PASSWORD='xxxx xxxx xxxx xxxx'
 pip install -r requirements.txt
 ```
 
-## Браузерный интерфейс (Chrome)
+## Браузерный интерфейс (Chrome) — постоянно
 
-Пока агент запущен, ассистент поднимает публичную ссылку (Cloudflare Tunnel) и даёт пароль в чате.
+**Постоянный вариант (рекомендуется):** Google Apps Script в вашем аккаунте Gmail.  
+Пошагово: [`apps-script/КАК_ОТКРЫТЬ_В_CHROME.md`](apps-script/КАК_ОТКРЫТЬ_В_CHROME.md)
 
-Локально в среде агента:
+Файлы для вставки:
+- `apps-script/Code.gs`
+- `apps-script/Index.html`
+
+После одного развёртывания ссылка `script.google.com/...` остаётся рабочей в Chrome.
+
+### Локальный вариант (только пока жив агент)
 
 ```bash
 python3 web/app.py
-# cloudflared tunnel --url http://127.0.0.1:5055
+# cloudflared tunnel --url http://127.0.0.1:5055   # временная ссылка
 ```
-
-1. Откройте ссылку в Chrome  
-2. Введите пароль (`QUOTE_DESK_PASSWORD` в `.secrets/gmail.env`)  
-3. Вставьте P/N → «Найти предложения» → «Копировать TSV» в ТУЗ (O–AA)
-
-Временная ссылка работает только пока жива сессия агента. Если перестала открываться — напишите в чат, поднимем новую.
 
 ## CLI
 
