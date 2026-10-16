@@ -158,6 +158,12 @@ def fmt_int(v: int) -> str:
     return f"{v:,}".replace(",", " ")
 
 
+def fmt_transport_delta_html(delta: float) -> str:
+    """Δ транспорт (факт−план), цвета как в шапке: >0 красный, иначе зелёный."""
+    cls = "bad" if as_money(delta) > 0 else "ok"
+    return f'<span class="{cls}">Δ тр. ${fmt_money(delta)}</span>'
+
+
 def load_taz(path: Path) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=0)
     df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
@@ -352,7 +358,13 @@ class CategoryRow:
     margin: float
     lead_avg: float | None
     lead_n: int
+    transport_plan: float = 0.0
+    transport_fact: float = 0.0
     positions: list[LineRow] = field(default_factory=list)
+
+    @property
+    def transport_delta(self) -> float:
+        return self.transport_fact - self.transport_plan
 
 
 @dataclass
@@ -456,6 +468,8 @@ def summarize_group(rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str) -> li
                     margin=b_margin,
                     lead_avg=b_lead_avg,
                     lead_n=b_lead_n,
+                    transport_plan=as_money(b_part["_plan"].sum()),
+                    transport_fact=as_money(b_part["_fact"].sum()),
                     positions=positions,
                 )
             )
@@ -555,7 +569,7 @@ def render_entity_dropdowns(entities: list[EntityRow], table_prefix: str) -> str
 <details class="catblock" open>
   <summary>
     <span class="cat-name">{html_escape(cat.name)}{html_escape(hint)}</span>
-    <span class="ent-meta">{fmt_int(cat.orders)} зак. · {fmt_int(cat.lines)} поз. · ${fmt_money(cat.revenue)} · маржа ${fmt_money(cat.margin)} · срок {fmt_days(cat.lead_avg)} дн.</span>
+    <span class="ent-meta">{fmt_int(cat.orders)} зак. · {fmt_int(cat.lines)} поз. · ${fmt_money(cat.revenue)} · маржа ${fmt_money(cat.margin)} · срок {fmt_days(cat.lead_avg)} дн. · {fmt_transport_delta_html(cat.transport_delta)}</span>
   </summary>
   <div class="block-body">
     {render_positions_table(cat.positions, f"{table_prefix}-{i}-{j}")}
@@ -569,7 +583,7 @@ def render_entity_dropdowns(entities: list[EntityRow], table_prefix: str) -> str
 <details class="subblock">
   <summary>
     <span class="ent-name">{html_escape(ent.name)}</span>
-    <span class="ent-meta">{fmt_int(ent.orders)} зак. · {fmt_int(ent.lines)} поз. · ${fmt_money(ent.revenue)} · маржа ${fmt_money(ent.margin)} · срок {fmt_days(ent.lead_avg)} дн.</span>
+    <span class="ent-meta">{fmt_int(ent.orders)} зак. · {fmt_int(ent.lines)} поз. · ${fmt_money(ent.revenue)} · маржа ${fmt_money(ent.margin)} · срок {fmt_days(ent.lead_avg)} дн. · {fmt_transport_delta_html(ent.transport_delta)}</span>
   </summary>
   <div class="block-body">
     {inner}
@@ -780,7 +794,8 @@ tbody tr:hover {{ background:#eef7f9; }}
     <br/>
     <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − transaction fee.
     В списках клиентов/поставщиков позиции разбиты на <strong>ROTABLE</strong> (вкл. GSE)
-    и <strong>EXPENDABLE</strong> (вкл. consumable); по транспорту только Δ (красно/зелёно).
+    и <strong>EXPENDABLE</strong> (вкл. consumable); в сводке и в таблице —
+    <strong>Δ транспорт</strong> (факт−план), красный если &gt;0, зелёный иначе.
   </div>
   {sections}
   <p class="hint">Скачивайте / открывайте HTML напрямую. ZIP+HTML Windows часто помечает ложно.</p>
