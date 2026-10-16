@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TIME TO PAY — JT &amp; KT</title>
+<style>
+:root {
+  --bg:#e7ecef; --card:#fff; --ink:#202020; --muted:#5a5a5a;
+  --navy:#022f40; --cyan:#d5fbff; --line:#c4c4c4; --zebra:#f5fafb;
+  --jt:#022f40; --kt:#c45c26;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  color:var(--ink); background: linear-gradient(180deg, #022f40 0 140px, var(--bg) 140px);
+  line-height:1.45;
+}
+.wrap { max-width:1100px; margin:0 auto; padding:28px 20px 64px; }
+.brand {
+  background:var(--cyan); color:var(--navy); display:inline-block;
+  padding:6px 10px; font-weight:700; margin-bottom:14px;
+  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+}
+h1 { color:#fff; font-size:28px; margin:0 0 6px; }
+.sub { color:#d5fbff; margin:0 0 18px; font-size:14px; }
+.card {
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:18px; margin-bottom:18px;
+}
+h2 { margin:0 0 6px; color:var(--navy); font-size:22px; }
+h3 { margin:22px 0 10px; color:var(--navy); font-size:16px; }
+.period-range { margin:0 0 14px; color:var(--muted); font-size:13px; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.kpis.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.kpis > div.highlight { background:#e8f6f8; border-color:#9ed7e0; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+.table-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { border-bottom:1px solid #e8e8e8; padding:9px 8px; text-align:left; vertical-align:middle; }
+th {
+  font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap;
+}
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+th.sorted .arrow { opacity:1; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+tr.channel-jt td { background:#e8f2f5 !important; font-weight:700; }
+tr.channel-kt td { background:#f8ebe3 !important; font-weight:700; }
+.hint { margin-top:12px; color:var(--muted); font-size:12px; }
+.hint.warn { color:#8a3b12; background:#fff4ec; border:1px solid #f0c7a8; padding:10px 12px; border-radius:8px; }
+.chart-wrap { margin-top:8px; }
+.legend { display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:10px; font-size:13px; }
+.swatch { display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+.swatch.jt { background:var(--jt); }
+.swatch.kt { background:var(--kt); }
+.chart-frame {
+  display:grid;
+  grid-template-columns:72px 1fr;
+  grid-template-rows:260px auto;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  overflow:hidden;
+}
+.chart-yaxis {
+  grid-row:1;
+  grid-column:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:6px 8px 6px 4px;
+  font-size:11px;
+  color:#5a5a5a;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  background:#fafcfd;
+  border-right:1px solid #e5e5e5;
+  line-height:1.1;
+}
+.chart-plot {
+  grid-row:1;
+  grid-column:2;
+  min-width:0;
+  height:260px;
+}
+.chart-plot svg { width:100%; height:100%; display:block; }
+.chart-xaxis {
+  grid-row:2;
+  grid-column:2;
+  position:relative;
+  height:28px;
+  border-top:1px solid #e8e8e8;
+  background:#fafcfd;
+}
+.chart-xaxis span {
+  position:absolute;
+  top:6px;
+  transform:translateX(2px);
+  font-size:11px;
+  font-weight:700;
+  color:var(--navy);
+  white-space:nowrap;
+}
+@media (max-width:800px) {
+  .kpis, .kpis.three { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .chart-frame { grid-template-columns:56px 1fr; grid-template-rows:220px auto; }
+  .chart-plot { height:220px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">not so fastair</div>
+  <h1>TIME TO PAY</h1>
+  <div class="sub">Только «Продажа от поставщика» · доли · скорость оплаты JT / KT · платежи по дням · источник ТАЗ 18.09.2026.xlsx</div>
+  
+<section class="card period" id="period-0">
+  <h2>Весь ТАЗ 2026</h2>
+  <p class="period-range">01.01.2026 — 31.12.2026 · только «Продажа от поставщика» · заказы по дате Q · 2328 поз.</p>
+  <p class="hint">KT MNT в ТАЗ = поставщик <strong>IBERIA</strong> (столбец Z).</p>
+
+  <h3>1. Топ-5 поставщиков</h3>
+  <div class="kpis">
+    <div class="highlight"><div class="label">Выручка всего</div><div class="value">45 507 237</div><div class="muted">USD · продажная итого</div></div>
+    <div><div class="label">Маржа всего</div><div class="value">10 270 316</div><div class="muted">продажа − закупка</div></div>
+    <div><div class="label">JT выручка</div><div class="value">13.0%</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">KT выручка</div><div class="value">24.0%</div><div class="muted">доля от выручки</div></div>
+  </div>
+  <div class="table-scroll">
+  <table class="sortable" data-table="shares-0">
+    <thead>
+      <tr>
+        <th data-type="str" data-col="0">Поставщик <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="1">Выручка, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="2">% выручки <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="3">Маржа, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="4">% маржи <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="5">n <span class="arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class=""><td>LUFTHANSA</td><td class="num" data-value="25788830.074">25 788 830</td><td class="num" data-value="56.670">56.7%</td><td class="num" data-value="4259401.704">4 259 402</td><td class="num" data-value="41.473">41.5%</td><td class="num" data-value="896">896</td></tr><tr class="channel-kt"><td>IBERIA (KT MNT)</td><td class="num" data-value="10931687.711">10 931 688</td><td class="num" data-value="24.022">24.0%</td><td class="num" data-value="3486217.622">3 486 218</td><td class="num" data-value="33.945">33.9%</td><td class="num" data-value="470">470</td></tr><tr class="channel-jt"><td>JET TECHNIC (JT)</td><td class="num" data-value="5908128.4">5 908 128</td><td class="num" data-value="12.983">13.0%</td><td class="num" data-value="1679772.94">1 679 773</td><td class="num" data-value="16.356">16.4%</td><td class="num" data-value="298">298</td></tr><tr class=""><td>CAESAR</td><td class="num" data-value="1970000.0">1 970 000</td><td class="num" data-value="4.329">4.3%</td><td class="num" data-value="502500.0">502 500</td><td class="num" data-value="4.893">4.9%</td><td class="num" data-value="3">3</td></tr><tr class=""><td>BLUE OCEAN SOLUTIONS</td><td class="num" data-value="886435.806">886 436</td><td class="num" data-value="1.948">1.9%</td><td class="num" data-value="331197.71">331 198</td><td class="num" data-value="3.225">3.2%</td><td class="num" data-value="655">655</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>2. Time to pay (только JT + KT, STK)</h3>
+  <div class="kpis three">
+    
+        <div>
+          <div class="label">JT + KT</div>
+          <div class="value">14.3 дн.</div>
+          <div class="muted">медиана 10.5 · n=548</div>
+        </div>
+    
+        <div>
+          <div class="label">JET TECHNIC</div>
+          <div class="value">14.3 дн.</div>
+          <div class="muted">медиана 10.0 · n=201</div>
+        </div>
+    
+        <div>
+          <div class="label">KT MNT (IBERIA)</div>
+          <div class="value">14.3 дн.</div>
+          <div class="muted">медиана 11.0 · n=347</div>
+        </div>
+  </div>
+  <p class="hint">
+    Срок = дата оплаты поставщику (AW) − дата взятия в работу (Q).
+    В среднее: только Lead time = STK; исключены постоплата (есть дата начала движения BA раньше оплаты AW)
+    и заказы с ненулевым lead time (оплата после LT — норма).
+    Исключено как постоплата: JT 40, KT 8;
+    как lead-time: JT 35, KT 71.
+  </p>
+
+  <h3>3. Платежи по дням (AW)</h3>
+  
+<div class="chart-wrap" id="chart-0">
+  <div class="legend">
+    <span><i class="swatch jt"></i>JET TECHNIC · 4 291 744</span>
+    <span><i class="swatch kt"></i>KT MNT (IBERIA) · 6 043 795</span>
+    <span class="muted">розовый = сб/вс · пик 21.05: 900 000</span>
+  </div>
+  <div class="chart-frame">
+    <div class="chart-yaxis" aria-hidden="true"><span>900 000</span><span>675 000</span><span>450 000</span><span>225 000</span><span>0</span></div>
+    <div class="chart-plot">
+      <svg viewBox="0 0 365 100" preserveAspectRatio="none"
+           role="img" aria-label="Платежи поставщикам по дням">
+        <rect x="2" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="3" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="9" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="10" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="16" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="17" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="23" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="24" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="30" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="31" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="37" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="38" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="44" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="45" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="51" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="52" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="58" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="59" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="65" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="66" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="72" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="73" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="79" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="80" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="86" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="87" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="93" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="94" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="100" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="101" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="107" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="108" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="114" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="115" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="121" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="122" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="128" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="129" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="135" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="136" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="142" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="143" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="149" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="150" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="156" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="157" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="163" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="164" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="170" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="171" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="177" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="178" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="184" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="185" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="191" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="192" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="198" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="199" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="205" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="206" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="212" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="213" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="219" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="220" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="226" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="227" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="233" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="234" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="240" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="241" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="247" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="248" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="254" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="255" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="261" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="262" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="268" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="269" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="275" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="276" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="282" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="283" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="289" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="290" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="296" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="297" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="303" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="304" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="310" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="311" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="317" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="318" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="324" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="325" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="331" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="332" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="338" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="339" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="345" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="346" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="352" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="353" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="359" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="360" y="0" width="1" height="100" fill="#f3e8e8"/>
+        <line x1="0" y1="75.0" x2="365" y2="75.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="50.0" x2="365" y2="50.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="25.0" x2="365" y2="25.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="0.0" x2="365" y2="0.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="100" x2="365" y2="100" stroke="#9aa6ab" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <rect x="5.15" y="97.4607798" width="0.7" height="2.5392202" fill="#022f40"><title>06.01.2026 · JT 23 084 · KT 0 · всего 23 084</title></rect><rect x="6.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>07.01.2026 · JT 3 300 · KT 0 · всего 3 300</title></rect><rect x="7.15" y="97.5525" width="0.7" height="2.4475" fill="#022f40"><title>08.01.2026 · JT 22 250 · KT 0 · всего 22 250</title></rect><rect x="11.15" y="99.0375" width="0.7" height="0.9625" fill="#c45c26"><title>12.01.2026 · JT 0 · KT 8 750 · всего 8 750</title></rect><rect x="14.15" y="98.548" width="0.7" height="1.452" fill="#c45c26"><title>15.01.2026 · JT 5 774 · KT 13 200 · всего 18 974</title></rect><rect x="14.15" y="97.91286" width="0.7" height="0.6351399999999998" fill="#022f40"><title>15.01.2026 · JT 5 774 · KT 13 200 · всего 18 974</title></rect><rect x="18.15" y="98.46" width="0.7" height="1.5399999999999998" fill="#c45c26"><title>19.01.2026 · JT 150 · KT 14 000 · всего 14 150</title></rect><rect x="18.15" y="98.4435" width="0.7" height="0.01649999999999996" fill="#022f40"><title>19.01.2026 · JT 150 · KT 14 000 · всего 14 150</title></rect><rect x="19.15" y="98.2368232" width="0.7" height="1.7631768" fill="#c45c26"><title>20.01.2026 · JT 0 · KT 16 029 · всего 16 029</title></rect><rect x="26.15" y="94.87763" width="0.7" height="5.12237" fill="#022f40"><title>27.01.2026 · JT 46 567 · KT 0 · всего 46 567</title></rect><rect x="27.15" y="98.746" width="0.7" height="1.254" fill="#022f40"><title>28.01.2026 · JT 11 400 · KT 0 · всего 11 400</title></rect><rect x="28.15" y="94.038" width="0.7" height="5.962000000000001" fill="#c45c26"><title>29.01.2026 · JT 0 · KT 54 200 · всего 54 200</title></rect><rect x="36.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>06.02.2026 · JT 899 · KT 0 · всего 899</title></rect><rect x="43.15" y="70.07482999999999" width="0.7" height="29.92517" fill="#c45c26"><title>13.02.2026 · JT 0 · KT 272 047 · всего 272 047</title></rect><rect x="46.15" y="98.62676" width="0.7" height="1.37324" fill="#c45c26"><title>16.02.2026 · JT 50 000 · KT 12 484 · всего 62 484</title></rect><rect x="46.15" y="93.12676" width="0.7" height="5.5" fill="#022f40"><title>16.02.2026 · JT 50 000 · KT 12 484 · всего 62 484</title></rect><rect x="47.15" y="99.8702" width="0.7" height="0.1298" fill="#c45c26"><title>17.02.2026 · JT 6 500 · KT 1 180 · всего 7 680</title></rect><rect x="47.15" y="99.1552" width="0.7" height="0.715" fill="#022f40"><title>17.02.2026 · JT 6 500 · KT 1 180 · всего 7 680</title></rect><rect x="48.15" y="91.75" width="0.7" height="8.25" fill="#c45c26"><title>18.02.2026 · JT 0 · KT 75 000 · всего 75 000</title></rect><rect x="49.15" y="88.0485" width="0.7" height="11.9515" fill="#c45c26"><title>19.02.2026 · JT 0 · KT 108 650 · всего 108 650</title></rect><rect x="53.15" y="99.2" width="0.7" height="0.8" fill="#c45c26"><title>23.02.2026 · JT 0 · KT 3 385 · всего 3 385</title></rect><rect x="55.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>25.02.2026 · JT 1 725 · KT 0 · всего 1 725</title></rect><rect x="56.15" y="94.24149999999999" width="0.7" height="5.758500000000001" fill="#c45c26"><title>26.02.2026 · JT 136 184 · KT 52 350 · всего 188 534</title></rect><rect x="56.15" y="79.26126" width="0.7" height="14.980239999999998" fill="#022f40"><title>26.02.2026 · JT 136 184 · KT 52 350 · всего 188 534</title></rect><rect x="57.15" y="97.4315" width="0.7" height="2.5685" fill="#c45c26"><title>27.02.2026 · JT 0 · KT 23 350 · всего 23 350</title></rect><rect x="60.15" y="92.652" width="0.7" height="7.348" fill="#c45c26"><title>02.03.2026 · JT 0 · KT 66 800 · всего 66 800</title></rect><rect x="61.15" y="90.914" width="0.7" height="9.086" fill="#c45c26"><title>03.03.2026 · JT 0 · KT 82 600 · всего 82 600</title></rect><rect x="62.15" y="83.84100000000001" width="0.7" height="16.159" fill="#c45c26"><title>04.03.2026 · JT 0 · KT 146 900 · всего 146 900</title></rect><rect x="63.15" y="98.6745" width="0.7" height="1.3255000000000001" fill="#c45c26"><title>05.03.2026 · JT 0 · KT 12 050 · всего 12 050</title></rect><rect x="67.15" y="96.27925" width="0.7" height="3.7207500000000002" fill="#022f40"><title>09.03.2026 · JT 33 825 · KT 0 · всего 33 825</title></rect><rect x="68.15" y="97.43964" width="0.7" height="2.5603599999999997" fill="#c45c26"><title>10.03.2026 · JT 3 600 · KT 23 276 · всего 26 876</title></rect><rect x="68.15" y="97.04364" width="0.7" height="0.3959999999999999" fill="#022f40"><title>10.03.2026 · JT 3 600 · KT 23 276 · всего 26 876</title></rect><rect x="69.15" y="98.1267" width="0.7" height="1.8733000000000002" fill="#c45c26"><title>11.03.2026 · JT 28 379 · KT 17 030 · всего 45 409</title></rect><rect x="69.15" y="95.00501" width="0.7" height="3.12169" fill="#022f40"><title>11.03.2026 · JT 28 379 · KT 17 030 · всего 45 409</title></rect><rect x="70.15" y="94.92349999999999" width="0.7" height="5.076499999999999" fill="#c45c26"><title>12.03.2026 · JT 29 394 · KT 46 150 · всего 75 544</title></rect><rect x="70.15" y="91.6901116" width="0.7" height="3.233388400000001" fill="#022f40"><title>12.03.2026 · JT 29 394 · KT 46 150 · всего 75 544</title></rect><rect x="71.15" y="95.969512" width="0.7" height="4.030488" fill="#c45c26"><title>13.03.2026 · JT 15 250 · KT 36 641 · всего 51 891</title></rect><rect x="71.15" y="94.292012" width="0.7" height="1.6775000000000002" fill="#022f40"><title>13.03.2026 · JT 15 250 · KT 36 641 · всего 51 891</title></rect><rect x="74.15" y="98.03099999999999" width="0.7" height="1.9689999999999996" fill="#c45c26"><title>16.03.2026 · JT 18 500 · KT 17 900 · всего 36 400</title></rect><rect x="74.15" y="95.996" width="0.7" height="2.035" fill="#022f40"><title>16.03.2026 · JT 18 500 · KT 17 900 · всего 36 400</title></rect><rect x="75.15" y="98.2125" width="0.7" height="1.7874999999999999" fill="#022f40"><title>17.03.2026 · JT 16 250 · KT 0 · всего 16 250</title></rect><rect x="76.15" y="97.5745" width="0.7" height="2.4255" fill="#c45c26"><title>18.03.2026 · JT 0 · KT 22 050 · всего 22 050</title></rect><rect x="78.15" y="93.7503379" width="0.7" height="6.2496621" fill="#c45c26"><title>20.03.2026 · JT 0 · KT 56 815 · всего 56 815</title></rect><rect x="81.15" y="69.618" width="0.7" height="30.381999999999998" fill="#c45c26"><title>23.03.2026 · JT 39 291 · KT 276 200 · всего 315 491</title></rect><rect x="81.15" y="65.29599" width="0.7" height="4.322009999999999" fill="#022f40"><title>23.03.2026 · JT 39 291 · KT 276 200 · всего 315 491</title></rect><rect x="84.15" y="99.2" width="0.7" height="0.8" fill="#c45c26"><title>26.03.2026 · JT 0 · KT 7 250 · всего 7 250</title></rect><rect x="85.15" y="97.44800000000001" width="0.7" height="2.552" fill="#c45c26"><title>27.03.2026 · JT 5 500 · KT 23 200 · всего 28 700</title></rect><rect x="85.15" y="96.843" width="0.7" height="0.605" fill="#022f40"><title>27.03.2026 · JT 5 500 · KT 23 200 · всего 28 700</title></rect><rect x="88.15" y="97.3105" width="0.7" height="2.6895" fill="#022f40"><title>30.03.2026 · JT 24 450 · KT 0 · всего 24 450</title></rect><rect x="89.15" y="99.168213" width="0.7" height="0.831787" fill="#022f40"><title>31.03.2026 · JT 7 562 · KT 0 · всего 7 562</title></rect><rect x="90.15" y="92.4683" width="0.7" height="7.5317" fill="#c45c26"><title>01.04.2026 · JT 18 850 · KT 68 470 · всего 87 320</title></rect><rect x="90.15" y="90.3948" width="0.7" height="2.0735" fill="#022f40"><title>01.04.2026 · JT 18 850 · KT 68 470 · всего 87 320</title></rect><rect x="91.15" y="96.7971036" width="0.7" height="3.2028963999999998" fill="#c45c26"><title>02.04.2026 · JT 0 · KT 29 117 · всего 29 117</title></rect><rect x="92.15" y="93.14150000000001" width="0.7" height="6.858499999999999" fill="#c45c26"><title>03.04.2026 · JT 0 · KT 62 350 · всего 62 350</title></rect><rect x="95.15" y="98.405" width="0.7" height="1.595" fill="#c45c26"><title>06.04.2026 · JT 0 · KT 14 500 · всего 14 500</title></rect><rect x="97.15" y="96.5570847" width="0.7" height="3.4429153" fill="#c45c26"><title>08.04.2026 · JT 7 196 · KT 31 299 · всего 38 495</title></rect><rect x="97.15" y="95.7655247" width="0.7" height="0.7915599999999996" fill="#022f40"><title>08.04.2026 · JT 7 196 · KT 31 299 · всего 38 495</title></rect><rect x="98.15" y="73.38550000000001" width="0.7" height="26.6145" fill="#c45c26"><title>09.04.2026 · JT 65 600 · KT 241 950 · всего 307 550</title></rect><rect x="98.15" y="66.1695" width="0.7" height="7.216000000000001" fill="#022f40"><title>09.04.2026 · JT 65 600 · KT 241 950 · всего 307 550</title></rect><rect x="99.15" y="96.28464" width="0.7" height="3.71536" fill="#c45c26"><title>10.04.2026 · JT 0 · KT 33 776 · всего 33 776</title></rect><rect x="102.15" y="98.46" width="0.7" height="1.54" fill="#022f40"><title>13.04.2026 · JT 14 000 · KT 0 · всего 14 000</title></rect><rect x="103.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>14.04.2026 · JT 1 634 · KT 0 · всего 1 634</title></rect><rect x="104.15" y="98.812" width="0.7" height="1.188" fill="#c45c26"><title>15.04.2026 · JT 5 250 · KT 10 800 · всего 16 050</title></rect><rect x="104.15" y="98.2345" width="0.7" height="0.5775000000000001" fill="#022f40"><title>15.04.2026 · JT 5 250 · KT 10 800 · всего 16 050</title></rect><rect x="105.15" y="96.53084199999999" width="0.7" height="3.469158" fill="#c45c26"><title>16.04.2026 · JT 8 650 · KT 31 538 · всего 40 188</title></rect><rect x="105.15" y="95.579342" width="0.7" height="0.9515000000000002" fill="#022f40"><title>16.04.2026 · JT 8 650 · KT 31 538 · всего 40 188</title></rect><rect x="106.15" y="99.01" width="0.7" height="0.99" fill="#022f40"><title>17.04.2026 · JT 9 000 · KT 0 · всего 9 000</title></rect><rect x="109.15" y="97.201963" width="0.7" height="2.798037" fill="#022f40"><title>20.04.2026 · JT 25 437 · KT 0 · всего 25 437</title></rect><rect x="110.15" y="97.3985" width="0.7" height="2.6014999999999997" fill="#c45c26"><title>21.04.2026 · JT 9 200 · KT 23 650 · всего 32 850</title></rect><rect x="110.15" y="96.3865" width="0.7" height="1.012" fill="#022f40"><title>21.04.2026 · JT 9 200 · KT 23 650 · всего 32 850</title></rect><rect x="111.15" y="99.065" width="0.7" height="0.935" fill="#c45c26"><title>22.04.2026 · JT 48 000 · KT 8 500 · всего 56 500</title></rect><rect x="111.15" y="93.785" width="0.7" height="5.279999999999999" fill="#022f40"><title>22.04.2026 · JT 48 000 · KT 8 500 · всего 56 500</title></rect><rect x="116.15" y="86.2433956" width="0.7" height="13.756604399999999" fill="#022f40"><title>27.04.2026 · JT 125 060 · KT 0 · всего 125 060</title></rect><rect x="119.15" y="86.1088359" width="0.7" height="13.8911641" fill="#022f40"><title>30.04.2026 · JT 126 283 · KT 0 · всего 126 283</title></rect><rect x="120.15" y="57.991" width="0.7" height="42.009" fill="#c45c26"><title>01.05.2026 · JT 0 · KT 381 900 · всего 381 900</title></rect><rect x="123.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>04.05.2026 · JT 3 300 · KT 0 · всего 3 300</title></rect><rect x="124.15" y="95.9809982" width="0.7" height="4.019001800000001" fill="#022f40"><title>05.05.2026 · JT 36 536 · KT 0 · всего 36 536</title></rect><rect x="125.15" y="98.218" width="0.7" height="1.782" fill="#c45c26"><title>06.05.2026 · JT 133 399 · KT 16 200 · всего 149 599</title></rect><rect x="125.15" y="83.54411" width="0.7" height="14.67389" fill="#022f40"><title>06.05.2026 · JT 133 399 · KT 16 200 · всего 149 599</title></rect><rect x="126.15" y="99.582" width="0.7" height="0.41800000000000004" fill="#c45c26"><title>07.05.2026 · JT 68 500 · KT 3 800 · всего 72 300</title></rect><rect x="126.15" y="92.047" width="0.7" height="7.535" fill="#022f40"><title>07.05.2026 · JT 68 500 · KT 3 800 · всего 72 300</title></rect><rect x="127.15" y="93.6227929" width="0.7" height="6.377207100000001" fill="#c45c26"><title>08.05.2026 · JT 230 000 · KT 57 975 · всего 287 975</title></rect><rect x="127.15" y="68.3227929" width="0.7" height="25.3" fill="#022f40"><title>08.05.2026 · JT 230 000 · KT 57 975 · всего 287 975</title></rect><rect x="130.15" y="98.482" width="0.7" height="1.518" fill="#c45c26"><title>11.05.2026 · JT 8 690 · KT 13 800 · всего 22 490</title></rect><rect x="130.15" y="97.5260626" width="0.7" height="0.9559374" fill="#022f40"><title>11.05.2026 · JT 8 690 · KT 13 800 · всего 22 490</title></rect><rect x="131.15" y="96.39068" width="0.7" height="3.60932" fill="#c45c26"><title>12.05.2026 · JT 0 · KT 32 812 · всего 32 812</title></rect><rect x="132.15" y="95.04197" width="0.7" height="4.95803" fill="#c45c26"><title>13.05.2026 · JT 24 595 · KT 45 073 · всего 69 668</title></rect><rect x="132.15" y="92.33652000000001" width="0.7" height="2.70545" fill="#022f40"><title>13.05.2026 · JT 24 595 · KT 45 073 · всего 69 668</title></rect><rect x="133.15" y="98.24" width="0.7" height="1.76" fill="#022f40"><title>14.05.2026 · JT 16 000 · KT 0 · всего 16 000</title></rect><rect x="134.15" y="95.01205" width="0.7" height="4.9879500000000005" fill="#c45c26"><title>15.05.2026 · JT 0 · KT 45 345 · всего 45 345</title></rect><rect x="137.15" y="99.56" width="0.7" height="0.44" fill="#c45c26"><title>18.05.2026 · JT 95 512 · KT 4 000 · всего 99 512</title></rect><rect x="137.15" y="89.0536536" width="0.7" height="10.506346400000002" fill="#022f40"><title>18.05.2026 · JT 95 512 · KT 4 000 · всего 99 512</title></rect><rect x="139.15" y="96.9035" width="0.7" height="3.0965000000000003" fill="#c45c26"><title>20.05.2026 · JT 190 800 · KT 28 150 · всего 218 950</title></rect><rect x="139.15" y="75.9155" width="0.7" height="20.988000000000003" fill="#022f40"><title>20.05.2026 · JT 190 800 · KT 28 150 · всего 218 950</title></rect><rect x="140.15" y="1.0" width="0.7" height="99.0" fill="#022f40"><title>21.05.2026 · JT 900 000 · KT 0 · всего 900 000</title></rect><rect x="141.15" y="97.855" width="0.7" height="2.145" fill="#c45c26"><title>22.05.2026 · JT 125 152 · KT 19 500 · всего 144 652</title></rect><rect x="141.15" y="84.08828" width="0.7" height="13.766720000000001" fill="#022f40"><title>22.05.2026 · JT 125 152 · KT 19 500 · всего 144 652</title></rect><rect x="144.15" y="90.8909" width="0.7" height="9.1091" fill="#022f40"><title>25.05.2026 · JT 82 810 · KT 0 · всего 82 810</title></rect><rect x="146.15" y="90.8121345" width="0.7" height="9.1878655" fill="#c45c26"><title>27.05.2026 · JT 0 · KT 83 526 · всего 83 526</title></rect><rect x="147.15" y="97.8627" width="0.7" height="2.1373" fill="#c45c26"><title>28.05.2026 · JT 0 · KT 19 430 · всего 19 430</title></rect><rect x="152.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>02.06.2026 · JT 147 · KT 0 · всего 147</title></rect><rect x="154.15" y="88.12495" width="0.7" height="11.875050000000002" fill="#c45c26"><title>04.06.2026 · JT 144 350 · KT 107 955 · всего 252 305</title></rect><rect x="154.15" y="72.24645" width="0.7" height="15.878500000000003" fill="#022f40"><title>04.06.2026 · JT 144 350 · KT 107 955 · всего 252 305</title></rect><rect x="155.15" y="99.791" width="0.7" height="0.20900000000000002" fill="#c45c26"><title>05.06.2026 · JT 115 299 · KT 1 900 · всего 117 199</title></rect><rect x="155.15" y="87.10811" width="0.7" height="12.68289" fill="#022f40"><title>05.06.2026 · JT 115 299 · KT 1 900 · всего 117 199</title></rect><rect x="158.15" y="97.68946980000001" width="0.7" height="2.3105302" fill="#c45c26"><title>08.06.2026 · JT 220 656 · KT 21 005 · всего 241 661</title></rect><rect x="158.15" y="73.4172713" width="0.7" height="24.27219850000001" fill="#022f40"><title>08.06.2026 · JT 220 656 · KT 21 005 · всего 241 661</title></rect><rect x="159.15" y="98.999" width="0.7" height="1.001" fill="#c45c26"><title>09.06.2026 · JT 0 · KT 9 100 · всего 9 100</title></rect><rect x="162.15" y="92.564" width="0.7" height="7.436" fill="#c45c26"><title>12.06.2026 · JT 0 · KT 67 600 · всего 67 600</title></rect><rect x="165.15" y="91.255" width="0.7" height="8.745" fill="#022f40"><title>15.06.2026 · JT 79 500 · KT 0 · всего 79 500</title></rect><rect x="166.15" y="80.849" width="0.7" height="19.151" fill="#c45c26"><title>16.06.2026 · JT 0 · KT 174 100 · всего 174 100</title></rect><rect x="168.15" y="94.7615052" width="0.7" height="5.2384948" fill="#022f40"><title>18.06.2026 · JT 47 623 · KT 0 · всего 47 623</title></rect><rect x="169.15" y="98.08985" width="0.7" height="1.91015" fill="#c45c26"><title>19.06.2026 · JT 0 · KT 17 365 · всего 17 365</title></rect><rect x="172.15" y="99.2" width="0.7" height="0.8" fill="#c45c26"><title>22.06.2026 · JT 0 · KT 302 · всего 302</title></rect><rect x="173.15" y="99.4225" width="0.7" height="0.5775" fill="#c45c26"><title>23.06.2026 · JT 104 206 · KT 5 250 · всего 109 456</title></rect><rect x="173.15" y="87.9598895" width="0.7" height="11.462610499999998" fill="#022f40"><title>23.06.2026 · JT 104 206 · KT 5 250 · всего 109 456</title></rect><rect x="174.15" y="94.1942" width="0.7" height="5.8058000000000005" fill="#c45c26"><title>24.06.2026 · JT 133 243 · KT 52 780 · всего 186 023</title></rect><rect x="174.15" y="79.53747" width="0.7" height="14.65673" fill="#022f40"><title>24.06.2026 · JT 133 243 · KT 52 780 · всего 186 023</title></rect><rect x="175.15" y="98.702" width="0.7" height="1.298" fill="#022f40"><title>25.06.2026 · JT 11 800 · KT 0 · всего 11 800</title></rect><rect x="176.15" y="77.5148021" width="0.7" height="22.485197900000003" fill="#c45c26"><title>26.06.2026 · JT 1 700 · KT 204 411 · всего 206 111</title></rect><rect x="176.15" y="77.3278021" width="0.7" height="0.18700000000000117" fill="#022f40"><title>26.06.2026 · JT 1 700 · KT 204 411 · всего 206 111</title></rect><rect x="177.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>27.06.2026 · JT 2 200 · KT 0 · всего 2 200</title></rect><rect x="179.15" y="99.043" width="0.7" height="0.9570000000000001" fill="#022f40"><title>29.06.2026 · JT 8 700 · KT 0 · всего 8 700</title></rect><rect x="187.15" y="94.1526794" width="0.7" height="5.8473206" fill="#c45c26"><title>07.07.2026 · JT 10 105 · KT 53 157 · всего 63 262</title></rect><rect x="187.15" y="93.0411294" width="0.7" height="1.1115500000000003" fill="#022f40"><title>07.07.2026 · JT 10 105 · KT 53 157 · всего 63 262</title></rect><rect x="188.15" y="90.718508" width="0.7" height="9.281492" fill="#c45c26"><title>08.07.2026 · JT 0 · KT 84 377 · всего 84 377</title></rect><rect x="189.15" y="98.6661928" width="0.7" height="1.3338072" fill="#c45c26"><title>09.07.2026 · JT 0 · KT 12 126 · всего 12 126</title></rect><rect x="190.15" y="98.0689951" width="0.7" height="1.9310049" fill="#022f40"><title>10.07.2026 · JT 17 555 · KT 0 · всего 17 555</title></rect><rect x="193.15" y="93.82625" width="0.7" height="6.17375" fill="#022f40"><title>13.07.2026 · JT 56 125 · KT 0 · всего 56 125</title></rect><rect x="196.15" y="94.3706169" width="0.7" height="5.629383099999999" fill="#c45c26"><title>16.07.2026 · JT 0 · KT 51 176 · всего 51 176</title></rect><rect x="197.15" y="93.73" width="0.7" height="6.2700000000000005" fill="#022f40"><title>17.07.2026 · JT 57 000 · KT 0 · всего 57 000</title></rect><rect x="201.15" y="99.2" width="0.7" height="0.8" fill="#c45c26"><title>21.07.2026 · JT 0 · KT 7 137 · всего 7 137</title></rect><rect x="202.15" y="98.372" width="0.7" height="1.6280000000000001" fill="#c45c26"><title>22.07.2026 · JT 0 · KT 14 800 · всего 14 800</title></rect><rect x="204.15" y="84.215" width="0.7" height="15.785" fill="#c45c26"><title>24.07.2026 · JT 61 049 · KT 143 500 · всего 204 549</title></rect><rect x="204.15" y="77.49961" width="0.7" height="6.715389999999999" fill="#022f40"><title>24.07.2026 · JT 61 049 · KT 143 500 · всего 204 549</title></rect><rect x="207.15" y="87.46000000000001" width="0.7" height="12.540000000000001" fill="#c45c26"><title>27.07.2026 · JT 88 974 · KT 114 000 · всего 202 974</title></rect><rect x="207.15" y="77.672893" width="0.7" height="9.787107" fill="#022f40"><title>27.07.2026 · JT 88 974 · KT 114 000 · всего 202 974</title></rect><rect x="217.15" y="98.7515" width="0.7" height="1.2485" fill="#c45c26"><title>06.08.2026 · JT 100 410 · KT 11 350 · всего 111 760</title></rect><rect x="217.15" y="87.706367" width="0.7" height="11.045133" fill="#022f40"><title>06.08.2026 · JT 100 410 · KT 11 350 · всего 111 760</title></rect><rect x="218.15" y="95.435" width="0.7" height="4.5649999999999995" fill="#022f40"><title>07.08.2026 · JT 41 500 · KT 0 · всего 41 500</title></rect><rect x="222.15" y="70.2065" width="0.7" height="29.7935" fill="#c45c26"><title>11.08.2026 · JT 0 · KT 270 850 · всего 270 850</title></rect><rect x="223.15" y="92.23455" width="0.7" height="7.76545" fill="#c45c26"><title>12.08.2026 · JT 0 · KT 70 595 · всего 70 595</title></rect><rect x="224.15" y="90.96625" width="0.7" height="9.03375" fill="#c45c26"><title>13.08.2026 · JT 0 · KT 82 125 · всего 82 125</title></rect><rect x="225.15" y="95.4032848" width="0.7" height="4.596715199999999" fill="#c45c26"><title>14.08.2026 · JT 0 · KT 41 788 · всего 41 788</title></rect><rect x="230.15" y="94.01050000000001" width="0.7" height="5.9895" fill="#c45c26"><title>19.08.2026 · JT 0 · KT 54 450 · всего 54 450</title></rect><rect x="231.15" y="35.155" width="0.7" height="64.845" fill="#c45c26"><title>20.08.2026 · JT 0 · KT 589 500 · всего 589 500</title></rect><rect x="232.15" y="89.286858" width="0.7" height="10.713142" fill="#c45c26"><title>21.08.2026 · JT 0 · KT 97 392 · всего 97 392</title></rect><rect x="235.15" y="98.54249999999999" width="0.7" height="1.4574999999999998" fill="#c45c26"><title>24.08.2026 · JT 2 400 · KT 13 250 · всего 15 650</title></rect><rect x="235.15" y="98.2785" width="0.7" height="0.264" fill="#022f40"><title>24.08.2026 · JT 2 400 · KT 13 250 · всего 15 650</title></rect><rect x="236.15" y="92.44982341" width="0.7" height="7.55017659" fill="#c45c26"><title>25.08.2026 · JT 32 250 · KT 68 638 · всего 100 888</title></rect><rect x="236.15" y="88.90232341" width="0.7" height="3.5475000000000003" fill="#022f40"><title>25.08.2026 · JT 32 250 · KT 68 638 · всего 100 888</title></rect><rect x="237.15" y="77.3704458" width="0.7" height="22.6295542" fill="#c45c26"><title>26.08.2026 · JT 5 168 · KT 205 723 · всего 210 891</title></rect><rect x="237.15" y="76.8019658" width="0.7" height="0.568480000000001" fill="#022f40"><title>26.08.2026 · JT 5 168 · KT 205 723 · всего 210 891</title></rect><rect x="238.15" y="98.12065" width="0.7" height="1.87935" fill="#c45c26"><title>27.08.2026 · JT 33 500 · KT 17 085 · всего 50 585</title></rect><rect x="238.15" y="94.43565" width="0.7" height="3.685" fill="#022f40"><title>27.08.2026 · JT 33 500 · KT 17 085 · всего 50 585</title></rect><rect x="239.15" y="93.47755" width="0.7" height="6.52245" fill="#c45c26"><title>28.08.2026 · JT 0 · KT 59 295 · всего 59 295</title></rect><rect x="247.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>05.09.2026 · JT 6 995 · KT 0 · всего 6 995</title></rect><rect x="250.15" y="92.6663132" width="0.7" height="7.333686800000001" fill="#c45c26"><title>08.09.2026 · JT 0 · KT 66 670 · всего 66 670</title></rect><rect x="257.15" y="98.35055" width="0.7" height="1.64945" fill="#c45c26"><title>15.09.2026 · JT 0 · KT 14 995 · всего 14 995</title></rect><rect x="258.15" y="94.731" width="0.7" height="5.269" fill="#c45c26"><title>16.09.2026 · JT 0 · KT 47 900 · всего 47 900</title></rect><rect x="259.15" y="80.068" width="0.7" height="19.932" fill="#c45c26"><title>17.09.2026 · JT 0 · KT 181 200 · всего 181 200</title></rect><rect x="260.15" y="76.68" width="0.7" height="23.32" fill="#c45c26"><title>18.09.2026 · JT 0 · KT 212 000 · всего 212 000</title></rect>
+      </svg>
+    </div>
+    <div class="chart-xaxis"><span style="left:0.00%">Jan</span><span style="left:8.49%">Feb</span><span style="left:16.16%">Mar</span><span style="left:24.66%">Apr</span><span style="left:32.88%">May</span><span style="left:41.37%">Jun</span><span style="left:49.59%">Jul</span><span style="left:58.08%">Aug</span><span style="left:66.58%">Sep</span><span style="left:74.79%">Oct</span><span style="left:83.29%">Nov</span><span style="left:91.51%">Dec</span></div>
+  </div>
+</div>
+
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. JT (верх) + KT (низ) в одном столбце дня; весь период на ширину страницы, без прокрутки.</p>
+</section>
+
+
+<section class="card period" id="period-1">
+  <h2>01.06 — 18.09.2026</h2>
+  <p class="period-range">01.06.2026 — 18.09.2026 · только «Продажа от поставщика» · заказы по дате Q · 1342 поз.</p>
+  <p class="hint">KT MNT в ТАЗ = поставщик <strong>IBERIA</strong> (столбец Z).</p>
+
+  <h3>1. Топ-5 поставщиков</h3>
+  <div class="kpis">
+    <div class="highlight"><div class="label">Выручка всего</div><div class="value">11 306 335</div><div class="muted">USD · продажная итого</div></div>
+    <div><div class="label">Маржа всего</div><div class="value">3 300 562</div><div class="muted">продажа − закупка</div></div>
+    <div><div class="label">JT выручка</div><div class="value">12.7%</div><div class="muted">доля от выручки</div></div>
+    <div><div class="label">KT выручка</div><div class="value">58.0%</div><div class="muted">доля от выручки</div></div>
+  </div>
+  <div class="table-scroll">
+  <table class="sortable" data-table="shares-1">
+    <thead>
+      <tr>
+        <th data-type="str" data-col="0">Поставщик <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="1">Выручка, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="2">% выручки <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="3">Маржа, USD <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="4">% маржи <span class="arrow">↕</span></th>
+        <th data-type="num" data-col="5">n <span class="arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="channel-kt"><td>IBERIA (KT MNT)</td><td class="num" data-value="6562550.125">6 562 550</td><td class="num" data-value="58.043">58.0%</td><td class="num" data-value="2004878.536">2 004 879</td><td class="num" data-value="60.744">60.7%</td><td class="num" data-value="291">291</td></tr><tr class=""><td>LUFTHANSA</td><td class="num" data-value="1495807.584">1 495 808</td><td class="num" data-value="13.230">13.2%</td><td class="num" data-value="425964.854">425 965</td><td class="num" data-value="12.906">12.9%</td><td class="num" data-value="539">539</td></tr><tr class="channel-jt"><td>JET TECHNIC (JT)</td><td class="num" data-value="1431279.4">1 431 279</td><td class="num" data-value="12.659">12.7%</td><td class="num" data-value="410662.21">410 662</td><td class="num" data-value="12.442">12.4%</td><td class="num" data-value="148">148</td></tr><tr class=""><td>CAESAR</td><td class="num" data-value="1360000.0">1 360 000</td><td class="num" data-value="12.029">12.0%</td><td class="num" data-value="290000.0">290 000</td><td class="num" data-value="8.786">8.8%</td><td class="num" data-value="2">2</td></tr><tr class=""><td>BLUE OCEAN SOLUTIONS</td><td class="num" data-value="441433.83">441 434</td><td class="num" data-value="3.904">3.9%</td><td class="num" data-value="160200.444">160 200</td><td class="num" data-value="4.854">4.9%</td><td class="num" data-value="360">360</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>2. Time to pay (только JT + KT, STK)</h3>
+  <div class="kpis three">
+    
+        <div>
+          <div class="label">JT + KT</div>
+          <div class="value">14.0 дн.</div>
+          <div class="muted">медиана 10.0 · n=301</div>
+        </div>
+    
+        <div>
+          <div class="label">JET TECHNIC</div>
+          <div class="value">14.3 дн.</div>
+          <div class="muted">медиана 8.0 · n=84</div>
+        </div>
+    
+        <div>
+          <div class="label">KT MNT (IBERIA)</div>
+          <div class="value">13.9 дн.</div>
+          <div class="muted">медиана 11.0 · n=217</div>
+        </div>
+  </div>
+  <p class="hint">
+    Срок = дата оплаты поставщику (AW) − дата взятия в работу (Q).
+    В среднее: только Lead time = STK; исключены постоплата (есть дата начала движения BA раньше оплаты AW)
+    и заказы с ненулевым lead time (оплата после LT — норма).
+    Исключено как постоплата: JT 34, KT 5;
+    как lead-time: JT 15, KT 31.
+  </p>
+
+  <h3>3. Платежи по дням (AW)</h3>
+  
+<div class="chart-wrap" id="chart-1">
+  <div class="legend">
+    <span><i class="swatch jt"></i>JET TECHNIC · 1 382 454</span>
+    <span><i class="swatch kt"></i>KT MNT (IBERIA) · 3 246 847</span>
+    <span class="muted">розовый = сб/вс · пик 20.08: 589 500</span>
+  </div>
+  <div class="chart-frame">
+    <div class="chart-yaxis" aria-hidden="true"><span>589 500</span><span>442 125</span><span>294 750</span><span>147 375</span><span>0</span></div>
+    <div class="chart-plot">
+      <svg viewBox="0 0 110 100" preserveAspectRatio="none"
+           role="img" aria-label="Платежи поставщикам по дням">
+        <rect x="5" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="6" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="12" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="13" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="19" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="20" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="26" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="27" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="33" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="34" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="40" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="41" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="47" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="48" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="54" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="55" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="61" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="62" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="68" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="69" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="75" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="76" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="82" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="83" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="89" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="90" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="96" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="97" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="103" y="0" width="1" height="100" fill="#f3e8e8"/><rect x="104" y="0" width="1" height="100" fill="#f3e8e8"/>
+        <line x1="0" y1="75.0" x2="110" y2="75.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="50.0" x2="110" y2="50.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="25.0" x2="110" y2="25.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="0.0" x2="110" y2="0.0" stroke="#dde3e6" stroke-width="0.4" vector-effect="non-scaling-stroke"/><line x1="0" y1="100" x2="110" y2="100" stroke="#9aa6ab" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <rect x="1.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>02.06.2026 · JT 147 · KT 0 · всего 147</title></rect><rect x="3.15" y="81.87015267175573" width="0.7" height="18.129847328244274" fill="#c45c26"><title>04.06.2026 · JT 144 350 · KT 107 955 · всего 252 305</title></rect><rect x="3.15" y="57.6281679389313" width="0.7" height="24.241984732824427" fill="#022f40"><title>04.06.2026 · JT 144 350 · KT 107 955 · всего 252 305</title></rect><rect x="4.15" y="99.68091603053435" width="0.7" height="0.3190839694656489" fill="#c45c26"><title>05.06.2026 · JT 115 299 · KT 1 900 · всего 117 199</title></rect><rect x="4.15" y="80.3177251908397" width="0.7" height="19.363190839694656" fill="#022f40"><title>05.06.2026 · JT 115 299 · KT 1 900 · всего 117 199</title></rect><rect x="7.15" y="96.47247297709924" width="0.7" height="3.5275270229007627" fill="#c45c26"><title>08.06.2026 · JT 220 656 · KT 21 005 · всего 241 661</title></rect><rect x="7.15" y="59.415681374045796" width="0.7" height="37.05679160305344" fill="#022f40"><title>08.06.2026 · JT 220 656 · KT 21 005 · всего 241 661</title></rect><rect x="8.15" y="98.47175572519085" width="0.7" height="1.5282442748091603" fill="#c45c26"><title>09.06.2026 · JT 0 · KT 9 100 · всего 9 100</title></rect><rect x="11.15" y="88.6473282442748" width="0.7" height="11.35267175572519" fill="#c45c26"><title>12.06.2026 · JT 0 · KT 67 600 · всего 67 600</title></rect><rect x="14.15" y="86.64885496183206" width="0.7" height="13.35114503816794" fill="#022f40"><title>15.06.2026 · JT 79 500 · KT 0 · всего 79 500</title></rect><rect x="15.15" y="70.7618320610687" width="0.7" height="29.238167938931294" fill="#c45c26"><title>16.06.2026 · JT 0 · KT 174 100 · всего 174 100</title></rect><rect x="17.15" y="92.00229801526717" width="0.7" height="7.997701984732824" fill="#022f40"><title>18.06.2026 · JT 47 623 · KT 0 · всего 47 623</title></rect><rect x="18.15" y="97.08374045801527" width="0.7" height="2.916259541984733" fill="#c45c26"><title>19.06.2026 · JT 0 · KT 17 365 · всего 17 365</title></rect><rect x="21.15" y="99.2" width="0.7" height="0.8" fill="#c45c26"><title>22.06.2026 · JT 0 · KT 302 · всего 302</title></rect><rect x="22.15" y="99.11832061068702" width="0.7" height="0.8816793893129771" fill="#c45c26"><title>23.06.2026 · JT 104 206 · KT 5 250 · всего 109 456</title></rect><rect x="22.15" y="81.61815190839695" width="0.7" height="17.500168702290072" fill="#022f40"><title>23.06.2026 · JT 104 206 · KT 5 250 · всего 109 456</title></rect><rect x="23.15" y="91.13618320610688" width="0.7" height="8.863816793893129" fill="#c45c26"><title>24.06.2026 · JT 133 243 · KT 52 780 · всего 186 023</title></rect><rect x="23.15" y="68.75949618320611" width="0.7" height="22.376687022900764" fill="#022f40"><title>24.06.2026 · JT 133 243 · KT 52 780 · всего 186 023</title></rect><rect x="24.15" y="98.01832061068703" width="0.7" height="1.981679389312977" fill="#022f40"><title>25.06.2026 · JT 11 800 · KT 0 · всего 11 800</title></rect><rect x="25.15" y="65.67145358778626" width="0.7" height="34.32854641221374" fill="#c45c26"><title>26.06.2026 · JT 1 700 · KT 204 411 · всего 206 111</title></rect><rect x="25.15" y="65.38595740458015" width="0.7" height="0.2854961832061065" fill="#022f40"><title>26.06.2026 · JT 1 700 · KT 204 411 · всего 206 111</title></rect><rect x="26.15" y="99.2" width="0.7" height="0.8" fill="#022f40"><title>27.06.2026 · JT 2 200 · KT 0 · всего 2 200</title></rect><rect x="28.15" y="98.53893129770992" width="0.7" height="1.4610687022900763" fill="#022f40"><title>29.06.2026 · JT 8 700 · KT 0 · всего 8 700</title></rect><rect x="36.15" y="91.07279297709924" width="0.7" height="8.927207022900763" fill="#c45c26"><title>07.07.2026 · JT 10 105 · KT 53 157 · всего 63 262</title></rect><rect x="36.15" y="89.37577007633588" width="0.7" height="1.6970229007633595" fill="#022f40"><title>07.07.2026 · JT 10 105 · KT 53 157 · всего 63 262</title></rect><rect x="37.15" y="85.82978320610687" width="0.7" height="14.170216793893129" fill="#c45c26"><title>08.07.2026 · JT 0 · KT 84 377 · всего 84 377</title></rect><rect x="38.15" y="97.96365312977099" width="0.7" height="2.036346870229008" fill="#c45c26"><title>09.07.2026 · JT 0 · KT 12 126 · всего 12 126</title></rect><rect x="39.15" y="97.05190091603053" width="0.7" height="2.9480990839694656" fill="#022f40"><title>10.07.2026 · JT 17 555 · KT 0 · всего 17 555</title></rect><rect x="42.15" y="90.57442748091603" width="0.7" height="9.42557251908397" fill="#022f40"><title>13.07.2026 · JT 56 125 · KT 0 · всего 56 125</title></rect><rect x="45.15" y="91.40552198473283" width="0.7" height="8.594478015267175" fill="#c45c26"><title>16.07.2026 · JT 0 · KT 51 176 · всего 51 176</title></rect><rect x="46.15" y="90.42748091603053" width="0.7" height="9.572519083969466" fill="#022f40"><title>17.07.2026 · JT 57 000 · KT 0 · всего 57 000</title></rect><rect x="50.15" y="98.80141984732825" width="0.7" height="1.1985801526717557" fill="#c45c26"><title>21.07.2026 · JT 0 · KT 7 137 · всего 7 137</title></rect><rect x="51.15" y="97.51450381679389" width="0.7" height="2.4854961832061067" fill="#c45c26"><title>22.07.2026 · JT 0 · KT 14 800 · всего 14 800</title></rect><rect x="53.15" y="75.90076335877863" width="0.7" height="24.09923664122137" fill="#c45c26"><title>24.07.2026 · JT 61 049 · KT 143 500 · всего 204 549</title></rect><rect x="53.15" y="65.64825954198474" width="0.7" height="10.252503816793894" fill="#022f40"><title>24.07.2026 · JT 61 049 · KT 143 500 · всего 204 549</title></rect><rect x="56.15" y="80.85496183206106" width="0.7" height="19.14503816793893" fill="#c45c26"><title>27.07.2026 · JT 88 974 · KT 114 000 · всего 202 974</title></rect><rect x="56.15" y="65.912813740458" width="0.7" height="14.942148091603055" fill="#022f40"><title>27.07.2026 · JT 88 974 · KT 114 000 · всего 202 974</title></rect><rect x="66.15" y="98.093893129771" width="0.7" height="1.9061068702290076" fill="#c45c26"><title>06.08.2026 · JT 100 410 · KT 11 350 · всего 111 760</title></rect><rect x="66.15" y="81.23109465648855" width="0.7" height="16.862798473282446" fill="#022f40"><title>06.08.2026 · JT 100 410 · KT 11 350 · всего 111 760</title></rect><rect x="67.15" y="93.03053435114504" width="0.7" height="6.969465648854962" fill="#022f40"><title>07.08.2026 · JT 41 500 · KT 0 · всего 41 500</title></rect><rect x="71.15" y="54.51374045801526" width="0.7" height="45.48625954198474" fill="#c45c26"><title>11.08.2026 · JT 0 · KT 270 850 · всего 270 850</title></rect><rect x="72.15" y="88.14435114503817" width="0.7" height="11.855648854961833" fill="#c45c26"><title>12.08.2026 · JT 0 · KT 70 595 · всего 70 595</title></rect><rect x="73.15" y="86.20801526717557" width="0.7" height="13.791984732824428" fill="#c45c26"><title>13.08.2026 · JT 0 · KT 82 125 · всего 82 125</title></rect><rect x="74.15" y="92.98211419847328" width="0.7" height="7.017885801526718" fill="#c45c26"><title>14.08.2026 · JT 0 · KT 41 788 · всего 41 788</title></rect><rect x="79.15" y="90.85572519083969" width="0.7" height="9.144274809160306" fill="#c45c26"><title>19.08.2026 · JT 0 · KT 54 450 · всего 54 450</title></rect><rect x="80.15" y="1.0" width="0.7" height="99.0" fill="#c45c26"><title>20.08.2026 · JT 0 · KT 589 500 · всего 589 500</title></rect><rect x="81.15" y="83.64405801526718" width="0.7" height="16.355941984732823" fill="#c45c26"><title>21.08.2026 · JT 0 · KT 97 392 · всего 97 392</title></rect><rect x="84.15" y="97.77480916030534" width="0.7" height="2.2251908396946565" fill="#c45c26"><title>24.08.2026 · JT 2 400 · KT 13 250 · всего 15 650</title></rect><rect x="84.15" y="97.37175572519084" width="0.7" height="0.40305343511450387" fill="#022f40"><title>24.08.2026 · JT 2 400 · KT 13 250 · всего 15 650</title></rect><rect x="85.15" y="88.47301283969466" width="0.7" height="11.526987160305342" fill="#c45c26"><title>25.08.2026 · JT 32 250 · KT 68 638 · всего 100 888</title></rect><rect x="85.15" y="83.05698230534351" width="0.7" height="5.416030534351144" fill="#022f40"><title>25.08.2026 · JT 32 250 · KT 68 638 · всего 100 888</title></rect><rect x="86.15" y="65.45106229007635" width="0.7" height="34.548937709923656" fill="#c45c26"><title>26.08.2026 · JT 5 168 · KT 205 723 · всего 210 891</title></rect><rect x="86.15" y="64.58315389312978" width="0.7" height="0.867908396946568" fill="#022f40"><title>26.08.2026 · JT 5 168 · KT 205 723 · всего 210 891</title></rect><rect x="87.15" y="97.13076335877862" width="0.7" height="2.869236641221374" fill="#c45c26"><title>27.08.2026 · JT 33 500 · KT 17 085 · всего 50 585</title></rect><rect x="87.15" y="91.50480916030534" width="0.7" height="5.625954198473282" fill="#022f40"><title>27.08.2026 · JT 33 500 · KT 17 085 · всего 50 585</title></rect><rect x="88.15" y="90.0420610687023" width="0.7" height="9.95793893129771" fill="#c45c26"><title>28.08.2026 · JT 0 · KT 59 295 · всего 59 295</title></rect><rect x="96.15" y="98.82526717557252" width="0.7" height="1.1747328244274808" fill="#022f40"><title>05.09.2026 · JT 6 995 · KT 0 · всего 6 995</title></rect><rect x="99.15" y="88.80353160305343" width="0.7" height="11.196468396946566" fill="#c45c26"><title>08.09.2026 · JT 0 · KT 66 670 · всего 66 670</title></rect><rect x="106.15" y="97.48175572519084" width="0.7" height="2.5182442748091605" fill="#c45c26"><title>15.09.2026 · JT 0 · KT 14 995 · всего 14 995</title></rect><rect x="107.15" y="91.9557251908397" width="0.7" height="8.044274809160306" fill="#c45c26"><title>16.09.2026 · JT 0 · KT 47 900 · всего 47 900</title></rect><rect x="108.15" y="69.56946564885496" width="0.7" height="30.43053435114504" fill="#c45c26"><title>17.09.2026 · JT 0 · KT 181 200 · всего 181 200</title></rect><rect x="109.15" y="64.3969465648855" width="0.7" height="35.603053435114504" fill="#c45c26"><title>18.09.2026 · JT 0 · KT 212 000 · всего 212 000</title></rect>
+      </svg>
+    </div>
+    <div class="chart-xaxis"><span style="left:0.00%">Jun</span><span style="left:27.27%">Jul</span><span style="left:55.45%">Aug</span><span style="left:83.64%">Sep</span></div>
+  </div>
+</div>
+
+  <p class="hint">Суммы оплат поставщику (AX) по дате AW. JT (верх) + KT (низ) в одном столбце дня; весь период на ширину страницы, без прокрутки.</p>
+</section>
+
+  <p class="hint">
+    Фильтр: Тип поставки = «Продажа от поставщика».
+    Выручка = «Продажная, итого»; маржа = продажа − закупка.
+    Каналы: JT = JET TECHNIC, KT MNT = IBERIA (столбец Z). Root supplier (AA) — контрагент, которому платят JT/KT.
+  </p>
+</div>
+<script>
+(function () {
+  function cellValue(td, type) {
+    const raw = td.getAttribute('data-value');
+    if (raw === null || raw === '') {
+      const t = td.textContent.trim();
+      if (type === 'num') {
+        const n = Number(t.replace(/\s/g,'').replace('%','').replace('—',''));
+        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+      }
+      return t.toLowerCase();
+    }
+    return type === 'num' ? Number(raw) : String(raw);
+  }
+  document.querySelectorAll('table.sortable').forEach(table => {
+    const tbody = table.tBodies[0];
+    const headers = [...table.tHead.rows[0].cells];
+    let sortCol = -1;
+    let asc = true;
+    headers.forEach(th => {
+      th.addEventListener('click', () => {
+        const col = Number(th.dataset.col);
+        const type = th.dataset.type;
+        if (sortCol === col) asc = !asc;
+        else { sortCol = col; asc = type !== 'num'; }
+        headers.forEach((h, i) => {
+          h.classList.toggle('sorted', i === col);
+          const arrow = h.querySelector('.arrow');
+          if (arrow) arrow.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
+        });
+        const rows = [...tbody.rows];
+        rows.sort((a, b) => {
+          const av = cellValue(a.cells[col], type);
+          const bv = cellValue(b.cells[col], type);
+          let cmp = type === 'num' ? (av - bv) : String(av).localeCompare(String(bv), 'ru');
+          if (type === 'num') {
+            const aEmpty = !isFinite(av);
+            const bEmpty = !isFinite(bv);
+            if (aEmpty !== bEmpty) return aEmpty ? 1 : -1;
+          }
+          return asc ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
