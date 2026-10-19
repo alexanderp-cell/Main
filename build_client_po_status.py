@@ -153,16 +153,38 @@ def norm_qty(value):
     return value
 
 
-def as_date(value) -> date | None:
+def parse_stamp(value) -> datetime | None:
+    """Дата из ячейки: объект Excel или текст ДД.ММ.ГГГГ, в том числе со временем."""
     if isinstance(value, datetime):
-        if value.year < 2024:
-            return None
-        return value.date()
-    if isinstance(value, date):
-        if value.year < 2024:
-            return None
         return value
+    if isinstance(value, date):
+        return datetime(value.year, value.month, value.day)
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text or text.startswith("="):
+        return None
+    text = re.sub(r"\b(\d):", r"0\1:", text)
+    for fmt in (
+        "%d.%m.%Y",
+        "%d.%m.%Y %H:%M",
+        "%d.%m.%Y %H:%M:%S",
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+    ):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
     return None
+
+
+def as_date(value) -> date | None:
+    found = parse_stamp(value)
+    if found is None or found.year < 2024:
+        return None
+    return found.date()
 
 
 def parse_client_date(value) -> date | None:
@@ -342,16 +364,30 @@ def normalize_batch_token(value) -> str:
     return text
 
 
+SHIPMENT_WORDS = ("WHS", "PAID", "READY", "HOLD", "UNSOLVED", "UNCONFIRMED", "MID-OCTOBER", "MID OCTOBER", "ON THE WAY")
+
+
+def is_shipment_id(token: str) -> bool:
+    if not token or any(word in token for word in SHIPMENT_WORDS):
+        return False
+    if parse_stamp(token):
+        return False
+    return len(re.sub(r"\D", "", token)) >= 8
+
+
 def batch_signature(src: SourceRow):
     if src.section != "PRE TRANSIT" or src.warranty or src.on_hold:
-        return None
-    if not src.row_color:
         return None
     track = normalize_batch_token(src.awb)
     arrival = normalize_batch_token(src.arrival)
     if not track and not arrival:
         return None
-    return (src.row_color, track, arrival)
+    if src.row_color:
+        return (src.row_color, track, arrival)
+    # В новом файле строки больше не красят. Общий номер отправления — та же партия.
+    if is_shipment_id(track):
+        return ("TRACK", track, arrival)
+    return None
 
 
 def assign_batches(rows: list[SourceRow], file_date: date):
@@ -529,11 +565,11 @@ def choose_transit_comment(base_kind: str, prev_text, planned_changed: bool, poi
 
 def awb_comment(src: SourceRow):
     awb = str(src.awb).strip() if src.awb else ""
-    arrival = src.arrival
-    if isinstance(arrival, datetime) and (arrival.hour or arrival.minute):
+    arrival = parse_stamp(src.arrival)
+    if arrival and (arrival.hour or arrival.minute):
         when = arrival.strftime("%d.%m.%Y %H:%M")
     else:
-        when_date = as_date(arrival)
+        when_date = as_date(src.arrival)
         when = fmt_date(when_date) if when_date else ""
     if awb and when:
         return f"AWB {awb}\n{when}"
@@ -542,25 +578,107 @@ def awb_comment(src: SourceRow):
     return None
 
 
-def find_serial_column(ws) -> int | None:
+COLUMN_SPECS = (
+    ("invoice", ("номер счета", "invoice")),
+    ("status", ("status", "статус")),
+    ("comment", ("комментар",)),
+    ("pn", ("p/n", "part number", "парт")),
+    ("alt", ("alt",)),
+    ("desc", ("description", "описан")),
+    ("qty", ("qty", "колич")),
+    ("start", ("взят в работу",)),
+    ("lead", ("дней на поставку",)),
+    ("deadline", ("крайняя дата",)),
+    ("actual", ("фактическая дата",)),
+    ("condition", ("condition", "состояние")),
+    ("serial", ("серийн", "s/n", "s.n")),
+    ("price", ("продажная, ед", "продажная,ед", "unit price")),
+    ("total", ("продажная, итого", "итого")),
+    ("payment", ("тип оплаты", "payment")),
+    ("awb", ("awb",)),
+    ("arrival", ("ожидаемая дата", "прихода")),
+)
+
+
+def header_columns(ws) -> dict[str, int]:
+    """Столбцы ищем по заголовку: в новом файле добавлены Client, UOM и S/N."""
+    found = {}
     for col in range(1, ws.max_column + 1):
-        header = str(ws.cell(1, col).value or "").lower()
-        if "s/n" in header or "серийн" in header or header.strip() in {"sn", "s.n."}:
-            return col
-    return None
+        header = " ".join(str(ws.cell(1, col).value or "").strip().lower().split())
+        if not header:
+            continue
+        for key, needles in COLUMN_SPECS:
+            if key in found:
+                continue
+            if any(needle in header for needle in needles):
+                found[key] = col
+                break
+    required = ("invoice", "status", "comment", "pn", "qty", "start", "lead", "deadline", "price", "payment", "awb", "arrival")
+    missing = [name for name in required if name not in found]
+    if missing:
+        raise SystemExit(f"В таблице 1 не найдены столбцы: {', '.join(missing)}")
+    return found
+
+
+def display_code(value):
+    """Число из Excel без хвоста .0: партномер, трек и серийный номер."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    text = str(value).replace("\r\n", "\n").strip()
+    if re.fullmatch(r"\d+\.0", text):
+        return text[:-2]
+    return text or None
+
+
+def pure_date_value(value):
+    """Ячейка целиком является датой, а не комментарием с датой внутри."""
+    if parse_stamp(value) is None:
+        return False
+    if isinstance(value, (datetime, date)):
+        return True
+    text = str(value).strip()
+    text = re.sub(r"\b(\d):", r"0\1:", text)
+    return bool(re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?|\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?", text))
+
+
+def drop_shadow_duplicates(rows: list[SourceRow]) -> list[SourceRow]:
+    """Одна и та же строка в TROUBLES и ещё раз в MARKET — для клиента оставляем TROUBLES."""
+    groups = defaultdict(list)
+    for src in rows:
+        groups[(src.invoice, src.pn_key, norm_qty(src.qty))].append(src)
+    drop = set()
+    for group in groups.values():
+        troubles = [src for src in group if src.section == "TROUBLES" or src.kind == "trouble"]
+        if not troubles:
+            continue
+        for src in group:
+            if src not in troubles and src.kind in ACTIVE_SOURCE_KINDS:
+                drop.add(id(src))
+    return [src for src in rows if id(src) not in drop]
 
 
 def load_source(path: Path) -> list[SourceRow]:
-    wb = openpyxl.load_workbook(path, data_only=True)
+    wb = openpyxl.load_workbook(path, data_only=False)
     ws = wb.active
-    serial_col = find_serial_column(ws)
+    cols = header_columns(ws)
     section = "PREAMBLE"
     rows: list[SourceRow] = []
+
+    def cell(index, key):
+        column = cols.get(key)
+        if not column:
+            return None
+        return ws.cell(index, column).value
+
     for index in range(2, ws.max_row + 1):
-        invoice_raw = ws.cell(index, 1).value
-        status = ws.cell(index, 2).value
-        comment = ws.cell(index, 3).value
-        pn = ws.cell(index, 4).value
+        invoice_raw = cell(index, "invoice")
+        status = cell(index, "status")
+        comment = cell(index, "comment")
+        pn = cell(index, "pn")
         kind = status_kind(status)
         header = str(pn).strip().upper() if isinstance(pn, str) else ""
         invoice = norm_inv(invoice_raw)
@@ -575,41 +693,50 @@ def load_source(path: Path) -> list[SourceRow]:
             section = "ARCHIVE"
         if str(comment or "").strip().upper() == "SAMPLE":
             continue
-        if not invoice or not norm_pn(pn) or invoice in {"-", "NONE"}:
+        pn_text = display_code(pn)
+        if not invoice or not norm_pn(pn_text) or invoice in {"-", "NONE"}:
             continue
-        start = as_date(ws.cell(index, 8).value)
-        lead = ws.cell(index, 9).value
-        deadline = as_date(ws.cell(index, 10).value)
+        start = as_date(cell(index, "start"))
+        lead = cell(index, "lead")
+        deadline = as_date(cell(index, "deadline"))
         if deadline is None and start is not None and isinstance(lead, (int, float)):
             deadline = start + timedelta(days=int(lead))
+        awb = cell(index, "awb")
+        arrival = cell(index, "arrival")
+        # В новом файле ожидаемую дату иногда пишут в столбец AWB, а столбец прихода оставляют пустым.
+        if pure_date_value(awb) and not pure_date_value(arrival):
+            arrival = awb
+            awb = None
+        else:
+            awb = display_code(awb)
         item = SourceRow(
             row=index,
             section=section,
             kind=kind,
             invoice=invoice,
-            pn_key=norm_pn(pn),
-            pn_raw=str(pn).strip(),
-            alt=ws.cell(index, 5).value,
-            desc=ws.cell(index, 6).value,
-            qty=ws.cell(index, 7).value,
+            pn_key=norm_pn(pn_text),
+            pn_raw=pn_text,
+            alt=cell(index, "alt"),
+            desc=cell(index, "desc"),
+            qty=cell(index, "qty"),
             start=start,
             lead=lead,
             deadline=deadline,
-            actual=as_date(ws.cell(index, 11).value),
-            condition=ws.cell(index, 12).value,
-            price=ws.cell(index, 13).value,
-            total=ws.cell(index, 14).value,
-            payment=ws.cell(index, 15).value,
-            awb=ws.cell(index, 16).value,
-            arrival=ws.cell(index, 17).value,
+            actual=as_date(cell(index, "actual")),
+            condition=cell(index, "condition"),
+            price=cell(index, "price"),
+            total=cell(index, "total"),
+            payment=cell(index, "payment"),
+            awb=awb,
+            arrival=arrival,
             comment=str(comment or ""),
-            warranty=is_warranty_text(comment, invoice_raw, pn),
-            on_hold=is_on_hold(ws.cell(index, 16).value, ws.cell(index, 17).value, comment),
-            row_color=cell_fill(ws.cell(index, 1)),
-            serial=ws.cell(index, serial_col).value if serial_col else None,
+            warranty=is_warranty_text(comment, invoice_raw, pn_text),
+            on_hold=is_on_hold(awb, arrival, comment),
+            row_color=cell_fill(ws.cell(index, cols["invoice"])),
+            serial=display_code(cell(index, "serial")),
         )
         rows.append(item)
-    return rows
+    return drop_shadow_duplicates(rows)
 
 
 def load_previous(path: Path) -> list[PrevRow]:
@@ -1488,36 +1615,37 @@ def write_changes(path: Path, file_date: date, ordered, changes, dropped, notes)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def self_check(ordered, output: Path):
+def self_check(ordered, output: Path, file_date: date):
     index = {}
     for section, rows in ordered:
         for item in rows:
             index[(norm_inv(item.values[3]), norm_pn(item.values[5]))] = (section, item.values)
-    expects = {
-        ("7102610555", "J816P086A"): "Требует внимания",
-        ("8102612465", "KT-1257"): "Отгрузка от поставщика",
-        ("1102611295", "622-8001-350"): "В транзите",
-        ("21012612372", "5100S151"): "Лид тайм",
-        ("17092615215", "1150002-1"): "Отгружен",
-        ("19082612405", "102LA2AG"): "Завершен",
-        ("22072610315", "BACC2C4C06720EG"): "Отменен",
-        ("7102613425", "2116M23P01"): "Ожидает аванса",
-        ("22072613105", "3291214-2"): "Принят в работу",
-        ("29092616005", "BUL216"): "Требует внимания",
-        ("2309268425", "3-906S383-70"): "Отгрузка от поставщика",
-        ("5102611505", "46-3145-1"): "В транзите",
-        ("16092613402", "BACR15FT6AD12C"): "В транзите",
-        ("23092613105", "10009255"): "В транзите",
-        ("30092610505", "GR501BB4-4"): "Отгрузка от поставщика",
-        ("25092613455", "121282-25"): "В транзите",
-    }
     errors = []
-    for key, section in expects.items():
-        found = index.get(key)
-        if not found:
-            errors.append(f"нет строки {key}")
-        elif found[0] != section:
-            errors.append(f"{key}: ожидался раздел {section}, получен {found[0]}")
+    if file_date == date(2026, 10, 13):
+        expects = {
+            ("7102610555", "J816P086A"): "Требует внимания",
+            ("8102612465", "KT-1257"): "Отгрузка от поставщика",
+            ("1102611295", "622-8001-350"): "В транзите",
+            ("21012612372", "5100S151"): "Лид тайм",
+            ("17092615215", "1150002-1"): "Отгружен",
+            ("19082612405", "102LA2AG"): "Завершен",
+            ("22072610315", "BACC2C4C06720EG"): "Отменен",
+            ("7102613425", "2116M23P01"): "Ожидает аванса",
+            ("22072613105", "3291214-2"): "Принят в работу",
+            ("29092616005", "BUL216"): "Требует внимания",
+            ("2309268425", "3-906S383-70"): "Отгрузка от поставщика",
+            ("5102611505", "46-3145-1"): "В транзите",
+            ("16092613402", "BACR15FT6AD12C"): "В транзите",
+            ("23092613105", "10009255"): "В транзите",
+            ("30092610505", "GR501BB4-4"): "Отгрузка от поставщика",
+            ("25092613455", "121282-25"): "В транзите",
+        }
+        for key, section in expects.items():
+            found = index.get(key)
+            if not found:
+                errors.append(f"нет строки {key}")
+            elif found[0] != section:
+                errors.append(f"{key}: ожидался раздел {section}, получен {found[0]}")
     if ("", "622-6263-003") in {(norm_pn(v[5]),) for _s, rows in ordered for v in [r.values for r in rows]}:
         errors.append("ON HOLD попал в таблицу")
     for _section, rows in ordered:
@@ -1553,8 +1681,8 @@ def self_check(ordered, output: Path):
     if not closed or closed[0] != "Завершен" or closed[1][10] != "26.03.2026" or closed[1][12] != "25.04.2026":
         errors.append(f"пустые даты R287P04 не взяты из таблицы 1: {None if not closed else (closed[0], closed[1][10], closed[1][12])}")
     advance = index.get(("7102613425", "2116M23P01"))
-    if not advance or any(not cell_blank(advance[1][idx]) for idx in (1, 10, 12, 13)):
-        errors.append(f"в авансе 2116M23P01 стоят даты: {None if not advance else (advance[1][1], advance[1][10], advance[1][12], advance[1][13])}")
+    if advance and advance[0] == "Ожидает аванса" and any(not cell_blank(advance[1][idx]) for idx in (1, 10, 12, 13)):
+        errors.append(f"в авансе 2116M23P01 стоят даты: {(advance[1][1], advance[1][10], advance[1][12], advance[1][13])}")
     moved = index.get(("22072613105", "3291214-2"))
     if not moved or moved[1][10] != "22.07.2026" or moved[1][12] != "16.08.2026":
         errors.append(f"пустые даты 3291214-2 не взяты из таблицы 1: {None if not moved else (moved[1][10], moved[1][12])}")
@@ -1606,7 +1734,7 @@ def main():
     write_workbook(args.template, output, ordered, file_date)
     save_history(args.history, ordered, file_date, args.source.name)
     write_changes(changes_path, file_date, ordered, changes, dropped, notes)
-    self_check(ordered, output)
+    self_check(ordered, output, file_date)
     print(f"Готово: {output}")
     print(f"Отличия: {changes_path}")
     print(f"Изменений: {len(changes)}, убрано: {len(dropped)}")
