@@ -27,6 +27,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import openpyxl
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 SECTIONS = [
     "Ожидает аванса",
@@ -1450,36 +1451,74 @@ def assemble(previous, source_rows, file_date, history):
     return ordered, changes, dropped, notes
 
 
+# Высота в пунктах Excel. Google Таблицы переводят её в пиксели как pt * 4/3.
+# 28.5 pt даёт 38 px: вторая строка текста обрезается, и строки приходится править руками.
+DATA_ROW_HEIGHT = 36
+BANNER_ROW_HEIGHT = 22
+HEADER_ROW_HEIGHT = 57
+
+THIN_BORDER = Border(
+    left=Side(style="thin", color="FF000000"),
+    right=Side(style="thin", color="FF000000"),
+    top=Side(style="thin", color="FF000000"),
+    bottom=Side(style="thin", color="FF000000"),
+)
+DATA_FONT = Font(name="Calibri", size=10, bold=False, italic=False, color="FF000000")
+DATA_ALIGNMENT = Alignment(horizontal="center", vertical="center", wrap_text=True, shrink_to_fit=False)
+BANNER_FONT = Font(name="Calibri", size=10, bold=True, italic=False, color="FFFFFFFF")
+BANNER_FILL = PatternFill(fill_type="solid", fgColor="FF666666")
+BANNER_ALIGNMENT = Alignment(horizontal="center", vertical="center", wrap_text=False, shrink_to_fit=False)
+HEADER_FONT = Font(name="Calibri", size=10, bold=True, italic=False, color="FF000000")
+HEADER_FILL = PatternFill(fill_type="solid", fgColor="FF9FC5E8")
+HEADER_ALIGNMENT = Alignment(horizontal="center", vertical="center", wrap_text=True, shrink_to_fit=False)
+NO_FILL = PatternFill(fill_type=None)
+
+
+def apply_paste_style(cell, *, font, fill, alignment):
+    """Одинаковый вид ячейки: без зачёркивания и без случайной серой заливки из образца."""
+    cell.font = font
+    cell.fill = fill
+    cell.alignment = alignment
+    cell.border = THIN_BORDER
+    cell.number_format = "General"
+
+
 def write_workbook(template: Path, output: Path, ordered, file_date: date):
     output.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(template, output)
     wb = openpyxl.load_workbook(output)
     ws = wb["Main"] if "Main" in wb.sheetnames else wb.active
-    data_style = [style_snapshot(ws.cell(9, col)) for col in range(1, 25)]
-    banner_style = [style_snapshot(ws.cell(3, col)) for col in range(1, 25)]
     if ws.max_row > 1:
         ws.delete_rows(2, ws.max_row - 1)
+
+    for col in range(1, 25):
+        apply_paste_style(ws.cell(1, col), font=HEADER_FONT, fill=HEADER_FILL, alignment=HEADER_ALIGNMENT)
+    ws.row_dimensions[1].height = HEADER_ROW_HEIGHT
 
     row_index = 2
     data_rows = []
     for section, rows in ordered:
         for col in range(1, 25):
             cell = ws.cell(row_index, col, section if col == 6 else None)
-            apply_style(cell, banner_style[col - 1])
-        ws.row_dimensions[row_index].height = 15
+            apply_paste_style(cell, font=BANNER_FONT, fill=BANNER_FILL, alignment=BANNER_ALIGNMENT)
+        ws.row_dimensions[row_index].height = BANNER_ROW_HEIGHT
         row_index += 1
         for built in rows:
             for col in range(1, 25):
                 cell = ws.cell(row_index, col, built.values[col - 1])
-                apply_style(cell, data_style[col - 1])
-            ws.row_dimensions[row_index].height = 28.5
+                apply_paste_style(cell, font=DATA_FONT, fill=NO_FILL, alignment=DATA_ALIGNMENT)
+            ws.row_dimensions[row_index].height = DATA_ROW_HEIGHT
             data_rows.append(row_index)
             row_index += 1
 
     last_row = max(row_index - 1, 2)
+    for row_number in list(ws.row_dimensions):
+        if row_number > last_row:
+            del ws.row_dimensions[row_number]
     ws.auto_filter.ref = f"A1:X{last_row}"
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = f"A1:X{last_row}"
+    ws.sheet_format.defaultRowHeight = DATA_ROW_HEIGHT
     retarget_conditional_formatting(ws, last_row)
     wb.save(output)
     patch_dropdowns(output, last_row, data_rows)
@@ -1532,6 +1571,14 @@ def patch_dropdowns(path: Path, last_row: int, data_rows: list[int]):
                         1,
                     )
                 xml = re.sub(r"<extLst>.*</extLst>", "", xml, count=1, flags=re.S)
+
+                def keep_row(match):
+                    row_number = int(match.group(1) or match.group(2))
+                    if row_number <= last_row:
+                        return match.group(0)
+                    return ""
+
+                xml = re.sub(r"<row r=\"(\d+)\"[^>]*>.*?</row>|<row r=\"(\d+)\"[^>]*/>", keep_row, xml, flags=re.S)
                 xml = xml.replace("</worksheet>", block + "</worksheet>")
                 data = xml.encode("utf-8")
             zout.writestr(item, data)
@@ -1664,6 +1711,27 @@ def self_check(ordered, output: Path, file_date: date):
     with zipfile.ZipFile(output) as book:
         xml = book.read("xl/worksheets/sheet1.xml").decode("utf-8")
         dropdown = book.read("xl/worksheets/sheet2.xml").decode("utf-8")
+        styles_xml = book.read("xl/styles.xml").decode("utf-8")
+    if 'ht="36"' not in xml:
+        errors.append("высота строк данных не подходит для вставки в Google Таблицы")
+    row_numbers = [int(number) for number in re.findall(r'<row r="(\d+)"', xml)]
+    dimension = re.search(r'<dimension ref="[^"]*?(\d+)"', xml)
+    if row_numbers and dimension and max(row_numbers) > int(dimension.group(1)):
+        errors.append("в файле остались пустые строки образца")
+    strike_fonts = {
+        index
+        for index, font_xml in enumerate(re.findall(r"<font>.*?</font>", styles_xml))
+        if "<strike" in font_xml and 'val="0"' not in font_xml
+    }
+    used_style = re.search(r'<c r="A4" s="(\d+)"', xml)
+    cell_xfs = re.search(r"<cellXfs[^>]*>(.*?)</cellXfs>", styles_xml, flags=re.S)
+    if used_style and cell_xfs and strike_fonts:
+        xf_list = re.findall(r"<xf [^>]*>", cell_xfs.group(1))
+        style_id = int(used_style.group(1))
+        if style_id < len(xf_list):
+            font_id = re.search(r'fontId="(\d+)"', xf_list[style_id])
+            if font_id and int(font_id.group(1)) in strike_fonts:
+                errors.append("в оформлении осталось зачёркивание")
     if "x14:dataValidations" not in xml:
         errors.append("пропал выпадающий список")
     if "Dropdown!$A$2:$A$34" not in xml or "Dropdown!$B$2:$B$4" not in xml:
