@@ -1,0 +1,4 @@
+{
+  "name": "Weekly client order reports",
+  "install": "pip install -r requirements.txt"
+}
