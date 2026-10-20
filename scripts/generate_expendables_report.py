@@ -4,10 +4,10 @@
 Попадание / периоды — как в completed_orders (W, без cancel/refund/warranty…).
 
 В каждом периоде:
-  1) По поставщикам — шапка KPI + выпадающий список по каждому поставщику
-     (метрики + позиции)
-  2) По клиентам — выпадающий клиент; внутри — мини-отчёты по поставщикам
-     (та же логика, что в разделе 1)
+  1) По поставщикам — шапка KPI + выпадающий поставщик;
+     внутри — выпадающие клиенты с мини-отчётами
+  2) По клиентам — выпадающий клиент;
+     внутри — выпадающие поставщики с мини-отчётами
 """
 
 from __future__ import annotations
@@ -61,17 +61,25 @@ class SliceKPI:
 
 
 @dataclass
-class SupplierBlock:
+class EntityLeaf:
+    """Мини-отчёт: метрики + позиции (клиент внутри поставщика или наоборот)."""
     name: str
     kpi: SliceKPI
     positions: list = field(default_factory=list)
 
 
 @dataclass
+class SupplierBlock:
+    name: str
+    kpi: SliceKPI
+    clients: list[EntityLeaf] = field(default_factory=list)
+
+
+@dataclass
 class ClientBlock:
     name: str
     kpi: SliceKPI
-    suppliers: list[SupplierBlock] = field(default_factory=list)
+    suppliers: list[EntityLeaf] = field(default_factory=list)
 
 
 @dataclass
@@ -112,17 +120,22 @@ def _positions(part: pd.DataFrame) -> list:
     ]
 
 
-def build_suppliers(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[SupplierBlock]:
-    names = sorted(
-        rows["_supplier"].unique(),
-        key=lambda s: (-float(rows.loc[rows["_supplier"] == s, "_sale"].sum()), str(s).casefold()),
+def _sorted_names(rows: pd.DataFrame, key: str) -> list:
+    return sorted(
+        rows[key].unique(),
+        key=lambda s: (-float(rows.loc[rows[key] == s, "_sale"].sum()), str(s).casefold()),
     )
-    out: list[SupplierBlock] = []
-    for name in names:
-        part = rows[rows["_supplier"] == name]
-        lead_part = lead_rows[lead_rows["_supplier"] == name]
+
+
+def build_leaves(
+    rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str
+) -> list[EntityLeaf]:
+    out: list[EntityLeaf] = []
+    for name in _sorted_names(rows, key):
+        part = rows[rows[key] == name]
+        lead_part = lead_rows[lead_rows[key] == name]
         out.append(
-            SupplierBlock(
+            EntityLeaf(
                 name=str(name),
                 kpi=_kpi(part, lead_part),
                 positions=_positions(part),
@@ -131,20 +144,31 @@ def build_suppliers(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[Supplie
     return out
 
 
+def build_suppliers(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[SupplierBlock]:
+    out: list[SupplierBlock] = []
+    for name in _sorted_names(rows, "_supplier"):
+        part = rows[rows["_supplier"] == name]
+        lead_part = lead_rows[lead_rows["_supplier"] == name]
+        out.append(
+            SupplierBlock(
+                name=str(name),
+                kpi=_kpi(part, lead_part),
+                clients=build_leaves(part, lead_part, "_client"),
+            )
+        )
+    return out
+
+
 def build_clients(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[ClientBlock]:
-    names = sorted(
-        rows["_client"].unique(),
-        key=lambda s: (-float(rows.loc[rows["_client"] == s, "_sale"].sum()), str(s).casefold()),
-    )
     out: list[ClientBlock] = []
-    for name in names:
+    for name in _sorted_names(rows, "_client"):
         part = rows[rows["_client"] == name]
         lead_part = lead_rows[lead_rows["_client"] == name]
         out.append(
             ClientBlock(
                 name=str(name),
                 kpi=_kpi(part, lead_part),
-                suppliers=build_suppliers(part, lead_part),
+                suppliers=build_leaves(part, lead_part, "_supplier"),
             )
         )
     return out
@@ -210,22 +234,43 @@ def render_header_kpis(kpi: SliceKPI) -> str:
     """
 
 
-def render_supplier_dropdown(sup: SupplierBlock, table_id: str, *, opened: bool = False) -> str:
-    open_attr = " open" if opened else ""
+def render_leaf_dropdown(leaf: EntityLeaf, table_id: str, kind_label: str) -> str:
+    """Мини-отчёт внутри поставщика/клиента."""
     body = (
-        render_positions_table(sup.positions, table_id)
-        if sup.positions
+        render_positions_table(leaf.positions, table_id)
+        if leaf.positions
         else "<p class='empty'>Нет позиций</p>"
     )
     return f"""
-<details class="subblock"{open_attr}>
+<details class="leaf">
+  <summary>
+    <span class="ent-name">{html_escape(leaf.name)}</span>
+    <span class="ent-meta">{kpi_meta(leaf.kpi)}</span>
+  </summary>
+  <div class="block-body">
+    {render_header_kpis(leaf.kpi)}
+    <h4 class="leaf-h">Позиции · {html_escape(kind_label)}</h4>
+    {body}
+  </div>
+</details>
+"""
+
+
+def render_supplier_dropdown(sup: SupplierBlock, prefix: str) -> str:
+    clients = "\n".join(
+        render_leaf_dropdown(c, f"{prefix}-c{i}", "клиент")
+        for i, c in enumerate(sup.clients)
+    ) or "<p class='empty'>Нет клиентов</p>"
+    return f"""
+<details class="drop">
   <summary>
     <span class="ent-name">{html_escape(sup.name)}</span>
-    <span class="ent-meta">{kpi_meta(sup.kpi)}</span>
+    <span class="ent-meta">{kpi_meta(sup.kpi)} · клиентов {fmt_int(len(sup.clients))}</span>
   </summary>
   <div class="block-body">
     {render_header_kpis(sup.kpi)}
-    {body}
+    <h3 class="section-h">Клиенты ({fmt_int(len(sup.clients))})</h3>
+    {clients}
   </div>
 </details>
 """
@@ -233,13 +278,11 @@ def render_supplier_dropdown(sup: SupplierBlock, table_id: str, *, opened: bool 
 
 def render_client_dropdown(client: ClientBlock, prefix: str) -> str:
     suppliers = "\n".join(
-        render_supplier_dropdown(s, f"{prefix}-s{i}", opened=False)
+        render_leaf_dropdown(s, f"{prefix}-s{i}", "поставщик")
         for i, s in enumerate(client.suppliers)
-    )
-    if not suppliers:
-        suppliers = "<p class='empty'>Нет поставщиков</p>"
+    ) or "<p class='empty'>Нет поставщиков</p>"
     return f"""
-<details class="block">
+<details class="drop">
   <summary>
     <span class="ent-name">{html_escape(client.name)}</span>
     <span class="ent-meta">{kpi_meta(client.kpi)} · поставщиков {fmt_int(len(client.suppliers))}</span>
@@ -277,6 +320,7 @@ def render_period(period: PeriodView, idx: int, *, opened: bool) -> str:
     <details class="section" open>
       <summary>1. По поставщикам ({fmt_int(len(period.suppliers))})</summary>
       <div class="block-body">
+        <p class="section-note">Внутри поставщика — мини-отчёты по клиентам.</p>
         {suppliers_html}
       </div>
     </details>
@@ -284,7 +328,7 @@ def render_period(period: PeriodView, idx: int, *, opened: bool) -> str:
     <details class="section" open>
       <summary>2. По клиентам ({fmt_int(len(period.clients))})</summary>
       <div class="block-body">
-        <p class="section-note">Внутри клиента — мини-отчёты по поставщикам (как в разделе 1).</p>
+        <p class="section-note">Внутри клиента — мини-отчёты по поставщикам.</p>
         {clients_html}
       </div>
     </details>
@@ -306,6 +350,9 @@ def render_html(periods: list[PeriodView], source_name: str, as_of: date) -> str
 <style>
 :root {{
   --navy:#04384d; --line:#c5d4da; --muted:#6b7c83; --zebra:#f4f8f9;
+  --drop:#6b3f1f; --drop-bg:#f3e6d4; --drop-border:#d2a66a;
+  --leaf:#3d4a22; --leaf-bg:#eef0e2; --leaf-border:#b7c08a;
+  --section-bg:#e8f0f3;
 }}
 * {{ box-sizing:border-box; }}
 body {{
@@ -342,31 +389,52 @@ details.period > summary::-webkit-details-marker {{ display:none; }}
 .period-title {{ font-size:17px; font-weight:700; color:var(--navy); }}
 .period-meta {{ font-size:13px; color:var(--muted); }}
 .period-body {{ padding:12px 16px 16px; }}
-details.section, details.block, details.subblock {{
-  border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
+
+/* Разделы 1/2 — холодный фон, но не как выпадающие сущности */
+details.section {{
+  border:1px solid #b7c8cf; border-radius:8px; margin:14px 0; background:#fff;
 }}
 details.section > summary {{
-  cursor:pointer; padding:12px 14px; list-style:none; background:#e8f6f8;
+  cursor:pointer; padding:12px 14px; list-style:none; background:var(--section-bg);
   font-weight:700; color:var(--navy); font-size:15px;
 }}
-details.block > summary, details.subblock > summary {{
-  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
-  list-style:none; background:#f7fbfc;
+
+/* Основные выпадающие (поставщик / клиент) — тёплый песочный, контраст к голубому */
+details.drop {{
+  border:1px solid var(--drop-border); border-radius:8px; margin:10px 0; background:#fff;
+}}
+details.drop > summary {{
+  cursor:pointer; padding:11px 12px; font-weight:700; color:var(--drop);
+  list-style:none; background:var(--drop-bg);
   display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
 }}
+
+/* Вложенные мини-отчёты — оливковый, чтобы отличались от песочных */
+details.leaf {{
+  border:1px solid var(--leaf-border); border-radius:8px; margin:8px 0; background:#fff;
+}}
+details.leaf > summary {{
+  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--leaf);
+  list-style:none; background:var(--leaf-bg);
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+}}
+
 details.section > summary::-webkit-details-marker,
-details.block > summary::-webkit-details-marker,
-details.subblock > summary::-webkit-details-marker {{ display:none; }}
+details.drop > summary::-webkit-details-marker,
+details.leaf > summary::-webkit-details-marker {{ display:none; }}
 details.section > summary::before,
-details.block > summary::before,
-details.subblock > summary::before {{ content:"▸ "; color:#7a8a90; }}
+details.drop > summary::before,
+details.leaf > summary::before {{ content:"▸ "; opacity:.7; }}
 details.section[open] > summary::before,
-details.block[open] > summary::before,
-details.subblock[open] > summary::before {{ content:"▾ "; }}
-.block-body {{ padding:12px; }}
+details.drop[open] > summary::before,
+details.leaf[open] > summary::before {{ content:"▾ "; }}
+
+.block-body {{ padding:12px; background:#fff; }}
 .ent-name {{ font-weight:700; }}
-.ent-meta {{ font-size:12px; color:var(--muted); font-weight:600; }}
+.ent-meta {{ font-size:12px; color:#5c5348; font-weight:600; }}
+details.leaf .ent-meta {{ color:#4a5240; }}
 .section-h {{ margin:16px 0 8px; font-size:14px; color:var(--navy); }}
+.leaf-h {{ margin:8px 0; font-size:13px; color:var(--muted); font-weight:600; }}
 .section-note {{ margin:0 0 12px; color:var(--muted); font-size:13px; }}
 .kpis {{
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
@@ -417,13 +485,14 @@ tbody tr:hover {{ background:#eef7f9; }}
     <br/>
     <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST. FINISHED не фильтруем.
     <br/>
-    <strong>Структура периода:</strong> 1) по поставщикам (шапка + выпадающие списки с метриками) ·
-    2) по клиентам (внутри — мини-отчёты по поставщикам).
+    <strong>Структура периода:</strong>
+    1) по поставщикам → внутри мини-отчёты по клиентам ·
+    2) по клиентам → внутри мини-отчёты по поставщикам.
     <br/>
     <strong>Метрики:</strong> заказы, позиции, выручка, маржа, срок STK (W−Q), Δ транспорта.
   </div>
   {sections}
-  <p class="hint">Открывайте HTML напрямую.</p>
+  <p class="hint">Открывайте HTML напрямую. Выпадающие списки — песочный/оливковый, чтобы отличались от голубой шапки отчёта.</p>
 </div>
 <script>
 document.querySelectorAll('table[data-sortable]').forEach((table) => {{
