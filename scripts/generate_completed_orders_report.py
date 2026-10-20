@@ -257,12 +257,16 @@ def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
 
 
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
+    """Сроки STK: исключаем битые даты заказа Q (напр. 1970-01-01 → десятки тысяч дней)."""
+    q_ok = df["_q"].map(lambda d: d is not None and getattr(d, "year", 0) >= 2020)
     return (
         report_mask(df, start, end)
         & df["_stk"]
         & df["_q"].notna()
+        & q_ok
         & df["_days"].notna()
         & (df["_days"] >= 0)
+        & (df["_days"] <= 3650)  # страховка от абсурдных сроков
         & df["_bucket"].isin({CAT_ROTABLE, CAT_EXPENDABLE})
     )
 
@@ -790,6 +794,7 @@ tbody tr:hover {{ background:#eef7f9; }}
     3) последний <em>полный</em> квартал · 4) текущий год с 01.01 по дату среза.
     <br/>
     <strong>Сроки:</strong> среднее W−Q, только <strong>STK</strong> (лид-таймы исключены).
+    Битые даты заказа Q (год &lt; 2020, напр. 1970-01-01) из сроков исключаем.
     Для <strong>IBERIA / JET TECHNIC</strong> в шапке дополнительно ср. срок оплаты AW−Q (STK, без постоплаты).
     <br/>
     <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − transaction fee.

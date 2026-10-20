@@ -147,6 +147,7 @@ tbody tr:hover { background:#eef7f9; }
     2) по клиентам → внутри мини-отчёты по поставщикам.
     <br/>
     <strong>Метрики:</strong> заказы, позиции, выручка, маржа, срок STK (W−Q), Δ транспорта.
+    Из сроков исключаем битые даты заказа Q (год &lt; 2020, напр. 1970-01-01).
   </div>
   
 <details class="period" open>
@@ -31013,8 +31014,8 @@ DEMO</td><td class='num'>616</td><td class='num'>197</td><td class='num'>66.0</t
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">78.8 дн.</div>
-        <div class="muted">ср. W−Q · 1 547 поз.</div>
+        <div class="value">52.3 дн.</div>
+        <div class="muted">ср. W−Q · 1 545 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -38533,7 +38534,7 @@ SHORT THREAD</td><td class='num'>405</td><td class='num'>264</td><td class='num'
 <details class="drop">
   <summary>
     <span class="ent-name">ФЭИ</span>
-    <span class="ent-meta">97 зак. · 115 поз. · $118 024 · маржа $27 831 · 23.6% · срок 368.2 дн. · <span class="ok">Δ тр. $-788</span> · клиентов 34</span>
+    <span class="ent-meta">97 зак. · 115 поз. · $118 024 · маржа $27 831 · 23.6% · срок 8.7 дн. · <span class="ok">Δ тр. $-788</span> · клиентов 34</span>
   </summary>
   <div class="block-body">
     
@@ -38555,8 +38556,8 @@ SHORT THREAD</td><td class='num'>405</td><td class='num'>264</td><td class='num'
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">368.2 дн.</div>
-        <div class="muted">ср. W−Q · 114 поз.</div>
+        <div class="value">8.7 дн.</div>
+        <div class="muted">ср. W−Q · 112 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -39073,7 +39074,7 @@ PREFORMEDO-RING</td><td class='num'>300</td><td class='num'>183</td><td class='n
 <details class="leaf">
   <summary>
     <span class="ent-name">Скайпро Техникс</span>
-    <span class="ent-meta">10 зак. · 12 поз. · $4 577 · маржа $1 626 · 35.5% · срок 3418.5 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">10 зак. · 12 поз. · $4 577 · маржа $1 626 · 35.5% · срок 2.8 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -39095,8 +39096,8 @@ PREFORMEDO-RING</td><td class='num'>300</td><td class='num'>183</td><td class='n
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">3418.5 дн.</div>
-        <div class="muted">ср. W−Q · 12 поз.</div>
+        <div class="value">2.8 дн.</div>
+        <div class="muted">ср. W−Q · 10 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -52533,7 +52534,7 @@ FILTER</td><td class='num'>970</td><td class='num'>230</td><td class='num'>48.0<
 <details class="drop">
   <summary>
     <span class="ent-name">Скайпро Техникс</span>
-    <span class="ent-meta">13 зак. · 27 поз. · $15 987 · маржа $6 484 · 40.6% · срок 1544.6 дн. · <span class="ok">Δ тр. $-173</span> · поставщиков 4</span>
+    <span class="ent-meta">13 зак. · 27 поз. · $15 987 · маржа $6 484 · 40.6% · срок 28.4 дн. · <span class="ok">Δ тр. $-173</span> · поставщиков 4</span>
   </summary>
   <div class="block-body">
     
@@ -52555,8 +52556,8 @@ FILTER</td><td class='num'>970</td><td class='num'>230</td><td class='num'>48.0<
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">1544.6 дн.</div>
-        <div class="muted">ср. W−Q · 27 поз.</div>
+        <div class="value">28.4 дн.</div>
+        <div class="muted">ср. W−Q · 25 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -52638,7 +52639,7 @@ FILTER</td><td class='num'>970</td><td class='num'>230</td><td class='num'>48.0<
 <details class="leaf">
   <summary>
     <span class="ent-name">ФЭИ</span>
-    <span class="ent-meta">10 зак. · 12 поз. · $4 577 · маржа $1 626 · 35.5% · срок 3418.5 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">10 зак. · 12 поз. · $4 577 · маржа $1 626 · 35.5% · срок 2.8 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -52660,8 +52661,8 @@ FILTER</td><td class='num'>970</td><td class='num'>230</td><td class='num'>48.0<
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">3418.5 дн.</div>
-        <div class="muted">ср. W−Q · 12 поз.</div>
+        <div class="value">2.8 дн.</div>
+        <div class="muted">ср. W−Q · 10 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>

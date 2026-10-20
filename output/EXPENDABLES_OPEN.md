@@ -4,10 +4,8 @@
 
 **Открыть HTML:** https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/expendables-suppliers-clients-3296/output/expendables_suppliers_clients_0910.html
 
-Зеркало: https://filebin.net/lfDYab9CpP2ShhzD/expendables_suppliers_clients_0910.html
+Зеркало: https://filebin.net/qCS4wR9ensgibjSG/expendables_suppliers_clients_0910.html
 
-### Структура периода
-1. **По поставщикам** (песочные выпадающие) → внутри мини-отчёты по клиентам (оливковые)
-2. **По клиентам** (песочные) → внутри мини-отчёты по поставщикам (оливковые)
-
-Выпадающие списки специально другого цвета, чтобы не сливались с голубой шапкой отчёта.
+### Исправление сроков
+Исключены битые даты заказа Q (год &lt; 2020, напр. `1970-01-01`).  
+ФЭИ YTD: было ~368 дн. → стало **8.7 дн.** (медиана 2).
