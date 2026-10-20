@@ -634,15 +634,51 @@ def display_code(value):
     return text or None
 
 
+_MONTHS = {
+    name: number
+    for number, name in enumerate(
+        ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"),
+        start=1,
+    )
+}
+
+
+def english_day(value, year: int) -> date | None:
+    """«Oct 26» и «18-Oct» без года — дата в году файла."""
+    if not isinstance(value, str):
+        return None
+    text = " ".join(value.strip().replace(",", " ").split())
+    month_first = re.fullmatch(r"([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:\s+(\d{4}))?", text)
+    day_first = re.fullmatch(r"(\d{1,2})[-\s]([A-Za-z]{3,9})\.?(?:\s+(\d{4}))?", text)
+    if month_first:
+        month = _MONTHS.get(month_first.group(1).lower()[:3])
+        day = int(month_first.group(2))
+        year = int(month_first.group(3) or year)
+    elif day_first:
+        month = _MONTHS.get(day_first.group(2).lower()[:3])
+        day = int(day_first.group(1))
+        year = int(day_first.group(3) or year)
+    else:
+        return None
+    if not month:
+        return None
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
 def pure_date_value(value):
     """Ячейка целиком является датой, а не комментарием с датой внутри."""
-    if parse_stamp(value) is None:
-        return False
     if isinstance(value, (datetime, date)):
-        return True
+        return parse_stamp(value) is not None
+    if not isinstance(value, str):
+        return False
     text = str(value).strip()
     text = re.sub(r"\b(\d):", r"0\1:", text)
-    return bool(re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?|\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?", text))
+    if re.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?|\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?", text):
+        return parse_stamp(value) is not None
+    return english_day(text, 2026) is not None
 
 
 def drop_shadow_duplicates(rows: list[SourceRow]) -> list[SourceRow]:
@@ -662,7 +698,8 @@ def drop_shadow_duplicates(rows: list[SourceRow]) -> list[SourceRow]:
 
 
 def load_source(path: Path) -> list[SourceRow]:
-    wb = openpyxl.load_workbook(path, data_only=False)
+    # Google Таблицы сохраняют значения внутри IFERROR, их видно только в data_only.
+    wb = openpyxl.load_workbook(path, data_only=True)
     ws = wb.active
     cols = header_columns(ws)
     section = "PREAMBLE"
@@ -703,9 +740,14 @@ def load_source(path: Path) -> list[SourceRow]:
             deadline = start + timedelta(days=int(lead))
         awb = cell(index, "awb")
         arrival = cell(index, "arrival")
+        file_year = file_date_from_name(path).year
+        named_arrival = english_day(arrival, file_year)
+        if named_arrival and not as_date(arrival):
+            arrival = named_arrival
         # В новом файле ожидаемую дату иногда пишут в столбец AWB, а столбец прихода оставляют пустым.
-        if pure_date_value(awb) and not pure_date_value(arrival):
-            arrival = awb
+        named_awb = english_day(awb, file_year)
+        if (pure_date_value(awb) or named_awb) and not pure_date_value(arrival) and not as_date(arrival):
+            arrival = named_awb or awb
             awb = None
         else:
             awb = display_code(awb)
