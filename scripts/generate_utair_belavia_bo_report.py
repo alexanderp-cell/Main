@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """FASTAIR — Выполненные заказы: Utair + Белавиа, доля BLUE OCEAN.
 
+Только EXPENDABLE (вкл. consumable). ROTABLE / GSE не сравниваем.
+
 Те же правила попадания и периоды, что в completed_orders:
   · только заполненная W; без CANCEL/REFUND/WARRANTY/SCRAP/LOST
   · FINISHED не фильтруем
@@ -14,16 +16,14 @@
 from __future__ import annotations
 
 import argparse
-import re
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
 from generate_completed_orders_report import (
     CAT_EXPENDABLE,
-    CAT_ROTABLE,
     as_money,
     build_periods,
     fmt_days,
@@ -58,10 +58,13 @@ def is_blue_ocean(supplier: str) -> bool:
     return BO_TOKEN in (supplier or "").upper()
 
 
-def filter_target_clients(df: pd.DataFrame) -> pd.DataFrame:
+def filter_scope(df: pd.DataFrame) -> pd.DataFrame:
+    """Utair + Белавиа, только EXPENDABLE (consumable уже в бакете)."""
     out = df.copy()
     out["_client_norm"] = out["_client"].map(normalize_client)
-    return out.loc[out["_client_norm"].isin(TARGET_CLIENTS)].copy()
+    return out.loc[
+        out["_client_norm"].isin(TARGET_CLIENTS) & out["_bucket"].eq(CAT_EXPENDABLE)
+    ].copy()
 
 
 @dataclass
@@ -91,9 +94,7 @@ class SupplierBlock:
     name: str
     is_bo: bool
     kpi: SliceKPI
-    positions_rotable: list
-    positions_expendable: list
-    positions_other: list
+    positions: list = field(default_factory=list)
 
 
 @dataclass
@@ -133,21 +134,6 @@ def _kpi(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> SliceKPI:
     )
 
 
-def _positions_by_bucket(part: pd.DataFrame) -> tuple[list, list, list]:
-    def pos(bucket: str):
-        sub = part[part["_bucket"] == bucket].sort_values("_sale", ascending=False)
-        return [line_from_row(r) for _, r in sub.iterrows()]
-
-    other = part[~part["_bucket"].isin({CAT_ROTABLE, CAT_EXPENDABLE})].sort_values(
-        "_sale", ascending=False
-    )
-    return (
-        pos(CAT_ROTABLE),
-        pos(CAT_EXPENDABLE),
-        [line_from_row(r) for _, r in other.iterrows()],
-    )
-
-
 def build_client(rows: pd.DataFrame, lead_rows: pd.DataFrame, name: str) -> ClientBlock:
     part = rows[rows["_client_norm"] == name]
     lead_part = lead_rows[lead_rows["_client_norm"] == name]
@@ -158,18 +144,26 @@ def build_client(rows: pd.DataFrame, lead_rows: pd.DataFrame, name: str) -> Clie
     other_lead = lead_part.loc[~lead_part["_supplier"].map(is_blue_ocean)]
 
     suppliers: list[SupplierBlock] = []
-    for sup in sorted(part["_supplier"].unique(), key=lambda s: (not is_blue_ocean(str(s)), -float(part.loc[part["_supplier"] == s, "_sale"].sum()), str(s).casefold())):
+    for sup in sorted(
+        part["_supplier"].unique(),
+        key=lambda s: (
+            not is_blue_ocean(str(s)),
+            -float(part.loc[part["_supplier"] == s, "_sale"].sum()),
+            str(s).casefold(),
+        ),
+    ):
         s_part = part[part["_supplier"] == sup]
         s_lead = lead_part[lead_part["_supplier"] == sup]
-        rot, exp, oth = _positions_by_bucket(s_part)
+        positions = [
+            line_from_row(r)
+            for _, r in s_part.sort_values("_sale", ascending=False).iterrows()
+        ]
         suppliers.append(
             SupplierBlock(
                 name=str(sup),
                 is_bo=is_blue_ocean(str(sup)),
                 kpi=_kpi(s_part, s_lead),
-                positions_rotable=rot,
-                positions_expendable=exp,
-                positions_other=oth,
+                positions=positions,
             )
         )
 
@@ -253,24 +247,11 @@ def render_compare(bo: SliceKPI, other: SliceKPI, total: SliceKPI) -> str:
 
 def render_supplier(sup: SupplierBlock, table_prefix: str) -> str:
     badge = ' <span class="bo-badge">BLUE OCEAN</span>' if sup.is_bo else ""
-    blocks = []
-    for label, positions, j in (
-        ("ROTABLE · вкл. GSE", sup.positions_rotable, 0),
-        ("EXPENDABLE · вкл. consumable", sup.positions_expendable, 1),
-        ("Прочее", sup.positions_other, 2),
-    ):
-        if not positions:
-            continue
-        blocks.append(
-            f"""
-<details class="catblock" open>
-  <summary><span class="cat-name">{html_escape(label)}</span>
-  <span class="ent-meta">{fmt_int(len(positions))} поз.</span></summary>
-  <div class="block-body">{render_positions_table(positions, f"{table_prefix}-{j}")}</div>
-</details>
-"""
-        )
-    inner = "\n".join(blocks) if blocks else "<p class='empty'>Нет позиций</p>"
+    inner = (
+        render_positions_table(sup.positions, table_prefix)
+        if sup.positions
+        else "<p class='empty'>Нет позиций</p>"
+    )
     open_attr = " open" if sup.is_bo else ""
     return f"""
 <details class="subblock{' bo-block' if sup.is_bo else ''}"{open_attr}>
@@ -307,7 +288,7 @@ def render_period(period: PeriodView, idx: int, *, opened: bool) -> str:
     range_s = f"{period.start.strftime('%d.%m.%Y')} – {period.end.strftime('%d.%m.%Y')}"
     clients_html = "\n".join(render_client(c, i, idx) for i, c in enumerate(period.clients))
     if not clients_html:
-        clients_html = "<p class='empty'>Нет выполненных позиций Utair / Белавиа</p>"
+        clients_html = "<p class='empty'>Нет выполненных EXPENDABLE по Utair / Белавиа</p>"
     return f"""
 <details class="period"{open_attr}>
   <summary>
@@ -475,18 +456,19 @@ tbody tr:hover {{ background:#eef7f9; }}
 <div class="wrap">
   <div class="hero">
     <div class="eyebrow">FASTAIR</div>
-    <h1>Utair + Белавиа · доля BLUE OCEAN</h1>
-    <div class="sub">Срез ТАЗ {html_escape(as_of.strftime('%d.%m.%Y'))} · источник {html_escape(source_name)}</div>
+    <h1>Utair + Белавиа · BLUE OCEAN · EXPENDABLE</h1>
+    <div class="sub">Срез ТАЗ {html_escape(as_of.strftime('%d.%m.%Y'))} · источник {html_escape(source_name)} · только EXPENDABLE (вкл. consumable)</div>
   </div>
   <div class="rules">
-    <strong>Клиенты:</strong> только <strong>Utair</strong> (вкл. UTair) и <strong>Белавиа</strong>.
+    <strong>Срез:</strong> только <strong>EXPENDABLE</strong> (consumable сюда же). ROTABLE / GSE не входят.
+    Клиенты: <strong>Utair</strong> (вкл. UTair) и <strong>Белавиа</strong>.
     Внутри клиента — выпадающие <strong>поставщики</strong>; BLUE OCEAN выделен.
     <br/>
     <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST.
     FINISHED не фильтруем.
     <br/>
     <strong>Качество:</strong> сравниваем долю заказов/выручки/маржи, срок STK (W−Q) и Δ транспорта
-    у BLUE OCEAN vs остальные поставщики.
+    у BLUE OCEAN vs остальные поставщики — только по expendables.
     <br/>
     <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − fee.
   </div>
@@ -538,7 +520,7 @@ def main() -> None:
     args = parser.parse_args()
 
     as_of = infer_taz_end(args.taz)
-    df = filter_target_clients(prepare(load_taz(args.taz)))
+    df = filter_scope(prepare(load_taz(args.taz)))
     # reuse period windows from base builder, then rebuild focused views
     base_periods = build_periods(df, as_of)
     periods = [
