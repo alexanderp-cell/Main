@@ -153,8 +153,9 @@ tbody tr:hover { background:#eef7f9; }
     <strong>Срез:</strong> только <strong>ROTABLE</strong> (GSE/TOOL сюда же), все клиенты.
     KIT / FEET / пустой Category в эти отчёты не входят (бакет «Прочее»).
     <br/>
-    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST.
-    Статус <strong>WARRANTY</strong> входит в выполнение (поставка уже была) и дублируется в разделе 3 — без повторного сложения выручки.
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST;
+    без типа поставки «Гарантийная поставка» (замена/возврат из ремонта).
+    Статус <strong>WARRANTY</strong> на обычной продаже входит в выполнение и дублируется в разделе 3 — без повторного сложения выручки.
     FINISHED не фильтруем.
     <br/>
     <strong>Структура периода:</strong>
@@ -2406,15 +2407,15 @@ GEAR</td><td class='num'>20 800</td><td class='num'>4 542</td><td class='num'>21
   <summary>
     <span class="period-title">2. Прошедший месяц · Сентябрь 2026</span>
     <span class="period-meta">01.09.2026 – 30.09.2026</span>
-    <span class="period-meta">81 зак. · $3 592 426 выр. · маржа $608 659 · warranty 1 зак. / $13 000</span>
+    <span class="period-meta">79 зак. · $3 592 426 выр. · маржа $629 334 · warranty 1 зак. / $13 000</span>
   </summary>
   <div class="period-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">81</div>
-        <div class="muted">86 позиций ROTABLE с W</div>
+        <div class="value">79</div>
+        <div class="muted">84 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -2423,22 +2424,22 @@ GEAR</td><td class='num'>20 800</td><td class='num'>4 542</td><td class='num'>21
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$608 659</div>
-        <div class="muted">продажа − закупка − тр. − fee · 16.9%</div>
+        <div class="value">$629 334</div>
+        <div class="muted">продажа − закупка − тр. − fee · 17.5%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">68.5 дн.</div>
-        <div class="muted">ср. W−Q · 68 поз.</div>
+        <div class="value">52.4 дн.</div>
+        <div class="muted">ср. W−Q · 66 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>178 040</span>
+          <span>177 540</span>
           <span class="op">−</span>
-          <span>198 757</span>
+          <span>197 367</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $20 717</span>
+          <span class="bad">Δ тр. $19 827</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -3786,15 +3787,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="drop">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">16 зак. · 18 поз. · $552 534 · маржа $77 485 · 14.0% · срок 140.4 дн. · <span class="bad">Δ тр. $2 499</span> · клиентов 8</span>
+    <span class="ent-meta">14 зак. · 16 поз. · $552 534 · маржа $98 159 · 17.8% · срок 74.9 дн. · <span class="bad">Δ тр. $1 609</span> · клиентов 7</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">16</div>
-        <div class="muted">18 позиций ROTABLE с W</div>
+        <div class="value">14</div>
+        <div class="muted">16 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -3803,28 +3804,28 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$77 485</div>
-        <div class="muted">продажа − закупка − тр. − fee · 14.0%</div>
+        <div class="value">$98 159</div>
+        <div class="muted">продажа − закупка − тр. − fee · 17.8%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">140.4 дн.</div>
-        <div class="muted">ср. W−Q · 16 поз.</div>
+        <div class="value">74.9 дн.</div>
+        <div class="muted">ср. W−Q · 14 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>29 890</span>
+          <span>29 390</span>
           <span class="op">−</span>
-          <span>32 389</span>
+          <span>30 999</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $2 499</span>
+          <span class="bad">Δ тр. $1 609</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
     </div>
     
-    <h3 class="section-h">Клиенты (8)</h3>
+    <h3 class="section-h">Клиенты (7)</h3>
     
 <details class="leaf">
   <summary>
@@ -3891,15 +3892,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="leaf">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">8 зак. · 8 поз. · $52 800 · маржа $-10 733 · -20.3% · срок 159.0 дн. · <span class="bad">Δ тр. $2 306</span></span>
+    <span class="ent-meta">7 зак. · 7 поз. · $52 800 · маржа $6 802 · 12.9% · срок 57.7 дн. · <span class="bad">Δ тр. $1 335</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">8</div>
-        <div class="muted">8 позиций ROTABLE с W</div>
+        <div class="value">7</div>
+        <div class="muted">7 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -3908,22 +3909,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-10 733</div>
-        <div class="muted">продажа − закупка − тр. − fee · -20.3%</div>
+        <div class="value">$6 802</div>
+        <div class="muted">продажа − закупка − тр. − fee · 12.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">159.0 дн.</div>
-        <div class="muted">ср. W−Q · 7 поз.</div>
+        <div class="value">57.7 дн.</div>
+        <div class="muted">ср. W−Q · 6 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>3 740</span>
           <span class="op">−</span>
-          <span>6 046</span>
+          <span>5 075</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $2 306</span>
+          <span class="bad">Δ тр. $1 335</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -3944,7 +3945,7 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </tr></thead>
       <tbody><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr></tbody>
     </table>
     </div>
     
@@ -4256,68 +4257,6 @@ Tube</td><td class='num'>1 560</td><td class='num'>779</td><td class='num'>—</
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>P75701-3</td><td>PITOT TEST ADAPTER</td><td class='num'>1 500</td><td class='num'>501</td><td class='num'>155.0</td><td class='num bad'>11</td><td class='num'>100426095012</td></tr></tbody>
-    </table>
-    </div>
-    
-  </div>
-</details>
-
-
-<details class="leaf">
-  <summary>
-    <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-3 139 · срок 432.0 дн. · <span class="ok">Δ тр. $-81</span></span>
-  </summary>
-  <div class="block-body">
-    
-    <div class="kpis">
-      <div class="highlight">
-        <div class="label">Выполнено заказов</div>
-        <div class="value">1</div>
-        <div class="muted">1 позиций ROTABLE с W</div>
-      </div>
-      <div>
-        <div class="label">Выручка</div>
-        <div class="value">$0</div>
-        <div class="muted">Σ продажная итого</div>
-      </div>
-      <div>
-        <div class="label">Маржа</div>
-        <div class="value">$-3 139</div>
-        <div class="muted">продажа − закупка − тр. − fee</div>
-      </div>
-      <div>
-        <div class="label">Сроки STK</div>
-        <div class="value">432.0 дн.</div>
-        <div class="muted">ср. W−Q · 1 поз.</div>
-      </div>
-      <div class="wide">
-        <div class="label">Транспорт план − факт = дельта</div>
-        <div class="value transport">
-          <span>500</span>
-          <span class="op">−</span>
-          <span>419</span>
-          <span class="op">=</span>
-          <span class="ok">Δ тр. $-81</span>
-        </div>
-        <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
-      </div>
-    </div>
-    
-    <h4 class="leaf-h">Позиции · клиент</h4>
-    
-    <div class="table-scroll">
-    <table data-sortable id="p2-sup-2-c7">
-      <thead><tr>
-        <th class="label-col">P/N <span class="arrow">↕</span></th>
-        <th class="label-col">Description <span class="arrow">↕</span></th>
-        <th class="num">Выручка $ <span class="arrow">↕</span></th>
-        <th class="num">Маржа $ <span class="arrow">↕</span></th>
-        <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
-        <th class="num">Счёт <span class="arrow">↕</span></th>
-      </tr></thead>
-      <tbody><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
     </table>
     </div>
     
@@ -6042,15 +5981,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="drop">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">12 зак. · 12 поз. · $104 000 · маржа $-1 972 · -1.9% · срок 137.0 дн. · <span class="bad">Δ тр. $5 513</span> · поставщиков 2</span>
+    <span class="ent-meta">11 зак. · 11 поз. · $104 000 · маржа $15 563 · 15.0% · срок 58.2 дн. · <span class="bad">Δ тр. $4 542</span> · поставщиков 2</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">12</div>
-        <div class="muted">12 позиций ROTABLE с W</div>
+        <div class="value">11</div>
+        <div class="muted">11 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -6059,22 +5998,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-1 972</div>
-        <div class="muted">продажа − закупка − тр. − fee · -1.9%</div>
+        <div class="value">$15 563</div>
+        <div class="muted">продажа − закупка − тр. − fee · 15.0%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">137.0 дн.</div>
-        <div class="muted">ср. W−Q · 9 поз.</div>
+        <div class="value">58.2 дн.</div>
+        <div class="muted">ср. W−Q · 8 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>8 840</span>
           <span class="op">−</span>
-          <span>14 353</span>
+          <span>13 382</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $5 513</span>
+          <span class="bad">Δ тр. $4 542</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -6085,15 +6024,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="leaf">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">8 зак. · 8 поз. · $52 800 · маржа $-10 733 · -20.3% · срок 159.0 дн. · <span class="bad">Δ тр. $2 306</span></span>
+    <span class="ent-meta">7 зак. · 7 поз. · $52 800 · маржа $6 802 · 12.9% · срок 57.7 дн. · <span class="bad">Δ тр. $1 335</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">8</div>
-        <div class="muted">8 позиций ROTABLE с W</div>
+        <div class="value">7</div>
+        <div class="muted">7 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -6102,22 +6041,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-10 733</div>
-        <div class="muted">продажа − закупка − тр. − fee · -20.3%</div>
+        <div class="value">$6 802</div>
+        <div class="muted">продажа − закупка − тр. − fee · 12.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">159.0 дн.</div>
-        <div class="muted">ср. W−Q · 7 поз.</div>
+        <div class="value">57.7 дн.</div>
+        <div class="muted">ср. W−Q · 6 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>3 740</span>
           <span class="op">−</span>
-          <span>6 046</span>
+          <span>5 075</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $2 306</span>
+          <span class="bad">Δ тр. $1 335</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -6138,7 +6077,7 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </tr></thead>
       <tbody><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr></tbody>
     </table>
     </div>
     
@@ -6446,15 +6385,15 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
 <details class="drop">
   <summary>
     <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">3 зак. · 3 поз. · $95 050 · маржа $13 250 · 13.9% · срок 236.0 дн. · <span class="bad">Δ тр. $1 554</span> · поставщиков 2</span>
+    <span class="ent-meta">2 зак. · 2 поз. · $95 050 · маржа $16 390 · 17.2% · срок 40.0 дн. · <span class="bad">Δ тр. $1 635</span> · поставщиков 1</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">3</div>
-        <div class="muted">3 позиций ROTABLE с W</div>
+        <div class="value">2</div>
+        <div class="muted">2 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -6463,28 +6402,28 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$13 250</div>
-        <div class="muted">продажа − закупка − тр. − fee · 13.9%</div>
+        <div class="value">$16 390</div>
+        <div class="muted">продажа − закупка − тр. − fee · 17.2%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">236.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">40.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>5 500</span>
+          <span>5 000</span>
           <span class="op">−</span>
-          <span>7 054</span>
+          <span>6 635</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $1 554</span>
+          <span class="bad">Δ тр. $1 635</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
     </div>
     
-    <h3 class="section-h">Поставщики (2)</h3>
+    <h3 class="section-h">Поставщики (1)</h3>
     
 <details class="leaf">
   <summary>
@@ -6541,68 +6480,6 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>364-093-909-0</td><td>Exchanger</td><td class='num'>90 100</td><td class='num'>16 104</td><td class='num'>—</td><td class='num bad'>650</td><td class='num'>3082610455</td></tr><tr><td>D97C00-654</td><td>Single actuator</td><td class='num'>4 950</td><td class='num'>286</td><td class='num'>40.0</td><td class='num bad'>985</td><td class='num'>308269485</td></tr></tbody>
-    </table>
-    </div>
-    
-  </div>
-</details>
-
-
-<details class="leaf">
-  <summary>
-    <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-3 139 · срок 432.0 дн. · <span class="ok">Δ тр. $-81</span></span>
-  </summary>
-  <div class="block-body">
-    
-    <div class="kpis">
-      <div class="highlight">
-        <div class="label">Выполнено заказов</div>
-        <div class="value">1</div>
-        <div class="muted">1 позиций ROTABLE с W</div>
-      </div>
-      <div>
-        <div class="label">Выручка</div>
-        <div class="value">$0</div>
-        <div class="muted">Σ продажная итого</div>
-      </div>
-      <div>
-        <div class="label">Маржа</div>
-        <div class="value">$-3 139</div>
-        <div class="muted">продажа − закупка − тр. − fee</div>
-      </div>
-      <div>
-        <div class="label">Сроки STK</div>
-        <div class="value">432.0 дн.</div>
-        <div class="muted">ср. W−Q · 1 поз.</div>
-      </div>
-      <div class="wide">
-        <div class="label">Транспорт план − факт = дельта</div>
-        <div class="value transport">
-          <span>500</span>
-          <span class="op">−</span>
-          <span>419</span>
-          <span class="op">=</span>
-          <span class="ok">Δ тр. $-81</span>
-        </div>
-        <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
-      </div>
-    </div>
-    
-    <h4 class="leaf-h">Позиции · поставщик</h4>
-    
-    <div class="table-scroll">
-    <table data-sortable id="p2-cli-6-s1">
-      <thead><tr>
-        <th class="label-col">P/N <span class="arrow">↕</span></th>
-        <th class="label-col">Description <span class="arrow">↕</span></th>
-        <th class="num">Выручка $ <span class="arrow">↕</span></th>
-        <th class="num">Маржа $ <span class="arrow">↕</span></th>
-        <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
-        <th class="num">Счёт <span class="arrow">↕</span></th>
-      </tr></thead>
-      <tbody><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
     </table>
     </div>
     
@@ -9382,15 +9259,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
   <summary>
     <span class="period-title">3. Прошедший квартал · Q3 2026 (июль–сентябрь)</span>
     <span class="period-meta">01.07.2026 – 30.09.2026</span>
-    <span class="period-meta">171 зак. · $8 511 288 выр. · маржа $1 441 469 · warranty 3 зак. / $111 000</span>
+    <span class="period-meta">168 зак. · $8 511 288 выр. · маржа $1 468 136 · warranty 3 зак. / $111 000</span>
   </summary>
   <div class="period-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">171</div>
-        <div class="muted">187 позиций ROTABLE с W</div>
+        <div class="value">168</div>
+        <div class="muted">184 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -9399,22 +9276,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$1 441 469</div>
-        <div class="muted">продажа − закупка − тр. − fee · 16.9%</div>
+        <div class="value">$1 468 136</div>
+        <div class="muted">продажа − закупка − тр. − fee · 17.2%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">62.2 дн.</div>
-        <div class="muted">ср. W−Q · 146 поз.</div>
+        <div class="value">54.9 дн.</div>
+        <div class="muted">ср. W−Q · 143 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>423 660</span>
+          <span>421 660</span>
           <span class="op">−</span>
-          <span>411 615</span>
+          <span>409 462</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-12 045</span>
+          <span class="ok">Δ тр. $-12 198</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -9429,15 +9306,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="drop">
   <summary>
     <span class="ent-name">IBERIA</span>
-    <span class="ent-meta">73 зак. · 76 поз. · $2 972 235 · маржа $584 713 · 19.7% · срок 43.0 дн. · <span class="bad">Δ тр. $20 506</span> · клиентов 23</span>
+    <span class="ent-meta">72 зак. · 75 поз. · $2 972 235 · маржа $590 706 · 19.9% · срок 43.2 дн. · <span class="bad">Δ тр. $21 243</span> · клиентов 22</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">73</div>
-        <div class="muted">76 позиций ROTABLE с W</div>
+        <div class="value">72</div>
+        <div class="muted">75 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -9446,28 +9323,28 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$584 713</div>
-        <div class="muted">продажа − закупка − тр. − fee · 19.7%</div>
+        <div class="value">$590 706</div>
+        <div class="muted">продажа − закупка − тр. − fee · 19.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">43.0 дн.</div>
-        <div class="muted">ср. W−Q · 57 поз.</div>
+        <div class="value">43.2 дн.</div>
+        <div class="muted">ср. W−Q · 56 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>183 800</span>
+          <span>182 300</span>
           <span class="op">−</span>
-          <span>204 306</span>
+          <span>203 543</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $20 506</span>
+          <span class="bad">Δ тр. $21 243</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
     </div>
     
-    <h3 class="section-h">Клиенты (23)</h3>
+    <h3 class="section-h">Клиенты (22)</h3>
     
 <details class="leaf">
   <summary>
@@ -10835,68 +10712,6 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
   </div>
 </details>
 
-
-<details class="leaf">
-  <summary>
-    <span class="ent-name">Авексима Лимитед</span>
-    <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-5 994 · срок 32.0 дн. · <span class="ok">Δ тр. $-737</span></span>
-  </summary>
-  <div class="block-body">
-    
-    <div class="kpis">
-      <div class="highlight">
-        <div class="label">Выполнено заказов</div>
-        <div class="value">1</div>
-        <div class="muted">1 позиций ROTABLE с W</div>
-      </div>
-      <div>
-        <div class="label">Выручка</div>
-        <div class="value">$0</div>
-        <div class="muted">Σ продажная итого</div>
-      </div>
-      <div>
-        <div class="label">Маржа</div>
-        <div class="value">$-5 994</div>
-        <div class="muted">продажа − закупка − тр. − fee</div>
-      </div>
-      <div>
-        <div class="label">Сроки STK</div>
-        <div class="value">32.0 дн.</div>
-        <div class="muted">ср. W−Q · 1 поз.</div>
-      </div>
-      <div class="wide">
-        <div class="label">Транспорт план − факт = дельта</div>
-        <div class="value transport">
-          <span>1 500</span>
-          <span class="op">−</span>
-          <span>763</span>
-          <span class="op">=</span>
-          <span class="ok">Δ тр. $-737</span>
-        </div>
-        <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
-      </div>
-    </div>
-    
-    <h4 class="leaf-h">Позиции · клиент</h4>
-    
-    <div class="table-scroll">
-    <table data-sortable id="p3-sup-0-c22">
-      <thead><tr>
-        <th class="label-col">P/N <span class="arrow">↕</span></th>
-        <th class="label-col">Description <span class="arrow">↕</span></th>
-        <th class="num">Выручка $ <span class="arrow">↕</span></th>
-        <th class="num">Маржа $ <span class="arrow">↕</span></th>
-        <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
-        <th class="num">Счёт <span class="arrow">↕</span></th>
-      </tr></thead>
-      <tbody><tr><td>GG436-2005-5</td><td>SENSOR, TEMPERATURE</td><td class='num'>0</td><td class='num'>-5 994</td><td class='num'>32.0</td><td class='num ok'>-737</td><td class='num'>12122517314</td></tr></tbody>
-    </table>
-    </div>
-    
-  </div>
-</details>
-
   </div>
 </details>
 
@@ -10904,15 +10719,15 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
 <details class="drop">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">37 зак. · 43 поз. · $2 614 374 · маржа $418 389 · 16.0% · срок 123.7 дн. · <span class="ok">Δ тр. $-46 748</span> · клиентов 15</span>
+    <span class="ent-meta">35 зак. · 41 поз. · $2 614 374 · маржа $439 064 · 16.8% · срок 93.9 дн. · <span class="ok">Δ тр. $-47 638</span> · клиентов 15</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">37</div>
-        <div class="muted">43 позиций ROTABLE с W</div>
+        <div class="value">35</div>
+        <div class="muted">41 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -10921,22 +10736,22 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$418 389</div>
-        <div class="muted">продажа − закупка − тр. − fee · 16.0%</div>
+        <div class="value">$439 064</div>
+        <div class="muted">продажа − закупка − тр. − fee · 16.8%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">123.7 дн.</div>
-        <div class="muted">ср. W−Q · 34 поз.</div>
+        <div class="value">93.9 дн.</div>
+        <div class="muted">ср. W−Q · 32 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>139 190</span>
+          <span>138 690</span>
           <span class="op">−</span>
-          <span>92 442</span>
+          <span>91 052</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-46 748</span>
+          <span class="ok">Δ тр. $-47 638</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -11009,15 +10824,15 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
 <details class="leaf">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">17 зак. · 18 поз. · $1 110 450 · маржа $202 825 · 18.3% · срок 114.9 дн. · <span class="ok">Δ тр. $-16 087</span></span>
+    <span class="ent-meta">16 зак. · 17 поз. · $1 110 450 · маржа $220 360 · 19.8% · срок 64.7 дн. · <span class="ok">Δ тр. $-17 058</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">17</div>
-        <div class="muted">18 позиций ROTABLE с W</div>
+        <div class="value">16</div>
+        <div class="muted">17 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -11026,22 +10841,22 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$202 825</div>
-        <div class="muted">продажа − закупка − тр. − fee · 18.3%</div>
+        <div class="value">$220 360</div>
+        <div class="muted">продажа − закупка − тр. − fee · 19.8%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">114.9 дн.</div>
-        <div class="muted">ср. W−Q · 14 поз.</div>
+        <div class="value">64.7 дн.</div>
+        <div class="muted">ср. W−Q · 13 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>43 440</span>
           <span class="op">−</span>
-          <span>27 353</span>
+          <span>26 382</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-16 087</span>
+          <span class="ok">Δ тр. $-17 058</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -11062,7 +10877,7 @@ Filter Puller</td><td class='num'>1 960</td><td class='num'>785</td><td class='n
       </tr></thead>
       <tbody><tr><td>2410M50P02</td><td>522 HPT FRONT AIR SEAL</td><td class='num'>883 500</td><td class='num'>120 999</td><td class='num'>143.0</td><td class='num ok'>-14 126</td><td class='num'>10022616045</td></tr><tr><td>9373M34P03</td><td>BLADE</td><td class='num'>134 850</td><td class='num'>79 361</td><td class='num'>—</td><td class='num ok'>-3 845</td><td class='num'>24022610495</td></tr><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>8901-326</td><td>T2 SENSOR</td><td class='num'>9 000</td><td class='num'>3 907</td><td class='num'>—</td><td class='num ok'>-43</td><td class='num'>25052613115</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr></tbody>
     </table>
     </div>
     
@@ -11447,15 +11262,15 @@ Wrench</td><td class='num'>1 030</td><td class='num'>579</td><td class='num'>60.
 <details class="leaf">
   <summary>
     <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">3 зак. · 3 поз. · $11 300 · маржа $-235 · -2.1% · срок 244.5 дн. · <span class="ok">Δ тр. $-108</span></span>
+    <span class="ent-meta">2 зак. · 2 поз. · $11 300 · маржа $2 904 · 25.7% · срок 57.0 дн. · <span class="ok">Δ тр. $-27</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">3</div>
-        <div class="muted">3 позиций ROTABLE с W</div>
+        <div class="value">2</div>
+        <div class="muted">2 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -11464,22 +11279,22 @@ Wrench</td><td class='num'>1 030</td><td class='num'>579</td><td class='num'>60.
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-235</div>
-        <div class="muted">продажа − закупка − тр. − fee · -2.1%</div>
+        <div class="value">$2 904</div>
+        <div class="muted">продажа − закупка − тр. − fee · 25.7%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">244.5 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">57.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>1 800</span>
+          <span>1 300</span>
           <span class="op">−</span>
-          <span>1 692</span>
+          <span>1 273</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-108</span>
+          <span class="ok">Δ тр. $-27</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -11498,7 +11313,7 @@ Wrench</td><td class='num'>1 030</td><td class='num'>579</td><td class='num'>60.
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
+      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr></tbody>
     </table>
     </div>
     
@@ -13806,7 +13621,7 @@ COMPRESSOR</td><td class='num'>4 531</td><td class='num'>535</td><td class='num'
     </details>
 
     <details class="section" open>
-      <summary>2. По клиентам (39)</summary>
+      <summary>2. По клиентам (38)</summary>
       <div class="block-body">
         <p class="section-note">Внутри клиента — мини-отчёты по поставщикам.</p>
         
@@ -14340,15 +14155,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="drop">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">28 зак. · 29 поз. · $1 480 950 · маржа $288 304 · 19.5% · срок 92.7 дн. · <span class="ok">Δ тр. $-16 904</span> · поставщиков 3</span>
+    <span class="ent-meta">27 зак. · 28 поз. · $1 480 950 · маржа $305 838 · 20.7% · срок 60.6 дн. · <span class="ok">Δ тр. $-17 875</span> · поставщиков 3</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">28</div>
-        <div class="muted">29 позиций ROTABLE с W</div>
+        <div class="value">27</div>
+        <div class="muted">28 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -14357,22 +14172,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$288 304</div>
-        <div class="muted">продажа − закупка − тр. − fee · 19.5%</div>
+        <div class="value">$305 838</div>
+        <div class="muted">продажа − закупка − тр. − fee · 20.7%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">92.7 дн.</div>
-        <div class="muted">ср. W−Q · 22 поз.</div>
+        <div class="value">60.6 дн.</div>
+        <div class="muted">ср. W−Q · 21 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>69 840</span>
           <span class="op">−</span>
-          <span>52 936</span>
+          <span>51 965</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-16 904</span>
+          <span class="ok">Δ тр. $-17 875</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -14383,15 +14198,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="leaf">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">17 зак. · 18 поз. · $1 110 450 · маржа $202 825 · 18.3% · срок 114.9 дн. · <span class="ok">Δ тр. $-16 087</span></span>
+    <span class="ent-meta">16 зак. · 17 поз. · $1 110 450 · маржа $220 360 · 19.8% · срок 64.7 дн. · <span class="ok">Δ тр. $-17 058</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">17</div>
-        <div class="muted">18 позиций ROTABLE с W</div>
+        <div class="value">16</div>
+        <div class="muted">17 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -14400,22 +14215,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$202 825</div>
-        <div class="muted">продажа − закупка − тр. − fee · 18.3%</div>
+        <div class="value">$220 360</div>
+        <div class="muted">продажа − закупка − тр. − fee · 19.8%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">114.9 дн.</div>
-        <div class="muted">ср. W−Q · 14 поз.</div>
+        <div class="value">64.7 дн.</div>
+        <div class="muted">ср. W−Q · 13 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>43 440</span>
           <span class="op">−</span>
-          <span>27 353</span>
+          <span>26 382</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-16 087</span>
+          <span class="ok">Δ тр. $-17 058</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -14436,7 +14251,7 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </tr></thead>
       <tbody><tr><td>2410M50P02</td><td>522 HPT FRONT AIR SEAL</td><td class='num'>883 500</td><td class='num'>120 999</td><td class='num'>143.0</td><td class='num ok'>-14 126</td><td class='num'>10022616045</td></tr><tr><td>9373M34P03</td><td>BLADE</td><td class='num'>134 850</td><td class='num'>79 361</td><td class='num'>—</td><td class='num ok'>-3 845</td><td class='num'>24022610495</td></tr><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>8901-326</td><td>T2 SENSOR</td><td class='num'>9 000</td><td class='num'>3 907</td><td class='num'>—</td><td class='num ok'>-43</td><td class='num'>25052613115</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr></tbody>
     </table>
     </div>
     
@@ -15086,15 +14901,15 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
 <details class="drop">
   <summary>
     <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">9 зак. · 10 поз. · $158 050 · маржа $26 566 · 16.8% · срок 102.2 дн. · <span class="bad">Δ тр. $6 027</span> · поставщиков 3</span>
+    <span class="ent-meta">8 зак. · 9 поз. · $158 050 · маржа $29 706 · 18.8% · срок 55.1 дн. · <span class="bad">Δ тр. $6 108</span> · поставщиков 3</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">9</div>
-        <div class="muted">10 позиций ROTABLE с W</div>
+        <div class="value">8</div>
+        <div class="muted">9 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -15103,22 +14918,22 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$26 566</div>
-        <div class="muted">продажа − закупка − тр. − fee · 16.8%</div>
+        <div class="value">$29 706</div>
+        <div class="muted">продажа − закупка − тр. − fee · 18.8%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">102.2 дн.</div>
-        <div class="muted">ср. W−Q · 8 поз.</div>
+        <div class="value">55.1 дн.</div>
+        <div class="muted">ср. W−Q · 7 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>9 400</span>
+          <span>8 900</span>
           <span class="op">−</span>
-          <span>15 427</span>
+          <span>15 008</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $6 027</span>
+          <span class="bad">Δ тр. $6 108</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -15253,15 +15068,15 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
 <details class="leaf">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">3 зак. · 3 поз. · $11 300 · маржа $-235 · -2.1% · срок 244.5 дн. · <span class="ok">Δ тр. $-108</span></span>
+    <span class="ent-meta">2 зак. · 2 поз. · $11 300 · маржа $2 904 · 25.7% · срок 57.0 дн. · <span class="ok">Δ тр. $-27</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">3</div>
-        <div class="muted">3 позиций ROTABLE с W</div>
+        <div class="value">2</div>
+        <div class="muted">2 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -15270,22 +15085,22 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-235</div>
-        <div class="muted">продажа − закупка − тр. − fee · -2.1%</div>
+        <div class="value">$2 904</div>
+        <div class="muted">продажа − закупка − тр. − fee · 25.7%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">244.5 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">57.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>1 800</span>
+          <span>1 300</span>
           <span class="op">−</span>
-          <span>1 692</span>
+          <span>1 273</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-108</span>
+          <span class="ok">Δ тр. $-27</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -15304,7 +15119,7 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
+      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr></tbody>
     </table>
     </div>
     
@@ -19491,114 +19306,6 @@ COMPRESSOR</td><td class='num'>4 531</td><td class='num'>535</td><td class='num'
 
 <details class="drop">
   <summary>
-    <span class="ent-name">Авексима Лимитед</span>
-    <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-5 994 · срок 32.0 дн. · <span class="ok">Δ тр. $-737</span> · поставщиков 1</span>
-  </summary>
-  <div class="block-body">
-    
-    <div class="kpis">
-      <div class="highlight">
-        <div class="label">Выполнено заказов</div>
-        <div class="value">1</div>
-        <div class="muted">1 позиций ROTABLE с W</div>
-      </div>
-      <div>
-        <div class="label">Выручка</div>
-        <div class="value">$0</div>
-        <div class="muted">Σ продажная итого</div>
-      </div>
-      <div>
-        <div class="label">Маржа</div>
-        <div class="value">$-5 994</div>
-        <div class="muted">продажа − закупка − тр. − fee</div>
-      </div>
-      <div>
-        <div class="label">Сроки STK</div>
-        <div class="value">32.0 дн.</div>
-        <div class="muted">ср. W−Q · 1 поз.</div>
-      </div>
-      <div class="wide">
-        <div class="label">Транспорт план − факт = дельта</div>
-        <div class="value transport">
-          <span>1 500</span>
-          <span class="op">−</span>
-          <span>763</span>
-          <span class="op">=</span>
-          <span class="ok">Δ тр. $-737</span>
-        </div>
-        <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
-      </div>
-    </div>
-    
-    <h3 class="section-h">Поставщики (1)</h3>
-    
-<details class="leaf">
-  <summary>
-    <span class="ent-name">IBERIA</span>
-    <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-5 994 · срок 32.0 дн. · <span class="ok">Δ тр. $-737</span></span>
-  </summary>
-  <div class="block-body">
-    
-    <div class="kpis">
-      <div class="highlight">
-        <div class="label">Выполнено заказов</div>
-        <div class="value">1</div>
-        <div class="muted">1 позиций ROTABLE с W</div>
-      </div>
-      <div>
-        <div class="label">Выручка</div>
-        <div class="value">$0</div>
-        <div class="muted">Σ продажная итого</div>
-      </div>
-      <div>
-        <div class="label">Маржа</div>
-        <div class="value">$-5 994</div>
-        <div class="muted">продажа − закупка − тр. − fee</div>
-      </div>
-      <div>
-        <div class="label">Сроки STK</div>
-        <div class="value">32.0 дн.</div>
-        <div class="muted">ср. W−Q · 1 поз.</div>
-      </div>
-      <div class="wide">
-        <div class="label">Транспорт план − факт = дельта</div>
-        <div class="value transport">
-          <span>1 500</span>
-          <span class="op">−</span>
-          <span>763</span>
-          <span class="op">=</span>
-          <span class="ok">Δ тр. $-737</span>
-        </div>
-        <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
-      </div>
-    </div>
-    
-    <h4 class="leaf-h">Позиции · поставщик</h4>
-    
-    <div class="table-scroll">
-    <table data-sortable id="p3-cli-37-s0">
-      <thead><tr>
-        <th class="label-col">P/N <span class="arrow">↕</span></th>
-        <th class="label-col">Description <span class="arrow">↕</span></th>
-        <th class="num">Выручка $ <span class="arrow">↕</span></th>
-        <th class="num">Маржа $ <span class="arrow">↕</span></th>
-        <th class="num">Срок дн. <span class="arrow">↕</span></th>
-        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
-        <th class="num">Счёт <span class="arrow">↕</span></th>
-      </tr></thead>
-      <tbody><tr><td>GG436-2005-5</td><td>SENSOR, TEMPERATURE</td><td class='num'>0</td><td class='num'>-5 994</td><td class='num'>32.0</td><td class='num ok'>-737</td><td class='num'>12122517314</td></tr></tbody>
-    </table>
-    </div>
-    
-  </div>
-</details>
-
-  </div>
-</details>
-
-
-<details class="drop">
-  <summary>
     <span class="ent-name">Тулпар Эйр</span>
     <span class="ent-meta">1 зак. · 1 поз. · $0 · маржа $-9 781 · срок 350.0 дн. · <span class="ok">Δ тр. $-20 595</span> · поставщиков 1</span>
   </summary>
@@ -19684,7 +19391,7 @@ COMPRESSOR</td><td class='num'>4 531</td><td class='num'>535</td><td class='num'
     <h4 class="leaf-h">Позиции · поставщик</h4>
     
     <div class="table-scroll">
-    <table data-sortable id="p3-cli-38-s0">
+    <table data-sortable id="p3-cli-37-s0">
       <thead><tr>
         <th class="label-col">P/N <span class="arrow">↕</span></th>
         <th class="label-col">Description <span class="arrow">↕</span></th>
@@ -20142,15 +19849,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
   <summary>
     <span class="period-title">4. Прошедший год · 2026</span>
     <span class="period-meta">01.01.2026 – 23.10.2026</span>
-    <span class="period-meta">540 зак. · $44 439 176 выр. · маржа $7 100 224 · warranty 8 зак. / $1 499 948</span>
+    <span class="period-meta">537 зак. · $44 439 176 выр. · маржа $7 155 357 · warranty 8 зак. / $1 499 948</span>
   </summary>
   <div class="period-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">540</div>
-        <div class="muted">611 позиций ROTABLE с W</div>
+        <div class="value">537</div>
+        <div class="muted">604 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -20159,22 +19866,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$7 100 224</div>
-        <div class="muted">продажа − закупка − тр. − fee · 16.0%</div>
+        <div class="value">$7 155 357</div>
+        <div class="muted">продажа − закупка − тр. − fee · 16.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">56.8 дн.</div>
-        <div class="muted">ср. W−Q · 504 поз.</div>
+        <div class="value">54.8 дн.</div>
+        <div class="muted">ср. W−Q · 498 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>1 333 419</span>
+          <span>1 327 639</span>
           <span class="op">−</span>
-          <span>1 507 909</span>
+          <span>1 497 237</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $174 490</span>
+          <span class="bad">Δ тр. $169 598</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -20189,15 +19896,15 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
 <details class="drop">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">78 зак. · 88 поз. · $24 880 655 · маржа $3 049 312 · 12.3% · срок 97.9 дн. · <span class="bad">Δ тр. $126 386</span> · клиентов 28</span>
+    <span class="ent-meta">76 зак. · 86 поз. · $24 880 655 · маржа $3 069 987 · 12.3% · срок 83.6 дн. · <span class="bad">Δ тр. $125 496</span> · клиентов 28</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">78</div>
-        <div class="muted">88 позиций ROTABLE с W</div>
+        <div class="value">76</div>
+        <div class="muted">86 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -20206,22 +19913,22 @@ RETURN</td><td class='num'>13 000</td><td class='num'>4 160</td><td class='num'>
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$3 049 312</div>
+        <div class="value">$3 069 987</div>
         <div class="muted">продажа − закупка − тр. − fee · 12.3%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">97.9 дн.</div>
-        <div class="muted">ср. W−Q · 72 поз.</div>
+        <div class="value">83.6 дн.</div>
+        <div class="muted">ср. W−Q · 70 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>324 305</span>
+          <span>323 805</span>
           <span class="op">−</span>
-          <span>450 691</span>
+          <span>449 301</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $126 386</span>
+          <span class="bad">Δ тр. $125 496</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -20295,15 +20002,15 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
 <details class="leaf">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">28 зак. · 31 поз. · $4 369 346 · маржа $643 071 · 14.7% · срок 109.2 дн. · <span class="ok">Δ тр. $-19 600</span></span>
+    <span class="ent-meta">27 зак. · 30 поз. · $4 369 346 · маржа $660 606 · 15.1% · срок 81.8 дн. · <span class="ok">Δ тр. $-20 571</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">28</div>
-        <div class="muted">31 позиций ROTABLE с W</div>
+        <div class="value">27</div>
+        <div class="muted">30 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -20312,22 +20019,22 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$643 071</div>
-        <div class="muted">продажа − закупка − тр. − fee · 14.7%</div>
+        <div class="value">$660 606</div>
+        <div class="muted">продажа − закупка − тр. − fee · 15.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">109.2 дн.</div>
-        <div class="muted">ср. W−Q · 25 поз.</div>
+        <div class="value">81.8 дн.</div>
+        <div class="muted">ср. W−Q · 24 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>97 780</span>
           <span class="op">−</span>
-          <span>78 180</span>
+          <span>77 209</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-19 600</span>
+          <span class="ok">Δ тр. $-20 571</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -20349,7 +20056,7 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
       <tbody><tr><td>2100M96P05</td><td>BLADE</td><td class='num'>2 749 200</td><td class='num'>355 902</td><td class='num'>—</td><td class='num ok'>-5 045</td><td class='num'>30032612565</td></tr><tr><td>2410M50P02</td><td>522 HPT FRONT AIR SEAL</td><td class='num'>883 500</td><td class='num'>120 999</td><td class='num'>143.0</td><td class='num ok'>-14 126</td><td class='num'>10022616045</td></tr><tr><td>761574B</td><td>GENERATOR ASSY - INTEGRATED DRIVE</td><td class='num'>262 000</td><td class='num'>43 444</td><td class='num'>53.0</td><td class='num bad'>750</td><td class='num'>16042615005</td></tr><tr><td>9373M34P03</td><td>BLADE</td><td class='num'>134 850</td><td class='num'>79 361</td><td class='num'>—</td><td class='num ok'>-3 845</td><td class='num'>24022610495</td></tr><tr><td>2028M21P02</td><td>COUPLING</td><td class='num'>96 000</td><td class='num'>17 286</td><td class='num'>58.0</td><td class='num ok'>-1 038</td><td class='num'>27032610005</td></tr><tr><td>46-3546-5</td><td>HARNESS</td><td class='num'>55 200</td><td class='num'>7 301</td><td class='num'>32.0</td><td class='num bad'>1 957</td><td class='num'>221225112012</td></tr><tr><td>2100M96P05</td><td>BLADE</td><td class='num'>34 800</td><td class='num'>3 832</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>30032612565</td></tr><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>9693-3-1</td><td>SPIGOT</td><td class='num'>16 400</td><td class='num'>2 071</td><td class='num'>43.0</td><td class='num bad'>196</td><td class='num'>111225132012</td></tr><tr><td>0851HT-1</td><td>PROBE, 3RD PITOT STATIC</td><td class='num'>14 800</td><td class='num'>6 002</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>25032612292</td></tr><tr><td>902862</td><td>FIRE DETECTOR
 ASSY</td><td class='num'>14 500</td><td class='num'>3 010</td><td class='num'>60.0</td><td class='num ok'>-573</td><td class='num'>13082611355</td></tr><tr><td>8901-326</td><td>T2 SENSOR</td><td class='num'>9 000</td><td class='num'>3 907</td><td class='num'>—</td><td class='num ok'>-43</td><td class='num'>25052613115</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>A3295-1</td><td>ROD ASSY</td><td class='num'>7 000</td><td class='num'>822</td><td class='num'>145.0</td><td class='num bad'>200</td><td class='num'>23102511302</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>335-011-904-0</td><td>PANEL ASSY</td><td class='num'>4 640</td><td class='num'>1 988</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>30012613182</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>49380</td><td>PROBE-PITOT</td><td class='num'>3 800</td><td class='num'>819</td><td class='num'>58.0</td><td class='num bad'>96</td><td class='num'>6032613002</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>AH090831</td><td>DAM GREASE</td><td class='num'>556</td><td class='num'>236</td><td class='num'>43.0</td><td class='num ok'>-56</td><td class='num'>111225132012</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr><tr><td>9600-58-0000</td><td>LIGHT ASSY</td><td class='num'>0</td><td class='num'>-2 468</td><td class='num'>559.0</td><td class='num ok'>0</td><td class='num'>10092417002</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>A3295-1</td><td>ROD ASSY</td><td class='num'>7 000</td><td class='num'>822</td><td class='num'>145.0</td><td class='num bad'>200</td><td class='num'>23102511302</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>335-011-904-0</td><td>PANEL ASSY</td><td class='num'>4 640</td><td class='num'>1 988</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>30012613182</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>49380</td><td>PROBE-PITOT</td><td class='num'>3 800</td><td class='num'>819</td><td class='num'>58.0</td><td class='num bad'>96</td><td class='num'>6032613002</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>AH090831</td><td>DAM GREASE</td><td class='num'>556</td><td class='num'>236</td><td class='num'>43.0</td><td class='num ok'>-56</td><td class='num'>111225132012</td></tr><tr><td>9600-58-0000</td><td>LIGHT ASSY</td><td class='num'>0</td><td class='num'>-2 468</td><td class='num'>559.0</td><td class='num ok'>0</td><td class='num'>10092417002</td></tr></tbody>
     </table>
     </div>
     
@@ -21045,15 +20752,15 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
 <details class="leaf">
   <summary>
     <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">4 зак. · 4 поз. · $15 800 · маржа $-1 882 · -11.9% · срок 194.7 дн. · <span class="bad">Δ тр. $772</span></span>
+    <span class="ent-meta">3 зак. · 3 поз. · $15 800 · маржа $1 258 · 8.0% · срок 76.0 дн. · <span class="bad">Δ тр. $853</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">4</div>
-        <div class="muted">4 позиций ROTABLE с W</div>
+        <div class="value">3</div>
+        <div class="muted">3 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -21062,22 +20769,22 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-1 882</div>
-        <div class="muted">продажа − закупка − тр. − fee · -11.9%</div>
+        <div class="value">$1 258</div>
+        <div class="muted">продажа − закупка − тр. − fee · 8.0%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">194.7 дн.</div>
-        <div class="muted">ср. W−Q · 3 поз.</div>
+        <div class="value">76.0 дн.</div>
+        <div class="muted">ср. W−Q · 2 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>2 800</span>
+          <span>2 300</span>
           <span class="op">−</span>
-          <span>3 572</span>
+          <span>3 153</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $772</span>
+          <span class="bad">Δ тр. $853</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -21096,7 +20803,7 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>2295186</td><td>Ballast assy</td><td class='num'>4 500</td><td class='num'>-1 646</td><td class='num'>95.0</td><td class='num bad'>880</td><td class='num'>2022519045</td></tr><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
+      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>2295186</td><td>Ballast assy</td><td class='num'>4 500</td><td class='num'>-1 646</td><td class='num'>95.0</td><td class='num bad'>880</td><td class='num'>2022519045</td></tr></tbody>
     </table>
     </div>
     
@@ -21978,7 +21685,7 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
 <details class="drop">
   <summary>
     <span class="ent-name">IBERIA</span>
-    <span class="ent-meta">248 зак. · 264 поз. · $10 787 016 · маржа $2 381 265 · 22.1% · срок 51.8 дн. · <span class="bad">Δ тр. $39 145</span> · клиентов 41</span>
+    <span class="ent-meta">248 зак. · 263 поз. · $10 787 016 · маржа $2 387 258 · 22.1% · срок 51.9 дн. · <span class="bad">Δ тр. $39 882</span> · клиентов 41</span>
   </summary>
   <div class="block-body">
     
@@ -21986,7 +21693,7 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">248</div>
-        <div class="muted">264 позиций ROTABLE с W</div>
+        <div class="muted">263 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -21995,22 +21702,22 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$2 381 265</div>
+        <div class="value">$2 387 258</div>
         <div class="muted">продажа − закупка − тр. − fee · 22.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">51.8 дн.</div>
-        <div class="muted">ср. W−Q · 208 поз.</div>
+        <div class="value">51.9 дн.</div>
+        <div class="muted">ср. W−Q · 207 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>647 335</span>
+          <span>645 835</span>
           <span class="op">−</span>
-          <span>686 480</span>
+          <span>685 717</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $39 145</span>
+          <span class="bad">Δ тр. $39 882</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -23084,7 +22791,7 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
 <details class="leaf">
   <summary>
     <span class="ent-name">Авексима Лимитед</span>
-    <span class="ent-meta">5 зак. · 6 поз. · $160 700 · маржа $37 862 · 23.6% · срок 39.0 дн. · <span class="ok">Δ тр. $-4 887</span></span>
+    <span class="ent-meta">5 зак. · 5 поз. · $160 700 · маржа $43 856 · 27.3% · срок 40.4 дн. · <span class="ok">Δ тр. $-4 150</span></span>
   </summary>
   <div class="block-body">
     
@@ -23092,7 +22799,7 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">5</div>
-        <div class="muted">6 позиций ROTABLE с W</div>
+        <div class="muted">5 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -23101,22 +22808,22 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$37 862</div>
-        <div class="muted">продажа − закупка − тр. − fee · 23.6%</div>
+        <div class="value">$43 856</div>
+        <div class="muted">продажа − закупка − тр. − fee · 27.3%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">39.0 дн.</div>
-        <div class="muted">ср. W−Q · 6 поз.</div>
+        <div class="value">40.4 дн.</div>
+        <div class="muted">ср. W−Q · 5 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>13 900</span>
+          <span>12 400</span>
           <span class="op">−</span>
-          <span>9 013</span>
+          <span>8 250</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-4 887</span>
+          <span class="ok">Δ тр. $-4 150</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -23135,7 +22842,7 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>—</td><td>SIDE WINDOW (RH)</td><td class='num'>70 000</td><td class='num'>17 636</td><td class='num'>29.0</td><td class='num ok'>-3 650</td><td class='num'>18032618494</td></tr><tr><td>7510300-901</td><td>ANTENNA, ADF</td><td class='num'>45 000</td><td class='num'>14 320</td><td class='num'>50.0</td><td class='num ok'>-500</td><td class='num'>25022617504</td></tr><tr><td>GG436-1006-7</td><td>THERMOSTAT TEMPERATURE CONTROL</td><td class='num'>27 000</td><td class='num'>6 200</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>14052611304</td></tr><tr><td>8ES409800-00</td><td>POWER SUPPLY</td><td class='num'>10 500</td><td class='num'>3 324</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>26112516384</td></tr><tr><td>GG436-2005-3</td><td>[WARRANTY] SENSOR, TEMPERATURE</td><td class='num'>8 200</td><td class='num'>2 376</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>12122517314</td></tr><tr><td>GG436-2005-5</td><td>SENSOR, TEMPERATURE</td><td class='num'>0</td><td class='num'>-5 994</td><td class='num'>32.0</td><td class='num ok'>-737</td><td class='num'>12122517314</td></tr></tbody>
+      <tbody><tr><td>—</td><td>SIDE WINDOW (RH)</td><td class='num'>70 000</td><td class='num'>17 636</td><td class='num'>29.0</td><td class='num ok'>-3 650</td><td class='num'>18032618494</td></tr><tr><td>7510300-901</td><td>ANTENNA, ADF</td><td class='num'>45 000</td><td class='num'>14 320</td><td class='num'>50.0</td><td class='num ok'>-500</td><td class='num'>25022617504</td></tr><tr><td>GG436-1006-7</td><td>THERMOSTAT TEMPERATURE CONTROL</td><td class='num'>27 000</td><td class='num'>6 200</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>14052611304</td></tr><tr><td>8ES409800-00</td><td>POWER SUPPLY</td><td class='num'>10 500</td><td class='num'>3 324</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>26112516384</td></tr><tr><td>GG436-2005-3</td><td>[WARRANTY] SENSOR, TEMPERATURE</td><td class='num'>8 200</td><td class='num'>2 376</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>12122517314</td></tr></tbody>
     </table>
     </div>
     
@@ -24575,15 +24282,15 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
 <details class="drop">
   <summary>
     <span class="ent-name">JET TECHNIC</span>
-    <span class="ent-meta">171 зак. · 197 поз. · $5 566 114 · маржа $1 068 620 · 19.2% · срок 54.3 дн. · <span class="bad">Δ тр. $1 716</span> · клиентов 31</span>
+    <span class="ent-meta">169 зак. · 193 поз. · $5 566 114 · маржа $1 097 084 · 19.7% · срок 54.5 дн. · <span class="ok">Δ тр. $-3 024</span> · клиентов 31</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">171</div>
-        <div class="muted">197 позиций ROTABLE с W</div>
+        <div class="value">169</div>
+        <div class="muted">193 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -24592,22 +24299,22 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$1 068 620</div>
-        <div class="muted">продажа − закупка − тр. − fee · 19.2%</div>
+        <div class="value">$1 097 084</div>
+        <div class="muted">продажа − закупка − тр. − fee · 19.7%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">54.3 дн.</div>
-        <div class="muted">ср. W−Q · 165 поз.</div>
+        <div class="value">54.5 дн.</div>
+        <div class="muted">ср. W−Q · 162 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>330 887</span>
+          <span>327 107</span>
           <span class="op">−</span>
-          <span>332 603</span>
+          <span>324 084</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $1 716</span>
+          <span class="ok">Δ тр. $-3 024</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -24618,15 +24325,15 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
 <details class="leaf">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">39 зак. · 45 поз. · $2 353 900 · маржа $486 694 · 20.7% · срок 60.5 дн. · <span class="ok">Δ тр. $-21 594</span></span>
+    <span class="ent-meta">37 зак. · 41 поз. · $2 353 900 · маржа $515 158 · 21.9% · срок 62.2 дн. · <span class="ok">Δ тр. $-26 334</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">39</div>
-        <div class="muted">45 позиций ROTABLE с W</div>
+        <div class="value">37</div>
+        <div class="muted">41 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -24635,22 +24342,22 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$486 694</div>
-        <div class="muted">продажа − закупка − тр. − fee · 20.7%</div>
+        <div class="value">$515 158</div>
+        <div class="muted">продажа − закупка − тр. − fee · 21.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">60.5 дн.</div>
-        <div class="muted">ср. W−Q · 38 поз.</div>
+        <div class="value">62.2 дн.</div>
+        <div class="muted">ср. W−Q · 35 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>119 020</span>
+          <span>115 240</span>
           <span class="op">−</span>
-          <span>97 426</span>
+          <span>88 906</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-21 594</span>
+          <span class="ok">Δ тр. $-26 334</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -24670,14 +24377,14 @@ OVERTEMP VALVE</td><td class='num'>8 200</td><td class='num'>1 907</td><td class
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>442653</td><td>[WARRANTY] HMU</td><td class='num'>1 145 000</td><td class='num'>202 427</td><td class='num'>14.0</td><td class='num ok'>-8 680</td><td class='num'>14052610285</td></tr><tr><td>2084M33P02</td><td>BLADE</td><td class='num'>316 800</td><td class='num'>113 168</td><td class='num'>79.0</td><td class='num ok'>0</td><td class='num'>17032614455</td></tr><tr><td>811390-3</td><td>VALVE ASSY - STARTER</td><td class='num'>108 000</td><td class='num'>19 558</td><td class='num'>25.0</td><td class='num ok'>-1 960</td><td class='num'>2012610425</td></tr><tr><td>1853M33P06</td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)</td><td class='num'>107 000</td><td class='num'>29 260</td><td class='num'>36.0</td><td class='num ok'>-3 250</td><td class='num'>3062612555</td></tr><tr><td>1853M33P06</td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)</td><td class='num'>95 000</td><td class='num'>22 476</td><td class='num'>34.0</td><td class='num ok'>-3 265</td><td class='num'>24062616125</td></tr><tr><td>2206400-2</td><td>MACHINE ASSY -
-AIR CYCLE</td><td class='num'>52 000</td><td class='num'>10 660</td><td class='num'>41.0</td><td class='num ok'>-1 250</td><td class='num'>25062609555</td></tr><tr><td>4951957</td><td>STARTER MOTOR</td><td class='num'>35 900</td><td class='num'>11 924</td><td class='num'>14.0</td><td class='num ok'>-1 446</td><td class='num'>29052613565</td></tr><tr><td>LA4E20608HM0100</td><td>MULTIFUNCTION COMPUTER</td><td class='num'>34 500</td><td class='num'>6 389</td><td class='num'>37.0</td><td class='num bad'>30</td><td class='num'>22012610302</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>33 100</td><td class='num'>10 158</td><td class='num'>36.0</td><td class='num ok'>-3 650</td><td class='num'>160126103212</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>32 990</td><td class='num'>12 284</td><td class='num'>29.0</td><td class='num ok'>-1 590</td><td class='num'>25022617002</td></tr><tr><td>M472001-01</td><td>CARTRIDGE</td><td class='num'>29 000</td><td class='num'>4 871</td><td class='num'>91.0</td><td class='num bad'>4 975</td><td class='num'>28042609405</td></tr><tr><td>07325P000-01</td><td>BALLSCREW ASSY</td><td class='num'>29 000</td><td class='num'>10 675</td><td class='num'>9.0</td><td class='num ok'>-880</td><td class='num'>21042613315</td></tr><tr><td>S5431301100000</td><td>COWL ASSY-LOWER</td><td class='num'>27 000</td><td class='num'>5 566</td><td class='num'>—</td><td class='num ok'>-890</td><td class='num'>4052611115</td></tr><tr><td>141A4810-56</td><td>WINDSHIELD ASSY
-RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>147.0</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-39</td><td>WINDSHIELD ASSY
-RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-62</td><td>WINDSHIELD ASSY
+AIR CYCLE</td><td class='num'>52 000</td><td class='num'>10 660</td><td class='num'>41.0</td><td class='num ok'>-1 250</td><td class='num'>25062609555</td></tr><tr><td>4951957</td><td>STARTER MOTOR</td><td class='num'>35 900</td><td class='num'>11 924</td><td class='num'>14.0</td><td class='num ok'>-1 446</td><td class='num'>29052613565</td></tr><tr><td>LA4E20608HM0100</td><td>MULTIFUNCTION COMPUTER</td><td class='num'>34 500</td><td class='num'>6 389</td><td class='num'>37.0</td><td class='num bad'>30</td><td class='num'>22012610302</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>33 100</td><td class='num'>10 158</td><td class='num'>36.0</td><td class='num ok'>-3 650</td><td class='num'>160126103212</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>32 990</td><td class='num'>12 284</td><td class='num'>29.0</td><td class='num ok'>-1 590</td><td class='num'>25022617002</td></tr><tr><td>M472001-01</td><td>CARTRIDGE</td><td class='num'>29 000</td><td class='num'>4 871</td><td class='num'>91.0</td><td class='num bad'>4 975</td><td class='num'>28042609405</td></tr><tr><td>07325P000-01</td><td>BALLSCREW ASSY</td><td class='num'>29 000</td><td class='num'>10 675</td><td class='num'>9.0</td><td class='num ok'>-880</td><td class='num'>21042613315</td></tr><tr><td>S5431301100000</td><td>COWL ASSY-LOWER</td><td class='num'>27 000</td><td class='num'>5 566</td><td class='num'>—</td><td class='num ok'>-890</td><td class='num'>4052611115</td></tr><tr><td>141A4810-39</td><td>WINDSHIELD ASSY
+RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-56</td><td>WINDSHIELD ASSY
+RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>147.0</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-62</td><td>WINDSHIELD ASSY
 RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-42</td><td>WINDSHIELD ASSY
 RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>3079014-01</td><td>ADAPTER ASSY</td><td class='num'>18 200</td><td class='num'>4 285</td><td class='num'>29.0</td><td class='num bad'>580</td><td class='num'>26052612425</td></tr><tr><td>214N2520-82</td><td>DIFFUSER ASSY</td><td class='num'>17 600</td><td class='num'>6 004</td><td class='num'>27.0</td><td class='num ok'>-1 850</td><td class='num'>6032611165</td></tr><tr><td>2100-1020-02</td><td>COCKPIT VOICE
 RECORDER</td><td class='num'>15 500</td><td class='num'>6 535</td><td class='num'>31.0</td><td class='num ok'>-2 380</td><td class='num'>28042609515</td></tr><tr><td>2100-1020-02</td><td>COCKPIT VOICE RECORDER</td><td class='num'>15 500</td><td class='num'>6 535</td><td class='num'>—</td><td class='num ok'>-2 380</td><td class='num'>18052613305</td></tr><tr><td>JA9206M79P02</td><td>WASHER</td><td class='num'>15 040</td><td class='num'>8 516</td><td class='num'>151.0</td><td class='num ok'>-611</td><td class='num'>161225104012</td></tr><tr><td>3604524-54</td><td>COMBUSTOR UNIT ASSY</td><td class='num'>14 800</td><td class='num'>4 728</td><td class='num'>—</td><td class='num ok'>-1 315</td><td class='num'>270526102205</td></tr><tr><td>96019-02</td><td>ISOLATOR</td><td class='num'>13 800</td><td class='num'>2 880</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>26022610565</td></tr><tr><td>398908-5</td><td>VALVE ASSY - TEMP CONT</td><td class='num'>13 500</td><td class='num'>3 464</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>27032609375</td></tr><tr><td>3604524-54</td><td>COMBUSTOR UNIT ASSY</td><td class='num'>13 300</td><td class='num'>2 817</td><td class='num'>71.0</td><td class='num bad'>80</td><td class='num'>12052613145</td></tr><tr><td>65-46140-9</td><td>1.9 TEE BOLT ASSY,
 DRAG STRUT</td><td class='num'>9 900</td><td class='num'>1 476</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>31032615055</td></tr><tr><td>65C26839-3208</td><td>TUBE ASSY</td><td class='num'>9 450</td><td class='num'>1 650</td><td class='num'>125.0</td><td class='num ok'>0</td><td class='num'>18122513015</td></tr><tr><td>11197-5</td><td>DETECTOR</td><td class='num'>8 800</td><td class='num'>2 108</td><td class='num'>26.0</td><td class='num ok'>-65</td><td class='num'>2042610345</td></tr><tr><td>DEC69-069-501</td><td>COUPLING SPLINE</td><td class='num'>8 200</td><td class='num'>2 547</td><td class='num'>106.0</td><td class='num bad'>580</td><td class='num'>191225134712</td></tr><tr><td>6237M118A</td><td>SENSOR - VIB FFCC</td><td class='num'>7 500</td><td class='num'>1 252</td><td class='num'>8.0</td><td class='num bad'>1 708</td><td class='num'>2104616165</td></tr><tr><td>335-251-809-0</td><td>HOSE</td><td class='num'>6 890</td><td class='num'>4 550</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>27032618075</td></tr><tr><td>TY1878-22</td><td>SYNC LOCK</td><td class='num'>4 100</td><td class='num'>460</td><td class='num'>229.0</td><td class='num ok'>0</td><td class='num'>6102514202</td></tr><tr><td>69-39465-20G​​​​​​​</td><td>1.1.9 GLAND NUT</td><td class='num'>4 000</td><td class='num'>1 166</td><td class='num'>46.0</td><td class='num bad'>300</td><td class='num'>2022614522</td></tr><tr><td>748-722</td><td>FUEL QUANTITY
-REPEATER</td><td class='num'>3 700</td><td class='num'>1 058</td><td class='num'>281.0</td><td class='num ok'>0</td><td class='num'>7052517102</td></tr><tr><td>65C26195-100</td><td>HINGE</td><td class='num'>2 710</td><td class='num'>490</td><td class='num'>70.0</td><td class='num ok'>0</td><td class='num'>26022617505</td></tr><tr><td>CT60-3</td><td>CHECK VALVE-LP BLEED AIR</td><td class='num'>2 320</td><td class='num'>482</td><td class='num'>60.0</td><td class='num bad'>50</td><td class='num'>121225113012</td></tr><tr><td>898732-02</td><td>CONTROL CARD ASSY</td><td class='num'>2 000</td><td class='num'>-579</td><td class='num'>64.0</td><td class='num bad'>1 280</td><td class='num'>30426123065</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>492</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>702</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>622-9436-101</td><td>EFIS SYMBOL GENERATOR</td><td class='num'>0</td><td class='num'>-5 824</td><td class='num'>50.0</td><td class='num bad'>3 100</td><td class='num'>25092410102</td></tr><tr><td>ED34A350</td><td>FLIGHT DATA ACQUISITION UNIT</td><td class='num'>0</td><td class='num'>-26 515</td><td class='num'>22.0</td><td class='num ok'>-455</td><td class='num'>2102241901</td></tr><tr><td>7800000-010</td><td>FLUSH VLV</td><td class='num'>0</td><td class='num'>-3 629</td><td class='num'>25.0</td><td class='num bad'>1 640</td><td class='num'>—</td></tr><tr><td>396430-2</td><td>VALVE ASSY</td><td class='num'>0</td><td class='num'>-7 946</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>—</td></tr><tr><td>45-0083-7</td><td>RETRACTABLE AIRCRAFT LANDING LIGHT</td><td class='num'>0</td><td class='num'>-11 066</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>23092410152</td></tr></tbody>
+REPEATER</td><td class='num'>3 700</td><td class='num'>1 058</td><td class='num'>281.0</td><td class='num ok'>0</td><td class='num'>7052517102</td></tr><tr><td>65C26195-100</td><td>HINGE</td><td class='num'>2 710</td><td class='num'>490</td><td class='num'>70.0</td><td class='num ok'>0</td><td class='num'>26022617505</td></tr><tr><td>CT60-3</td><td>CHECK VALVE-LP BLEED AIR</td><td class='num'>2 320</td><td class='num'>482</td><td class='num'>60.0</td><td class='num bad'>50</td><td class='num'>121225113012</td></tr><tr><td>898732-02</td><td>CONTROL CARD ASSY</td><td class='num'>2 000</td><td class='num'>-579</td><td class='num'>64.0</td><td class='num bad'>1 280</td><td class='num'>30426123065</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>492</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>702</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>ED34A350</td><td>FLIGHT DATA ACQUISITION UNIT</td><td class='num'>0</td><td class='num'>-26 515</td><td class='num'>22.0</td><td class='num ok'>-455</td><td class='num'>2102241901</td></tr></tbody>
     </table>
     </div>
     
@@ -29458,15 +29165,15 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
 <details class="drop">
   <summary>
     <span class="ent-name">Utair</span>
-    <span class="ent-meta">93 зак. · 108 поз. · $7 259 530 · маржа $1 282 128 · 17.7% · срок 72.0 дн. · <span class="ok">Δ тр. $-37 344</span> · поставщиков 6</span>
+    <span class="ent-meta">90 зак. · 103 поз. · $7 259 530 · маржа $1 328 127 · 18.3% · срок 65.1 дн. · <span class="ok">Δ тр. $-43 054</span> · поставщиков 6</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">93</div>
-        <div class="muted">108 позиций ROTABLE с W</div>
+        <div class="value">90</div>
+        <div class="muted">103 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -29475,22 +29182,22 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$1 282 128</div>
-        <div class="muted">продажа − закупка − тр. − fee · 17.7%</div>
+        <div class="value">$1 328 127</div>
+        <div class="muted">продажа − закупка − тр. − fee · 18.3%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">72.0 дн.</div>
-        <div class="muted">ср. W−Q · 91 поз.</div>
+        <div class="value">65.1 дн.</div>
+        <div class="muted">ср. W−Q · 87 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>253 400</span>
+          <span>249 620</span>
           <span class="op">−</span>
-          <span>216 056</span>
+          <span>206 566</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-37 344</span>
+          <span class="ok">Δ тр. $-43 054</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -29501,15 +29208,15 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
 <details class="leaf">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">28 зак. · 31 поз. · $4 369 346 · маржа $643 071 · 14.7% · срок 109.2 дн. · <span class="ok">Δ тр. $-19 600</span></span>
+    <span class="ent-meta">27 зак. · 30 поз. · $4 369 346 · маржа $660 606 · 15.1% · срок 81.8 дн. · <span class="ok">Δ тр. $-20 571</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">28</div>
-        <div class="muted">31 позиций ROTABLE с W</div>
+        <div class="value">27</div>
+        <div class="muted">30 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -29518,22 +29225,22 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$643 071</div>
-        <div class="muted">продажа − закупка − тр. − fee · 14.7%</div>
+        <div class="value">$660 606</div>
+        <div class="muted">продажа − закупка − тр. − fee · 15.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">109.2 дн.</div>
-        <div class="muted">ср. W−Q · 25 поз.</div>
+        <div class="value">81.8 дн.</div>
+        <div class="muted">ср. W−Q · 24 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
           <span>97 780</span>
           <span class="op">−</span>
-          <span>78 180</span>
+          <span>77 209</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-19 600</span>
+          <span class="ok">Δ тр. $-20 571</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -29555,7 +29262,7 @@ AM2228B1</td><td>ENGINE STAND FOR V2527-A5(Cradle + Base)</td><td class='num'>25
       <tbody><tr><td>2100M96P05</td><td>BLADE</td><td class='num'>2 749 200</td><td class='num'>355 902</td><td class='num'>—</td><td class='num ok'>-5 045</td><td class='num'>30032612565</td></tr><tr><td>2410M50P02</td><td>522 HPT FRONT AIR SEAL</td><td class='num'>883 500</td><td class='num'>120 999</td><td class='num'>143.0</td><td class='num ok'>-14 126</td><td class='num'>10022616045</td></tr><tr><td>761574B</td><td>GENERATOR ASSY - INTEGRATED DRIVE</td><td class='num'>262 000</td><td class='num'>43 444</td><td class='num'>53.0</td><td class='num bad'>750</td><td class='num'>16042615005</td></tr><tr><td>9373M34P03</td><td>BLADE</td><td class='num'>134 850</td><td class='num'>79 361</td><td class='num'>—</td><td class='num ok'>-3 845</td><td class='num'>24022610495</td></tr><tr><td>2028M21P02</td><td>COUPLING</td><td class='num'>96 000</td><td class='num'>17 286</td><td class='num'>58.0</td><td class='num ok'>-1 038</td><td class='num'>27032610005</td></tr><tr><td>46-3546-5</td><td>HARNESS</td><td class='num'>55 200</td><td class='num'>7 301</td><td class='num'>32.0</td><td class='num bad'>1 957</td><td class='num'>221225112012</td></tr><tr><td>2100M96P05</td><td>BLADE</td><td class='num'>34 800</td><td class='num'>3 832</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>30032612565</td></tr><tr><td>7123-19973-02AB</td><td>PRESSURE
 CONTROL PANEL</td><td class='num'>22 500</td><td class='num'>830</td><td class='num'>50.0</td><td class='num bad'>909</td><td class='num'>6082611055</td></tr><tr><td>9693-3-1</td><td>SPIGOT</td><td class='num'>16 400</td><td class='num'>2 071</td><td class='num'>43.0</td><td class='num bad'>196</td><td class='num'>111225132012</td></tr><tr><td>0851HT-1</td><td>PROBE, 3RD PITOT STATIC</td><td class='num'>14 800</td><td class='num'>6 002</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>25032612292</td></tr><tr><td>902862</td><td>FIRE DETECTOR
 ASSY</td><td class='num'>14 500</td><td class='num'>3 010</td><td class='num'>60.0</td><td class='num ok'>-573</td><td class='num'>13082611355</td></tr><tr><td>8901-326</td><td>T2 SENSOR</td><td class='num'>9 000</td><td class='num'>3 907</td><td class='num'>—</td><td class='num ok'>-43</td><td class='num'>25052613115</td></tr><tr><td>3601193-8</td><td>ATOMIZER ASSY -
-FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>A3295-1</td><td>ROD ASSY</td><td class='num'>7 000</td><td class='num'>822</td><td class='num'>145.0</td><td class='num bad'>200</td><td class='num'>23102511302</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>335-011-904-0</td><td>PANEL ASSY</td><td class='num'>4 640</td><td class='num'>1 988</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>30012613182</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>49380</td><td>PROBE-PITOT</td><td class='num'>3 800</td><td class='num'>819</td><td class='num'>58.0</td><td class='num bad'>96</td><td class='num'>6032613002</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>AH090831</td><td>DAM GREASE</td><td class='num'>556</td><td class='num'>236</td><td class='num'>43.0</td><td class='num ok'>-56</td><td class='num'>111225132012</td></tr><tr><td>4051601-938</td><td>PANEL ASSY - CONT AFCS</td><td class='num'>0</td><td class='num'>-17 535</td><td class='num'>767.0</td><td class='num bad'>971</td><td class='num'>24072409372</td></tr><tr><td>9600-58-0000</td><td>LIGHT ASSY</td><td class='num'>0</td><td class='num'>-2 468</td><td class='num'>559.0</td><td class='num ok'>0</td><td class='num'>10092417002</td></tr></tbody>
+FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td class='num'>—</td><td class='num bad'>166</td><td class='num'>10072614325</td></tr><tr><td>A3295-1</td><td>ROD ASSY</td><td class='num'>7 000</td><td class='num'>822</td><td class='num'>145.0</td><td class='num bad'>200</td><td class='num'>23102511302</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>6 200</td><td class='num'>2 990</td><td class='num'>62.0</td><td class='num ok'>-793</td><td class='num'>21052613335</td></tr><tr><td>285A1300-1</td><td>ACCESSORY UNIT</td><td class='num'>5 800</td><td class='num'>892</td><td class='num'>63.0</td><td class='num bad'>138</td><td class='num'>27072610325</td></tr><tr><td>2-8020-3</td><td>FUSE ASSY</td><td class='num'>5 200</td><td class='num'>511</td><td class='num'>60.0</td><td class='num bad'>369</td><td class='num'>30072612095</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>5 000</td><td class='num'>761</td><td class='num'>64.0</td><td class='num ok'>-24</td><td class='num'>2206269535</td></tr><tr><td>10-631045-2</td><td>IGNITION EXCITER</td><td class='num'>4 900</td><td class='num'>2 013</td><td class='num'>62.0</td><td class='num ok'>-314</td><td class='num'>21052613335</td></tr><tr><td>G7500-03</td><td>VHF NAV CONTROL PANEL</td><td class='num'>4 800</td><td class='num'>1 408</td><td class='num'>39.0</td><td class='num ok'>-228</td><td class='num'>22062615375</td></tr><tr><td>335-011-904-0</td><td>PANEL ASSY</td><td class='num'>4 640</td><td class='num'>1 988</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>30012613182</td></tr><tr><td>4951351</td><td>PROBE</td><td class='num'>4 500</td><td class='num'>1 936</td><td class='num'>58.0</td><td class='num ok'>-152</td><td class='num'>27072615005</td></tr><tr><td>49380</td><td>PROBE-PITOT</td><td class='num'>3 800</td><td class='num'>819</td><td class='num'>58.0</td><td class='num bad'>96</td><td class='num'>6032613002</td></tr><tr><td>90G237</td><td>SWITCH</td><td class='num'>3 800</td><td class='num'>398</td><td class='num'>62.0</td><td class='num bad'>85</td><td class='num'>307269335</td></tr><tr><td>20200-0206</td><td>TANK UNIT 1 AND 2</td><td class='num'>3 500</td><td class='num'>1 165</td><td class='num'>—</td><td class='num bad'>405</td><td class='num'>27042614105</td></tr><tr><td>DMC50-17</td><td>ANTENNA ASSY</td><td class='num'>3 400</td><td class='num'>-199</td><td class='num'>58.0</td><td class='num bad'>861</td><td class='num'>26052610365</td></tr><tr><td>320362-2-1</td><td>VALVE-THREE WAY SOL SHUTOFF</td><td class='num'>2 500</td><td class='num'>1 154</td><td class='num'>67.0</td><td class='num ok'>-286</td><td class='num'>19062613055</td></tr><tr><td>14330-050</td><td>VALVE ASSY-FLUSH ORBITAL</td><td class='num'>2 500</td><td class='num'>1 165</td><td class='num'>53.0</td><td class='num ok'>-180</td><td class='num'>20072613055</td></tr><tr><td>AH090831</td><td>DAM GREASE</td><td class='num'>556</td><td class='num'>236</td><td class='num'>43.0</td><td class='num ok'>-56</td><td class='num'>111225132012</td></tr><tr><td>9600-58-0000</td><td>LIGHT ASSY</td><td class='num'>0</td><td class='num'>-2 468</td><td class='num'>559.0</td><td class='num ok'>0</td><td class='num'>10092417002</td></tr></tbody>
     </table>
     </div>
     
@@ -29566,15 +29273,15 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
 <details class="leaf">
   <summary>
     <span class="ent-name">JET TECHNIC</span>
-    <span class="ent-meta">39 зак. · 45 поз. · $2 353 900 · маржа $486 694 · 20.7% · срок 60.5 дн. · <span class="ok">Δ тр. $-21 594</span></span>
+    <span class="ent-meta">37 зак. · 41 поз. · $2 353 900 · маржа $515 158 · 21.9% · срок 62.2 дн. · <span class="ok">Δ тр. $-26 334</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">39</div>
-        <div class="muted">45 позиций ROTABLE с W</div>
+        <div class="value">37</div>
+        <div class="muted">41 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -29583,22 +29290,22 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$486 694</div>
-        <div class="muted">продажа − закупка − тр. − fee · 20.7%</div>
+        <div class="value">$515 158</div>
+        <div class="muted">продажа − закупка − тр. − fee · 21.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">60.5 дн.</div>
-        <div class="muted">ср. W−Q · 38 поз.</div>
+        <div class="value">62.2 дн.</div>
+        <div class="muted">ср. W−Q · 35 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>119 020</span>
+          <span>115 240</span>
           <span class="op">−</span>
-          <span>97 426</span>
+          <span>88 906</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-21 594</span>
+          <span class="ok">Δ тр. $-26 334</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -29618,14 +29325,14 @@ FUEL REPAIR PART</td><td class='num'>8 500</td><td class='num'>1 070</td><td cla
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
       <tbody><tr><td>442653</td><td>[WARRANTY] HMU</td><td class='num'>1 145 000</td><td class='num'>202 427</td><td class='num'>14.0</td><td class='num ok'>-8 680</td><td class='num'>14052610285</td></tr><tr><td>2084M33P02</td><td>BLADE</td><td class='num'>316 800</td><td class='num'>113 168</td><td class='num'>79.0</td><td class='num ok'>0</td><td class='num'>17032614455</td></tr><tr><td>811390-3</td><td>VALVE ASSY - STARTER</td><td class='num'>108 000</td><td class='num'>19 558</td><td class='num'>25.0</td><td class='num ok'>-1 960</td><td class='num'>2012610425</td></tr><tr><td>1853M33P06</td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)</td><td class='num'>107 000</td><td class='num'>29 260</td><td class='num'>36.0</td><td class='num ok'>-3 250</td><td class='num'>3062612555</td></tr><tr><td>1853M33P06</td><td>CONTROL UNIT - ELECTRONIC (ECU/EEC)</td><td class='num'>95 000</td><td class='num'>22 476</td><td class='num'>34.0</td><td class='num ok'>-3 265</td><td class='num'>24062616125</td></tr><tr><td>2206400-2</td><td>MACHINE ASSY -
-AIR CYCLE</td><td class='num'>52 000</td><td class='num'>10 660</td><td class='num'>41.0</td><td class='num ok'>-1 250</td><td class='num'>25062609555</td></tr><tr><td>4951957</td><td>STARTER MOTOR</td><td class='num'>35 900</td><td class='num'>11 924</td><td class='num'>14.0</td><td class='num ok'>-1 446</td><td class='num'>29052613565</td></tr><tr><td>LA4E20608HM0100</td><td>MULTIFUNCTION COMPUTER</td><td class='num'>34 500</td><td class='num'>6 389</td><td class='num'>37.0</td><td class='num bad'>30</td><td class='num'>22012610302</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>33 100</td><td class='num'>10 158</td><td class='num'>36.0</td><td class='num ok'>-3 650</td><td class='num'>160126103212</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>32 990</td><td class='num'>12 284</td><td class='num'>29.0</td><td class='num ok'>-1 590</td><td class='num'>25022617002</td></tr><tr><td>M472001-01</td><td>CARTRIDGE</td><td class='num'>29 000</td><td class='num'>4 871</td><td class='num'>91.0</td><td class='num bad'>4 975</td><td class='num'>28042609405</td></tr><tr><td>07325P000-01</td><td>BALLSCREW ASSY</td><td class='num'>29 000</td><td class='num'>10 675</td><td class='num'>9.0</td><td class='num ok'>-880</td><td class='num'>21042613315</td></tr><tr><td>S5431301100000</td><td>COWL ASSY-LOWER</td><td class='num'>27 000</td><td class='num'>5 566</td><td class='num'>—</td><td class='num ok'>-890</td><td class='num'>4052611115</td></tr><tr><td>141A4810-56</td><td>WINDSHIELD ASSY
-RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>147.0</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-39</td><td>WINDSHIELD ASSY
-RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-62</td><td>WINDSHIELD ASSY
+AIR CYCLE</td><td class='num'>52 000</td><td class='num'>10 660</td><td class='num'>41.0</td><td class='num ok'>-1 250</td><td class='num'>25062609555</td></tr><tr><td>4951957</td><td>STARTER MOTOR</td><td class='num'>35 900</td><td class='num'>11 924</td><td class='num'>14.0</td><td class='num ok'>-1 446</td><td class='num'>29052613565</td></tr><tr><td>LA4E20608HM0100</td><td>MULTIFUNCTION COMPUTER</td><td class='num'>34 500</td><td class='num'>6 389</td><td class='num'>37.0</td><td class='num bad'>30</td><td class='num'>22012610302</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>33 100</td><td class='num'>10 158</td><td class='num'>36.0</td><td class='num ok'>-3 650</td><td class='num'>160126103212</td></tr><tr><td>1151952-18</td><td>STANDBY POWER CONTROL UNIT</td><td class='num'>32 990</td><td class='num'>12 284</td><td class='num'>29.0</td><td class='num ok'>-1 590</td><td class='num'>25022617002</td></tr><tr><td>M472001-01</td><td>CARTRIDGE</td><td class='num'>29 000</td><td class='num'>4 871</td><td class='num'>91.0</td><td class='num bad'>4 975</td><td class='num'>28042609405</td></tr><tr><td>07325P000-01</td><td>BALLSCREW ASSY</td><td class='num'>29 000</td><td class='num'>10 675</td><td class='num'>9.0</td><td class='num ok'>-880</td><td class='num'>21042613315</td></tr><tr><td>S5431301100000</td><td>COWL ASSY-LOWER</td><td class='num'>27 000</td><td class='num'>5 566</td><td class='num'>—</td><td class='num ok'>-890</td><td class='num'>4052611115</td></tr><tr><td>141A4810-39</td><td>WINDSHIELD ASSY
+RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-56</td><td>WINDSHIELD ASSY
+RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>147.0</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-62</td><td>WINDSHIELD ASSY
 RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>141A4810-42</td><td>WINDSHIELD ASSY
 RH</td><td class='num'>24 600</td><td class='num'>4 660</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>19052614485</td></tr><tr><td>3079014-01</td><td>ADAPTER ASSY</td><td class='num'>18 200</td><td class='num'>4 285</td><td class='num'>29.0</td><td class='num bad'>580</td><td class='num'>26052612425</td></tr><tr><td>214N2520-82</td><td>DIFFUSER ASSY</td><td class='num'>17 600</td><td class='num'>6 004</td><td class='num'>27.0</td><td class='num ok'>-1 850</td><td class='num'>6032611165</td></tr><tr><td>2100-1020-02</td><td>COCKPIT VOICE
 RECORDER</td><td class='num'>15 500</td><td class='num'>6 535</td><td class='num'>31.0</td><td class='num ok'>-2 380</td><td class='num'>28042609515</td></tr><tr><td>2100-1020-02</td><td>COCKPIT VOICE RECORDER</td><td class='num'>15 500</td><td class='num'>6 535</td><td class='num'>—</td><td class='num ok'>-2 380</td><td class='num'>18052613305</td></tr><tr><td>JA9206M79P02</td><td>WASHER</td><td class='num'>15 040</td><td class='num'>8 516</td><td class='num'>151.0</td><td class='num ok'>-611</td><td class='num'>161225104012</td></tr><tr><td>3604524-54</td><td>COMBUSTOR UNIT ASSY</td><td class='num'>14 800</td><td class='num'>4 728</td><td class='num'>—</td><td class='num ok'>-1 315</td><td class='num'>270526102205</td></tr><tr><td>96019-02</td><td>ISOLATOR</td><td class='num'>13 800</td><td class='num'>2 880</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>26022610565</td></tr><tr><td>398908-5</td><td>VALVE ASSY - TEMP CONT</td><td class='num'>13 500</td><td class='num'>3 464</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>27032609375</td></tr><tr><td>3604524-54</td><td>COMBUSTOR UNIT ASSY</td><td class='num'>13 300</td><td class='num'>2 817</td><td class='num'>71.0</td><td class='num bad'>80</td><td class='num'>12052613145</td></tr><tr><td>65-46140-9</td><td>1.9 TEE BOLT ASSY,
 DRAG STRUT</td><td class='num'>9 900</td><td class='num'>1 476</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>31032615055</td></tr><tr><td>65C26839-3208</td><td>TUBE ASSY</td><td class='num'>9 450</td><td class='num'>1 650</td><td class='num'>125.0</td><td class='num ok'>0</td><td class='num'>18122513015</td></tr><tr><td>11197-5</td><td>DETECTOR</td><td class='num'>8 800</td><td class='num'>2 108</td><td class='num'>26.0</td><td class='num ok'>-65</td><td class='num'>2042610345</td></tr><tr><td>DEC69-069-501</td><td>COUPLING SPLINE</td><td class='num'>8 200</td><td class='num'>2 547</td><td class='num'>106.0</td><td class='num bad'>580</td><td class='num'>191225134712</td></tr><tr><td>6237M118A</td><td>SENSOR - VIB FFCC</td><td class='num'>7 500</td><td class='num'>1 252</td><td class='num'>8.0</td><td class='num bad'>1 708</td><td class='num'>2104616165</td></tr><tr><td>335-251-809-0</td><td>HOSE</td><td class='num'>6 890</td><td class='num'>4 550</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>27032618075</td></tr><tr><td>TY1878-22</td><td>SYNC LOCK</td><td class='num'>4 100</td><td class='num'>460</td><td class='num'>229.0</td><td class='num ok'>0</td><td class='num'>6102514202</td></tr><tr><td>69-39465-20G​​​​​​​</td><td>1.1.9 GLAND NUT</td><td class='num'>4 000</td><td class='num'>1 166</td><td class='num'>46.0</td><td class='num bad'>300</td><td class='num'>2022614522</td></tr><tr><td>748-722</td><td>FUEL QUANTITY
-REPEATER</td><td class='num'>3 700</td><td class='num'>1 058</td><td class='num'>281.0</td><td class='num ok'>0</td><td class='num'>7052517102</td></tr><tr><td>65C26195-100</td><td>HINGE</td><td class='num'>2 710</td><td class='num'>490</td><td class='num'>70.0</td><td class='num ok'>0</td><td class='num'>26022617505</td></tr><tr><td>CT60-3</td><td>CHECK VALVE-LP BLEED AIR</td><td class='num'>2 320</td><td class='num'>482</td><td class='num'>60.0</td><td class='num bad'>50</td><td class='num'>121225113012</td></tr><tr><td>898732-02</td><td>CONTROL CARD ASSY</td><td class='num'>2 000</td><td class='num'>-579</td><td class='num'>64.0</td><td class='num bad'>1 280</td><td class='num'>30426123065</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>492</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>702</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>622-9436-101</td><td>EFIS SYMBOL GENERATOR</td><td class='num'>0</td><td class='num'>-5 824</td><td class='num'>50.0</td><td class='num bad'>3 100</td><td class='num'>25092410102</td></tr><tr><td>ED34A350</td><td>FLIGHT DATA ACQUISITION UNIT</td><td class='num'>0</td><td class='num'>-26 515</td><td class='num'>22.0</td><td class='num ok'>-455</td><td class='num'>2102241901</td></tr><tr><td>7800000-010</td><td>FLUSH VLV</td><td class='num'>0</td><td class='num'>-3 629</td><td class='num'>25.0</td><td class='num bad'>1 640</td><td class='num'>—</td></tr><tr><td>396430-2</td><td>VALVE ASSY</td><td class='num'>0</td><td class='num'>-7 946</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>—</td></tr><tr><td>45-0083-7</td><td>RETRACTABLE AIRCRAFT LANDING LIGHT</td><td class='num'>0</td><td class='num'>-11 066</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>23092410152</td></tr></tbody>
+REPEATER</td><td class='num'>3 700</td><td class='num'>1 058</td><td class='num'>281.0</td><td class='num ok'>0</td><td class='num'>7052517102</td></tr><tr><td>65C26195-100</td><td>HINGE</td><td class='num'>2 710</td><td class='num'>490</td><td class='num'>70.0</td><td class='num ok'>0</td><td class='num'>26022617505</td></tr><tr><td>CT60-3</td><td>CHECK VALVE-LP BLEED AIR</td><td class='num'>2 320</td><td class='num'>482</td><td class='num'>60.0</td><td class='num bad'>50</td><td class='num'>121225113012</td></tr><tr><td>898732-02</td><td>CONTROL CARD ASSY</td><td class='num'>2 000</td><td class='num'>-579</td><td class='num'>64.0</td><td class='num bad'>1 280</td><td class='num'>30426123065</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>492</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>MS28034-3</td><td>SENSOR</td><td class='num'>1 700</td><td class='num'>702</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>241225093012</td></tr><tr><td>ED34A350</td><td>FLIGHT DATA ACQUISITION UNIT</td><td class='num'>0</td><td class='num'>-26 515</td><td class='num'>22.0</td><td class='num ok'>-455</td><td class='num'>2102241901</td></tr></tbody>
     </table>
     </div>
     
@@ -31430,15 +31137,15 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
 <details class="drop">
   <summary>
     <span class="ent-name">Белавиа</span>
-    <span class="ent-meta">40 зак. · 42 поз. · $1 116 041 · маржа $221 422 · 19.8% · срок 74.4 дн. · <span class="bad">Δ тр. $11 995</span> · поставщиков 5</span>
+    <span class="ent-meta">39 зак. · 41 поз. · $1 116 041 · маржа $224 561 · 20.1% · срок 63.9 дн. · <span class="bad">Δ тр. $12 076</span> · поставщиков 5</span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">40</div>
-        <div class="muted">42 позиций ROTABLE с W</div>
+        <div class="value">39</div>
+        <div class="muted">41 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -31447,22 +31154,22 @@ TEMPERATURE</td><td class='num'>27 100</td><td class='num'>528</td><td class='nu
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$221 422</div>
-        <div class="muted">продажа − закупка − тр. − fee · 19.8%</div>
+        <div class="value">$224 561</div>
+        <div class="muted">продажа − закупка − тр. − fee · 20.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">74.4 дн.</div>
-        <div class="muted">ср. W−Q · 35 поз.</div>
+        <div class="value">63.9 дн.</div>
+        <div class="muted">ср. W−Q · 34 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>78 450</span>
+          <span>77 950</span>
           <span class="op">−</span>
-          <span>90 445</span>
+          <span>90 026</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $11 995</span>
+          <span class="bad">Δ тр. $12 076</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -31599,15 +31306,15 @@ Wing Strobe</td><td class='num'>3 700</td><td class='num'>996</td><td class='num
 <details class="leaf">
   <summary>
     <span class="ent-name">LUFTHANSA</span>
-    <span class="ent-meta">4 зак. · 4 поз. · $15 800 · маржа $-1 882 · -11.9% · срок 194.7 дн. · <span class="bad">Δ тр. $772</span></span>
+    <span class="ent-meta">3 зак. · 3 поз. · $15 800 · маржа $1 258 · 8.0% · срок 76.0 дн. · <span class="bad">Δ тр. $853</span></span>
   </summary>
   <div class="block-body">
     
     <div class="kpis">
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
-        <div class="value">4</div>
-        <div class="muted">4 позиций ROTABLE с W</div>
+        <div class="value">3</div>
+        <div class="muted">3 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -31616,22 +31323,22 @@ Wing Strobe</td><td class='num'>3 700</td><td class='num'>996</td><td class='num
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$-1 882</div>
-        <div class="muted">продажа − закупка − тр. − fee · -11.9%</div>
+        <div class="value">$1 258</div>
+        <div class="muted">продажа − закупка − тр. − fee · 8.0%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">194.7 дн.</div>
-        <div class="muted">ср. W−Q · 3 поз.</div>
+        <div class="value">76.0 дн.</div>
+        <div class="muted">ср. W−Q · 2 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>2 800</span>
+          <span>2 300</span>
           <span class="op">−</span>
-          <span>3 572</span>
+          <span>3 153</span>
           <span class="op">=</span>
-          <span class="bad">Δ тр. $772</span>
+          <span class="bad">Δ тр. $853</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -31650,7 +31357,7 @@ Wing Strobe</td><td class='num'>3 700</td><td class='num'>996</td><td class='num
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>2295186</td><td>Ballast assy</td><td class='num'>4 500</td><td class='num'>-1 646</td><td class='num'>95.0</td><td class='num bad'>880</td><td class='num'>2022519045</td></tr><tr><td>158300-101</td><td>Actuator</td><td class='num'>0</td><td class='num'>-3 139</td><td class='num'>432.0</td><td class='num ok'>-81</td><td class='num'>-</td></tr></tbody>
+      <tbody><tr><td>24E507009G03</td><td>Lavatory Water Heater</td><td class='num'>6 500</td><td class='num'>2 228</td><td class='num'>—</td><td class='num ok'>-152</td><td class='num'>22062611105</td></tr><tr><td>300-047-730</td><td>Heated Slide Fitting</td><td class='num'>4 800</td><td class='num'>676</td><td class='num'>57.0</td><td class='num bad'>125</td><td class='num'>5062612245</td></tr><tr><td>2295186</td><td>Ballast assy</td><td class='num'>4 500</td><td class='num'>-1 646</td><td class='num'>95.0</td><td class='num bad'>880</td><td class='num'>2022519045</td></tr></tbody>
     </table>
     </div>
     
@@ -34683,7 +34390,7 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
 <details class="drop">
   <summary>
     <span class="ent-name">Авексима Лимитед</span>
-    <span class="ent-meta">5 зак. · 6 поз. · $160 700 · маржа $37 862 · 23.6% · срок 39.0 дн. · <span class="ok">Δ тр. $-4 887</span> · поставщиков 1</span>
+    <span class="ent-meta">5 зак. · 5 поз. · $160 700 · маржа $43 856 · 27.3% · срок 40.4 дн. · <span class="ok">Δ тр. $-4 150</span> · поставщиков 1</span>
   </summary>
   <div class="block-body">
     
@@ -34691,7 +34398,7 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">5</div>
-        <div class="muted">6 позиций ROTABLE с W</div>
+        <div class="muted">5 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -34700,22 +34407,22 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$37 862</div>
-        <div class="muted">продажа − закупка − тр. − fee · 23.6%</div>
+        <div class="value">$43 856</div>
+        <div class="muted">продажа − закупка − тр. − fee · 27.3%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">39.0 дн.</div>
-        <div class="muted">ср. W−Q · 6 поз.</div>
+        <div class="value">40.4 дн.</div>
+        <div class="muted">ср. W−Q · 5 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>13 900</span>
+          <span>12 400</span>
           <span class="op">−</span>
-          <span>9 013</span>
+          <span>8 250</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-4 887</span>
+          <span class="ok">Δ тр. $-4 150</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -34726,7 +34433,7 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
 <details class="leaf">
   <summary>
     <span class="ent-name">IBERIA</span>
-    <span class="ent-meta">5 зак. · 6 поз. · $160 700 · маржа $37 862 · 23.6% · срок 39.0 дн. · <span class="ok">Δ тр. $-4 887</span></span>
+    <span class="ent-meta">5 зак. · 5 поз. · $160 700 · маржа $43 856 · 27.3% · срок 40.4 дн. · <span class="ok">Δ тр. $-4 150</span></span>
   </summary>
   <div class="block-body">
     
@@ -34734,7 +34441,7 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">5</div>
-        <div class="muted">6 позиций ROTABLE с W</div>
+        <div class="muted">5 позиций ROTABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -34743,22 +34450,22 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$37 862</div>
-        <div class="muted">продажа − закупка − тр. − fee · 23.6%</div>
+        <div class="value">$43 856</div>
+        <div class="muted">продажа − закупка − тр. − fee · 27.3%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">39.0 дн.</div>
-        <div class="muted">ср. W−Q · 6 поз.</div>
+        <div class="value">40.4 дн.</div>
+        <div class="muted">ср. W−Q · 5 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
         <div class="value transport">
-          <span>13 900</span>
+          <span>12 400</span>
           <span class="op">−</span>
-          <span>9 013</span>
+          <span>8 250</span>
           <span class="op">=</span>
-          <span class="ok">Δ тр. $-4 887</span>
+          <span class="ok">Δ тр. $-4 150</span>
         </div>
         <div class="muted">USD · только ROTABLE (GSE/TOOL сюда же)</div>
       </div>
@@ -34777,7 +34484,7 @@ UNIT (BCU)</td><td class='num'>217 500</td><td class='num'>60 315</td><td class=
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>—</td><td>SIDE WINDOW (RH)</td><td class='num'>70 000</td><td class='num'>17 636</td><td class='num'>29.0</td><td class='num ok'>-3 650</td><td class='num'>18032618494</td></tr><tr><td>7510300-901</td><td>ANTENNA, ADF</td><td class='num'>45 000</td><td class='num'>14 320</td><td class='num'>50.0</td><td class='num ok'>-500</td><td class='num'>25022617504</td></tr><tr><td>GG436-1006-7</td><td>THERMOSTAT TEMPERATURE CONTROL</td><td class='num'>27 000</td><td class='num'>6 200</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>14052611304</td></tr><tr><td>8ES409800-00</td><td>POWER SUPPLY</td><td class='num'>10 500</td><td class='num'>3 324</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>26112516384</td></tr><tr><td>GG436-2005-3</td><td>[WARRANTY] SENSOR, TEMPERATURE</td><td class='num'>8 200</td><td class='num'>2 376</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>12122517314</td></tr><tr><td>GG436-2005-5</td><td>SENSOR, TEMPERATURE</td><td class='num'>0</td><td class='num'>-5 994</td><td class='num'>32.0</td><td class='num ok'>-737</td><td class='num'>12122517314</td></tr></tbody>
+      <tbody><tr><td>—</td><td>SIDE WINDOW (RH)</td><td class='num'>70 000</td><td class='num'>17 636</td><td class='num'>29.0</td><td class='num ok'>-3 650</td><td class='num'>18032618494</td></tr><tr><td>7510300-901</td><td>ANTENNA, ADF</td><td class='num'>45 000</td><td class='num'>14 320</td><td class='num'>50.0</td><td class='num ok'>-500</td><td class='num'>25022617504</td></tr><tr><td>GG436-1006-7</td><td>THERMOSTAT TEMPERATURE CONTROL</td><td class='num'>27 000</td><td class='num'>6 200</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>14052611304</td></tr><tr><td>8ES409800-00</td><td>POWER SUPPLY</td><td class='num'>10 500</td><td class='num'>3 324</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>26112516384</td></tr><tr><td>GG436-2005-3</td><td>[WARRANTY] SENSOR, TEMPERATURE</td><td class='num'>8 200</td><td class='num'>2 376</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>12122517314</td></tr></tbody>
     </table>
     </div>
     

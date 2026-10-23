@@ -605,8 +605,9 @@ tbody tr:hover {{ background:#eef7f9; }}
     <strong>Срез:</strong> только <strong>{spec.title}</strong> ({spec.include_note}), все клиенты.
     KIT / FEET / пустой Category в эти отчёты не входят (бакет «Прочее»).
     <br/>
-    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST.
-    Статус <strong>WARRANTY</strong> входит в выполнение (поставка уже была) и дублируется в разделе 3 — без повторного сложения выручки.
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST;
+    без типа поставки «Гарантийная поставка» (замена/возврат из ремонта).
+    Статус <strong>WARRANTY</strong> на обычной продаже входит в выполнение и дублируется в разделе 3 — без повторного сложения выручки.
     FINISHED не фильтруем.
     <br/>
     <strong>Структура периода:</strong>

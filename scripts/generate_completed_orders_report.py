@@ -56,14 +56,19 @@ COL_TRANSPORT_PLAN = (
     "то \"размазываем\" равномерно планируюмую стоиомость транспорта на все позиции из счета."
 )
 COL_TRANSPORT_FACT = "Стоимость доставки факт"
+COL_DELIVERY_TYPE = "Тип поставки"
 PAY_SUPPLIERS = {"IBERIA", "JET TECHNIC"}
 # Не считаем выполнением: отмены, возвраты, списание, потеря.
-# WARRANTY оставляем в выполнении (поставка по W уже была) и дублируем в разделе гарантий.
+# Статус WARRANTY оставляем в выполнении (оригинальная продажа уже была) и дублируем в разделе гарантий.
 EXCLUDED_STATUS_TOKENS = (
     "CANCEL",
     "REFUND",
     "SCRAP",
     "LOST",
+)
+# Тип поставки «Гарантийная поставка» — замена/возврат из ремонта, не коммерческое выполнение.
+EXCLUDED_DELIVERY_TYPE_TOKENS = (
+    "ГАРАНТИЙН",  # Гарантийная Поставка / Гарантийная поставка
 )
 
 CAT_ROTABLE = "ROTABLE"
@@ -187,10 +192,26 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_status"] = out[COL_STATUS].map(
         lambda v: "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v).strip().upper()
     )
-    out["_excluded"] = out["_status"].map(
+    out["_delivery_type"] = (
+        out[COL_DELIVERY_TYPE].map(
+            lambda v: ""
+            if v is None or (isinstance(v, float) and pd.isna(v))
+            else str(v).strip().upper()
+        )
+        if COL_DELIVERY_TYPE in out.columns
+        else ""
+    )
+    out["_excluded_status"] = out["_status"].map(
         lambda s: any(tok in s for tok in EXCLUDED_STATUS_TOKENS)
     )
-    out["_warranty"] = out["_status"].map(lambda s: "WARRANTY" in s)
+    out["_excluded_delivery_type"] = out["_delivery_type"].map(
+        lambda s: any(tok in s for tok in EXCLUDED_DELIVERY_TYPE_TOKENS)
+    )
+    out["_excluded"] = out["_excluded_status"] | out["_excluded_delivery_type"]
+    # Статус WARRANTY на оригинальной продаже (не путать с типом «Гарантийная поставка»).
+    out["_warranty"] = out["_status"].map(lambda s: "WARRANTY" in s) & ~out[
+        "_excluded_delivery_type"
+    ]
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
     out["_stk"] = out["_lead"].eq("STK")
     out["_invoice"] = out[COL_INVOICE].map(clean_str)
@@ -250,9 +271,10 @@ def in_period(d: date | None, start: date, end: date) -> bool:
 
 
 def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Попадание: заполненная W в периоде; без cancel/refund/scrap/lost.
+    """Попадание: заполненная W в периоде.
 
-    WARRANTY не исключаем: заказ уже поставлен по W, статус гарантии — отдельный слой.
+    Исключаем cancel/refund/scrap/lost и тип поставки «Гарантийная поставка».
+    Статус WARRANTY на обычной продаже оставляем (отдельный слой в отчёте).
     """
     return (
         df["_w"].map(lambda d: in_period(d, start, end))

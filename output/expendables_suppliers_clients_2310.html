@@ -153,8 +153,9 @@ tbody tr:hover { background:#eef7f9; }
     <strong>Срез:</strong> только <strong>EXPENDABLE</strong> (consumable сюда же), все клиенты.
     KIT / FEET / пустой Category в эти отчёты не входят (бакет «Прочее»).
     <br/>
-    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST.
-    Статус <strong>WARRANTY</strong> входит в выполнение (поставка уже была) и дублируется в разделе 3 — без повторного сложения выручки.
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST;
+    без типа поставки «Гарантийная поставка» (замена/возврат из ремонта).
+    Статус <strong>WARRANTY</strong> на обычной продаже входит в выполнение и дублируется в разделе 3 — без повторного сложения выручки.
     FINISHED не фильтруем.
     <br/>
     <strong>Структура периода:</strong>
@@ -32060,7 +32061,7 @@ DEMO</td><td class='num'>616</td><td class='num'>197</td><td class='num'>66.0</t
   <summary>
     <span class="period-title">4. Прошедший год · 2026</span>
     <span class="period-meta">01.01.2026 – 23.10.2026</span>
-    <span class="period-meta">1 019 зак. · $2 544 230 выр. · маржа $734 565 · warranty 1 зак. / $373</span>
+    <span class="period-meta">1 019 зак. · $2 544 230 выр. · маржа $734 669 · warranty 1 зак. / $373</span>
   </summary>
   <div class="period-body">
     
@@ -32068,7 +32069,7 @@ DEMO</td><td class='num'>616</td><td class='num'>197</td><td class='num'>66.0</t
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">1 019</div>
-        <div class="muted">1 760 позиций EXPENDABLE с W</div>
+        <div class="muted">1 759 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -32077,13 +32078,13 @@ DEMO</td><td class='num'>616</td><td class='num'>197</td><td class='num'>66.0</t
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$734 565</div>
+        <div class="value">$734 669</div>
         <div class="muted">продажа − закупка − тр. − fee · 28.9%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">53.8 дн.</div>
-        <div class="muted">ср. W−Q · 1 740 поз.</div>
+        <div class="value">53.7 дн.</div>
+        <div class="muted">ср. W−Q · 1 739 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -35273,7 +35274,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
 <details class="drop">
   <summary>
     <span class="ent-name">BLUE OCEAN SOLUTIONS</span>
-    <span class="ent-meta">400 зак. · 596 поз. · $803 091 · маржа $282 572 · 35.2% · срок 53.0 дн. · <span class="ok">Δ тр. $-580</span> · клиентов 42</span>
+    <span class="ent-meta">400 зак. · 595 поз. · $803 091 · маржа $282 676 · 35.2% · срок 52.8 дн. · <span class="ok">Δ тр. $-580</span> · клиентов 42</span>
   </summary>
   <div class="block-body">
     
@@ -35281,7 +35282,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">400</div>
-        <div class="muted">596 позиций EXPENDABLE с W</div>
+        <div class="muted">595 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -35290,13 +35291,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$282 572</div>
+        <div class="value">$282 676</div>
         <div class="muted">продажа − закупка − тр. − fee · 35.2%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">53.0 дн.</div>
-        <div class="muted">ср. W−Q · 591 поз.</div>
+        <div class="value">52.8 дн.</div>
+        <div class="muted">ср. W−Q · 590 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -35643,7 +35644,7 @@ MINUTE OXY SYS</td><td class='num'>392</td><td class='num'>188</td><td class='nu
 <details class="leaf">
   <summary>
     <span class="ent-name">S7 Engineering</span>
-    <span class="ent-meta">43 зак. · 46 поз. · $34 470 · маржа $13 811 · 40.1% · срок 52.5 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">43 зак. · 45 поз. · $34 470 · маржа $13 915 · 40.4% · срок 49.9 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -35651,7 +35652,7 @@ MINUTE OXY SYS</td><td class='num'>392</td><td class='num'>188</td><td class='nu
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">43</div>
-        <div class="muted">46 позиций EXPENDABLE с W</div>
+        <div class="muted">45 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -35660,13 +35661,13 @@ MINUTE OXY SYS</td><td class='num'>392</td><td class='num'>188</td><td class='nu
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$13 811</div>
-        <div class="muted">продажа − закупка − тр. − fee · 40.1%</div>
+        <div class="value">$13 915</div>
+        <div class="muted">продажа − закупка − тр. − fee · 40.4%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">52.5 дн.</div>
-        <div class="muted">ср. W−Q · 44 поз.</div>
+        <div class="value">49.9 дн.</div>
+        <div class="muted">ср. W−Q · 43 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -35694,7 +35695,7 @@ MINUTE OXY SYS</td><td class='num'>392</td><td class='num'>188</td><td class='nu
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>CR7621S-05-03</td><td>RIVET</td><td class='num'>2 977</td><td class='num'>1 105</td><td class='num'>91.0</td><td class='num ok'>0</td><td class='num'>6012614200-3</td></tr><tr><td>MBF3006S-5-500</td><td>BLIND FASTENER, FLUSH HEAD</td><td class='num'>2 253</td><td class='num'>411</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>27072616550-3</td></tr><tr><td>J1438P910</td><td>PACKING</td><td class='num'>2 010</td><td class='num'>632</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>23012614300-3</td></tr><tr><td>14330-239</td><td>SCREW</td><td class='num'>1 966</td><td class='num'>568</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>25112515450-3</td></tr><tr><td>2801A0900-01</td><td>WASHER; PARTS KIT</td><td class='num'>1 829</td><td class='num'>252</td><td class='num'>55.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>TRBASE125</td><td>SOAP BASE</td><td class='num'>1 620</td><td class='num'>258</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>29072618100-3</td></tr><tr><td>HST79CK-10</td><td>COLLAR</td><td class='num'>1 282</td><td class='num'>367</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>26022610300-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>1 178</td><td class='num'>460</td><td class='num'>44.0</td><td class='num ok'>0</td><td class='num'>9042617550-3</td></tr><tr><td>NAS2815C15H</td><td>BOLT</td><td class='num'>1 140</td><td class='num'>256</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>28052619300-3</td></tr><tr><td>42FLW720</td><td>SELF LOCKING NUT</td><td class='num'>921</td><td class='num'>381</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>27032619050-3</td></tr><tr><td>APM2893358-101</td><td>CABLE ASSY</td><td class='num'>918</td><td class='num'>294</td><td class='num'>65.0</td><td class='num ok'>0</td><td class='num'>12022610250-3</td></tr><tr><td>J1128P42</td><td>SEAL RING-METAL</td><td class='num'>901</td><td class='num'>298</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>2032619040-3</td></tr><tr><td>170-08780-003</td><td>LINING FLOOR 3 COCKPIT</td><td class='num'>729</td><td class='num'>291</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012610250-3</td></tr><tr><td>15800-321</td><td>GASKET</td><td class='num'>711</td><td class='num'>274</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>16032612300-3</td></tr><tr><td>D9337070939400</td><td>PLACARD</td><td class='num'>680</td><td class='num'>295</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082615200-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>647</td><td class='num'>281</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19062616330-3</td></tr><tr><td>14330-211</td><td>IDENTIFICATION LABEL</td><td class='num'>638</td><td class='num'>274</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>SJ5514WHITE</td><td>BUMPER</td><td class='num'>600</td><td class='num'>205</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>7082614050-3</td></tr><tr><td>NAS1149V0316M</td><td>WASHER, FLAT</td><td class='num'>591</td><td class='num'>491</td><td class='num'>84.0</td><td class='num ok'>0</td><td class='num'>22012610400-3</td></tr><tr><td>DAN12-8</td><td>COLLAR</td><td class='num'>575</td><td class='num'>279</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012611400-3</td></tr><tr><td>186027-3-4</td><td>NUT ,PLATE</td><td class='num'>570</td><td class='num'>209</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082617150-3</td></tr><tr><td>16006-020-5</td><td>BALL</td><td class='num'>558</td><td class='num'>277</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012611150-3</td></tr><tr><td>ANL-400</td><td>FUSE</td><td class='num'>552</td><td class='num'>271</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>19012618450-3</td></tr><tr><td>MS20426D6-10</td><td>RIVET</td><td class='num'>547</td><td class='num'>248</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>17032610450-3</td></tr><tr><td>BACS12ER08K8</td><td>SCREW</td><td class='num'>482</td><td class='num'>269</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012614250-3</td></tr><tr><td>ASNA2050DCJ3210</td><td>RIVET</td><td class='num'>478</td><td class='num'>270</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>20032618150-3</td></tr><tr><td>MS20470AD4-12</td><td>RIVET</td><td class='num'>434</td><td class='num'>268</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>19032618250-3</td></tr><tr><td>779-551-74</td><td>SELF-LOCKING SCREW</td><td class='num'>407</td><td class='num'>301</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>27112516500-3</td></tr><tr><td>ABS0112-24-03T</td><td>RIVET BLIND</td><td class='num'>401</td><td class='num'>228</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>9072618250-3</td></tr><tr><td>MS20392-4C45</td><td>PIN</td><td class='num'>400</td><td class='num'>265</td><td class='num'>88.0</td><td class='num ok'>0</td><td class='num'>24072618450-3</td></tr><tr><td>NAS1100-06-7</td><td>SCREW</td><td class='num'>398</td><td class='num'>227</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>16022610400-3</td></tr><tr><td>BAC27DEX6741</td><td>MARKER</td><td class='num'>396</td><td class='num'>259</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>112614596</td></tr><tr><td>145-32809-001</td><td>PLACARD</td><td class='num'>377</td><td class='num'>278</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>26032614500-3</td></tr><tr><td>BACB30LU4-7</td><td>BOLT</td><td class='num'>377</td><td class='num'>271</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>168000VI-44</td><td>SCREW</td><td class='num'>368</td><td class='num'>259</td><td class='num'>66.0</td><td class='num ok'>0</td><td class='num'>18032613450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>364</td><td class='num'>233</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>29012613000-3</td></tr><tr><td>MS17825-6</td><td>NUT</td><td class='num'>364</td><td class='num'>234</td><td class='num'>52.0</td><td class='num ok'>0</td><td class='num'>28052619250-3</td></tr><tr><td>NSA5059-8</td><td>NUT</td><td class='num'>362</td><td class='num'>258</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>BACS12HM08AH8</td><td>SCREW</td><td class='num'>357</td><td class='num'>210</td><td class='num'>161.0</td><td class='num ok'>0</td><td class='num'>3042613400-3</td></tr><tr><td>B14056-906</td><td>O-RING</td><td class='num'>354</td><td class='num'>235</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>30012611450-3</td></tr><tr><td>NAS1834-08K250</td><td>INSERT</td><td class='num'>352</td><td class='num'>196</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>14052619050-3</td></tr><tr><td>CDSP5905-4-13</td><td>INSERT</td><td class='num'>351</td><td class='num'>246</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>7052611450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>343</td><td class='num'>239</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>21042618050-3</td></tr><tr><td>NAS514P632-9</td><td>SCREW</td><td class='num'>340</td><td class='num'>223</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>18022611200-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>0</td><td class='num'>-104</td><td class='num'>164.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
+      <tbody><tr><td>CR7621S-05-03</td><td>RIVET</td><td class='num'>2 977</td><td class='num'>1 105</td><td class='num'>91.0</td><td class='num ok'>0</td><td class='num'>6012614200-3</td></tr><tr><td>MBF3006S-5-500</td><td>BLIND FASTENER, FLUSH HEAD</td><td class='num'>2 253</td><td class='num'>411</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>27072616550-3</td></tr><tr><td>J1438P910</td><td>PACKING</td><td class='num'>2 010</td><td class='num'>632</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>23012614300-3</td></tr><tr><td>14330-239</td><td>SCREW</td><td class='num'>1 966</td><td class='num'>568</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>25112515450-3</td></tr><tr><td>2801A0900-01</td><td>WASHER; PARTS KIT</td><td class='num'>1 829</td><td class='num'>252</td><td class='num'>55.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>TRBASE125</td><td>SOAP BASE</td><td class='num'>1 620</td><td class='num'>258</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>29072618100-3</td></tr><tr><td>HST79CK-10</td><td>COLLAR</td><td class='num'>1 282</td><td class='num'>367</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>26022610300-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>1 178</td><td class='num'>460</td><td class='num'>44.0</td><td class='num ok'>0</td><td class='num'>9042617550-3</td></tr><tr><td>NAS2815C15H</td><td>BOLT</td><td class='num'>1 140</td><td class='num'>256</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>28052619300-3</td></tr><tr><td>42FLW720</td><td>SELF LOCKING NUT</td><td class='num'>921</td><td class='num'>381</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>27032619050-3</td></tr><tr><td>APM2893358-101</td><td>CABLE ASSY</td><td class='num'>918</td><td class='num'>294</td><td class='num'>65.0</td><td class='num ok'>0</td><td class='num'>12022610250-3</td></tr><tr><td>J1128P42</td><td>SEAL RING-METAL</td><td class='num'>901</td><td class='num'>298</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>2032619040-3</td></tr><tr><td>170-08780-003</td><td>LINING FLOOR 3 COCKPIT</td><td class='num'>729</td><td class='num'>291</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012610250-3</td></tr><tr><td>15800-321</td><td>GASKET</td><td class='num'>711</td><td class='num'>274</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>16032612300-3</td></tr><tr><td>D9337070939400</td><td>PLACARD</td><td class='num'>680</td><td class='num'>295</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082615200-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>647</td><td class='num'>281</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19062616330-3</td></tr><tr><td>14330-211</td><td>IDENTIFICATION LABEL</td><td class='num'>638</td><td class='num'>274</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>SJ5514WHITE</td><td>BUMPER</td><td class='num'>600</td><td class='num'>205</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>7082614050-3</td></tr><tr><td>NAS1149V0316M</td><td>WASHER, FLAT</td><td class='num'>591</td><td class='num'>491</td><td class='num'>84.0</td><td class='num ok'>0</td><td class='num'>22012610400-3</td></tr><tr><td>DAN12-8</td><td>COLLAR</td><td class='num'>575</td><td class='num'>279</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012611400-3</td></tr><tr><td>186027-3-4</td><td>NUT ,PLATE</td><td class='num'>570</td><td class='num'>209</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082617150-3</td></tr><tr><td>16006-020-5</td><td>BALL</td><td class='num'>558</td><td class='num'>277</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012611150-3</td></tr><tr><td>ANL-400</td><td>FUSE</td><td class='num'>552</td><td class='num'>271</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>19012618450-3</td></tr><tr><td>MS20426D6-10</td><td>RIVET</td><td class='num'>547</td><td class='num'>248</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>17032610450-3</td></tr><tr><td>BACS12ER08K8</td><td>SCREW</td><td class='num'>482</td><td class='num'>269</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012614250-3</td></tr><tr><td>ASNA2050DCJ3210</td><td>RIVET</td><td class='num'>478</td><td class='num'>270</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>20032618150-3</td></tr><tr><td>MS20470AD4-12</td><td>RIVET</td><td class='num'>434</td><td class='num'>268</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>19032618250-3</td></tr><tr><td>779-551-74</td><td>SELF-LOCKING SCREW</td><td class='num'>407</td><td class='num'>301</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>27112516500-3</td></tr><tr><td>ABS0112-24-03T</td><td>RIVET BLIND</td><td class='num'>401</td><td class='num'>228</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>9072618250-3</td></tr><tr><td>MS20392-4C45</td><td>PIN</td><td class='num'>400</td><td class='num'>265</td><td class='num'>88.0</td><td class='num ok'>0</td><td class='num'>24072618450-3</td></tr><tr><td>NAS1100-06-7</td><td>SCREW</td><td class='num'>398</td><td class='num'>227</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>16022610400-3</td></tr><tr><td>BAC27DEX6741</td><td>MARKER</td><td class='num'>396</td><td class='num'>259</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>112614596</td></tr><tr><td>145-32809-001</td><td>PLACARD</td><td class='num'>377</td><td class='num'>278</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>26032614500-3</td></tr><tr><td>BACB30LU4-7</td><td>BOLT</td><td class='num'>377</td><td class='num'>271</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>168000VI-44</td><td>SCREW</td><td class='num'>368</td><td class='num'>259</td><td class='num'>66.0</td><td class='num ok'>0</td><td class='num'>18032613450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>364</td><td class='num'>233</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>29012613000-3</td></tr><tr><td>MS17825-6</td><td>NUT</td><td class='num'>364</td><td class='num'>234</td><td class='num'>52.0</td><td class='num ok'>0</td><td class='num'>28052619250-3</td></tr><tr><td>NSA5059-8</td><td>NUT</td><td class='num'>362</td><td class='num'>258</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>BACS12HM08AH8</td><td>SCREW</td><td class='num'>357</td><td class='num'>210</td><td class='num'>161.0</td><td class='num ok'>0</td><td class='num'>3042613400-3</td></tr><tr><td>B14056-906</td><td>O-RING</td><td class='num'>354</td><td class='num'>235</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>30012611450-3</td></tr><tr><td>NAS1834-08K250</td><td>INSERT</td><td class='num'>352</td><td class='num'>196</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>14052619050-3</td></tr><tr><td>CDSP5905-4-13</td><td>INSERT</td><td class='num'>351</td><td class='num'>246</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>7052611450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>343</td><td class='num'>239</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>21042618050-3</td></tr><tr><td>NAS514P632-9</td><td>SCREW</td><td class='num'>340</td><td class='num'>223</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>18022611200-3</td></tr></tbody>
     </table>
     </div>
     
@@ -46837,7 +46838,7 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
 <details class="drop">
   <summary>
     <span class="ent-name">S7 Engineering</span>
-    <span class="ent-meta">84 зак. · 97 поз. · $96 049 · маржа $26 385 · 27.5% · срок 58.4 дн. · <span class="bad">Δ тр. $4 893</span> · поставщиков 6</span>
+    <span class="ent-meta">84 зак. · 96 поз. · $96 049 · маржа $26 489 · 27.6% · срок 57.2 дн. · <span class="bad">Δ тр. $4 893</span> · поставщиков 6</span>
   </summary>
   <div class="block-body">
     
@@ -46845,7 +46846,7 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">84</div>
-        <div class="muted">97 позиций EXPENDABLE с W</div>
+        <div class="muted">96 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -46854,13 +46855,13 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$26 385</div>
-        <div class="muted">продажа − закупка − тр. − fee · 27.5%</div>
+        <div class="value">$26 489</div>
+        <div class="muted">продажа − закупка − тр. − fee · 27.6%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">58.4 дн.</div>
-        <div class="muted">ср. W−Q · 92 поз.</div>
+        <div class="value">57.2 дн.</div>
+        <div class="muted">ср. W−Q · 91 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -46880,7 +46881,7 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
 <details class="leaf">
   <summary>
     <span class="ent-name">BLUE OCEAN SOLUTIONS</span>
-    <span class="ent-meta">43 зак. · 46 поз. · $34 470 · маржа $13 811 · 40.1% · срок 52.5 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">43 зак. · 45 поз. · $34 470 · маржа $13 915 · 40.4% · срок 49.9 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -46888,7 +46889,7 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">43</div>
-        <div class="muted">46 позиций EXPENDABLE с W</div>
+        <div class="muted">45 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -46897,13 +46898,13 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$13 811</div>
-        <div class="muted">продажа − закупка − тр. − fee · 40.1%</div>
+        <div class="value">$13 915</div>
+        <div class="muted">продажа − закупка − тр. − fee · 40.4%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">52.5 дн.</div>
-        <div class="muted">ср. W−Q · 44 поз.</div>
+        <div class="value">49.9 дн.</div>
+        <div class="muted">ср. W−Q · 43 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -46931,7 +46932,7 @@ interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td 
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>CR7621S-05-03</td><td>RIVET</td><td class='num'>2 977</td><td class='num'>1 105</td><td class='num'>91.0</td><td class='num ok'>0</td><td class='num'>6012614200-3</td></tr><tr><td>MBF3006S-5-500</td><td>BLIND FASTENER, FLUSH HEAD</td><td class='num'>2 253</td><td class='num'>411</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>27072616550-3</td></tr><tr><td>J1438P910</td><td>PACKING</td><td class='num'>2 010</td><td class='num'>632</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>23012614300-3</td></tr><tr><td>14330-239</td><td>SCREW</td><td class='num'>1 966</td><td class='num'>568</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>25112515450-3</td></tr><tr><td>2801A0900-01</td><td>WASHER; PARTS KIT</td><td class='num'>1 829</td><td class='num'>252</td><td class='num'>55.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>TRBASE125</td><td>SOAP BASE</td><td class='num'>1 620</td><td class='num'>258</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>29072618100-3</td></tr><tr><td>HST79CK-10</td><td>COLLAR</td><td class='num'>1 282</td><td class='num'>367</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>26022610300-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>1 178</td><td class='num'>460</td><td class='num'>44.0</td><td class='num ok'>0</td><td class='num'>9042617550-3</td></tr><tr><td>NAS2815C15H</td><td>BOLT</td><td class='num'>1 140</td><td class='num'>256</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>28052619300-3</td></tr><tr><td>42FLW720</td><td>SELF LOCKING NUT</td><td class='num'>921</td><td class='num'>381</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>27032619050-3</td></tr><tr><td>APM2893358-101</td><td>CABLE ASSY</td><td class='num'>918</td><td class='num'>294</td><td class='num'>65.0</td><td class='num ok'>0</td><td class='num'>12022610250-3</td></tr><tr><td>J1128P42</td><td>SEAL RING-METAL</td><td class='num'>901</td><td class='num'>298</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>2032619040-3</td></tr><tr><td>170-08780-003</td><td>LINING FLOOR 3 COCKPIT</td><td class='num'>729</td><td class='num'>291</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012610250-3</td></tr><tr><td>15800-321</td><td>GASKET</td><td class='num'>711</td><td class='num'>274</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>16032612300-3</td></tr><tr><td>D9337070939400</td><td>PLACARD</td><td class='num'>680</td><td class='num'>295</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082615200-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>647</td><td class='num'>281</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19062616330-3</td></tr><tr><td>14330-211</td><td>IDENTIFICATION LABEL</td><td class='num'>638</td><td class='num'>274</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>SJ5514WHITE</td><td>BUMPER</td><td class='num'>600</td><td class='num'>205</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>7082614050-3</td></tr><tr><td>NAS1149V0316M</td><td>WASHER, FLAT</td><td class='num'>591</td><td class='num'>491</td><td class='num'>84.0</td><td class='num ok'>0</td><td class='num'>22012610400-3</td></tr><tr><td>DAN12-8</td><td>COLLAR</td><td class='num'>575</td><td class='num'>279</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012611400-3</td></tr><tr><td>186027-3-4</td><td>NUT ,PLATE</td><td class='num'>570</td><td class='num'>209</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082617150-3</td></tr><tr><td>16006-020-5</td><td>BALL</td><td class='num'>558</td><td class='num'>277</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012611150-3</td></tr><tr><td>ANL-400</td><td>FUSE</td><td class='num'>552</td><td class='num'>271</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>19012618450-3</td></tr><tr><td>MS20426D6-10</td><td>RIVET</td><td class='num'>547</td><td class='num'>248</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>17032610450-3</td></tr><tr><td>BACS12ER08K8</td><td>SCREW</td><td class='num'>482</td><td class='num'>269</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012614250-3</td></tr><tr><td>ASNA2050DCJ3210</td><td>RIVET</td><td class='num'>478</td><td class='num'>270</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>20032618150-3</td></tr><tr><td>MS20470AD4-12</td><td>RIVET</td><td class='num'>434</td><td class='num'>268</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>19032618250-3</td></tr><tr><td>779-551-74</td><td>SELF-LOCKING SCREW</td><td class='num'>407</td><td class='num'>301</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>27112516500-3</td></tr><tr><td>ABS0112-24-03T</td><td>RIVET BLIND</td><td class='num'>401</td><td class='num'>228</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>9072618250-3</td></tr><tr><td>MS20392-4C45</td><td>PIN</td><td class='num'>400</td><td class='num'>265</td><td class='num'>88.0</td><td class='num ok'>0</td><td class='num'>24072618450-3</td></tr><tr><td>NAS1100-06-7</td><td>SCREW</td><td class='num'>398</td><td class='num'>227</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>16022610400-3</td></tr><tr><td>BAC27DEX6741</td><td>MARKER</td><td class='num'>396</td><td class='num'>259</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>112614596</td></tr><tr><td>145-32809-001</td><td>PLACARD</td><td class='num'>377</td><td class='num'>278</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>26032614500-3</td></tr><tr><td>BACB30LU4-7</td><td>BOLT</td><td class='num'>377</td><td class='num'>271</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>168000VI-44</td><td>SCREW</td><td class='num'>368</td><td class='num'>259</td><td class='num'>66.0</td><td class='num ok'>0</td><td class='num'>18032613450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>364</td><td class='num'>233</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>29012613000-3</td></tr><tr><td>MS17825-6</td><td>NUT</td><td class='num'>364</td><td class='num'>234</td><td class='num'>52.0</td><td class='num ok'>0</td><td class='num'>28052619250-3</td></tr><tr><td>NSA5059-8</td><td>NUT</td><td class='num'>362</td><td class='num'>258</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>BACS12HM08AH8</td><td>SCREW</td><td class='num'>357</td><td class='num'>210</td><td class='num'>161.0</td><td class='num ok'>0</td><td class='num'>3042613400-3</td></tr><tr><td>B14056-906</td><td>O-RING</td><td class='num'>354</td><td class='num'>235</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>30012611450-3</td></tr><tr><td>NAS1834-08K250</td><td>INSERT</td><td class='num'>352</td><td class='num'>196</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>14052619050-3</td></tr><tr><td>CDSP5905-4-13</td><td>INSERT</td><td class='num'>351</td><td class='num'>246</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>7052611450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>343</td><td class='num'>239</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>21042618050-3</td></tr><tr><td>NAS514P632-9</td><td>SCREW</td><td class='num'>340</td><td class='num'>223</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>18022611200-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>0</td><td class='num'>-104</td><td class='num'>164.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
+      <tbody><tr><td>CR7621S-05-03</td><td>RIVET</td><td class='num'>2 977</td><td class='num'>1 105</td><td class='num'>91.0</td><td class='num ok'>0</td><td class='num'>6012614200-3</td></tr><tr><td>MBF3006S-5-500</td><td>BLIND FASTENER, FLUSH HEAD</td><td class='num'>2 253</td><td class='num'>411</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>27072616550-3</td></tr><tr><td>J1438P910</td><td>PACKING</td><td class='num'>2 010</td><td class='num'>632</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>23012614300-3</td></tr><tr><td>14330-239</td><td>SCREW</td><td class='num'>1 966</td><td class='num'>568</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>25112515450-3</td></tr><tr><td>2801A0900-01</td><td>WASHER; PARTS KIT</td><td class='num'>1 829</td><td class='num'>252</td><td class='num'>55.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>TRBASE125</td><td>SOAP BASE</td><td class='num'>1 620</td><td class='num'>258</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>29072618100-3</td></tr><tr><td>HST79CK-10</td><td>COLLAR</td><td class='num'>1 282</td><td class='num'>367</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>26022610300-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>1 178</td><td class='num'>460</td><td class='num'>44.0</td><td class='num ok'>0</td><td class='num'>9042617550-3</td></tr><tr><td>NAS2815C15H</td><td>BOLT</td><td class='num'>1 140</td><td class='num'>256</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>28052619300-3</td></tr><tr><td>42FLW720</td><td>SELF LOCKING NUT</td><td class='num'>921</td><td class='num'>381</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>27032619050-3</td></tr><tr><td>APM2893358-101</td><td>CABLE ASSY</td><td class='num'>918</td><td class='num'>294</td><td class='num'>65.0</td><td class='num ok'>0</td><td class='num'>12022610250-3</td></tr><tr><td>J1128P42</td><td>SEAL RING-METAL</td><td class='num'>901</td><td class='num'>298</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>2032619040-3</td></tr><tr><td>170-08780-003</td><td>LINING FLOOR 3 COCKPIT</td><td class='num'>729</td><td class='num'>291</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012610250-3</td></tr><tr><td>15800-321</td><td>GASKET</td><td class='num'>711</td><td class='num'>274</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>16032612300-3</td></tr><tr><td>D9337070939400</td><td>PLACARD</td><td class='num'>680</td><td class='num'>295</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082615200-3</td></tr><tr><td>CR3223-6-02</td><td>RIVET</td><td class='num'>647</td><td class='num'>281</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19062616330-3</td></tr><tr><td>14330-211</td><td>IDENTIFICATION LABEL</td><td class='num'>638</td><td class='num'>274</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>SJ5514WHITE</td><td>BUMPER</td><td class='num'>600</td><td class='num'>205</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>7082614050-3</td></tr><tr><td>NAS1149V0316M</td><td>WASHER, FLAT</td><td class='num'>591</td><td class='num'>491</td><td class='num'>84.0</td><td class='num ok'>0</td><td class='num'>22012610400-3</td></tr><tr><td>DAN12-8</td><td>COLLAR</td><td class='num'>575</td><td class='num'>279</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012611400-3</td></tr><tr><td>186027-3-4</td><td>NUT ,PLATE</td><td class='num'>570</td><td class='num'>209</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>10082617150-3</td></tr><tr><td>16006-020-5</td><td>BALL</td><td class='num'>558</td><td class='num'>277</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>21012611150-3</td></tr><tr><td>ANL-400</td><td>FUSE</td><td class='num'>552</td><td class='num'>271</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>19012618450-3</td></tr><tr><td>MS20426D6-10</td><td>RIVET</td><td class='num'>547</td><td class='num'>248</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>17032610450-3</td></tr><tr><td>BACS12ER08K8</td><td>SCREW</td><td class='num'>482</td><td class='num'>269</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>27012614250-3</td></tr><tr><td>ASNA2050DCJ3210</td><td>RIVET</td><td class='num'>478</td><td class='num'>270</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>20032618150-3</td></tr><tr><td>MS20470AD4-12</td><td>RIVET</td><td class='num'>434</td><td class='num'>268</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>19032618250-3</td></tr><tr><td>779-551-74</td><td>SELF-LOCKING SCREW</td><td class='num'>407</td><td class='num'>301</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>27112516500-3</td></tr><tr><td>ABS0112-24-03T</td><td>RIVET BLIND</td><td class='num'>401</td><td class='num'>228</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>9072618250-3</td></tr><tr><td>MS20392-4C45</td><td>PIN</td><td class='num'>400</td><td class='num'>265</td><td class='num'>88.0</td><td class='num ok'>0</td><td class='num'>24072618450-3</td></tr><tr><td>NAS1100-06-7</td><td>SCREW</td><td class='num'>398</td><td class='num'>227</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>16022610400-3</td></tr><tr><td>BAC27DEX6741</td><td>MARKER</td><td class='num'>396</td><td class='num'>259</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>112614596</td></tr><tr><td>145-32809-001</td><td>PLACARD</td><td class='num'>377</td><td class='num'>278</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>26032614500-3</td></tr><tr><td>BACB30LU4-7</td><td>BOLT</td><td class='num'>377</td><td class='num'>271</td><td class='num'>48.0</td><td class='num ok'>0</td><td class='num'>12082618450-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>168000VI-44</td><td>SCREW</td><td class='num'>368</td><td class='num'>259</td><td class='num'>66.0</td><td class='num ok'>0</td><td class='num'>18032613450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>364</td><td class='num'>233</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>29012613000-3</td></tr><tr><td>MS17825-6</td><td>NUT</td><td class='num'>364</td><td class='num'>234</td><td class='num'>52.0</td><td class='num ok'>0</td><td class='num'>28052619250-3</td></tr><tr><td>NSA5059-8</td><td>NUT</td><td class='num'>362</td><td class='num'>258</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>19022615500-3</td></tr><tr><td>BACS12HM08AH8</td><td>SCREW</td><td class='num'>357</td><td class='num'>210</td><td class='num'>161.0</td><td class='num ok'>0</td><td class='num'>3042613400-3</td></tr><tr><td>B14056-906</td><td>O-RING</td><td class='num'>354</td><td class='num'>235</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>30012611450-3</td></tr><tr><td>NAS1834-08K250</td><td>INSERT</td><td class='num'>352</td><td class='num'>196</td><td class='num'>35.0</td><td class='num ok'>0</td><td class='num'>14052619050-3</td></tr><tr><td>CDSP5905-4-13</td><td>INSERT</td><td class='num'>351</td><td class='num'>246</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>7052611450-3</td></tr><tr><td>D2527055300000</td><td>SPACER ASSY</td><td class='num'>343</td><td class='num'>239</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>21042618050-3</td></tr><tr><td>NAS514P632-9</td><td>SCREW</td><td class='num'>340</td><td class='num'>223</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>18022611200-3</td></tr></tbody>
     </table>
     </div>
     
@@ -59726,7 +59727,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
     </details>
 
     <details class="section warranty-section" open>
-      <summary>3. WARRANTY (1 зак. · 2 поз. · $373)</summary>
+      <summary>3. WARRANTY (1 зак. · 1 поз. · $373)</summary>
       <div class="block-body">
         <p class="section-note warranty-note">
           Те же позиции, что уже учтены выше как выполненные (есть W).
@@ -59737,7 +59738,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Warranty-кейсы</div>
         <div class="value">1</div>
-        <div class="muted">2 позиций EXPENDABLE со статусом WARRANTY</div>
+        <div class="muted">1 позиций EXPENDABLE со статусом WARRANTY</div>
       </div>
       <div>
         <div class="label">Сумма оригинала (выручка)</div>
@@ -59746,13 +59747,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа оригинала</div>
-        <div class="value">$165</div>
+        <div class="value">$269</div>
         <div class="muted">как в выполнении · под риском гарантии</div>
       </div>
       <div>
         <div class="label">Сроки STK (оригинал)</div>
-        <div class="value">128.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">92.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
     </div>
     
@@ -59762,7 +59763,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
 <details class="drop">
   <summary>
     <span class="ent-name">BLUE OCEAN SOLUTIONS</span>
-    <span class="ent-meta">1 зак. · 2 поз. · $373 · маржа $165 · 44.3% · срок 128.0 дн. · <span class="ok">Δ тр. $0</span> · клиентов 1</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $373 · маржа $269 · 72.1% · срок 92.0 дн. · <span class="ok">Δ тр. $0</span> · клиентов 1</span>
   </summary>
   <div class="block-body">
     
@@ -59770,7 +59771,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">1</div>
-        <div class="muted">2 позиций EXPENDABLE с W</div>
+        <div class="muted">1 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -59779,13 +59780,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$165</div>
-        <div class="muted">продажа − закупка − тр. − fee · 44.3%</div>
+        <div class="value">$269</div>
+        <div class="muted">продажа − закупка − тр. − fee · 72.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">128.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">92.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -59805,7 +59806,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
 <details class="leaf">
   <summary>
     <span class="ent-name">S7 Engineering</span>
-    <span class="ent-meta">1 зак. · 2 поз. · $373 · маржа $165 · 44.3% · срок 128.0 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">1 зак. · 1 поз. · $373 · маржа $269 · 72.1% · срок 92.0 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -59813,7 +59814,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">1</div>
-        <div class="muted">2 позиций EXPENDABLE с W</div>
+        <div class="muted">1 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -59822,13 +59823,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$165</div>
-        <div class="muted">продажа − закупка − тр. − fee · 44.3%</div>
+        <div class="value">$269</div>
+        <div class="muted">продажа − закупка − тр. − fee · 72.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">128.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">92.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -59856,7 +59857,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>0</td><td class='num'>-104</td><td class='num'>164.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
+      <tbody><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
     </table>
     </div>
     
@@ -59873,7 +59874,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
 <details class="drop">
   <summary>
     <span class="ent-name">S7 Engineering</span>
-    <span class="ent-meta">1 зак. · 2 поз. · $373 · маржа $165 · 44.3% · срок 128.0 дн. · <span class="ok">Δ тр. $0</span> · поставщиков 1</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $373 · маржа $269 · 72.1% · срок 92.0 дн. · <span class="ok">Δ тр. $0</span> · поставщиков 1</span>
   </summary>
   <div class="block-body">
     
@@ -59881,7 +59882,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">1</div>
-        <div class="muted">2 позиций EXPENDABLE с W</div>
+        <div class="muted">1 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -59890,13 +59891,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$165</div>
-        <div class="muted">продажа − закупка − тр. − fee · 44.3%</div>
+        <div class="value">$269</div>
+        <div class="muted">продажа − закупка − тр. − fee · 72.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">128.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">92.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -59916,7 +59917,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
 <details class="leaf">
   <summary>
     <span class="ent-name">BLUE OCEAN SOLUTIONS</span>
-    <span class="ent-meta">1 зак. · 2 поз. · $373 · маржа $165 · 44.3% · срок 128.0 дн. · <span class="ok">Δ тр. $0</span></span>
+    <span class="ent-meta">1 зак. · 1 поз. · $373 · маржа $269 · 72.1% · срок 92.0 дн. · <span class="ok">Δ тр. $0</span></span>
   </summary>
   <div class="block-body">
     
@@ -59924,7 +59925,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       <div class="highlight">
         <div class="label">Выполнено заказов</div>
         <div class="value">1</div>
-        <div class="muted">2 позиций EXPENDABLE с W</div>
+        <div class="muted">1 позиций EXPENDABLE с W</div>
       </div>
       <div>
         <div class="label">Выручка</div>
@@ -59933,13 +59934,13 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
       </div>
       <div>
         <div class="label">Маржа</div>
-        <div class="value">$165</div>
-        <div class="muted">продажа − закупка − тр. − fee · 44.3%</div>
+        <div class="value">$269</div>
+        <div class="muted">продажа − закупка − тр. − fee · 72.1%</div>
       </div>
       <div>
         <div class="label">Сроки STK</div>
-        <div class="value">128.0 дн.</div>
-        <div class="muted">ср. W−Q · 2 поз.</div>
+        <div class="value">92.0 дн.</div>
+        <div class="muted">ср. W−Q · 1 поз.</div>
       </div>
       <div class="wide">
         <div class="label">Транспорт план − факт = дельта</div>
@@ -59967,7 +59968,7 @@ LIGHT</td><td class='num'>1 900</td><td class='num'>787</td><td class='num'>47.0
         <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
         <th class="num">Счёт <span class="arrow">↕</span></th>
       </tr></thead>
-      <tbody><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>0</td><td class='num'>-104</td><td class='num'>164.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
+      <tbody><tr><td>1963M80P38</td><td>[WARRANTY] PACKING-PREFORMED</td><td class='num'>373</td><td class='num'>269</td><td class='num'>92.0</td><td class='num ok'>0</td><td class='num'>18112510500-3</td></tr></tbody>
     </table>
     </div>
     
