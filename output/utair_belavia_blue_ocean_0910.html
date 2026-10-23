@@ -1,0 +1,1487 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FASTAIR — Utair / Белавиа · BLUE OCEAN</title>
+<style>
+:root {
+  --navy:#04384d; --line:#c5d4da; --muted:#6b7c83; --zebra:#f4f8f9;
+  --bo:#0b5c6b; --bo-bg:#e7f5f7;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family: Arial, Calibri, Helvetica, sans-serif;
+  background:linear-gradient(180deg,#eef5f7 0%,#f7fbfc 40%,#fff 100%);
+  color:#1a2a30;
+}
+.wrap { max-width:1180px; margin:0 auto; padding:28px 20px 64px; }
+.hero {
+  background:linear-gradient(135deg,#04384d 0%,#0a5c6b 55%,#12707f 100%);
+  padding:22px 22px 18px; border-radius:14px; margin-bottom:16px;
+}
+.eyebrow {
+  display:inline-block; background:rgba(255,255,255,.14); color:#d5fbff;
+  padding:6px 10px; font-weight:700; margin-bottom:10px; border-radius:6px; font-size:12px;
+}
+h1 { color:#fff; font-size:28px; margin:0 0 6px; font-weight:700; }
+.sub { color:#d5fbff; margin:0 0 0; font-size:14px; }
+.rules {
+  background:#e8f6f8; border:1px solid #9ed7e0; border-radius:8px;
+  padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--navy);
+}
+details.period {
+  border:1px solid var(--line); border-radius:10px; margin:0 0 14px; background:#fff;
+  overflow:hidden;
+}
+details.period > summary {
+  cursor:pointer; padding:14px 16px; list-style:none; background:#f7fbfc;
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+  border-bottom:1px solid transparent;
+}
+details.period[open] > summary { border-bottom-color:var(--line); }
+details.period > summary::-webkit-details-marker { display:none; }
+.period-title { font-size:17px; font-weight:700; color:var(--navy); }
+.period-meta { font-size:13px; color:var(--muted); }
+.period-body { padding:12px 16px 16px; }
+details.block, details.subblock, details.catblock {
+  border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; background:#fff;
+}
+details.catblock { margin:8px 0; border-color:#c5d4da; background:#fafcfd; }
+details.block > summary, details.subblock > summary, details.catblock > summary {
+  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--navy);
+  list-style:none; background:#f7fbfc;
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+}
+details.catblock > summary { background:#eef5f7; font-size:13px; }
+details.subblock.bo-block { border-color:#7eb8c2; }
+details.subblock.bo-block > summary { background:var(--bo-bg); }
+details.block > summary::-webkit-details-marker,
+details.subblock > summary::-webkit-details-marker,
+details.catblock > summary::-webkit-details-marker { display:none; }
+details.block > summary::before,
+details.subblock > summary::before,
+details.catblock > summary::before { content:"▸ "; color:#7a8a90; }
+details.block[open] > summary::before,
+details.subblock[open] > summary::before,
+details.catblock[open] > summary::before { content:"▾ "; }
+.block-body { padding:12px; }
+.ent-name, .cat-name { font-weight:700; }
+.ent-meta { font-size:12px; color:var(--muted); font-weight:600; }
+.bo-badge {
+  display:inline-block; margin-left:8px; padding:2px 8px; border-radius:4px;
+  background:var(--bo); color:#fff; font-size:11px; font-weight:700; vertical-align:middle;
+}
+.section-h { margin:16px 0 8px; font-size:14px; color:var(--navy); }
+.kpis {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
+}
+.kpis > div { background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; }
+.kpis > div.highlight { background:#e8f6f8; border-color:#9ed7e0; }
+.kpis > div.wide { grid-column:1 / -1; }
+.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
+.value { font-size:22px; font-weight:700; margin-top:4px; color:var(--navy); font-variant-numeric:tabular-nums; }
+.value.transport { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:baseline; font-size:18px; }
+.value.transport .op { color:var(--muted); font-weight:600; }
+.bad { color:#9b2c2c; font-weight:700; }
+.ok { color:#0a5c4c; font-weight:700; }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
+.compare {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0 16px;
+}
+.compare-card {
+  border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px; background:#fff;
+}
+.compare-card.bo { background:var(--bo-bg); border-color:#9ed7e0; }
+.compare-title { font-weight:700; color:var(--navy); margin-bottom:10px; }
+.compare-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; font-size:13px;
+}
+.compare-grid .k { display:block; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.03em; }
+.compare-grid .v { display:block; font-weight:700; color:var(--navy); margin-top:2px; font-variant-numeric:tabular-nums; }
+.table-scroll { overflow-x:auto; }
+table {
+  width:100%; border-collapse:collapse; font-size:13px; border:1px solid #b7c8cf;
+}
+th, td {
+  border:1px solid #c5d4da; padding:9px 10px; text-align:left; vertical-align:middle;
+}
+th {
+  font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:#fff;
+  background:var(--navy); cursor:pointer; user-select:none; white-space:nowrap; text-align:center;
+}
+th.label-col { text-align:left; }
+th:hover { background:#03425a; }
+th .arrow { opacity:.45; margin-left:6px; font-size:11px; }
+td.num, th.num { text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.empty, .empty { color:#9a9a9a; text-align:center; }
+tbody tr:nth-child(even) { background:var(--zebra); }
+tbody tr:hover { background:#eef7f9; }
+.hint { margin-top:12px; color:var(--muted); font-size:12px; }
+@media (max-width:900px) {
+  .kpis, .compare, .compare-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">FASTAIR</div>
+    <h1>Utair + Белавиа · BLUE OCEAN · EXPENDABLE</h1>
+    <div class="sub">Срез ТАЗ 09.10.2026 · источник ТАЗ 09.10.2026.xlsx · только EXPENDABLE (вкл. consumable)</div>
+  </div>
+  <div class="rules">
+    <strong>Срез:</strong> только <strong>EXPENDABLE</strong> (consumable сюда же). ROTABLE / GSE не входят.
+    Клиенты: <strong>Utair</strong> (вкл. UTair) и <strong>Белавиа</strong>.
+    Внутри клиента — выпадающие <strong>поставщики</strong>; BLUE OCEAN выделен.
+    <br/>
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST.
+    FINISHED не фильтруем.
+    <br/>
+    <strong>Качество:</strong> сравниваем долю заказов/выручки/маржи, срок STK (W−Q) и Δ транспорта
+    у BLUE OCEAN vs остальные поставщики — только по expendables.
+    <br/>
+    <strong>Маржа:</strong> продажная итого − закупка итого − транспорт (факт, иначе план) − fee.
+  </div>
+  
+<details class="period" open>
+  <summary>
+    <span class="period-title">1. Прошедшая неделя</span>
+    <span class="period-meta">03.10.2026 – 09.10.2026</span>
+    <span class="period-meta">2 зак. · $3 025 выр. · маржа $652 · BO 100.0% выр.</span>
+  </summary>
+  <div class="period-body">
+    <div class="kpis">
+      
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">2</div>
+        <div class="muted">2 позиций с W</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Выручка</div>
+        <div class="value">$3 025</div>
+        <div class="muted">Utair + Белавиа</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Маржа</div>
+        <div class="value">$652</div>
+        <div class="muted">продажа − закупка − тр. − fee</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Сроки STK</div>
+        <div class="value">53.5 дн.</div>
+        <div class="muted">2 поз. · W−Q</div>
+      </div>
+    
+      <div class="wide">
+        <div class="label">Доля BLUE OCEAN</div>
+        <div class="value transport">
+          <span>зак. 100.0%</span>
+          <span class="op">·</span>
+          <span>выр. 100.0%</span>
+          <span class="op">·</span>
+          <span>маржа 100.0%</span>
+          <span class="op">·</span>
+          <span>срок BO 53.5 / ост. — дн.</span>
+        </div>
+        <div class="muted">сравнение качества ниже по каждому клиенту</div>
+      </div>
+    </div>
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">100.0%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">100.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">100.0%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">2 / 2</span></div>
+          <div><span class="k">Выручка</span><span class="v">$3 025</span></div>
+          <div><span class="k">Маржа</span><span class="v">$652 · 21.6%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">53.5 дн. · 2 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">0.0%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">0.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">0.0%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">0 / 0</span></div>
+          <div><span class="k">Выручка</span><span class="v">$0</span></div>
+          <div><span class="k">Маржа</span><span class="v">$0</span></div>
+          <div><span class="k">Срок STK</span><span class="v">— дн. · 0 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Белавиа</span>
+    <span class="ent-meta">2 зак. · 2 поз. · $3 025 · маржа $652 · BO доля выр. 100.0% · срок 53.5 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">100.0%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">100.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">100.0%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">2 / 2</span></div>
+          <div><span class="k">Выручка</span><span class="v">$3 025</span></div>
+          <div><span class="k">Маржа</span><span class="v">$652 · 21.6%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">53.5 дн. · 2 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">0.0%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">0.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">0.0%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">0 / 0</span></div>
+          <div><span class="k">Выручка</span><span class="v">$0</span></div>
+          <div><span class="k">Маржа</span><span class="v">$0</span></div>
+          <div><span class="k">Срок STK</span><span class="v">— дн. · 0 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (1)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">2 зак. · 2 поз. · $3 025 · маржа $652 · срок 53.5 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p1-c0-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>856A2677G01</td><td>FIXTURE REMOVAL AND INSTALLATION, REMOVABLE RETAINING RING</td><td class='num'>2 470</td><td class='num'>491</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>13082611035</td></tr><tr><td>CA18021-2C</td><td>Pin, Stud, Live Lock</td><td class='num'>555</td><td class='num'>161</td><td class='num'>50.0</td><td class='num ok'>0</td><td class='num'>20082609520-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="period">
+  <summary>
+    <span class="period-title">2. Прошедший месяц · Сентябрь 2026</span>
+    <span class="period-meta">01.09.2026 – 30.09.2026</span>
+    <span class="period-meta">15 зак. · $11 997 выр. · маржа $4 364 · BO 50.2% выр.</span>
+  </summary>
+  <div class="period-body">
+    <div class="kpis">
+      
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">15</div>
+        <div class="muted">17 позиций с W</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Выручка</div>
+        <div class="value">$11 997</div>
+        <div class="muted">Utair + Белавиа</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Маржа</div>
+        <div class="value">$4 364</div>
+        <div class="muted">продажа − закупка − тр. − fee</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Сроки STK</div>
+        <div class="value">45.9 дн.</div>
+        <div class="muted">17 поз. · W−Q</div>
+      </div>
+    
+      <div class="wide">
+        <div class="label">Доля BLUE OCEAN</div>
+        <div class="value transport">
+          <span>зак. 46.7%</span>
+          <span class="op">·</span>
+          <span>выр. 50.2%</span>
+          <span class="op">·</span>
+          <span>маржа 53.7%</span>
+          <span class="op">·</span>
+          <span>срок BO 41.6 / ост. 49.0 дн.</span>
+        </div>
+        <div class="muted">сравнение качества ниже по каждому клиенту</div>
+      </div>
+    </div>
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">46.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">50.2%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">53.7%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">7 / 7</span></div>
+          <div><span class="k">Выручка</span><span class="v">$6 017</span></div>
+          <div><span class="k">Маржа</span><span class="v">$2 345 · 39.0%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">41.6 дн. · 7 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">66.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">49.8%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">46.3%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">10 / 10</span></div>
+          <div><span class="k">Выручка</span><span class="v">$5 980</span></div>
+          <div><span class="k">Маржа</span><span class="v">$2 019 · 33.8%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">49.0 дн. · 10 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $316</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Utair</span>
+    <span class="ent-meta">12 зак. · 13 поз. · $10 211 · маржа $3 698 · BO доля выр. 47.0% · срок 47.0 дн. · <span class="bad">Δ тр. $372</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">41.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">47.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">52.5%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">5 / 5</span></div>
+          <div><span class="k">Выручка</span><span class="v">$4 801</span></div>
+          <div><span class="k">Маржа</span><span class="v">$1 941 · 40.4%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">40.8 дн. · 5 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">66.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">53.0%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">47.5%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">8 / 8</span></div>
+          <div><span class="k">Выручка</span><span class="v">$5 410</span></div>
+          <div><span class="k">Маржа</span><span class="v">$1 758 · 32.5%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">50.9 дн. · 8 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $372</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (2)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">5 зак. · 5 поз. · $4 801 · маржа $1 941 · срок 40.8 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p2-c0-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2609573</td><td>SHIELD,  HEAT</td><td class='num'>1 760</td><td class='num'>582</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>508269585</td></tr><tr><td>BACB30XD3K6</td><td>BOLT</td><td class='num'>1 500</td><td class='num'>720</td><td class='num'>49.0</td><td class='num ok'>0</td><td class='num'>20072612515</td></tr><tr><td>R259G11</td><td>ELBOW ASSY</td><td class='num'>730</td><td class='num'>265</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>6082611335</td></tr><tr><td>NAS6609-27</td><td>HUB MOUNTING BOLT</td><td class='num'>552</td><td class='num'>222</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>5082613325</td></tr><tr><td>BACN10KB3CFD</td><td>NUTPLATE</td><td class='num'>259</td><td class='num'>151</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>11082610555</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">8 зак. · 8 поз. · $5 410 · маржа $1 758 · срок 50.9 дн. · <span class="bad">Δ тр. $372</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p2-c0-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>38284</td><td>ROLLER ASSY-TRACTION</td><td class='num'>1 800</td><td class='num'>556</td><td class='num'>48.0</td><td class='num bad'>73</td><td class='num'>1707269185</td></tr><tr><td>TY26M</td><td>CABLE</td><td class='num'>900</td><td class='num'>474</td><td class='num'>53.0</td><td class='num bad'>5</td><td class='num'>6082614502</td></tr><tr><td>E0091-10-200NN</td><td>LEAD-BONDING</td><td class='num'>700</td><td class='num'>191</td><td class='num'>34.0</td><td class='num bad'>74</td><td class='num'>31072610085</td></tr><tr><td>2D2013-3</td><td>PIVOT</td><td class='num'>640</td><td class='num'>177</td><td class='num'>54.0</td><td class='num bad'>60</td><td class='num'>5082610245</td></tr><tr><td>NAS1523AA4N</td><td>WASHER</td><td class='num'>432</td><td class='num'>99</td><td class='num'>82.0</td><td class='num bad'>34</td><td class='num'>8072610222</td></tr><tr><td>M81824-1-2</td><td>SPLICE</td><td class='num'>400</td><td class='num'>156</td><td class='num'>33.0</td><td class='num ok'>-8</td><td class='num'>26082610325</td></tr><tr><td>G565-2</td><td>TAPE - FIBERGLASS, WIDTH - 2 INCH</td><td class='num'>370</td><td class='num'>22</td><td class='num'>49.0</td><td class='num bad'>123</td><td class='num'>16072617212</td></tr><tr><td>SP2510-00-2028</td><td>AERATOR</td><td class='num'>168</td><td class='num'>82</td><td class='num'>54.0</td><td class='num bad'>11</td><td class='num'>508269585</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Белавиа</span>
+    <span class="ent-meta">3 зак. · 4 поз. · $1 786 · маржа $666 · BO доля выр. 68.1% · срок 42.5 дн. · <span class="ok">Δ тр. $-96</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">66.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">68.1%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">60.8%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">2 / 2</span></div>
+          <div><span class="k">Выручка</span><span class="v">$1 216</span></div>
+          <div><span class="k">Маржа</span><span class="v">$405 · 33.3%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">43.5 дн. · 2 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">66.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">31.9%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">39.2%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">2 / 2</span></div>
+          <div><span class="k">Выручка</span><span class="v">$570</span></div>
+          <div><span class="k">Маржа</span><span class="v">$261 · 45.8%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">41.5 дн. · 2 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-56</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (2)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">2 зак. · 2 поз. · $1 216 · маржа $405 · срок 43.5 дн. · <span class="ok">Δ тр. $-40</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p2-c1-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>856A3108G01</td><td>PIN GUIDE, NO.5 BEARING OUTER</td><td class='num'>950</td><td class='num'>251</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>13082611035</td></tr><tr><td>FB016/830</td><td>LAMP</td><td class='num'>266</td><td class='num'>153</td><td class='num'>44.0</td><td class='num ok'>-40</td><td class='num'>12082611385</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">2 зак. · 2 поз. · $570 · маржа $261 · срок 41.5 дн. · <span class="ok">Δ тр. $-56</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p2-c1-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>NAS1611-226A</td><td>PACKING</td><td class='num'>320</td><td class='num'>134</td><td class='num'>44.0</td><td class='num ok'>-23</td><td class='num'>12082611385</td></tr><tr><td>NSA936604CA0931</td><td>CAP</td><td class='num'>250</td><td class='num'>127</td><td class='num'>39.0</td><td class='num ok'>-33</td><td class='num'>1708269515</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="period">
+  <summary>
+    <span class="period-title">3. Прошедший квартал · Q3 2026 (июль–сентябрь)</span>
+    <span class="period-meta">01.07.2026 – 30.09.2026</span>
+    <span class="period-meta">101 зак. · $105 583 выр. · маржа $10 824 · BO 31.5% выр.</span>
+  </summary>
+  <div class="period-body">
+    <div class="kpis">
+      
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">101</div>
+        <div class="muted">124 позиций с W</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Выручка</div>
+        <div class="value">$105 583</div>
+        <div class="muted">Utair + Белавиа</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Маржа</div>
+        <div class="value">$10 824</div>
+        <div class="muted">продажа − закупка − тр. − fee</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Сроки STK</div>
+        <div class="value">41.6 дн.</div>
+        <div class="muted">123 поз. · W−Q</div>
+      </div>
+    
+      <div class="wide">
+        <div class="label">Доля BLUE OCEAN</div>
+        <div class="value transport">
+          <span>зак. 30.7%</span>
+          <span class="op">·</span>
+          <span>выр. 31.5%</span>
+          <span class="op">·</span>
+          <span>маржа 120.6%</span>
+          <span class="op">·</span>
+          <span>срок BO 43.9 / ост. 40.5 дн.</span>
+        </div>
+        <div class="muted">сравнение качества ниже по каждому клиенту</div>
+      </div>
+    </div>
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">30.7%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">31.5%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">120.6%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">31 / 40</span></div>
+          <div><span class="k">Выручка</span><span class="v">$33 241</span></div>
+          <div><span class="k">Маржа</span><span class="v">$13 052 · 39.3%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">43.9 дн. · 40 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">74.3%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">68.5%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">-20.6%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">75 / 84</span></div>
+          <div><span class="k">Выручка</span><span class="v">$72 342</span></div>
+          <div><span class="k">Маржа</span><span class="v">$-2 228 · -3.1%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">40.5 дн. · 83 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $22 511</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Utair</span>
+    <span class="ent-meta">67 зак. · 82 поз. · $71 690 · маржа $11 106 · BO доля выр. 41.9% · срок 39.5 дн. · <span class="bad">Δ тр. $11 528</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">35.8%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">41.9%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">105.5%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">24 / 32</span></div>
+          <div><span class="k">Выручка</span><span class="v">$30 055</span></div>
+          <div><span class="k">Маржа</span><span class="v">$11 714 · 39.0%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">39.9 дн. · 32 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">70.1%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">58.1%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">-5.5%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">47 / 50</span></div>
+          <div><span class="k">Выручка</span><span class="v">$41 635</span></div>
+          <div><span class="k">Маржа</span><span class="v">$-608 · -1.5%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">39.2 дн. · 49 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $11 528</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (6)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">24 зак. · 32 поз. · $30 055 · маржа $11 714 · срок 39.9 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>SG9632</td><td>GALLEY STRIP
+DOUBLE DOT</td><td class='num'>4 800</td><td class='num'>1 516</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>06-133802-002</td><td>LAVATORY WATER
+FILTER CARTRIGES</td><td class='num'>3 430</td><td class='num'>1 240</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>67839WE</td><td>CARTRIDGE VALVE ASSY</td><td class='num'>2 600</td><td class='num'>751</td><td class='num'>20.0</td><td class='num ok'>0</td><td class='num'>1106268685</td></tr><tr><td>CR3212-6-2</td><td>RIVET</td><td class='num'>1 800</td><td class='num'>906</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>26052614015</td></tr><tr><td>2609573</td><td>SHIELD,  HEAT</td><td class='num'>1 760</td><td class='num'>582</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>508269585</td></tr><tr><td>BACB30XD3K6</td><td>BOLT</td><td class='num'>1 500</td><td class='num'>720</td><td class='num'>49.0</td><td class='num ok'>0</td><td class='num'>20072612515</td></tr><tr><td>315A1571-508</td><td>RETAINER</td><td class='num'>1 230</td><td class='num'>494</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>ADS2270-1</td><td>RING</td><td class='num'>1 150</td><td class='num'>443</td><td class='num'>50.0</td><td class='num ok'>0</td><td class='num'>24062612485</td></tr><tr><td>649-411-983-0</td><td>CLAMP</td><td class='num'>1 080</td><td class='num'>456</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>21052610305</td></tr><tr><td>69-60723-4</td><td>SPACER</td><td class='num'>870</td><td class='num'>350</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>02-190002-018</td><td>O-RING, FILTER
+BUTTOM</td><td class='num'>840</td><td class='num'>340</td><td class='num'>60.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>02-190002-020</td><td>POTABLE WATER
+FILTER ELEMENT</td><td class='num'>840</td><td class='num'>340</td><td class='num'>60.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>336-063-102-0</td><td>DUCT</td><td class='num'>740</td><td class='num'>272</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>23072612105</td></tr><tr><td>R259G11</td><td>ELBOW ASSY</td><td class='num'>730</td><td class='num'>265</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>6082611335</td></tr><tr><td>11-10865</td><td>AIR FILTER</td><td class='num'>680</td><td class='num'>277</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>16062612225</td></tr><tr><td>HL1187-6</td><td>COLLAR</td><td class='num'>600</td><td class='num'>184</td><td class='num'>58.0</td><td class='num ok'>0</td><td class='num'>12052610325</td></tr><tr><td>NAS6609-27</td><td>HUB MOUNTING BOLT</td><td class='num'>552</td><td class='num'>222</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>5082613325</td></tr><tr><td>66-22655-2</td><td>SCREW</td><td class='num'>545</td><td class='num'>238</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>26052614015</td></tr><tr><td>NAS634-37</td><td>BOLT</td><td class='num'>480</td><td class='num'>200</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>3062611585</td></tr><tr><td>NTA11155-9K22</td><td>BOLT</td><td class='num'>440</td><td class='num'>176</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>BACB30NX12K20</td><td>HI-LOK</td><td class='num'>437</td><td class='num'>196</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>14072611465</td></tr><tr><td>26S55-5AB</td><td>STUD</td><td class='num'>306</td><td class='num'>153</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>ASNA2313-16B</td><td>STOP</td><td class='num'>273</td><td class='num'>151</td><td class='num'>98.0</td><td class='num ok'>0</td><td class='num'>25032612002</td></tr><tr><td>NAS1804-9</td><td>NUT</td><td class='num'>273</td><td class='num'>151</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>HL77-6</td><td>COLLAR</td><td class='num'>270</td><td class='num'>158</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>14072613202</td></tr><tr><td>181-8836-09-553</td><td>LIGHT</td><td class='num'>268</td><td class='num'>152</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>2062611002</td></tr><tr><td>69-60493-3</td><td>STRIP</td><td class='num'>265</td><td class='num'>152</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>30062612225</td></tr><tr><td>NAS1189E3P7L</td><td>SCREW</td><td class='num'>264</td><td class='num'>156</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>294667</td><td>NUT</td><td class='num'>259</td><td class='num'>155</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>9062616045</td></tr><tr><td>BACN10KB3CFD</td><td>NUTPLATE</td><td class='num'>259</td><td class='num'>151</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>11082610555</td></tr><tr><td>NTA14451-06P048</td><td>BUSHING</td><td class='num'>258</td><td class='num'>15</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>29062614435</td></tr><tr><td>BACN10JZ4B2</td><td>NUTPLATE</td><td class='num'>256</td><td class='num'>151</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>8062612102</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">38 зак. · 40 поз. · $34 300 · маржа $6 394 · срок 44.3 дн. · <span class="bad">Δ тр. $7 564</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>638060-77454EA</td><td>CUTTER</td><td class='num'>3 600</td><td class='num'>681</td><td class='num'>32.0</td><td class='num bad'>917</td><td class='num'>5062612352</td></tr><tr><td>332A2341-4</td><td>LINK ASSY</td><td class='num'>2 400</td><td class='num'>309</td><td class='num'>91.0</td><td class='num bad'>251</td><td class='num'>13052612025</td></tr><tr><td>638060-77453EA</td><td>CUTTER</td><td class='num'>2 200</td><td class='num'>478</td><td class='num'>31.0</td><td class='num bad'>501</td><td class='num'>2206269055</td></tr><tr><td>38284</td><td>ROLLER ASSY-TRACTION</td><td class='num'>1 800</td><td class='num'>556</td><td class='num'>48.0</td><td class='num bad'>73</td><td class='num'>1707269185</td></tr><tr><td>638060-77454EA</td><td>CUTTER</td><td class='num'>1 800</td><td class='num'>391</td><td class='num'>31.0</td><td class='num bad'>410</td><td class='num'>2206269055</td></tr><tr><td>BACB30MY6K4</td><td>BOLT</td><td class='num'>1 700</td><td class='num'>970</td><td class='num'>60.0</td><td class='num bad'>212</td><td class='num'>5052611375</td></tr><tr><td>MS9557-05</td><td>BOLT</td><td class='num'>1 400</td><td class='num'>-1 772</td><td class='num'>48.0</td><td class='num bad'>2 350</td><td class='num'>9062615365</td></tr><tr><td>FB016830</td><td>LAMP</td><td class='num'>1 200</td><td class='num'>216</td><td class='num'>21.0</td><td class='num bad'>96</td><td class='num'>22072614445</td></tr><tr><td>11-6557-7B</td><td>BEZEL</td><td class='num'>1 080</td><td class='num'>305</td><td class='num'>29.0</td><td class='num bad'>75</td><td class='num'>14072610515</td></tr><tr><td>A36889</td><td>SEAL, INNER
+BEARING</td><td class='num'>1 080</td><td class='num'>342</td><td class='num'>34.0</td><td class='num bad'>10</td><td class='num'>9072614402</td></tr><tr><td>207330</td><td>BASE</td><td class='num'>1 040</td><td class='num'>327</td><td class='num'>44.0</td><td class='num bad'>56</td><td class='num'>2906269205</td></tr><tr><td>D436-37</td><td>SPLICE</td><td class='num'>1 000</td><td class='num'>215</td><td class='num'>60.0</td><td class='num bad'>231</td><td class='num'>5052618455</td></tr><tr><td>F18T5CWRS</td><td>LAMP - COOL WHITE</td><td class='num'>990</td><td class='num'>225</td><td class='num'>56.0</td><td class='num bad'>240</td><td class='num'>12052613465</td></tr><tr><td>596-20629</td><td>BEARING</td><td class='num'>930</td><td class='num'>42</td><td class='num'>35.0</td><td class='num bad'>287</td><td class='num'>18062610152</td></tr><tr><td>TY26M</td><td>CABLE</td><td class='num'>900</td><td class='num'>474</td><td class='num'>53.0</td><td class='num bad'>5</td><td class='num'>6082614502</td></tr><tr><td>27782</td><td>AIR FILTER</td><td class='num'>870</td><td class='num'>-54</td><td class='num'>42.0</td><td class='num bad'>289</td><td class='num'>26052613095</td></tr><tr><td>2608438-1</td><td>RIVET</td><td class='num'>850</td><td class='num'>201</td><td class='num'>55.0</td><td class='num bad'>184</td><td class='num'>13052611235</td></tr><tr><td>SP2510-00-7031</td><td>LW SENSOR</td><td class='num'>780</td><td class='num'>60</td><td class='num'>59.0</td><td class='num bad'>221</td><td class='num'>25052612585</td></tr><tr><td>7387-600</td><td>SEAL</td><td class='num'>765</td><td class='num'>197</td><td class='num'>41.0</td><td class='num bad'>196</td><td class='num'>26052614015</td></tr><tr><td>E0091-10-200NN</td><td>LEAD-BONDING</td><td class='num'>700</td><td class='num'>191</td><td class='num'>34.0</td><td class='num bad'>74</td><td class='num'>31072610085</td></tr><tr><td>2D2013-3</td><td>PIVOT</td><td class='num'>640</td><td class='num'>177</td><td class='num'>54.0</td><td class='num bad'>60</td><td class='num'>5082610245</td></tr><tr><td>2602542</td><td>WASHER</td><td class='num'>600</td><td class='num'>179</td><td class='num'>50.0</td><td class='num bad'>138</td><td class='num'>18052613005</td></tr><tr><td>BACB30NN3K9</td><td>BOLT</td><td class='num'>600</td><td class='num'>113</td><td class='num'>48.0</td><td class='num bad'>138</td><td class='num'>20052615115</td></tr><tr><td>232T4125-9</td><td>STRAP ASSY</td><td class='num'>530</td><td class='num'>148</td><td class='num'>28.0</td><td class='num bad'>7</td><td class='num'>15072615075</td></tr><tr><td>NAS1523AA4N</td><td>WASHER</td><td class='num'>432</td><td class='num'>99</td><td class='num'>82.0</td><td class='num bad'>34</td><td class='num'>8072610222</td></tr><tr><td>M81824-1-2</td><td>SPLICE</td><td class='num'>400</td><td class='num'>156</td><td class='num'>33.0</td><td class='num ok'>-8</td><td class='num'>26082610325</td></tr><tr><td>S9026T041</td><td>PACKING</td><td class='num'>375</td><td class='num'>80</td><td class='num'>44.0</td><td class='num bad'>4</td><td class='num'>29062614435</td></tr><tr><td>G565-2</td><td>TAPE - FIBERGLASS, WIDTH - 2 INCH</td><td class='num'>370</td><td class='num'>22</td><td class='num'>49.0</td><td class='num bad'>123</td><td class='num'>16072617212</td></tr><tr><td>121-11632-1</td><td>SHEATH ASSY</td><td class='num'>360</td><td class='num'>126</td><td class='num'>26.0</td><td class='num ok'>-15</td><td class='num'>1707269315</td></tr><tr><td>448</td><td>PACKING, PREFORMED</td><td class='num'>360</td><td class='num'>125</td><td class='num'>38.0</td><td class='num bad'>68</td><td class='num'>15062614235</td></tr><tr><td>J221P906WE</td><td>PACKING</td><td class='num'>350</td><td class='num'>177</td><td class='num'>37.0</td><td class='num bad'>19</td><td class='num'>6072611572</td></tr><tr><td>65-90305-38A</td><td>FILTER MAINTENANCE KIT</td><td class='num'>340</td><td class='num'>34</td><td class='num'>34.0</td><td class='num bad'>90</td><td class='num'>19062613402</td></tr><tr><td>MS25281-F3</td><td>CLAMP</td><td class='num'>300</td><td class='num'>102</td><td class='num'>62.0</td><td class='num bad'>58</td><td class='num'>22052611302</td></tr><tr><td>BACW10UB10</td><td>WASHER</td><td class='num'>300</td><td class='num'>65</td><td class='num'>43.0</td><td class='num bad'>76</td><td class='num'>1006268555</td></tr><tr><td>BACS12ER3K14</td><td>SCREW</td><td class='num'>290</td><td class='num'>63</td><td class='num'>34.0</td><td class='num bad'>66</td><td class='num'>19062613402</td></tr><tr><td>600-0101-1/4</td><td>SWITCH</td><td class='num'>280</td><td class='num'>61</td><td class='num'>44.0</td><td class='num bad'>71</td><td class='num'>9062610045</td></tr><tr><td>2-230S604-70</td><td>SEAL</td><td class='num'>270</td><td class='num'>86</td><td class='num'>23.0</td><td class='num ok'>-23</td><td class='num'>20072612015</td></tr><tr><td>MS29513-030</td><td>PACKING</td><td class='num'>240</td><td class='num'>141</td><td class='num'>30.0</td><td class='num ok'>-25</td><td class='num'>13072611045</td></tr><tr><td>SP2510-00-2028</td><td>AERATOR</td><td class='num'>168</td><td class='num'>82</td><td class='num'>54.0</td><td class='num bad'>11</td><td class='num'>508269585</td></tr><tr><td>BACS12ER3K14</td><td>SCREW</td><td class='num'>10</td><td class='num'>4</td><td class='num'>54.0</td><td class='num ok'>-6</td><td class='num'>19062613402-5</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">JET TECHNIC</span>
+    <span class="ent-meta">3 зак. · 3 поз. · $2 568 · маржа $-2 341 · срок 50.5 дн. · <span class="bad">Δ тр. $3 460</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s2">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>0LN115-18K</td><td>BULB</td><td class='num'>1 280</td><td class='num'>571</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>20072613585</td></tr><tr><td>26S55-5AB</td><td>STUD</td><td class='num'>880</td><td class='num'>-1 463</td><td class='num'>47.0</td><td class='num bad'>1 920</td><td class='num'>6072617302</td></tr><tr><td>AS3237-11</td><td>BOLT</td><td class='num'>408</td><td class='num'>-1 449</td><td class='num'>—</td><td class='num bad'>1 540</td><td class='num'>20052613002</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">ФЭИ</span>
+    <span class="ent-meta">5 зак. · 5 поз. · $2 242 · маржа $-6 214 · срок 0.4 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s3">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>EV949000</td><td>FILTER</td><td class='num'>1 000</td><td class='num'>-6 738</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>27082611405</td></tr><tr><td>6839</td><td>BULB</td><td class='num'>460</td><td class='num'>219</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>9072614502</td></tr><tr><td>SP3832-02-1285</td><td>SEAL</td><td class='num'>292</td><td class='num'>49</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>6072613022</td></tr><tr><td>BACR15DR3A5</td><td>RIVET, BLIND</td><td class='num'>280</td><td class='num'>133</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>708269545</td></tr><tr><td>NAS617-6</td><td>PACKING</td><td class='num'>210</td><td class='num'>123</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>13072610402</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">— без поставщика —</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $2 000 · маржа $1 800 · срок 0.0 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s4">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>137-00-870-14GK</td><td>SHROUD, IAT AISLE OUTER</td><td class='num'>2 000</td><td class='num'>1 800</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>10082615365</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">IBERIA</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $525 · маржа $-246 · срок 47.0 дн. · <span class="bad">Δ тр. $504</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c0-s5">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>NSA8206-113</td><td>O-RING</td><td class='num'>525</td><td class='num'>-246</td><td class='num'>47.0</td><td class='num bad'>504</td><td class='num'>18052613005</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Белавиа</span>
+    <span class="ent-meta">34 зак. · 42 поз. · $33 893 · маржа $-281 · BO доля выр. 9.4% · срок 45.6 дн. · <span class="bad">Δ тр. $10 943</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">20.6%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">9.4%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">—</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">7 / 8</span></div>
+          <div><span class="k">Выручка</span><span class="v">$3 186</span></div>
+          <div><span class="k">Маржа</span><span class="v">$1 338 · 42.0%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">59.8 дн. · 8 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">82.4%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">90.6%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">—</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">28 / 34</span></div>
+          <div><span class="k">Выручка</span><span class="v">$30 707</span></div>
+          <div><span class="k">Маржа</span><span class="v">$-1 620 · -5.3%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">42.3 дн. · 34 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $10 983</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (4)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">7 зак. · 8 поз. · $3 186 · маржа $1 338 · срок 59.8 дн. · <span class="ok">Δ тр. $-40</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c1-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>856A3108G01</td><td>PIN GUIDE, NO.5 BEARING OUTER</td><td class='num'>950</td><td class='num'>251</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>13082611035</td></tr><tr><td>4812-174-24</td><td>SHAFT-DRIVE</td><td class='num'>720</td><td class='num'>231</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>307269055</td></tr><tr><td>NAS1149F0532P</td><td>Washer</td><td class='num'>330</td><td class='num'>221</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>7042616380-2</td></tr><tr><td>CDSP1501-9</td><td>Spring</td><td class='num'>330</td><td class='num'>153</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>30042610470-2</td></tr><tr><td>D38999/26FD5SN</td><td>Connector, Electrical, Plug</td><td class='num'>320</td><td class='num'>165</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>26052617220-2</td></tr><tr><td>AS20624</td><td>NUT</td><td class='num'>270</td><td class='num'>164</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>11062616320-2</td></tr><tr><td>FB016/830</td><td>LAMP</td><td class='num'>266</td><td class='num'>153</td><td class='num'>44.0</td><td class='num ok'>-40</td><td class='num'>12082611385</td></tr><tr><td>NAS1149F0532P</td><td>Washer</td><td class='num'>0</td><td class='num'>0</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>—</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">23 зак. · 29 поз. · $23 767 · маржа $2 034 · срок 41.0 дн. · <span class="bad">Δ тр. $5 448</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c1-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>49-415</td><td>PLUG</td><td class='num'>5 850</td><td class='num'>-57</td><td class='num'>35.0</td><td class='num bad'>1 630</td><td class='num'>18062611570-2</td></tr><tr><td>801A50-0006A</td><td>SEAL</td><td class='num'>2 730</td><td class='num'>-638</td><td class='num'>27.0</td><td class='num bad'>1 523</td><td class='num'>9062611120-2</td></tr><tr><td>2A1447</td><td>Fastener-UPR</td><td class='num'>2 700</td><td class='num'>578</td><td class='num'>91.0</td><td class='num bad'>890</td><td class='num'>6042613010-2</td></tr><tr><td>2-12SCY</td><td>DISCHARGER, ELECTROSTATIC</td><td class='num'>1 150</td><td class='num'>56</td><td class='num'>30.0</td><td class='num bad'>302</td><td class='num'>23062609350-2</td></tr><tr><td>FE240-221-001</td><td>DIAPHRAGM-SEALING</td><td class='num'>1 020</td><td class='num'>86</td><td class='num'>50.0</td><td class='num bad'>258</td><td class='num'>3062616570-2</td></tr><tr><td>CM8A103</td><td>Lamp</td><td class='num'>925</td><td class='num'>185</td><td class='num'>57.0</td><td class='num ok'>-38</td><td class='num'>5062615070-2</td></tr><tr><td>PE21101-3-3TA</td><td>Screw</td><td class='num'>897</td><td class='num'>-65</td><td class='num'>78.0</td><td class='num bad'>215</td><td class='num'>6052616210-2</td></tr><tr><td>ABS1238-26-30B</td><td>Lamp</td><td class='num'>700</td><td class='num'>13</td><td class='num'>38.0</td><td class='num bad'>311</td><td class='num'>29052617210-2</td></tr><tr><td>MS20995C32</td><td>WIRE, LOCK</td><td class='num'>680</td><td class='num'>-20</td><td class='num'>42.0</td><td class='num bad'>193</td><td class='num'>11062615510-2</td></tr><tr><td>68-1602</td><td>O-RING</td><td class='num'>600</td><td class='num'>162</td><td class='num'>35.0</td><td class='num bad'>121</td><td class='num'>18062611570-2</td></tr><tr><td>M301-1562</td><td>RELAY</td><td class='num'>600</td><td class='num'>156</td><td class='num'>37.0</td><td class='num ok'>-8</td><td class='num'>25062615055</td></tr><tr><td>AS62404</td><td>CLIP</td><td class='num'>560</td><td class='num'>-23</td><td class='num'>43.0</td><td class='num bad'>161</td><td class='num'>10062617500-2</td></tr><tr><td>52638</td><td>Cup</td><td class='num'>510</td><td class='num'>-80</td><td class='num'>27.0</td><td class='num bad'>267</td><td class='num'>9062618560-2</td></tr><tr><td>ABS0337-01A</td><td>RECEPTACLE</td><td class='num'>500</td><td class='num'>6</td><td class='num'>32.0</td><td class='num ok'>0</td><td class='num'>30062611105</td></tr><tr><td>ASNA2001T3-23</td><td>SCREW</td><td class='num'>440</td><td class='num'>32</td><td class='num'>30.0</td><td class='num ok'>-13</td><td class='num'>2072615215</td></tr><tr><td>E0092-10-160NN</td><td>LEAD-BONDING</td><td class='num'>390</td><td class='num'>56</td><td class='num'>30.0</td><td class='num ok'>-24</td><td class='num'>2072615215</td></tr><tr><td>MS3367-1-9</td><td>Strap, tie, down-flexible hose,
+nylon</td><td class='num'>356</td><td class='num'>137</td><td class='num'>26.0</td><td class='num ok'>-17</td><td class='num'>6072615110-2</td></tr><tr><td>NAS1611-226A</td><td>PACKING</td><td class='num'>320</td><td class='num'>134</td><td class='num'>44.0</td><td class='num ok'>-23</td><td class='num'>12082611385</td></tr><tr><td>MS24693C277</td><td>Screw</td><td class='num'>300</td><td class='num'>115</td><td class='num'>26.0</td><td class='num ok'>-47</td><td class='num'>6072615110-2</td></tr><tr><td>NAS513-4</td><td>WASHER</td><td class='num'>273</td><td class='num'>104</td><td class='num'>45.0</td><td class='num ok'>-49</td><td class='num'>17062619080-2</td></tr><tr><td>AS20625</td><td>Nut</td><td class='num'>270</td><td class='num'>85</td><td class='num'>36.0</td><td class='num ok'>-47</td><td class='num'>26062610320-2</td></tr><tr><td>MS28775-017</td><td>PACKING-PREFORMED</td><td class='num'>270</td><td class='num'>197</td><td class='num'>50.0</td><td class='num bad'>20</td><td class='num'>3062617260-2</td></tr><tr><td>MS35333-74</td><td>Washer Lock</td><td class='num'>266</td><td class='num'>102</td><td class='num'>31.0</td><td class='num ok'>-50</td><td class='num'>1072617075</td></tr><tr><td>NAS1169C10</td><td>WASHER</td><td class='num'>260</td><td class='num'>87</td><td class='num'>30.0</td><td class='num ok'>-49</td><td class='num'>2072615215</td></tr><tr><td>NSA936604CA0931</td><td>CAP</td><td class='num'>250</td><td class='num'>127</td><td class='num'>39.0</td><td class='num ok'>-33</td><td class='num'>1708269515</td></tr><tr><td>MS16996-22</td><td>Screw</td><td class='num'>250</td><td class='num'>126</td><td class='num'>31.0</td><td class='num ok'>-56</td><td class='num'>1072617075</td></tr><tr><td>AS1895-7-225</td><td>Seal-E</td><td class='num'>245</td><td class='num'>115</td><td class='num'>26.0</td><td class='num ok'>-55</td><td class='num'>6072615110-2</td></tr><tr><td>MS35769-10</td><td>GASKET-METALLIC ENCASED</td><td class='num'>235</td><td class='num'>117</td><td class='num'>62.0</td><td class='num bad'>50</td><td class='num'>5052612160-2</td></tr><tr><td>MS27111-7</td><td>Washer</td><td class='num'>220</td><td class='num'>141</td><td class='num'>61.0</td><td class='num bad'>16</td><td class='num'>6052615560-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">IBERIA</span>
+    <span class="ent-meta">4 зак. · 4 поз. · $4 480 · маржа $-1 667 · срок 48.0 дн. · <span class="bad">Δ тр. $3 120</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c1-s2">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>212VL11BP100Y00</td><td>Switch-Pushbutton</td><td class='num'>2 730</td><td class='num'>-762</td><td class='num'>55.0</td><td class='num bad'>1 580</td><td class='num'>22052612450-2</td></tr><tr><td>MS20995C32</td><td>Lockwire</td><td class='num'>850</td><td class='num'>-499</td><td class='num'>44.0</td><td class='num bad'>803</td><td class='num'>20052616240-2</td></tr><tr><td>BACC10DU350ABE</td><td>Clamp</td><td class='num'>600</td><td class='num'>-437</td><td class='num'>39.0</td><td class='num bad'>617</td><td class='num'>26052616490-2</td></tr><tr><td>192872</td><td>Spring-Gas</td><td class='num'>300</td><td class='num'>31</td><td class='num'>54.0</td><td class='num bad'>120</td><td class='num'>11052613060-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">JET TECHNIC</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $2 460 · маржа $-1 988 · срок 56.0 дн. · <span class="bad">Δ тр. $2 415</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p3-c1-s3">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>ABS0951B3LM025</td><td>Switch-Pushbutton</td><td class='num'>2 460</td><td class='num'>-1 988</td><td class='num'>56.0</td><td class='num bad'>2 415</td><td class='num'>21052616400-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="period">
+  <summary>
+    <span class="period-title">4. Прошедший год · 2026</span>
+    <span class="period-meta">01.01.2026 – 09.10.2026</span>
+    <span class="period-meta">235 зак. · $534 554 выр. · маржа $134 803 · BO 37.3% выр.</span>
+  </summary>
+  <div class="period-body">
+    <div class="kpis">
+      
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">235</div>
+        <div class="muted">316 позиций с W</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Выручка</div>
+        <div class="value">$534 554</div>
+        <div class="muted">Utair + Белавиа</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Маржа</div>
+        <div class="value">$134 803</div>
+        <div class="muted">продажа − закупка − тр. − fee</div>
+      </div>
+    
+      
+      <div class="">
+        <div class="label">Сроки STK</div>
+        <div class="value">51.9 дн.</div>
+        <div class="muted">311 поз. · W−Q</div>
+      </div>
+    
+      <div class="wide">
+        <div class="label">Доля BLUE OCEAN</div>
+        <div class="value transport">
+          <span>зак. 37.4%</span>
+          <span class="op">·</span>
+          <span>выр. 37.3%</span>
+          <span class="op">·</span>
+          <span>маржа 59.9%</span>
+          <span class="op">·</span>
+          <span>срок BO 43.5 / ост. 57.5 дн.</span>
+        </div>
+        <div class="muted">сравнение качества ниже по каждому клиенту</div>
+      </div>
+    </div>
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">37.4%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">37.3%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">59.9%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">88 / 125</span></div>
+          <div><span class="k">Выручка</span><span class="v">$199 339</span></div>
+          <div><span class="k">Маржа</span><span class="v">$80 774 · 40.5%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">43.5 дн. · 124 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">67.2%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">62.7%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">40.1%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">158 / 191</span></div>
+          <div><span class="k">Выручка</span><span class="v">$335 215</span></div>
+          <div><span class="k">Маржа</span><span class="v">$54 029 · 16.1%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">57.5 дн. · 187 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $29 388</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Utair</span>
+    <span class="ent-meta">166 зак. · 230 поз. · $324 521 · маржа $94 405 · BO доля выр. 51.7% · срок 46.0 дн. · <span class="bad">Δ тр. $18 686</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">40.4%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">51.7%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">74.7%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">67 / 102</span></div>
+          <div><span class="k">Выручка</span><span class="v">$167 698</span></div>
+          <div><span class="k">Маржа</span><span class="v">$70 525 · 42.1%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">38.8 дн. · 101 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $0</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">64.5%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">48.3%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">25.3%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">107 / 128</span></div>
+          <div><span class="k">Выручка</span><span class="v">$156 823</span></div>
+          <div><span class="k">Маржа</span><span class="v">$23 880 · 15.2%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">51.9 дн. · 124 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $18 686</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (7)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">67 зак. · 102 поз. · $167 698 · маржа $70 525 · срок 38.8 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>65-68269-33</td><td>ARM ASSY</td><td class='num'>16 260</td><td class='num'>4 487</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>3022610162</td></tr><tr><td>1782M85G01</td><td>SPOOL</td><td class='num'>12 330</td><td class='num'>8 492</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>23012611502</td></tr><tr><td>KT9109M89P04</td><td>BOLT</td><td class='num'>11 400</td><td class='num'>4 536</td><td class='num'>169.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>BR20AXH5V3</td><td>RELAY</td><td class='num'>6 390</td><td class='num'>2 400</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>4022612302</td></tr><tr><td>9232M90P18</td><td>NUT ASSY</td><td class='num'>6 300</td><td class='num'>2 410</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>23012611502</td></tr><tr><td>EN2997KE3N12</td><td>PLUG</td><td class='num'>5 100</td><td class='num'>2 042</td><td class='num'>71.0</td><td class='num ok'>0</td><td class='num'>19032510242</td></tr><tr><td>SG9632</td><td>GALLEY STRIP
+DOUBLE DOT</td><td class='num'>4 800</td><td class='num'>1 516</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>AJF12A114</td><td>BUSHING</td><td class='num'>4 350</td><td class='num'>1 776</td><td class='num'>52.0</td><td class='num ok'>0</td><td class='num'>20226121012</td></tr><tr><td>9285-13</td><td>LATCH ASSY</td><td class='num'>4 300</td><td class='num'>2 698</td><td class='num'>66.0</td><td class='num ok'>0</td><td class='num'>3022610162</td></tr><tr><td>AJF13A-104DU</td><td>BUSHING</td><td class='num'>3 700</td><td class='num'>96</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>13032612055</td></tr><tr><td>1639M26P02</td><td>SHROUD</td><td class='num'>3 552</td><td class='num'>1 356</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>06-133802-002</td><td>LAVATORY WATER
+FILTER CARTRIGES</td><td class='num'>3 430</td><td class='num'>1 240</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>65-1797-3</td><td>FITTING</td><td class='num'>3 420</td><td class='num'>1 236</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>20032613455</td></tr><tr><td>ATF14</td><td>BEARING</td><td class='num'>3 200</td><td class='num'>1 286</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>2052610125</td></tr><tr><td>231-700055-00-3704</td><td>SCRIVET</td><td class='num'>3 000</td><td class='num'>1 066</td><td class='num'>38.0</td><td class='num ok'>0</td><td class='num'>140126105012</td></tr><tr><td>387LNCISMI</td><td>BULB</td><td class='num'>2 900</td><td class='num'>1 115</td><td class='num'>18.0</td><td class='num ok'>0</td><td class='num'>12012616355</td></tr><tr><td>67839WE</td><td>CARTRIDGE VALVE ASSY</td><td class='num'>2 600</td><td class='num'>751</td><td class='num'>20.0</td><td class='num ok'>0</td><td class='num'>1106268685</td></tr><tr><td>1288M44P05</td><td>STRIP</td><td class='num'>2 344</td><td class='num'>1 870</td><td class='num'>79.0</td><td class='num ok'>0</td><td class='num'>24032612452</td></tr><tr><td>J221P977</td><td>PACKING</td><td class='num'>2 320</td><td class='num'>985</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>151225083012</td></tr><tr><td>9208M52P04</td><td>SEAL</td><td class='num'>2 112</td><td class='num'>1 213</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>23012611502</td></tr><tr><td>69-43531-26</td><td>CABLE ASSY</td><td class='num'>2 060</td><td class='num'>833</td><td class='num'>18.0</td><td class='num ok'>0</td><td class='num'>13042613502</td></tr><tr><td>J490P05</td><td>NUT</td><td class='num'>2 024</td><td class='num'>1 019</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>CR3212-6-2</td><td>RIVET</td><td class='num'>1 800</td><td class='num'>906</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>26052614015</td></tr><tr><td>2609573</td><td>SHIELD,  HEAT</td><td class='num'>1 760</td><td class='num'>582</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>508269585</td></tr><tr><td>J221P179</td><td>PACKING</td><td class='num'>1 640</td><td class='num'>575</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>151225083012</td></tr><tr><td>315A1583-2</td><td>SPRING</td><td class='num'>1 560</td><td class='num'>-62</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>291225090012</td></tr><tr><td>55804</td><td>BEARING</td><td class='num'>1 520</td><td class='num'>-19</td><td class='num'>89.0</td><td class='num ok'>0</td><td class='num'>28012610152</td></tr><tr><td>BACB30XD3K6</td><td>BOLT</td><td class='num'>1 500</td><td class='num'>720</td><td class='num'>49.0</td><td class='num ok'>0</td><td class='num'>20072612515</td></tr><tr><td>6S6DC120V</td><td>LAMP</td><td class='num'>1 480</td><td class='num'>648</td><td class='num'>49.0</td><td class='num ok'>0</td><td class='num'>13032612055</td></tr><tr><td>1288M44P04</td><td>STRIP</td><td class='num'>1 469</td><td class='num'>712</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>1288M44P01</td><td>SHIELD</td><td class='num'>1 456</td><td class='num'>712</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>315A1567-3</td><td>INDICATOR</td><td class='num'>1 410</td><td class='num'>-150</td><td class='num'>133.0</td><td class='num ok'>0</td><td class='num'>41225084512</td></tr><tr><td>BACB30NX10K13</td><td>BOLT</td><td class='num'>1 350</td><td class='num'>510</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>23122512315</td></tr><tr><td>66-2396-1</td><td>GASKET</td><td class='num'>1 340</td><td class='num'>134</td><td class='num'>38.0</td><td class='num ok'>0</td><td class='num'>5012615065</td></tr><tr><td>315A1571-508</td><td>RETAINER</td><td class='num'>1 230</td><td class='num'>494</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>1539M96P01</td><td>SEAL</td><td class='num'>1 200</td><td class='num'>774</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>1288M44P03</td><td>STRIP</td><td class='num'>1 183</td><td class='num'>710</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>9208M51P04</td><td>SEAL</td><td class='num'>1 152</td><td class='num'>778</td><td class='num'>143.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>ADS2270-1</td><td>RING</td><td class='num'>1 150</td><td class='num'>443</td><td class='num'>50.0</td><td class='num ok'>0</td><td class='num'>24062612485</td></tr><tr><td>BACB30VU8K7</td><td>BOLT</td><td class='num'>1 090</td><td class='num'>450</td><td class='num'>24.0</td><td class='num ok'>0</td><td class='num'>23122512315</td></tr><tr><td>649-411-983-0</td><td>CLAMP</td><td class='num'>1 080</td><td class='num'>456</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>21052610305</td></tr><tr><td>BAC29PPS3993</td><td>MARKER</td><td class='num'>1 040</td><td class='num'>453</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>26012617252</td></tr><tr><td>S4933959-503</td><td>BUTTON-CIRCUIT BREAKER (YELLOW)</td><td class='num'>998</td><td class='num'>464</td><td class='num'>20.0</td><td class='num ok'>0</td><td class='num'>7042613552</td></tr><tr><td>4502312</td><td>WASHER - LOCK, TABBED</td><td class='num'>920</td><td class='num'>395</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>2022615182</td></tr><tr><td>315A1583-2</td><td>SPRING</td><td class='num'>910</td><td class='num'>348</td><td class='num'>28.0</td><td class='num ok'>0</td><td class='num'>291225090012</td></tr><tr><td>1012375-001</td><td>SPRING-LIT POCKET</td><td class='num'>900</td><td class='num'>318</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>21012612002</td></tr><tr><td>1288M65P01</td><td>SPRING</td><td class='num'>880</td><td class='num'>724</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>1288M65P02</td><td>SEAL</td><td class='num'>880</td><td class='num'>703</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>1288M66P04</td><td>SEAL</td><td class='num'>880</td><td class='num'>745</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>69-60723-4</td><td>SPACER</td><td class='num'>870</td><td class='num'>350</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>02-190002-020</td><td>POTABLE WATER
+FILTER ELEMENT</td><td class='num'>840</td><td class='num'>340</td><td class='num'>60.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>02-190002-018</td><td>O-RING, FILTER
+BUTTOM</td><td class='num'>840</td><td class='num'>340</td><td class='num'>60.0</td><td class='num ok'>0</td><td class='num'>22062617152</td></tr><tr><td>1288M44P02</td><td>STRIP</td><td class='num'>819</td><td class='num'>712</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>24122516335</td></tr><tr><td>BAC27TLG0005</td><td>MARKER</td><td class='num'>810</td><td class='num'>706</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>140126105012</td></tr><tr><td>411A4902-6</td><td>CLIP ASSY</td><td class='num'>800</td><td class='num'>559</td><td class='num'>18.0</td><td class='num ok'>0</td><td class='num'>3022610162</td></tr><tr><td>3A035-0181</td><td>SLEEVE</td><td class='num'>760</td><td class='num'>375</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>20012615445</td></tr><tr><td>336-063-102-0</td><td>DUCT</td><td class='num'>740</td><td class='num'>272</td><td class='num'>21.0</td><td class='num ok'>0</td><td class='num'>23072612105</td></tr><tr><td>R259G11</td><td>ELBOW ASSY</td><td class='num'>730</td><td class='num'>265</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>6082611335</td></tr><tr><td>A37040</td><td>BRACE</td><td class='num'>720</td><td class='num'>293</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>21012613432</td></tr><tr><td>BACB30NX10K12</td><td>BOLT</td><td class='num'>715</td><td class='num'>295</td><td class='num'>24.0</td><td class='num ok'>0</td><td class='num'>23122512315</td></tr><tr><td>69-50565-3</td><td>BUSHING</td><td class='num'>700</td><td class='num'>284</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>25032610402</td></tr><tr><td>BACR15DR3-6</td><td>RIVET</td><td class='num'>700</td><td class='num'>170</td><td class='num'>72.0</td><td class='num ok'>0</td><td class='num'>18032618082</td></tr><tr><td>1304M20P04</td><td>SEAL</td><td class='num'>693</td><td class='num'>587</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>11-10865</td><td>AIR FILTER</td><td class='num'>680</td><td class='num'>277</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>16062612225</td></tr><tr><td>65C33970U35</td><td>COLLAR</td><td class='num'>650</td><td class='num'>-317</td><td class='num'>90.0</td><td class='num ok'>0</td><td class='num'>20112516405</td></tr><tr><td>9382M26P02</td><td>GASKET</td><td class='num'>630</td><td class='num'>405</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>10032617302</td></tr><tr><td>69-38829-2</td><td>BUSHING</td><td class='num'>625</td><td class='num'>271</td><td class='num'>56.0</td><td class='num ok'>0</td><td class='num'>9042612175</td></tr><tr><td>HL1187-6</td><td>COLLAR</td><td class='num'>600</td><td class='num'>184</td><td class='num'>58.0</td><td class='num ok'>0</td><td class='num'>12052610325</td></tr><tr><td>0R-0941</td><td>O-RING</td><td class='num'>576</td><td class='num'>264</td><td class='num'>126.0</td><td class='num ok'>0</td><td class='num'>221225112012</td></tr><tr><td>NAS6609-27</td><td>HUB MOUNTING BOLT</td><td class='num'>552</td><td class='num'>222</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>5082613325</td></tr><tr><td>66-22655-2</td><td>SCREW</td><td class='num'>545</td><td class='num'>238</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>26052614015</td></tr><tr><td>BACR15FT6D12C</td><td>RIVET</td><td class='num'>492</td><td class='num'>318</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>4022614402</td></tr><tr><td>NAS634-37</td><td>BOLT</td><td class='num'>480</td><td class='num'>200</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>3062611585</td></tr><tr><td>BACB30MY10K13</td><td>BOLT</td><td class='num'>480</td><td class='num'>358</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>23122512315</td></tr><tr><td>BACS12HN3-8</td><td>SCREW</td><td class='num'>465</td><td class='num'>-211</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>160126132012</td></tr><tr><td>NAS1921M05-03</td><td>RIVET</td><td class='num'>456</td><td class='num'>200</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>21012610402</td></tr><tr><td>NTA11155-9K22</td><td>BOLT</td><td class='num'>440</td><td class='num'>176</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>BACB30NX12K20</td><td>HI-LOK</td><td class='num'>437</td><td class='num'>196</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>14072611465</td></tr><tr><td>BACJ40AB21-15</td><td>JUMPER ASSY</td><td class='num'>400</td><td class='num'>296</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>140126105012</td></tr><tr><td>TE096</td><td>TERMINAL RING</td><td class='num'>384</td><td class='num'>272</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>21012613432</td></tr><tr><td>BACB30YP6K3</td><td>BOLT</td><td class='num'>384</td><td class='num'>276</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>5022610102</td></tr><tr><td>WHS10F8TPKL16GY</td><td>SCREW</td><td class='num'>378</td><td class='num'>172</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>150126124612</td></tr><tr><td>1304M20P03</td><td>SEAL</td><td class='num'>351</td><td class='num'>244</td><td class='num'>17.0</td><td class='num ok'>0</td><td class='num'>190126090712</td></tr><tr><td>OR-0571</td><td>O-RING</td><td class='num'>320</td><td class='num'>206</td><td class='num'>39.0</td><td class='num ok'>0</td><td class='num'>2032616035</td></tr><tr><td>BACN11G3A5CD</td><td>NUTPLATE</td><td class='num'>312</td><td class='num'>196</td><td class='num'>28.0</td><td class='num ok'>0</td><td class='num'>19022616002</td></tr><tr><td>BACB28AT06B018A</td><td>BUSHING</td><td class='num'>312</td><td class='num'>206</td><td class='num'>25.0</td><td class='num ok'>0</td><td class='num'>2042616375</td></tr><tr><td>MW163</td><td>WASHER</td><td class='num'>308</td><td class='num'>192</td><td class='num'>24.0</td><td class='num ok'>0</td><td class='num'>231225103012</td></tr><tr><td>26S55-5AB</td><td>STUD</td><td class='num'>306</td><td class='num'>153</td><td class='num'>34.0</td><td class='num ok'>0</td><td class='num'>5062612352</td></tr><tr><td>BACB30LJ4-15</td><td>BOLT</td><td class='num'>288</td><td class='num'>182</td><td class='num'>15.0</td><td class='num ok'>0</td><td class='num'>19032613302</td></tr><tr><td>NAS1304-7</td><td>BOLT</td><td class='num'>275</td><td class='num'>155</td><td class='num'>70.0</td><td class='num ok'>0</td><td class='num'>26032611272</td></tr><tr><td>ASNA2313-16B</td><td>STOP</td><td class='num'>273</td><td class='num'>151</td><td class='num'>98.0</td><td class='num ok'>0</td><td class='num'>25032612002</td></tr><tr><td>NAS1804-9</td><td>NUT</td><td class='num'>273</td><td class='num'>151</td><td class='num'>36.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>HL77-6</td><td>COLLAR</td><td class='num'>270</td><td class='num'>158</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>14072613202</td></tr><tr><td>181-8836-09-553</td><td>LIGHT</td><td class='num'>268</td><td class='num'>152</td><td class='num'>29.0</td><td class='num ok'>0</td><td class='num'>2062611002</td></tr><tr><td>69-60493-3</td><td>STRIP</td><td class='num'>265</td><td class='num'>152</td><td class='num'>16.0</td><td class='num ok'>0</td><td class='num'>30062612225</td></tr><tr><td>NAS1921M05-09</td><td>RIVET</td><td class='num'>264</td><td class='num'>156</td><td class='num'>28.0</td><td class='num ok'>0</td><td class='num'>21012610402</td></tr><tr><td>NAS1189E3P7L</td><td>SCREW</td><td class='num'>264</td><td class='num'>156</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>3062610525</td></tr><tr><td>BACN10KB3CFD</td><td>NUTPLATE</td><td class='num'>259</td><td class='num'>151</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>11082610555</td></tr><tr><td>294667</td><td>NUT</td><td class='num'>259</td><td class='num'>155</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>9062616045</td></tr><tr><td>NTA14451-06P048</td><td>BUSHING</td><td class='num'>258</td><td class='num'>15</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>29062614435</td></tr><tr><td>BACN10JZ4B2</td><td>NUTPLATE</td><td class='num'>256</td><td class='num'>151</td><td class='num'>31.0</td><td class='num ok'>0</td><td class='num'>8062612102</td></tr><tr><td>BACB30NX10K21X</td><td>BOLT</td><td class='num'>256</td><td class='num'>151</td><td class='num'>38.0</td><td class='num ok'>0</td><td class='num'>23122512315</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">78 зак. · 95 поз. · $105 367 · маржа $20 365 · срок 57.3 дн. · <span class="bad">Δ тр. $11 032</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>2601066</td><td>NUT, SELF-LOCKING</td><td class='num'>6 600</td><td class='num'>946</td><td class='num'>—</td><td class='num bad'>537</td><td class='num'>12052616152</td></tr><tr><td>F045CWBCAC</td><td>LAMP</td><td class='num'>6 200</td><td class='num'>2 828</td><td class='num'>83.0</td><td class='num ok'>-108</td><td class='num'>9022613202</td></tr><tr><td>65-90305-20B</td><td>FILTER MAINTENANCE KIT</td><td class='num'>4 880</td><td class='num'>-868</td><td class='num'>90.0</td><td class='num bad'>497</td><td class='num'>20226121012</td></tr><tr><td>2502M08G01</td><td>BRACKET-HARNESS</td><td class='num'>4 610</td><td class='num'>1 571</td><td class='num'>65.0</td><td class='num ok'>-16</td><td class='num'>26032610312</td></tr><tr><td>J1215P16</td><td>GASKET</td><td class='num'>4 600</td><td class='num'>1 178</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>25032612512</td></tr><tr><td>137-00-370-01CC</td><td>ESCUTCHEON CLOSED</td><td class='num'>4 500</td><td class='num'>-615</td><td class='num'>25.0</td><td class='num ok'>-257</td><td class='num'>12032614302</td></tr><tr><td>AC71-37</td><td>CONTROL</td><td class='num'>3 800</td><td class='num'>1 075</td><td class='num'>39.0</td><td class='num ok'>-30</td><td class='num'>21042613072</td></tr><tr><td>638060-77454EA</td><td>CUTTER</td><td class='num'>3 600</td><td class='num'>681</td><td class='num'>32.0</td><td class='num bad'>917</td><td class='num'>5062612352</td></tr><tr><td>9365M41P122</td><td>PACKING</td><td class='num'>3 504</td><td class='num'>-2 430</td><td class='num'>108.0</td><td class='num bad'>3 540</td><td class='num'>4102511502</td></tr><tr><td>BACC30BP12</td><td>COLLAR</td><td class='num'>3 000</td><td class='num'>36</td><td class='num'>79.0</td><td class='num ok'>0</td><td class='num'>181225095012</td></tr><tr><td>R287P06</td><td>NIPPLE</td><td class='num'>2 500</td><td class='num'>732</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>24032617052</td></tr><tr><td>332A2341-4</td><td>LINK ASSY</td><td class='num'>2 400</td><td class='num'>309</td><td class='num'>91.0</td><td class='num bad'>251</td><td class='num'>13052612025</td></tr><tr><td>638060-77453EA</td><td>CUTTER</td><td class='num'>2 200</td><td class='num'>478</td><td class='num'>31.0</td><td class='num bad'>501</td><td class='num'>2206269055</td></tr><tr><td>AE710243-1</td><td>HOSE ASSY</td><td class='num'>2 000</td><td class='num'>794</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>24032617052</td></tr><tr><td>P4-01-0021</td><td>BATTERY PACK</td><td class='num'>1 950</td><td class='num'>645</td><td class='num'>53.0</td><td class='num bad'>5</td><td class='num'>23012614122</td></tr><tr><td>38284</td><td>ROLLER ASSY-TRACTION</td><td class='num'>1 800</td><td class='num'>556</td><td class='num'>48.0</td><td class='num bad'>73</td><td class='num'>1707269185</td></tr><tr><td>638060-77454EA</td><td>CUTTER</td><td class='num'>1 800</td><td class='num'>391</td><td class='num'>31.0</td><td class='num bad'>410</td><td class='num'>2206269055</td></tr><tr><td>BACB30MY6K4</td><td>BOLT</td><td class='num'>1 700</td><td class='num'>970</td><td class='num'>60.0</td><td class='num bad'>212</td><td class='num'>5052611375</td></tr><tr><td>R287P04</td><td>NIPPLE</td><td class='num'>1 420</td><td class='num'>484</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>26032611272</td></tr><tr><td>MS9557-05</td><td>BOLT</td><td class='num'>1 400</td><td class='num'>-1 772</td><td class='num'>48.0</td><td class='num bad'>2 350</td><td class='num'>9062615365</td></tr><tr><td>FB016830</td><td>LAMP</td><td class='num'>1 200</td><td class='num'>216</td><td class='num'>21.0</td><td class='num bad'>96</td><td class='num'>22072614445</td></tr><tr><td>R287P08</td><td>NIPPLE</td><td class='num'>1 100</td><td class='num'>278</td><td class='num'>61.0</td><td class='num ok'>0</td><td class='num'>23032613232</td></tr><tr><td>BACR15FT6D10C</td><td>RIVET</td><td class='num'>1 100</td><td class='num'>606</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>2022617002</td></tr><tr><td>11-6557-7B</td><td>BEZEL</td><td class='num'>1 080</td><td class='num'>305</td><td class='num'>29.0</td><td class='num bad'>75</td><td class='num'>14072610515</td></tr><tr><td>A36889</td><td>SEAL, INNER
+BEARING</td><td class='num'>1 080</td><td class='num'>342</td><td class='num'>34.0</td><td class='num bad'>10</td><td class='num'>9072614402</td></tr><tr><td>207330</td><td>BASE</td><td class='num'>1 040</td><td class='num'>327</td><td class='num'>44.0</td><td class='num bad'>56</td><td class='num'>2906269205</td></tr><tr><td>SP0224</td><td>KNOB</td><td class='num'>1 020</td><td class='num'>370</td><td class='num'>55.0</td><td class='num bad'>10</td><td class='num'>21012613002</td></tr><tr><td>D436-37</td><td>SPLICE</td><td class='num'>1 000</td><td class='num'>215</td><td class='num'>60.0</td><td class='num bad'>231</td><td class='num'>5052618455</td></tr><tr><td>F18T5CWRS</td><td>LAMP - COOL WHITE</td><td class='num'>990</td><td class='num'>225</td><td class='num'>56.0</td><td class='num bad'>240</td><td class='num'>12052613465</td></tr><tr><td>801A50-0006AATS</td><td>C-SEAL</td><td class='num'>980</td><td class='num'>427</td><td class='num'>52.0</td><td class='num ok'>-88</td><td class='num'>12032615255</td></tr><tr><td>596-20629</td><td>BEARING</td><td class='num'>930</td><td class='num'>42</td><td class='num'>35.0</td><td class='num bad'>287</td><td class='num'>18062610152</td></tr><tr><td>TY26M</td><td>CABLE</td><td class='num'>900</td><td class='num'>474</td><td class='num'>53.0</td><td class='num bad'>5</td><td class='num'>6082614502</td></tr><tr><td>27782</td><td>AIR FILTER</td><td class='num'>870</td><td class='num'>-54</td><td class='num'>42.0</td><td class='num bad'>289</td><td class='num'>26052613095</td></tr><tr><td>2608438-1</td><td>RIVET</td><td class='num'>850</td><td class='num'>201</td><td class='num'>55.0</td><td class='num bad'>184</td><td class='num'>13052611235</td></tr><tr><td>J522P53</td><td>REDUCER</td><td class='num'>840</td><td class='num'>354</td><td class='num'>37.0</td><td class='num bad'>15</td><td class='num'>23032613232</td></tr><tr><td>10-60545-127</td><td>BEARING</td><td class='num'>812</td><td class='num'>317</td><td class='num'>44.0</td><td class='num ok'>-244</td><td class='num'>20032612145</td></tr><tr><td>SP2510-00-7031</td><td>LW SENSOR</td><td class='num'>780</td><td class='num'>60</td><td class='num'>59.0</td><td class='num bad'>221</td><td class='num'>25052612585</td></tr><tr><td>7387-600</td><td>SEAL</td><td class='num'>765</td><td class='num'>197</td><td class='num'>41.0</td><td class='num bad'>196</td><td class='num'>26052614015</td></tr><tr><td>KP4R16FS428</td><td>BEARING</td><td class='num'>760</td><td class='num'>363</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>21042612242</td></tr><tr><td>U542648</td><td>GASKET</td><td class='num'>720</td><td class='num'>155</td><td class='num'>64.0</td><td class='num ok'>-41</td><td class='num'>20112518405</td></tr><tr><td>E0091-10-200NN</td><td>LEAD-BONDING</td><td class='num'>700</td><td class='num'>191</td><td class='num'>34.0</td><td class='num bad'>74</td><td class='num'>31072610085</td></tr><tr><td>NAS1102-06-8</td><td>SCREW</td><td class='num'>650</td><td class='num'>348</td><td class='num'>42.0</td><td class='num ok'>0</td><td class='num'>24032617052</td></tr><tr><td>65C28100-1B</td><td>COVER</td><td class='num'>640</td><td class='num'>-373</td><td class='num'>208.0</td><td class='num ok'>-36</td><td class='num'>7102514302</td></tr><tr><td>2D2013-3</td><td>PIVOT</td><td class='num'>640</td><td class='num'>177</td><td class='num'>54.0</td><td class='num bad'>60</td><td class='num'>5082610245</td></tr><tr><td>801A50-0005A</td><td>SEAL</td><td class='num'>612</td><td class='num'>122</td><td class='num'>94.0</td><td class='num ok'>0</td><td class='num'>31225110712</td></tr><tr><td>2602542</td><td>WASHER</td><td class='num'>600</td><td class='num'>179</td><td class='num'>50.0</td><td class='num bad'>138</td><td class='num'>18052613005</td></tr><tr><td>BACB30NN3K9</td><td>BOLT</td><td class='num'>600</td><td class='num'>113</td><td class='num'>48.0</td><td class='num bad'>138</td><td class='num'>20052615115</td></tr><tr><td>7171-00</td><td>FRANGIBLE SAFETY DISK</td><td class='num'>590</td><td class='num'>153</td><td class='num'>98.0</td><td class='num bad'>10</td><td class='num'>91225091512</td></tr><tr><td>SP2510-00-3029</td><td>SWITCH, 2 CIRCUIT</td><td class='num'>580</td><td class='num'>262</td><td class='num'>86.0</td><td class='num ok'>-39</td><td class='num'>60226160012</td></tr><tr><td>R287P06</td><td>NIPPLE</td><td class='num'>570</td><td class='num'>382</td><td class='num'>64.0</td><td class='num ok'>-64</td><td class='num'>20112518405</td></tr><tr><td>RS299-1</td><td>PIN</td><td class='num'>562</td><td class='num'>229</td><td class='num'>46.0</td><td class='num ok'>-2</td><td class='num'>18032614002</td></tr><tr><td>BACR12AG2C</td><td>RING</td><td class='num'>546</td><td class='num'>315</td><td class='num'>89.0</td><td class='num ok'>-49</td><td class='num'>3022616502</td></tr><tr><td>MS29513-153</td><td>PACKING</td><td class='num'>543</td><td class='num'>205</td><td class='num'>60.0</td><td class='num bad'>10</td><td class='num'>16012616395</td></tr><tr><td>232T4125-9</td><td>STRAP ASSY</td><td class='num'>530</td><td class='num'>148</td><td class='num'>28.0</td><td class='num bad'>7</td><td class='num'>15072615075</td></tr><tr><td>BACB30VF3K4</td><td>BOLT</td><td class='num'>530</td><td class='num'>228</td><td class='num'>68.0</td><td class='num ok'>0</td><td class='num'>16032613502</td></tr><tr><td>NAS577B8A</td><td>NUT</td><td class='num'>525</td><td class='num'>202</td><td class='num'>61.0</td><td class='num ok'>-39</td><td class='num'>150126124612</td></tr><tr><td>BACN11G3A1CD</td><td>NUTPLATE</td><td class='num'>490</td><td class='num'>204</td><td class='num'>32.0</td><td class='num ok'>0</td><td class='num'>3022616502</td></tr><tr><td>NAS1523AA4N</td><td>WASHER</td><td class='num'>432</td><td class='num'>99</td><td class='num'>82.0</td><td class='num bad'>34</td><td class='num'>8072610222</td></tr><tr><td>AS3209-153</td><td>O-RING</td><td class='num'>432</td><td class='num'>21</td><td class='num'>94.0</td><td class='num ok'>0</td><td class='num'>31225110712</td></tr><tr><td>BACB30NN3K6</td><td>BOLT</td><td class='num'>430</td><td class='num'>180</td><td class='num'>23.0</td><td class='num ok'>0</td><td class='num'>17042613072</td></tr><tr><td>2602801</td><td>WASHER</td><td class='num'>430</td><td class='num'>219</td><td class='num'>83.0</td><td class='num ok'>-62</td><td class='num'>1112514505</td></tr><tr><td>40725</td><td>DECAL</td><td class='num'>430</td><td class='num'>212</td><td class='num'>39.0</td><td class='num ok'>-30</td><td class='num'>17042613072</td></tr><tr><td>NAS1801-04-5</td><td>SCREW</td><td class='num'>420</td><td class='num'>124</td><td class='num'>113.0</td><td class='num ok'>0</td><td class='num'>14112516155</td></tr><tr><td>2602801</td><td>WASHER</td><td class='num'>418</td><td class='num'>123</td><td class='num'>107.0</td><td class='num ok'>0</td><td class='num'>20112510105</td></tr><tr><td>69272-22</td><td>PIN - COTTER</td><td class='num'>406</td><td class='num'>110</td><td class='num'>94.0</td><td class='num ok'>0</td><td class='num'>31225110712</td></tr><tr><td>MS28775-015</td><td>PACKING</td><td class='num'>400</td><td class='num'>166</td><td class='num'>61.0</td><td class='num bad'>10</td><td class='num'>150126124612</td></tr><tr><td>021200-04700</td><td>TAPE</td><td class='num'>400</td><td class='num'>109</td><td class='num'>85.0</td><td class='num ok'>0</td><td class='num'>121225105012</td></tr><tr><td>M81824-1-2</td><td>SPLICE</td><td class='num'>400</td><td class='num'>156</td><td class='num'>33.0</td><td class='num ok'>-8</td><td class='num'>26082610325</td></tr><tr><td>MS28775-210</td><td>PACKING</td><td class='num'>390</td><td class='num'>94</td><td class='num'>98.0</td><td class='num bad'>10</td><td class='num'>91225091512</td></tr><tr><td>2C1079</td><td>FITTING</td><td class='num'>390</td><td class='num'>146</td><td class='num'>61.0</td><td class='num bad'>10</td><td class='num'>150126143912</td></tr><tr><td>100PDL1</td><td>ABSORBER-VIBRATION</td><td class='num'>384</td><td class='num'>129</td><td class='num'>90.0</td><td class='num bad'>10</td><td class='num'>171225103012</td></tr><tr><td>AS1895-7-200</td><td>SEAL</td><td class='num'>378</td><td class='num'>155</td><td class='num'>28.0</td><td class='num ok'>0</td><td class='num'>23032612452</td></tr><tr><td>S9026T041</td><td>PACKING</td><td class='num'>375</td><td class='num'>80</td><td class='num'>44.0</td><td class='num bad'>4</td><td class='num'>29062614435</td></tr><tr><td>G565-2</td><td>TAPE - FIBERGLASS, WIDTH - 2 INCH</td><td class='num'>370</td><td class='num'>22</td><td class='num'>49.0</td><td class='num bad'>123</td><td class='num'>16072617212</td></tr><tr><td>121-11632-1</td><td>SHEATH ASSY</td><td class='num'>360</td><td class='num'>126</td><td class='num'>26.0</td><td class='num ok'>-15</td><td class='num'>1707269315</td></tr><tr><td>NAS1102E08-6</td><td>SCREW</td><td class='num'>360</td><td class='num'>116</td><td class='num'>180.0</td><td class='num ok'>0</td><td class='num'>26032612232</td></tr><tr><td>448</td><td>PACKING, PREFORMED</td><td class='num'>360</td><td class='num'>125</td><td class='num'>38.0</td><td class='num bad'>68</td><td class='num'>15062614235</td></tr><tr><td>BACC10HS16</td><td>CLAMP</td><td class='num'>351</td><td class='num'>174</td><td class='num'>34.0</td><td class='num ok'>-20</td><td class='num'>25032611282</td></tr><tr><td>J221P906WE</td><td>PACKING</td><td class='num'>350</td><td class='num'>177</td><td class='num'>37.0</td><td class='num bad'>19</td><td class='num'>6072611572</td></tr><tr><td>MS21059L06</td><td>NUT-PLATE</td><td class='num'>340</td><td class='num'>106</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>21112516505</td></tr><tr><td>65-90305-38A</td><td>FILTER MAINTENANCE KIT</td><td class='num'>340</td><td class='num'>34</td><td class='num'>34.0</td><td class='num bad'>90</td><td class='num'>19062613402</td></tr><tr><td>MS21047L06</td><td>NUT</td><td class='num'>340</td><td class='num'>85</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>21112516505</td></tr><tr><td>021200-04700</td><td>TAPE</td><td class='num'>328</td><td class='num'>63</td><td class='num'>—</td><td class='num ok'>0</td><td class='num'>8062615302</td></tr><tr><td>BACW10UB10</td><td>WASHER</td><td class='num'>300</td><td class='num'>65</td><td class='num'>43.0</td><td class='num bad'>76</td><td class='num'>1006268555</td></tr><tr><td>MS25281-F3</td><td>CLAMP</td><td class='num'>300</td><td class='num'>102</td><td class='num'>62.0</td><td class='num bad'>58</td><td class='num'>22052611302</td></tr><tr><td>BACS12ER3K14</td><td>SCREW</td><td class='num'>290</td><td class='num'>63</td><td class='num'>34.0</td><td class='num bad'>66</td><td class='num'>19062613402</td></tr><tr><td>600-0101-1/4</td><td>SWITCH</td><td class='num'>280</td><td class='num'>61</td><td class='num'>44.0</td><td class='num bad'>71</td><td class='num'>9062610045</td></tr><tr><td>2-230S604-70</td><td>SEAL</td><td class='num'>270</td><td class='num'>86</td><td class='num'>23.0</td><td class='num ok'>-23</td><td class='num'>20072612015</td></tr><tr><td>MS29513-030</td><td>PACKING</td><td class='num'>240</td><td class='num'>141</td><td class='num'>30.0</td><td class='num ok'>-25</td><td class='num'>13072611045</td></tr><tr><td>SP2510-00-2028</td><td>AERATOR</td><td class='num'>168</td><td class='num'>82</td><td class='num'>54.0</td><td class='num bad'>11</td><td class='num'>508269585</td></tr><tr><td>BACB30LH3-4</td><td>BOLT</td><td class='num'>144</td><td class='num'>92</td><td class='num'>25.0</td><td class='num ok'>-23</td><td class='num'>12032614302</td></tr><tr><td>BACB30LH3-4</td><td>BOLT</td><td class='num'>144</td><td class='num'>92</td><td class='num'>25.0</td><td class='num ok'>-23</td><td class='num'>12032614302</td></tr><tr><td>BACB30LH3-4</td><td>BOLT</td><td class='num'>12</td><td class='num'>8</td><td class='num'>25.0</td><td class='num ok'>-25</td><td class='num'>12032614302</td></tr><tr><td>BACS12ER3K14</td><td>SCREW</td><td class='num'>10</td><td class='num'>4</td><td class='num'>54.0</td><td class='num ok'>-6</td><td class='num'>19062613402-5</td></tr><tr><td>BACR15FT6D10C</td><td>RIVET</td><td class='num'>7</td><td class='num'>-74</td><td class='num'>33.0</td><td class='num ok'>0</td><td class='num'>2022617002</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">JET TECHNIC</span>
+    <span class="ent-meta">11 зак. · 11 поз. · $25 118 · маржа $3 251 · срок 28.0 дн. · <span class="bad">Δ тр. $7 430</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s2">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>ABS-4063P</td><td>BATTERY</td><td class='num'>8 500</td><td class='num'>1 758</td><td class='num'>—</td><td class='num bad'>1 533</td><td class='num'>6042615002</td></tr><tr><td>69-42193-3</td><td>2.13 BOLT-DOWNLOCK</td><td class='num'>6 000</td><td class='num'>2 194</td><td class='num'>13.0</td><td class='num ok'>-930</td><td class='num'>5022611002</td></tr><tr><td>69-38868-3</td><td>PLATE</td><td class='num'>5 910</td><td class='num'>3 326</td><td class='num'>14.0</td><td class='num bad'>485</td><td class='num'>906269245</td></tr><tr><td>0LN115-18K</td><td>BULB</td><td class='num'>1 280</td><td class='num'>571</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>20072613585</td></tr><tr><td>26S55-5AB</td><td>STUD</td><td class='num'>880</td><td class='num'>-1 463</td><td class='num'>47.0</td><td class='num bad'>1 920</td><td class='num'>6072617302</td></tr><tr><td>MS21083C3</td><td>NUT</td><td class='num'>600</td><td class='num'>-203</td><td class='num'>18.0</td><td class='num bad'>522</td><td class='num'>2062610202</td></tr><tr><td>HST11AG8-3</td><td>BOLT</td><td class='num'>600</td><td class='num'>418</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>11032614405</td></tr><tr><td>AS3237-11</td><td>BOLT</td><td class='num'>408</td><td class='num'>-1 449</td><td class='num'>—</td><td class='num bad'>1 540</td><td class='num'>20052613002</td></tr><tr><td>BACB30MY6K10</td><td>BOLT</td><td class='num'>320</td><td class='num'>-119</td><td class='num'>24.0</td><td class='num bad'>292</td><td class='num'>26052614015</td></tr><tr><td>0LN115-18K</td><td>BULB</td><td class='num'>320</td><td class='num'>-1 845</td><td class='num'>19.0</td><td class='num bad'>1 911</td><td class='num'>1062610035</td></tr><tr><td>NAS1149D0332J</td><td>WASHER</td><td class='num'>300</td><td class='num'>64</td><td class='num'>23.0</td><td class='num bad'>157</td><td class='num'>28052613275</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">ФЭИ</span>
+    <span class="ent-meta">9 зак. · 9 поз. · $11 466 · маржа $-3 930 · срок 0.6 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s3">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>Q4559X</td><td>LAMP</td><td class='num'>4 000</td><td class='num'>516</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>180226152912</td></tr><tr><td>MXP210-00</td><td>SMOKE GOGGLES</td><td class='num'>2 960</td><td class='num'>559</td><td class='num'>2.0</td><td class='num ok'>0</td><td class='num'>25062618105</td></tr><tr><td>3112</td><td>LAMP</td><td class='num'>1 900</td><td class='num'>1 008</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>160226103512</td></tr><tr><td>EV949000</td><td>FILTER</td><td class='num'>1 000</td><td class='num'>-6 738</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>27082611405</td></tr><tr><td>6839</td><td>BULB</td><td class='num'>460</td><td class='num'>219</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>9072614502</td></tr><tr><td>NAS537B16-044</td><td>BUSHING</td><td class='num'>364</td><td class='num'>202</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>16012610165</td></tr><tr><td>SP3832-02-1285</td><td>SEAL</td><td class='num'>292</td><td class='num'>49</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>6072613022</td></tr><tr><td>BACR15DR3A5</td><td>RIVET, BLIND</td><td class='num'>280</td><td class='num'>133</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>708269545</td></tr><tr><td>NAS617-6</td><td>PACKING</td><td class='num'>210</td><td class='num'>123</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>13072610402</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">PRIMUS AVIATION</span>
+    <span class="ent-meta">7 зак. · 8 поз. · $6 763 · маржа $1 123 · срок 93.5 дн. · <span class="ok">Δ тр. $-280</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s4">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>5002742</td><td>PLATE</td><td class='num'>1 560</td><td class='num'>108</td><td class='num'>89.0</td><td class='num ok'>-4</td><td class='num'>20112510105</td></tr><tr><td>3022383</td><td>SEAL, PLAIN</td><td class='num'>1 100</td><td class='num'>135</td><td class='num'>78.0</td><td class='num ok'>-87</td><td class='num'>1122518055</td></tr><tr><td>Q4681</td><td>LAMP</td><td class='num'>768</td><td class='num'>-18</td><td class='num'>104.0</td><td class='num bad'>2</td><td class='num'>6112517302</td></tr><tr><td>2D2025-12</td><td>FILLER</td><td class='num'>760</td><td class='num'>135</td><td class='num'>78.0</td><td class='num ok'>-59</td><td class='num'>1122517542</td></tr><tr><td>9111M35P14</td><td>SCREW</td><td class='num'>711</td><td class='num'>265</td><td class='num'>42.0</td><td class='num ok'>-70</td><td class='num'>60126140012</td></tr><tr><td>65C33161-2</td><td>GASKET</td><td class='num'>684</td><td class='num'>99</td><td class='num'>81.0</td><td class='num ok'>-12</td><td class='num'>28112512305</td></tr><tr><td>778000</td><td>FILTER</td><td class='num'>660</td><td class='num'>213</td><td class='num'>187.0</td><td class='num ok'>-20</td><td class='num'>14082515152</td></tr><tr><td>81489</td><td>CABLE WITH A4M CONNECTOR</td><td class='num'>520</td><td class='num'>186</td><td class='num'>89.0</td><td class='num ok'>-29</td><td class='num'>20112510105</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">IBERIA</span>
+    <span class="ent-meta">2 зак. · 2 поз. · $4 945 · маржа $806 · срок 50.5 дн. · <span class="bad">Δ тр. $504</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s5">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>1322M32G03</td><td>PIN</td><td class='num'>4 420</td><td class='num'>1 053</td><td class='num'>54.0</td><td class='num ok'>0</td><td class='num'>13032612055</td></tr><tr><td>NSA8206-113</td><td>O-RING</td><td class='num'>525</td><td class='num'>-246</td><td class='num'>47.0</td><td class='num bad'>504</td><td class='num'>18052613005</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">— без поставщика —</span>
+    <span class="ent-meta">3 зак. · 3 поз. · $3 164 · маржа $2 265 · срок 0.7 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c0-s6">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>137-00-870-14GK</td><td>SHROUD, IAT AISLE OUTER</td><td class='num'>2 000</td><td class='num'>1 800</td><td class='num'>0.0</td><td class='num ok'>0</td><td class='num'>10082615365</td></tr><tr><td>16-0095-1</td><td>LENS</td><td class='num'>980</td><td class='num'>356</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>8042616062</td></tr><tr><td>MS21047L08</td><td>Nut</td><td class='num'>184</td><td class='num'>109</td><td class='num'>1.0</td><td class='num ok'>0</td><td class='num'>13052513295</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+
+<details class="block" open>
+  <summary>
+    <span class="ent-name">Белавиа</span>
+    <span class="ent-meta">69 зак. · 86 поз. · $210 033 · маржа $40 398 · BO доля выр. 15.1% · срок 67.3 дн. · <span class="bad">Δ тр. $10 662</span></span>
+  </summary>
+  <div class="block-body">
+    
+    <div class="compare">
+      <div class="compare-card bo">
+        <div class="compare-title">BLUE OCEAN</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">30.4%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">15.1%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">25.4%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">21 / 23</span></div>
+          <div><span class="k">Выручка</span><span class="v">$31 641</span></div>
+          <div><span class="k">Маржа</span><span class="v">$10 249 · 32.4%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">63.9 дн. · 23 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="ok">Δ тр. $-40</span></span></div>
+        </div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-title">Остальные поставщики</div>
+        <div class="compare-grid">
+          <div><span class="k">Доля заказов</span><span class="v">73.9%</span></div>
+          <div><span class="k">Доля выручки</span><span class="v">84.9%</span></div>
+          <div><span class="k">Доля маржи</span><span class="v">74.6%</span></div>
+          <div><span class="k">Заказы / поз.</span><span class="v">51 / 63</span></div>
+          <div><span class="k">Выручка</span><span class="v">$178 392</span></div>
+          <div><span class="k">Маржа</span><span class="v">$30 149 · 16.9%</span></div>
+          <div><span class="k">Срок STK</span><span class="v">68.5 дн. · 63 поз.</span></div>
+          <div><span class="k">Δ тр.</span><span class="v"><span class="bad">Δ тр. $10 702</span></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-h">Поставщики (6)</h3>
+    
+<details class="subblock bo-block" open>
+  <summary>
+    <span class="ent-name">BLUE OCEAN SOLUTIONS <span class="bo-badge">BLUE OCEAN</span></span>
+    <span class="ent-meta">21 зак. · 23 поз. · $31 641 · маржа $10 249 · срок 63.9 дн. · <span class="ok">Δ тр. $-40</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s0">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>CA66287-50</td><td>Connector</td><td class='num'>12 200</td><td class='num'>2 944</td><td class='num'>59.0</td><td class='num ok'>0</td><td class='num'>17022615590-2</td></tr><tr><td>ABS-4016</td><td>Cell, storage, lead acid
+5.0Ah</td><td class='num'>3 600</td><td class='num'>1 616</td><td class='num'>63.0</td><td class='num ok'>0</td><td class='num'>12122510530-2</td></tr><tr><td>3CU7-125AN</td><td>Expanded copper foil</td><td class='num'>3 000</td><td class='num'>878</td><td class='num'>128.0</td><td class='num ok'>0</td><td class='num'>20102513000-2</td></tr><tr><td>856A2677G01</td><td>FIXTURE REMOVAL AND INSTALLATION, REMOVABLE RETAINING RING</td><td class='num'>2 470</td><td class='num'>491</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>13082611035</td></tr><tr><td>1012785-101</td><td>Headrest</td><td class='num'>1 900</td><td class='num'>673</td><td class='num'>56.0</td><td class='num ok'>0</td><td class='num'>19122513110-2</td></tr><tr><td>856A3108G01</td><td>PIN GUIDE, NO.5 BEARING OUTER</td><td class='num'>950</td><td class='num'>251</td><td class='num'>43.0</td><td class='num ok'>0</td><td class='num'>13082611035</td></tr><tr><td>HL13VF8-8</td><td>Hi-Lok Pin</td><td class='num'>800</td><td class='num'>363</td><td class='num'>27.0</td><td class='num ok'>0</td><td class='num'>29012612350-2</td></tr><tr><td>4812-174-24</td><td>SHAFT-DRIVE</td><td class='num'>720</td><td class='num'>231</td><td class='num'>19.0</td><td class='num ok'>0</td><td class='num'>307269055</td></tr><tr><td>KBM-6-1-N-1-35-V1</td><td>Countersink mandrel</td><td class='num'>670</td><td class='num'>233</td><td class='num'>28.0</td><td class='num ok'>0</td><td class='num'>28012617150-2</td></tr><tr><td>HL110VF8-3</td><td>HI-LOK PIN</td><td class='num'>658</td><td class='num'>277</td><td class='num'>51.0</td><td class='num ok'>0</td><td class='num'>24122512150-2</td></tr><tr><td>CA18021-2C</td><td>Pin, Stud, Live Lock</td><td class='num'>555</td><td class='num'>161</td><td class='num'>50.0</td><td class='num ok'>0</td><td class='num'>20082609520-2</td></tr><tr><td>KB27110</td><td>Seal</td><td class='num'>546</td><td class='num'>209</td><td class='num'>26.0</td><td class='num ok'>0</td><td class='num'>30012619120-2</td></tr><tr><td>98F27201002000</td><td>Safety Pin-rudder</td><td class='num'>480</td><td class='num'>205</td><td class='num'>121.0</td><td class='num ok'>0</td><td class='num'>15102513035</td></tr><tr><td>43702013</td><td>Pivot - Back</td><td class='num'>420</td><td class='num'>222</td><td class='num'>112.0</td><td class='num ok'>0</td><td class='num'>24102518400-2</td></tr><tr><td>DIN137B4B2C</td><td>Washer-spring</td><td class='num'>416</td><td class='num'>216</td><td class='num'>56.0</td><td class='num ok'>0</td><td class='num'>20022617050-2</td></tr><tr><td>67391-003</td><td>Spring literature pocket</td><td class='num'>400</td><td class='num'>204</td><td class='num'>121.0</td><td class='num ok'>0</td><td class='num'>15102510020-2</td></tr><tr><td>CA3105-1032-6</td><td>Screw</td><td class='num'>340</td><td class='num'>217</td><td class='num'>37.0</td><td class='num ok'>0</td><td class='num'>19012615390-2</td></tr><tr><td>CDSP1501-9</td><td>Spring</td><td class='num'>330</td><td class='num'>153</td><td class='num'>62.0</td><td class='num ok'>0</td><td class='num'>30042610470-2</td></tr><tr><td>NAS1149F0532P</td><td>Washer</td><td class='num'>330</td><td class='num'>221</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>7042616380-2</td></tr><tr><td>D38999/26FD5SN</td><td>Connector, Electrical, Plug</td><td class='num'>320</td><td class='num'>165</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>26052617220-2</td></tr><tr><td>AS20624</td><td>NUT</td><td class='num'>270</td><td class='num'>164</td><td class='num'>41.0</td><td class='num ok'>0</td><td class='num'>11062616320-2</td></tr><tr><td>FB016/830</td><td>LAMP</td><td class='num'>266</td><td class='num'>153</td><td class='num'>44.0</td><td class='num ok'>-40</td><td class='num'>12082611385</td></tr><tr><td>NAS1149F0532P</td><td>Washer</td><td class='num'>0</td><td class='num'>0</td><td class='num'>106.0</td><td class='num ok'>0</td><td class='num'>—</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">LUFTHANSA</span>
+    <span class="ent-meta">39 зак. · 46 поз. · $129 912 · маржа $19 358 · срок 57.9 дн. · <span class="bad">Δ тр. $5 973</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s1">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>31-8788-1</td><td>LIGHT ASSEMBLY</td><td class='num'>71 000</td><td class='num'>9 640</td><td class='num'>22.0</td><td class='num ok'>0</td><td class='num'>5052612510-2</td></tr><tr><td>2612529</td><td>Key</td><td class='num'>22 600</td><td class='num'>3 672</td><td class='num'>53.0</td><td class='num bad'>350</td><td class='num'>16032614130-2</td></tr><tr><td>49-415</td><td>PLUG</td><td class='num'>5 850</td><td class='num'>-57</td><td class='num'>35.0</td><td class='num bad'>1 630</td><td class='num'>18062611570-2</td></tr><tr><td>1012701</td><td>GASKET</td><td class='num'>3 300</td><td class='num'>773</td><td class='num'>40.0</td><td class='num ok'>0</td><td class='num'>30032616140-2</td></tr><tr><td>801A50-0006A</td><td>SEAL</td><td class='num'>2 730</td><td class='num'>-638</td><td class='num'>27.0</td><td class='num bad'>1 523</td><td class='num'>9062611120-2</td></tr><tr><td>2A1447</td><td>Fastener-UPR</td><td class='num'>2 700</td><td class='num'>578</td><td class='num'>91.0</td><td class='num bad'>890</td><td class='num'>6042613010-2</td></tr><tr><td>620-5-700</td><td>Seal</td><td class='num'>1 450</td><td class='num'>483</td><td class='num'>49.0</td><td class='num ok'>0</td><td class='num'>8042613210-2</td></tr><tr><td>801A50-0005A</td><td>Seal, Inconel</td><td class='num'>1 380</td><td class='num'>512</td><td class='num'>46.0</td><td class='num ok'>0</td><td class='num'>24032611410-2</td></tr><tr><td>EN3155-016M2018</td><td>Contact</td><td class='num'>1 200</td><td class='num'>534</td><td class='num'>45.0</td><td class='num ok'>0</td><td class='num'>25032617530-2</td></tr><tr><td>2-12SCY</td><td>DISCHARGER, ELECTROSTATIC</td><td class='num'>1 150</td><td class='num'>56</td><td class='num'>30.0</td><td class='num bad'>302</td><td class='num'>23062609350-2</td></tr><tr><td>FE240-221-001</td><td>DIAPHRAGM-SEALING</td><td class='num'>1 020</td><td class='num'>86</td><td class='num'>50.0</td><td class='num bad'>258</td><td class='num'>3062616570-2</td></tr><tr><td>CM8A103</td><td>Lamp</td><td class='num'>925</td><td class='num'>185</td><td class='num'>57.0</td><td class='num ok'>-38</td><td class='num'>5062615070-2</td></tr><tr><td>PE21101-3-3TA</td><td>Screw</td><td class='num'>897</td><td class='num'>-65</td><td class='num'>78.0</td><td class='num bad'>215</td><td class='num'>6052616210-2</td></tr><tr><td>M38H1001-1</td><td>Filter assy</td><td class='num'>780</td><td class='num'>281</td><td class='num'>50.0</td><td class='num ok'>0</td><td class='num'>20032611360-2</td></tr><tr><td>ABS1238-26-30B</td><td>Lamp</td><td class='num'>700</td><td class='num'>13</td><td class='num'>38.0</td><td class='num bad'>311</td><td class='num'>29052617210-2</td></tr><tr><td>ASPLCMV06</td><td>Collar</td><td class='num'>700</td><td class='num'>-132</td><td class='num'>190.0</td><td class='num bad'>25</td><td class='num'>29082513400-2</td></tr><tr><td>MS20995C32</td><td>WIRE, LOCK</td><td class='num'>680</td><td class='num'>-20</td><td class='num'>42.0</td><td class='num bad'>193</td><td class='num'>11062615510-2</td></tr><tr><td>68-1602</td><td>O-RING</td><td class='num'>600</td><td class='num'>162</td><td class='num'>35.0</td><td class='num bad'>121</td><td class='num'>18062611570-2</td></tr><tr><td>M301-1562</td><td>RELAY</td><td class='num'>600</td><td class='num'>156</td><td class='num'>37.0</td><td class='num ok'>-8</td><td class='num'>25062615055</td></tr><tr><td>AS62404</td><td>CLIP</td><td class='num'>560</td><td class='num'>-23</td><td class='num'>43.0</td><td class='num bad'>161</td><td class='num'>10062617500-2</td></tr><tr><td>52638</td><td>Cup</td><td class='num'>510</td><td class='num'>-80</td><td class='num'>27.0</td><td class='num bad'>267</td><td class='num'>9062618560-2</td></tr><tr><td>KB27108</td><td>Ring</td><td class='num'>500</td><td class='num'>-145</td><td class='num'>117.0</td><td class='num ok'>0</td><td class='num'>30012619120-2</td></tr><tr><td>ABS0337-01A</td><td>RECEPTACLE</td><td class='num'>500</td><td class='num'>6</td><td class='num'>32.0</td><td class='num ok'>0</td><td class='num'>30062611105</td></tr><tr><td>MS14218AD4C10</td><td>Rivet</td><td class='num'>490</td><td class='num'>230</td><td class='num'>200.0</td><td class='num bad'>25</td><td class='num'>20102510530-2</td></tr><tr><td>NAS1291C08M</td><td>Nut</td><td class='num'>470</td><td class='num'>168</td><td class='num'>200.0</td><td class='num bad'>25</td><td class='num'>20102510530-2</td></tr><tr><td>MS9385-02</td><td>Packing</td><td class='num'>460</td><td class='num'>179</td><td class='num'>155.0</td><td class='num bad'>25</td><td class='num'>4122517240-2</td></tr><tr><td>ASNA2001T3-23</td><td>SCREW</td><td class='num'>440</td><td class='num'>32</td><td class='num'>30.0</td><td class='num ok'>-13</td><td class='num'>2072615215</td></tr><tr><td>320634</td><td>Terminal</td><td class='num'>430</td><td class='num'>253</td><td class='num'>73.0</td><td class='num bad'>25</td><td class='num'>24022618430-2</td></tr><tr><td>E0092-10-160NN</td><td>LEAD-BONDING</td><td class='num'>390</td><td class='num'>56</td><td class='num'>30.0</td><td class='num ok'>-24</td><td class='num'>2072615215</td></tr><tr><td>BACR15BA3AD4C</td><td>RIVET</td><td class='num'>380</td><td class='num'>266</td><td class='num'>78.0</td><td class='num bad'>25</td><td class='num'>19022614470-2</td></tr><tr><td>MS27039C1-11</td><td>SCREW</td><td class='num'>360</td><td class='num'>225</td><td class='num'>47.0</td><td class='num ok'>0</td><td class='num'>23032612130-2</td></tr><tr><td>MS3367-1-9</td><td>Strap, tie, down-flexible hose,
+nylon</td><td class='num'>356</td><td class='num'>137</td><td class='num'>26.0</td><td class='num ok'>-17</td><td class='num'>6072615110-2</td></tr><tr><td>AS3578-012</td><td>PACKING-PREFORMED</td><td class='num'>345</td><td class='num'>179</td><td class='num'>78.0</td><td class='num bad'>25</td><td class='num'>19022615350-2</td></tr><tr><td>NAS1611-226A</td><td>PACKING</td><td class='num'>320</td><td class='num'>134</td><td class='num'>44.0</td><td class='num ok'>-23</td><td class='num'>12082611385</td></tr><tr><td>MS24693C277</td><td>Screw</td><td class='num'>300</td><td class='num'>115</td><td class='num'>26.0</td><td class='num ok'>-47</td><td class='num'>6072615110-2</td></tr><tr><td>M83248-1-011</td><td>Packing</td><td class='num'>300</td><td class='num'>206</td><td class='num'>30.0</td><td class='num ok'>0</td><td class='num'>9042610350-2</td></tr><tr><td>NAS513-4</td><td>WASHER</td><td class='num'>273</td><td class='num'>104</td><td class='num'>45.0</td><td class='num ok'>-49</td><td class='num'>17062619080-2</td></tr><tr><td>MS28775-017</td><td>PACKING-PREFORMED</td><td class='num'>270</td><td class='num'>197</td><td class='num'>50.0</td><td class='num bad'>20</td><td class='num'>3062617260-2</td></tr><tr><td>AS20625</td><td>Nut</td><td class='num'>270</td><td class='num'>85</td><td class='num'>36.0</td><td class='num ok'>-47</td><td class='num'>26062610320-2</td></tr><tr><td>MS35333-74</td><td>Washer Lock</td><td class='num'>266</td><td class='num'>102</td><td class='num'>31.0</td><td class='num ok'>-50</td><td class='num'>1072617075</td></tr><tr><td>NAS1169C10</td><td>WASHER</td><td class='num'>260</td><td class='num'>87</td><td class='num'>30.0</td><td class='num ok'>-49</td><td class='num'>2072615215</td></tr><tr><td>NSA936604CA0931</td><td>CAP</td><td class='num'>250</td><td class='num'>127</td><td class='num'>39.0</td><td class='num ok'>-33</td><td class='num'>1708269515</td></tr><tr><td>MS16996-22</td><td>Screw</td><td class='num'>250</td><td class='num'>126</td><td class='num'>31.0</td><td class='num ok'>-56</td><td class='num'>1072617075</td></tr><tr><td>AS1895-7-225</td><td>Seal-E</td><td class='num'>245</td><td class='num'>115</td><td class='num'>26.0</td><td class='num ok'>-55</td><td class='num'>6072615110-2</td></tr><tr><td>MS35769-10</td><td>GASKET-METALLIC ENCASED</td><td class='num'>235</td><td class='num'>117</td><td class='num'>62.0</td><td class='num bad'>50</td><td class='num'>5052612160-2</td></tr><tr><td>MS27111-7</td><td>Washer</td><td class='num'>220</td><td class='num'>141</td><td class='num'>61.0</td><td class='num bad'>16</td><td class='num'>6052615560-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">JET TECHNIC</span>
+    <span class="ent-meta">5 зак. · 9 поз. · $40 160 · маржа $11 115 · срок 115.8 дн. · <span class="bad">Δ тр. $1 865</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s2">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>ABS0254-8-200Z</td><td>Blind Bolt</td><td class='num'>7 800</td><td class='num'>3 125</td><td class='num'>202.0</td><td class='num ok'>-200</td><td class='num'>29102509210-2</td></tr><tr><td>CCR264CS-3-04</td><td>Rivet, Blind</td><td class='num'>7 500</td><td class='num'>2 565</td><td class='num'>121.0</td><td class='num ok'>0</td><td class='num'>22122510000-2</td></tr><tr><td>PLT5115-06-09</td><td>BLIND BOLT</td><td class='num'>7 400</td><td class='num'>1 056</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>24022617530-2</td></tr><tr><td>ABS0254-8-400Z</td><td>Blind Bolt</td><td class='num'>6 200</td><td class='num'>2 862</td><td class='num'>202.0</td><td class='num ok'>-200</td><td class='num'>29102509210-2</td></tr><tr><td>ABS0254-5-250Z</td><td>Blind Bolt</td><td class='num'>4 800</td><td class='num'>2 418</td><td class='num'>202.0</td><td class='num ok'>-200</td><td class='num'>29102509210-2</td></tr><tr><td>ABS0951B3LM025</td><td>Switch-Pushbutton</td><td class='num'>2 460</td><td class='num'>-1 988</td><td class='num'>56.0</td><td class='num bad'>2 415</td><td class='num'>21052616400-2</td></tr><tr><td>PLT5115-06-10</td><td>BLIND BOLT</td><td class='num'>2 400</td><td class='num'>840</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>24022617530-2</td></tr><tr><td>PLT5115-06-08</td><td>BLIND BOLT</td><td class='num'>1 250</td><td class='num'>340</td><td class='num'>57.0</td><td class='num ok'>0</td><td class='num'>24022617530-2</td></tr><tr><td>A104-1C</td><td>Bolt</td><td class='num'>350</td><td class='num'>-104</td><td class='num'>88.0</td><td class='num bad'>50</td><td class='num'>20022617050-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">IBERIA</span>
+    <span class="ent-meta">4 зак. · 4 поз. · $4 480 · маржа $-1 667 · срок 48.0 дн. · <span class="bad">Δ тр. $3 120</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s3">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>212VL11BP100Y00</td><td>Switch-Pushbutton</td><td class='num'>2 730</td><td class='num'>-762</td><td class='num'>55.0</td><td class='num bad'>1 580</td><td class='num'>22052612450-2</td></tr><tr><td>MS20995C32</td><td>Lockwire</td><td class='num'>850</td><td class='num'>-499</td><td class='num'>44.0</td><td class='num bad'>803</td><td class='num'>20052616240-2</td></tr><tr><td>BACC10DU350ABE</td><td>Clamp</td><td class='num'>600</td><td class='num'>-437</td><td class='num'>39.0</td><td class='num bad'>617</td><td class='num'>26052616490-2</td></tr><tr><td>192872</td><td>Spring-Gas</td><td class='num'>300</td><td class='num'>31</td><td class='num'>54.0</td><td class='num bad'>120</td><td class='num'>11052613060-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">PRIMUS AVIATION</span>
+    <span class="ent-meta">2 зак. · 3 поз. · $3 300 · маржа $1 111 · срок 136.3 дн. · <span class="ok">Δ тр. $-256</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s4">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>35301-75</td><td>Electrical 
+interconnecting cable</td><td class='num'>1 500</td><td class='num'>505</td><td class='num'>148.0</td><td class='num ok'>-83</td><td class='num'>7102510250-2</td></tr><tr><td>1148006-0254-00</td><td>Electrical 
+interconnecting cable</td><td class='num'>1 170</td><td class='num'>411</td><td class='num'>148.0</td><td class='num ok'>-100</td><td class='num'>7102510250-2</td></tr><tr><td>ESW1900</td><td>Lacing tape</td><td class='num'>630</td><td class='num'>195</td><td class='num'>113.0</td><td class='num ok'>-72</td><td class='num'>11112517100-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+
+<details class="subblock">
+  <summary>
+    <span class="ent-name">ФЭИ</span>
+    <span class="ent-meta">1 зак. · 1 поз. · $540 · маржа $231 · срок 9.0 дн. · <span class="ok">Δ тр. $0</span></span>
+  </summary>
+  <div class="block-body">
+    <div class="table-scroll">
+    <table data-sortable id="p4-c1-s5">
+      <thead><tr>
+        <th class="label-col">P/N <span class="arrow">↕</span></th>
+        <th class="label-col">Description <span class="arrow">↕</span></th>
+        <th class="num">Выручка $ <span class="arrow">↕</span></th>
+        <th class="num">Маржа $ <span class="arrow">↕</span></th>
+        <th class="num">Срок дн. <span class="arrow">↕</span></th>
+        <th class="num">Δ тр. $ <span class="arrow">↕</span></th>
+        <th class="num">Счёт <span class="arrow">↕</span></th>
+      </tr></thead>
+      <tbody><tr><td>139-00-112-00</td><td>Holder baggage bar</td><td class='num'>540</td><td class='num'>231</td><td class='num'>9.0</td><td class='num ok'>0</td><td class='num'>23022612380-2</td></tr></tbody>
+    </table>
+    </div>
+    </div>
+</details>
+
+  </div>
+</details>
+
+  </div>
+</details>
+
+  <p class="hint">Открывайте HTML напрямую. ZIP+HTML Windows часто помечает ложно.</p>
+</div>
+<script>
+document.querySelectorAll('table[data-sortable]').forEach((table) => {
+  const headers = table.querySelectorAll('th');
+  headers.forEach((th, idx) => {
+    th.addEventListener('click', () => {
+      const tbody = table.tBodies[0];
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const asc = th.dataset.asc !== '1';
+      headers.forEach(h => { h.classList.remove('sorted'); h.dataset.asc = ''; });
+      th.classList.add('sorted');
+      th.dataset.asc = asc ? '1' : '0';
+      const parse = (td) => {
+        const t = (td?.textContent || '').trim().replace(/\s/g, '').replace('%','').replace('$','');
+        const n = Number(t.replace(',', '.'));
+        return Number.isFinite(n) && t !== '' && t !== '—' ? n : t;
+      };
+      rows.sort((a, b) => {
+        const av = parse(a.children[idx]);
+        const bv = parse(b.children[idx]);
+        if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
+        return asc ? String(av).localeCompare(String(bv), 'ru') : String(bv).localeCompare(String(av), 'ru');
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+});
+</script>
+</body>
+</html>
