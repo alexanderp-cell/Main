@@ -57,11 +57,11 @@ COL_TRANSPORT_PLAN = (
 )
 COL_TRANSPORT_FACT = "Стоимость доставки факт"
 PAY_SUPPLIERS = {"IBERIA", "JET TECHNIC"}
-# Не считаем выполнением: отмены, возвраты, гарантия, списание, потеря.
+# Не считаем выполнением: отмены, возвраты, списание, потеря.
+# WARRANTY оставляем в выполнении (поставка по W уже была) и дублируем в разделе гарантий.
 EXCLUDED_STATUS_TOKENS = (
     "CANCEL",
     "REFUND",
-    "WARRANTY",
     "SCRAP",
     "LOST",
 )
@@ -190,6 +190,7 @@ def prepare(df: pd.DataFrame) -> pd.DataFrame:
     out["_excluded"] = out["_status"].map(
         lambda s: any(tok in s for tok in EXCLUDED_STATUS_TOKENS)
     )
+    out["_warranty"] = out["_status"].map(lambda s: "WARRANTY" in s)
     out["_lead"] = out[COL_LEAD_TIME].astype(str).str.strip().str.upper()
     out["_stk"] = out["_lead"].eq("STK")
     out["_invoice"] = out[COL_INVOICE].map(clean_str)
@@ -249,11 +250,19 @@ def in_period(d: date | None, start: date, end: date) -> bool:
 
 
 def report_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
-    """Попадание: заполненная W в периоде; без cancel/refund/warranty/scrap/lost."""
+    """Попадание: заполненная W в периоде; без cancel/refund/scrap/lost.
+
+    WARRANTY не исключаем: заказ уже поставлен по W, статус гарантии — отдельный слой.
+    """
     return (
         df["_w"].map(lambda d: in_period(d, start, end))
         & ~df["_excluded"]
     )
+
+
+def warranty_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:
+    """Гарантийные кейсы с W в периоде (подмножество report_mask)."""
+    return report_mask(df, start, end) & df["_warranty"]
 
 
 def lead_mask(df: pd.DataFrame, start: date, end: date) -> pd.Series:

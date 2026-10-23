@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """FASTAIR — Выполненные заказы по категории (EXPENDABLE / ROTABLE), все клиенты.
 
-Попадание / периоды — как в completed_orders (W, без cancel/refund/warranty…).
+Попадание / периоды — как в completed_orders (W, без cancel/refund/scrap/lost).
+WARRANTY входит в выполнение (поставка уже была) и дублируется в разделе 3.
 
 В каждом периоде:
   1) По поставщикам — шапка KPI + выпадающий поставщик;
      внутри — выпадающие клиенты с мини-отчётами
   2) По клиентам — выпадающий клиент;
      внутри — выпадающие поставщики с мини-отчётами
+  3) WARRANTY — те же позиции со статусом гарантии (не доп. выручка)
 """
 
 from __future__ import annotations
@@ -36,6 +38,7 @@ from generate_completed_orders_report import (
     prepare,
     render_positions_table,
     report_mask,
+    warranty_mask,
 )
 
 
@@ -119,6 +122,9 @@ class PeriodView:
     total: SliceKPI
     suppliers: list[SupplierBlock] = field(default_factory=list)
     clients: list[ClientBlock] = field(default_factory=list)
+    warranty_total: SliceKPI = field(default_factory=lambda: SliceKPI(0, 0, 0.0, 0.0, None, 0, 0.0, 0.0))
+    warranty_suppliers: list[SupplierBlock] = field(default_factory=list)
+    warranty_clients: list[ClientBlock] = field(default_factory=list)
 
 
 def filter_bucket(df: pd.DataFrame, bucket: str) -> pd.DataFrame:
@@ -143,10 +149,15 @@ def _kpi(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> SliceKPI:
 
 
 def _positions(part: pd.DataFrame) -> list:
-    return [
-        line_from_row(r)
-        for _, r in part.sort_values("_sale", ascending=False).iterrows()
-    ]
+    out = []
+    for _, r in part.sort_values("_sale", ascending=False).iterrows():
+        line = line_from_row(r)
+        if bool(r.get("_warranty", False)):
+            desc = line.description or ""
+            if not desc.upper().startswith("[WARRANTY]"):
+                line.description = f"[WARRANTY] {desc}".strip()
+        out.append(line)
+    return out
 
 
 def _sorted_names(rows: pd.DataFrame, key: str) -> list:
@@ -206,6 +217,8 @@ def build_clients(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[ClientBlo
 def build_period_view(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodView:
     rows = df.loc[report_mask(df, start, end)].copy()
     lead_rows = df.loc[lead_mask(df, start, end)].copy()
+    w_rows = df.loc[warranty_mask(df, start, end)].copy()
+    w_lead = df.loc[lead_mask(df, start, end) & df["_warranty"]].copy()
     return PeriodView(
         title=title,
         start=start,
@@ -213,6 +226,9 @@ def build_period_view(df: pd.DataFrame, title: str, start: date, end: date) -> P
         total=_kpi(rows, lead_rows),
         suppliers=build_suppliers(rows, lead_rows),
         clients=build_clients(rows, lead_rows),
+        warranty_total=_kpi(w_rows, w_lead),
+        warranty_suppliers=build_suppliers(w_rows, w_lead),
+        warranty_clients=build_clients(w_rows, w_lead),
     )
 
 
@@ -327,6 +343,33 @@ def render_client_dropdown(client: ClientBlock, prefix: str, spec: BucketSpec) -
 """
 
 
+def render_warranty_header_kpis(kpi: SliceKPI, spec: BucketSpec) -> str:
+    return f"""
+    <div class="kpis warranty-kpis">
+      <div class="highlight">
+        <div class="label">Warranty-кейсы</div>
+        <div class="value">{fmt_int(kpi.orders)}</div>
+        <div class="muted">{fmt_int(kpi.lines)} позиций {spec.title} со статусом WARRANTY</div>
+      </div>
+      <div>
+        <div class="label">Сумма оригинала (выручка)</div>
+        <div class="value">${fmt_money(kpi.revenue)}</div>
+        <div class="muted">не добавляется к итогу периода повторно</div>
+      </div>
+      <div>
+        <div class="label">Маржа оригинала</div>
+        <div class="value">${fmt_money(kpi.margin)}</div>
+        <div class="muted">как в выполнении · под риском гарантии</div>
+      </div>
+      <div>
+        <div class="label">Сроки STK (оригинал)</div>
+        <div class="value">{fmt_days(kpi.lead_avg)} дн.</div>
+        <div class="muted">ср. W−Q · {fmt_int(kpi.lead_n)} поз.</div>
+      </div>
+    </div>
+    """
+
+
 def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: bool) -> str:
     open_attr = " open" if opened else ""
     range_s = f"{period.start.strftime('%d.%m.%Y')} – {period.end.strftime('%d.%m.%Y')}"
@@ -338,12 +381,26 @@ def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: boo
         render_client_dropdown(c, f"p{idx}-cli-{i}", spec)
         for i, c in enumerate(period.clients)
     ) or "<p class='empty'>Нет клиентов</p>"
+    w_sup_html = "\n".join(
+        render_supplier_dropdown(s, f"p{idx}-wsup-{i}", spec)
+        for i, s in enumerate(period.warranty_suppliers)
+    ) or "<p class='empty'>Нет warranty-кейсов у поставщиков</p>"
+    w_cli_html = "\n".join(
+        render_client_dropdown(c, f"p{idx}-wcli-{i}", spec)
+        for i, c in enumerate(period.warranty_clients)
+    ) or "<p class='empty'>Нет warranty-кейсов у клиентов</p>"
+    w_meta = (
+        f" · warranty {fmt_int(period.warranty_total.orders)} зак. / "
+        f"${fmt_money(period.warranty_total.revenue)}"
+        if period.warranty_total.lines
+        else ""
+    )
     return f"""
 <details class="period"{open_attr}>
   <summary>
     <span class="period-title">{idx}. {html_escape(period.title)}</span>
     <span class="period-meta">{range_s}</span>
-    <span class="period-meta">{fmt_int(period.total.orders)} зак. · ${fmt_money(period.total.revenue)} выр. · маржа ${fmt_money(period.total.margin)}</span>
+    <span class="period-meta">{fmt_int(period.total.orders)} зак. · ${fmt_money(period.total.revenue)} выр. · маржа ${fmt_money(period.total.margin)}{w_meta}</span>
   </summary>
   <div class="period-body">
     {render_header_kpis(period.total, spec)}
@@ -351,7 +408,7 @@ def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: boo
     <details class="section" open>
       <summary>1. По поставщикам ({fmt_int(len(period.suppliers))})</summary>
       <div class="block-body">
-        <p class="section-note">Внутри поставщика — мини-отчёты по клиентам.</p>
+        <p class="section-note">Внутри поставщика — мини-отчёты по клиентам. Позиции со статусом WARRANTY помечены в описании.</p>
         {suppliers_html}
       </div>
     </details>
@@ -361,6 +418,25 @@ def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: boo
       <div class="block-body">
         <p class="section-note">Внутри клиента — мини-отчёты по поставщикам.</p>
         {clients_html}
+      </div>
+    </details>
+
+    <details class="section warranty-section"{" open" if period.warranty_total.lines else ""}>
+      <summary>3. WARRANTY ({fmt_int(period.warranty_total.orders)} зак. · {fmt_int(period.warranty_total.lines)} поз. · ${fmt_money(period.warranty_total.revenue)})</summary>
+      <div class="block-body">
+        <p class="section-note warranty-note">
+          Те же позиции, что уже учтены выше как выполненные (есть W).
+          Здесь — отдельный срез по статусу WARRANTY: сумма оригинала <strong>не</strong> прибавляется к выручке периода повторно.
+        </p>
+        {render_warranty_header_kpis(period.warranty_total, spec)}
+        <details class="section" open>
+          <summary>3.1. Warranty · по поставщикам ({fmt_int(len(period.warranty_suppliers))})</summary>
+          <div class="block-body">{w_sup_html}</div>
+        </details>
+        <details class="section" open>
+          <summary>3.2. Warranty · по клиентам ({fmt_int(len(period.warranty_clients))})</summary>
+          <div class="block-body">{w_cli_html}</div>
+        </details>
       </div>
     </details>
   </div>
@@ -386,6 +462,7 @@ def render_html(
   --drop:#6b3f1f; --drop-bg:#f3e6d4; --drop-border:#d2a66a;
   --leaf:#3d4a22; --leaf-bg:#eef0e2; --leaf-border:#b7c08a;
   --section-bg:#e8f0f3;
+  --warranty:#6b2430; --warranty-bg:#f7e8eb; --warranty-border:#c98a96;
 }}
 * {{ box-sizing:border-box; }}
 body {{
@@ -431,6 +508,17 @@ details.section > summary {{
   cursor:pointer; padding:12px 14px; list-style:none; background:var(--section-bg);
   font-weight:700; color:var(--navy); font-size:15px;
 }}
+details.warranty-section {{
+  border-color: var(--warranty-border);
+}}
+details.warranty-section > summary {{
+  background: var(--warranty-bg);
+  color: var(--warranty);
+}}
+.warranty-note {{ color: var(--warranty); }}
+.warranty-kpis > div {{ background:#fdf6f7; border-color: var(--warranty-border); }}
+.warranty-kpis > div.highlight {{ background: var(--warranty-bg); border-color: var(--warranty-border); }}
+.warranty-kpis .value {{ color: var(--warranty); }}
 
 /* Основные выпадающие (поставщик / клиент) — тёплый песочный, контраст к голубому */
 details.drop {{
@@ -515,12 +603,16 @@ tbody tr:hover {{ background:#eef7f9; }}
   </div>
   <div class="rules">
     <strong>Срез:</strong> только <strong>{spec.title}</strong> ({spec.include_note}), все клиенты.
+    KIT / FEET / пустой Category в эти отчёты не входят (бакет «Прочее»).
     <br/>
-    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / WARRANTY / SCRAPPED / LOST. FINISHED не фильтруем.
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST.
+    Статус <strong>WARRANTY</strong> входит в выполнение (поставка уже была) и дублируется в разделе 3 — без повторного сложения выручки.
+    FINISHED не фильтруем.
     <br/>
     <strong>Структура периода:</strong>
-    1) по поставщикам → внутри мини-отчёты по клиентам ·
-    2) по клиентам → внутри мини-отчёты по поставщикам.
+    1) по поставщикам → клиенты ·
+    2) по клиентам → поставщики ·
+    3) WARRANTY → те же кейсы отдельно.
     <br/>
     <strong>Метрики:</strong> заказы, позиции, выручка, маржа, срок STK (W−Q), Δ транспорта.
     Из сроков исключаем битые даты заказа Q (год &lt; 2020, напр. 1970-01-01).
@@ -579,7 +671,9 @@ def generate(
         print(
             f"{p.title}: orders={p.total.orders} lines={p.total.lines} "
             f"rev={p.total.revenue:.0f} margin={p.total.margin:.0f} "
-            f"suppliers={len(p.suppliers)} clients={len(p.clients)}"
+            f"suppliers={len(p.suppliers)} clients={len(p.clients)} "
+            f"warranty={p.warranty_total.orders}/{p.warranty_total.lines} "
+            f"w_rev={p.warranty_total.revenue:.0f}"
         )
 
     html = render_html(periods, taz.name, as_of, spec)
@@ -601,7 +695,7 @@ def main() -> None:
     parser.add_argument(
         "--taz",
         type=Path,
-        default=Path("/tmp/taz_history/ТАЗ 09.10.2026.xlsx"),
+        default=Path("/tmp/taz_history/ТАЗ 23.10.2026.xlsx"),
     )
     parser.add_argument("--out-dir", type=Path, default=Path("output"))
     parser.add_argument("--stem", default=None, help="Имя файла без .html")
