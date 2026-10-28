@@ -252,8 +252,13 @@ def is_warranty_text(*parts) -> bool:
     return "гарант" in blob or "warranty" in blob or "возврат из ремонта" in blob
 
 
+def normalize_location(blob: str) -> str:
+    """AHS — то же самое, что склад WHS."""
+    return re.sub(r"\bAHS\b", "WHS", str(blob or "").upper())
+
+
 def is_on_hold(*parts) -> bool:
-    blob = "\n".join(str(part or "") for part in parts).upper()
+    blob = normalize_location("\n".join(str(part or "") for part in parts))
     return "ON HOLD HA WHS" in blob
 
 
@@ -364,7 +369,7 @@ def normalize_batch_token(value) -> str:
     return text
 
 
-SHIPMENT_WORDS = ("WHS", "PAID", "READY", "HOLD", "UNSOLVED", "UNCONFIRMED", "MID-OCTOBER", "MID OCTOBER", "ON THE WAY")
+SHIPMENT_WORDS = ("WHS", "AHS", "PAID", "READY", "HOLD", "UNSOLVED", "UNCONFIRMED", "MID-OCTOBER", "MID OCTOBER", "ON THE WAY")
 
 
 def is_shipment_id(token: str) -> bool:
@@ -535,7 +540,7 @@ def apply_transit_stability(computed: date, previous: date | None, same_section:
 def transit_base_kind(src: SourceRow, planned: date, file_date: date) -> str:
     if days_between(planned, file_date) < 5:
         return "point"
-    blob = pq_blob(src).upper()
+    blob = normalize_location(pq_blob(src))
     in_pretransit = src.section == "PRE TRANSIT"
     whs = any(token in blob for token in ("BOS WHS", "HA WHS", "НА WHS")) or re.search(r"\bWHS\b", blob)
     # «On the way» и UNSOLVED сюда не попадают: их разбирает классификатор BOS раньше.
@@ -833,7 +838,7 @@ def market_section(src: SourceRow, file_date: date) -> tuple[str, str]:
 
 
 def bos_section(src: SourceRow, file_date: date) -> tuple[str, str] | None:
-    blob = pq_blob(src).upper()
+    blob = normalize_location(pq_blob(src))
     if "ON HOLD HA WHS" in blob:
         return None
     if "UNSOLVED" in blob:
@@ -870,7 +875,7 @@ def classify(src: SourceRow | None, prev: PrevRow | None, file_date: date, histo
         if prev:
             return Decision(action="drop", rule="Гарантия: строка убирается из клиентской таблицы")
         return Decision(action="skip", rule="Гарантия")
-    if src.on_hold or (src.section == "BLUE OCEAN SOLUTIONS" and "ON HOLD HA WHS" in pq_blob(src).upper()):
+    if src.on_hold or (src.section == "BLUE OCEAN SOLUTIONS" and "ON HOLD HA WHS" in normalize_location(pq_blob(src))):
         if prev:
             return Decision(action="drop", rule="ON HOLD HA WHS: строка не показывается клиенту")
         return Decision(action="skip", rule="ON HOLD HA WHS")
