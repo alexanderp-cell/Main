@@ -3,8 +3,8 @@
 
 Периоды (по столбцу W — факт. дата поставки), дата среза = дата из имени ТАЗ:
   1) прошедшая неделя (7 дней, включая дату среза)
-  2) прошедший полный месяц (например при срезе 02.10 → сентябрь)
-  3) прошедший полный квартал (например при срезе 02.10 → Q3)
+  2) прошедший полный месяц (при срезе концом месяца → этот месяц; иначе предыдущий)
+  3) прошедшие 3 месяца (окно из трёх полных месяцев, напр. авг–сент–окт)
   4) прошедший год = текущий календарный год с 01.01 по дату среза
 
 Попадание в отчёт: заполненная факт. дата поставки W; период по W.
@@ -354,19 +354,31 @@ def as_of_month_end(d: date) -> date:
 
 
 def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
-    q = (as_of.month - 1) // 3 + 1
-    if q == 1:
-        year = as_of.year - 1
-        start_m = 10
-        q_label = 4
-    else:
-        year = as_of.year
-        start_m = (q - 2) * 3 + 1
-        q_label = q - 1
-    start = date(year, start_m, 1)
-    end_m = start_m + 2
-    end = date(year, end_m, calendar.monthrange(year, end_m)[1])
-    title = f"Q{q_label} {year} ({MONTHS_RU[start_m]}–{MONTHS_RU[end_m]})"
+    """Три полных месяца, заканчивающихся последним завершённым месяцем.
+
+    Пример: срез концом октября → август–сентябрь–октябрь.
+    (Не календарный Q1–Q4.)
+    """
+    _month_start, month_end, _month_title = last_complete_month(as_of)
+    # Первый день окна = 1-е число месяца на 2 месяца раньше конца окна.
+    end_y, end_m = month_end.year, month_end.month
+    start_m = end_m - 2
+    start_y = end_y
+    while start_m <= 0:
+        start_m += 12
+        start_y -= 1
+    start = date(start_y, start_m, 1)
+    end = month_end
+    # Подписи месяцев по порядку в окне.
+    labels: list[str] = []
+    y, m = start_y, start_m
+    for _ in range(3):
+        labels.append(MONTHS_RU[m])
+        m += 1
+        if m > 12:
+            m = 1
+            y += 1
+    title = f"Прошедшие 3 месяца ({labels[0]}-{labels[1]}-{labels[2]})"
     return start, end, title
 
 
@@ -893,7 +905,8 @@ def build_periods(df: pd.DataFrame, as_of: date) -> list[PeriodBlock]:
     return [
         build_period(df, "Прошедшая неделя", week_start, as_of),
         build_period(df, f"Прошедший месяц · {month_title}", month_start, month_end),
-        build_period(df, f"Прошедший квартал · {q_title}", q_start, q_end),
+        # q_title уже вида «Прошедшие 3 месяца (август-сентябрь-октябрь)»
+        build_period(df, q_title, q_start, q_end),
         build_period(df, f"Прошедший год · {as_of.year}", year_start, as_of),
     ]
 
