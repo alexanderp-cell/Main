@@ -1,0 +1,770 @@
+#!/usr/bin/env python3
+"""FASTAIR — Выполненные заказы по категории (EXPENDABLE / ROTABLE), все клиенты.
+
+Попадание / периоды — как в completed_orders (W, без cancel/refund/scrap/lost).
+WARRANTY входит в выполнение (поставка уже была) и дублируется в разделе 3.
+
+В каждом периоде:
+  1) По поставщикам — шапка KPI + выпадающий поставщик;
+     внутри — выпадающие клиенты с мини-отчётами
+  2) По клиентам — выпадающий клиент;
+     внутри — выпадающие поставщики с мини-отчётами
+  3) WARRANTY — те же позиции со статусом гарантии (не доп. выручка)
+"""
+
+from __future__ import annotations
+
+import argparse
+from dataclasses import dataclass, field
+from datetime import date
+from pathlib import Path
+
+import pandas as pd
+
+from generate_completed_orders_report import (
+    CAT_EXPENDABLE,
+    CAT_ROTABLE,
+    as_money,
+    build_periods,
+    fmt_days,
+    fmt_int,
+    fmt_money,
+    fmt_transport_delta_html,
+    html_escape,
+    as_of_month_end,
+    infer_taz_end,
+    lead_mask,
+    line_from_row,
+    load_taz,
+    prepare,
+    render_positions_table,
+    report_mask,
+    warranty_mask,
+)
+
+
+@dataclass(frozen=True)
+class BucketSpec:
+    key: str
+    title: str
+    short: str
+    include_note: str
+    stem: str
+
+
+BUCKETS: dict[str, BucketSpec] = {
+    CAT_EXPENDABLE: BucketSpec(
+        key=CAT_EXPENDABLE,
+        title="EXPENDABLE",
+        short="расходка (вкл. consumable)",
+        include_note="consumable сюда же",
+        stem="expendables_suppliers_clients",
+    ),
+    CAT_ROTABLE: BucketSpec(
+        key=CAT_ROTABLE,
+        title="ROTABLE",
+        short="ротейблы (вкл. GSE/TOOL и KIT)",
+        include_note="GSE/TOOL и KIT сюда же",
+        stem="rotables_suppliers_clients",
+    ),
+}
+
+
+@dataclass
+class SliceKPI:
+    orders: int
+    lines: int
+    revenue: float
+    margin: float
+    lead_avg: float | None
+    lead_n: int
+    transport_plan: float
+    transport_fact: float
+
+    @property
+    def transport_delta(self) -> float:
+        return self.transport_fact - self.transport_plan
+
+    @property
+    def margin_pct(self) -> float | None:
+        if self.revenue <= 0:
+            return None
+        return 100.0 * self.margin / self.revenue
+
+
+@dataclass
+class EntityLeaf:
+    """Мини-отчёт: метрики + позиции (клиент внутри поставщика или наоборот)."""
+
+    name: str
+    kpi: SliceKPI
+    positions: list = field(default_factory=list)
+
+
+@dataclass
+class SupplierBlock:
+    name: str
+    kpi: SliceKPI
+    clients: list[EntityLeaf] = field(default_factory=list)
+
+
+@dataclass
+class ClientBlock:
+    name: str
+    kpi: SliceKPI
+    suppliers: list[EntityLeaf] = field(default_factory=list)
+
+
+@dataclass
+class PeriodView:
+    title: str
+    start: date
+    end: date
+    total: SliceKPI
+    suppliers: list[SupplierBlock] = field(default_factory=list)
+    clients: list[ClientBlock] = field(default_factory=list)
+    warranty_total: SliceKPI = field(default_factory=lambda: SliceKPI(0, 0, 0.0, 0.0, None, 0, 0.0, 0.0))
+    warranty_suppliers: list[SupplierBlock] = field(default_factory=list)
+    warranty_clients: list[ClientBlock] = field(default_factory=list)
+
+
+def filter_bucket(df: pd.DataFrame, bucket: str) -> pd.DataFrame:
+    return df.loc[df["_bucket"].eq(bucket)].copy()
+
+
+def _kpi(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> SliceKPI:
+    if rows.empty:
+        return SliceKPI(0, 0, 0.0, 0.0, None, 0, 0.0, 0.0)
+    invoices = {inv for inv in rows["_invoice"] if inv}
+    days = lead_rows["_days"].astype(float) if not lead_rows.empty else pd.Series(dtype=float)
+    return SliceKPI(
+        orders=len(invoices) if invoices else int(len(rows)),
+        lines=int(len(rows)),
+        revenue=as_money(rows["_sale"].sum()),
+        margin=as_money(rows["_margin"].sum()),
+        lead_avg=float(days.mean()) if not days.empty else None,
+        lead_n=int(len(days)),
+        transport_plan=as_money(rows["_plan"].sum()),
+        transport_fact=as_money(rows["_fact"].sum()),
+    )
+
+
+def _positions(part: pd.DataFrame) -> list:
+    out = []
+    for _, r in part.sort_values("_sale", ascending=False).iterrows():
+        line = line_from_row(r)
+        if bool(r.get("_warranty", False)):
+            desc = line.description or ""
+            if not desc.upper().startswith("[WARRANTY]"):
+                line.description = f"[WARRANTY] {desc}".strip()
+        out.append(line)
+    return out
+
+
+def _sorted_names(rows: pd.DataFrame, key: str) -> list:
+    return sorted(
+        rows[key].unique(),
+        key=lambda s: (-float(rows.loc[rows[key] == s, "_sale"].sum()), str(s).casefold()),
+    )
+
+
+def build_leaves(
+    rows: pd.DataFrame, lead_rows: pd.DataFrame, key: str
+) -> list[EntityLeaf]:
+    out: list[EntityLeaf] = []
+    for name in _sorted_names(rows, key):
+        part = rows[rows[key] == name]
+        lead_part = lead_rows[lead_rows[key] == name]
+        out.append(
+            EntityLeaf(
+                name=str(name),
+                kpi=_kpi(part, lead_part),
+                positions=_positions(part),
+            )
+        )
+    return out
+
+
+def build_suppliers(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[SupplierBlock]:
+    out: list[SupplierBlock] = []
+    for name in _sorted_names(rows, "_supplier"):
+        part = rows[rows["_supplier"] == name]
+        lead_part = lead_rows[lead_rows["_supplier"] == name]
+        out.append(
+            SupplierBlock(
+                name=str(name),
+                kpi=_kpi(part, lead_part),
+                clients=build_leaves(part, lead_part, "_client"),
+            )
+        )
+    return out
+
+
+def build_clients(rows: pd.DataFrame, lead_rows: pd.DataFrame) -> list[ClientBlock]:
+    out: list[ClientBlock] = []
+    for name in _sorted_names(rows, "_client"):
+        part = rows[rows["_client"] == name]
+        lead_part = lead_rows[lead_rows["_client"] == name]
+        out.append(
+            ClientBlock(
+                name=str(name),
+                kpi=_kpi(part, lead_part),
+                suppliers=build_leaves(part, lead_part, "_supplier"),
+            )
+        )
+    return out
+
+
+def build_period_view(df: pd.DataFrame, title: str, start: date, end: date) -> PeriodView:
+    rows = df.loc[report_mask(df, start, end)].copy()
+    lead_rows = df.loc[lead_mask(df, start, end)].copy()
+    w_rows = df.loc[warranty_mask(df, start, end)].copy()
+    w_lead = df.loc[lead_mask(df, start, end) & df["_warranty"]].copy()
+    return PeriodView(
+        title=title,
+        start=start,
+        end=end,
+        total=_kpi(rows, lead_rows),
+        suppliers=build_suppliers(rows, lead_rows),
+        clients=build_clients(rows, lead_rows),
+        warranty_total=_kpi(w_rows, w_lead),
+        warranty_suppliers=build_suppliers(w_rows, w_lead),
+        warranty_clients=build_clients(w_rows, w_lead),
+    )
+
+
+def kpi_meta(kpi: SliceKPI) -> str:
+    mp = f" · {kpi.margin_pct:.1f}%" if kpi.margin_pct is not None else ""
+    return (
+        f"{fmt_int(kpi.orders)} зак. · {fmt_int(kpi.lines)} поз. · "
+        f"${fmt_money(kpi.revenue)} · маржа ${fmt_money(kpi.margin)}{mp} · "
+        f"срок {fmt_days(kpi.lead_avg)} дн. · {fmt_transport_delta_html(kpi.transport_delta)}"
+    )
+
+
+def render_header_kpis(kpi: SliceKPI, spec: BucketSpec) -> str:
+    return f"""
+    <div class="kpis">
+      <div class="highlight">
+        <div class="label">Выполнено заказов</div>
+        <div class="value">{fmt_int(kpi.orders)}</div>
+        <div class="muted">{fmt_int(kpi.lines)} позиций {spec.title} с W</div>
+      </div>
+      <div>
+        <div class="label">Выручка</div>
+        <div class="value">${fmt_money(kpi.revenue)}</div>
+        <div class="muted">Σ продажная итого</div>
+      </div>
+      <div>
+        <div class="label">Маржа</div>
+        <div class="value">${fmt_money(kpi.margin)}</div>
+        <div class="muted">продажа − закупка − тр. − fee{(' · ' + f'{kpi.margin_pct:.1f}%') if kpi.margin_pct is not None else ''}</div>
+      </div>
+      <div>
+        <div class="label">Сроки STK</div>
+        <div class="value">{fmt_days(kpi.lead_avg)} дн.</div>
+        <div class="muted">ср. W−Q · {fmt_int(kpi.lead_n)} поз.</div>
+      </div>
+      <div class="wide">
+        <div class="label">Транспорт план − факт = дельта</div>
+        <div class="value transport">
+          <span>{fmt_money(kpi.transport_plan)}</span>
+          <span class="op">−</span>
+          <span>{fmt_money(kpi.transport_fact)}</span>
+          <span class="op">=</span>
+          {fmt_transport_delta_html(kpi.transport_delta)}
+        </div>
+        <div class="muted">USD · только {spec.title} ({spec.include_note})</div>
+      </div>
+    </div>
+    """
+
+
+def render_leaf_dropdown(
+    leaf: EntityLeaf, table_id: str, kind_label: str, spec: BucketSpec
+) -> str:
+    """Мини-отчёт внутри поставщика/клиента."""
+    body = (
+        render_positions_table(leaf.positions, table_id)
+        if leaf.positions
+        else "<p class='empty'>Нет позиций</p>"
+    )
+    return f"""
+<details class="leaf">
+  <summary>
+    <span class="ent-name">{html_escape(leaf.name)}</span>
+    <span class="ent-meta">{kpi_meta(leaf.kpi)}</span>
+  </summary>
+  <div class="block-body">
+    {render_header_kpis(leaf.kpi, spec)}
+    <h4 class="leaf-h">Позиции · {html_escape(kind_label)}</h4>
+    {body}
+  </div>
+</details>
+"""
+
+
+def render_supplier_dropdown(sup: SupplierBlock, prefix: str, spec: BucketSpec) -> str:
+    clients = "\n".join(
+        render_leaf_dropdown(c, f"{prefix}-c{i}", "клиент", spec)
+        for i, c in enumerate(sup.clients)
+    ) or "<p class='empty'>Нет клиентов</p>"
+    return f"""
+<details class="drop">
+  <summary>
+    <span class="ent-name">{html_escape(sup.name)}</span>
+    <span class="ent-meta">{kpi_meta(sup.kpi)} · клиентов {fmt_int(len(sup.clients))}</span>
+  </summary>
+  <div class="block-body">
+    {render_header_kpis(sup.kpi, spec)}
+    <h3 class="section-h">Клиенты ({fmt_int(len(sup.clients))})</h3>
+    {clients}
+  </div>
+</details>
+"""
+
+
+def render_client_dropdown(client: ClientBlock, prefix: str, spec: BucketSpec) -> str:
+    suppliers = "\n".join(
+        render_leaf_dropdown(s, f"{prefix}-s{i}", "поставщик", spec)
+        for i, s in enumerate(client.suppliers)
+    ) or "<p class='empty'>Нет поставщиков</p>"
+    return f"""
+<details class="drop">
+  <summary>
+    <span class="ent-name">{html_escape(client.name)}</span>
+    <span class="ent-meta">{kpi_meta(client.kpi)} · поставщиков {fmt_int(len(client.suppliers))}</span>
+  </summary>
+  <div class="block-body">
+    {render_header_kpis(client.kpi, spec)}
+    <h3 class="section-h">Поставщики ({fmt_int(len(client.suppliers))})</h3>
+    {suppliers}
+  </div>
+</details>
+"""
+
+
+def render_warranty_header_kpis(kpi: SliceKPI, spec: BucketSpec) -> str:
+    return f"""
+    <div class="kpis warranty-kpis">
+      <div class="highlight">
+        <div class="label">Warranty-кейсы</div>
+        <div class="value">{fmt_int(kpi.orders)}</div>
+        <div class="muted">{fmt_int(kpi.lines)} позиций {spec.title} со статусом WARRANTY</div>
+      </div>
+      <div>
+        <div class="label">Сумма оригинала (выручка)</div>
+        <div class="value">${fmt_money(kpi.revenue)}</div>
+        <div class="muted">не добавляется к итогу периода повторно</div>
+      </div>
+      <div>
+        <div class="label">Маржа оригинала</div>
+        <div class="value">${fmt_money(kpi.margin)}</div>
+        <div class="muted">как в выполнении · под риском гарантии</div>
+      </div>
+      <div>
+        <div class="label">Сроки STK (оригинал)</div>
+        <div class="value">{fmt_days(kpi.lead_avg)} дн.</div>
+        <div class="muted">ср. W−Q · {fmt_int(kpi.lead_n)} поз.</div>
+      </div>
+    </div>
+    """
+
+
+def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: bool) -> str:
+    open_attr = " open" if opened else ""
+    range_s = f"{period.start.strftime('%d.%m.%Y')} – {period.end.strftime('%d.%m.%Y')}"
+    suppliers_html = "\n".join(
+        render_supplier_dropdown(s, f"p{idx}-sup-{i}", spec)
+        for i, s in enumerate(period.suppliers)
+    ) or "<p class='empty'>Нет поставщиков</p>"
+    clients_html = "\n".join(
+        render_client_dropdown(c, f"p{idx}-cli-{i}", spec)
+        for i, c in enumerate(period.clients)
+    ) or "<p class='empty'>Нет клиентов</p>"
+    w_meta = (
+        f" · warranty {fmt_int(period.warranty_total.orders)} зак. / "
+        f"${fmt_money(period.warranty_total.revenue)}"
+        if period.warranty_total.lines
+        else ""
+    )
+    warranty_block = ""
+    if period.warranty_total.lines:
+        w_sup_html = "\n".join(
+            render_supplier_dropdown(s, f"p{idx}-wsup-{i}", spec)
+            for i, s in enumerate(period.warranty_suppliers)
+        ) or "<p class='empty'>Нет warranty-кейсов у поставщиков</p>"
+        w_cli_html = "\n".join(
+            render_client_dropdown(c, f"p{idx}-wcli-{i}", spec)
+            for i, c in enumerate(period.warranty_clients)
+        ) or "<p class='empty'>Нет warranty-кейсов у клиентов</p>"
+        warranty_block = f"""
+    <details class="section warranty-section" open>
+      <summary>3. WARRANTY ({fmt_int(period.warranty_total.orders)} зак. · {fmt_int(period.warranty_total.lines)} поз. · ${fmt_money(period.warranty_total.revenue)})</summary>
+      <div class="block-body">
+        <p class="section-note warranty-note">
+          Те же позиции, что уже учтены выше как выполненные (есть W).
+          Здесь — отдельный срез по статусу warranty: сумма оригинала <strong>не</strong> прибавляется к выручке периода повторно.
+        </p>
+        {render_warranty_header_kpis(period.warranty_total, spec)}
+        <details class="section" open>
+          <summary>3.1. Warranty · по поставщикам ({fmt_int(len(period.warranty_suppliers))})</summary>
+          <div class="block-body">{w_sup_html}</div>
+        </details>
+        <details class="section" open>
+          <summary>3.2. Warranty · по клиентам ({fmt_int(len(period.warranty_clients))})</summary>
+          <div class="block-body">{w_cli_html}</div>
+        </details>
+      </div>
+    </details>
+"""
+    return f"""
+<details class="period"{open_attr}>
+  <summary>
+    <span class="period-title">{idx}. {html_escape(period.title)}</span>
+    <span class="period-meta">{range_s}</span>
+    <span class="period-meta">{fmt_int(period.total.orders)} зак. · ${fmt_money(period.total.revenue)} выр. · маржа ${fmt_money(period.total.margin)}{w_meta}</span>
+  </summary>
+  <div class="period-body">
+    {render_header_kpis(period.total, spec)}
+
+    <details class="section" open>
+      <summary>1. По поставщикам ({fmt_int(len(period.suppliers))})</summary>
+      <div class="block-body">
+        <p class="section-note">Внутри поставщика — мини-отчёты по клиентам. Позиции со статусом WARRANTY помечены в описании.</p>
+        {suppliers_html}
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>2. По клиентам ({fmt_int(len(period.clients))})</summary>
+      <div class="block-body">
+        <p class="section-note">Внутри клиента — мини-отчёты по поставщикам.</p>
+        {clients_html}
+      </div>
+    </details>
+{warranty_block}
+  </div>
+</details>
+"""
+
+
+def render_html(
+    periods: list[PeriodView], source_name: str, as_of: date, spec: BucketSpec
+) -> str:
+    sections = "\n".join(
+        render_period(p, i + 1, spec, opened=(i == 0)) for i, p in enumerate(periods)
+    )
+    logo_svg = """<svg class="brand-logo" role="img" aria-label="FastAir" xmlns="http://www.w3.org/2000/svg" width="150" height="23" viewBox="0 0 150 23" fill="none"> <path d="M134.16 22.6273V0H138.738V4.51685L143.241 0H149.999V4.51685H138.738V22.6273H134.16Z" fill="white"></path> <path d="M124.688 22.7342L124.688 9.15609L129.204 4.52539L129.204 22.7342H124.688Z" fill="white"></path> <path d="M129.203 4.58389L129.203 0L124.619 -2.00368e-07L124.619 1.32861L124.619 4.58389L129.203 4.58389Z" fill="#FE621D"></path> <path d="M49.4531 13.7454V5.81537L55.1628 0H72.1235V4.53724H53.9904V13.6184L58.5097 9.07448L66.6878 9.07448L72.1235 13.7454V16.8117L66.3177 22.6704L49.4531 22.6704V18.1332L67.5863 18.1332V13.5959L54.7927 13.5959L49.4531 13.7454Z" fill="white"></path> <path d="M0 22.6674L7.01839e-06 5.89362L5.78838 0H22.5652V4.51618H4.51619V13.5328L9.03438 9.03236H16.4395V13.5328H4.51619L4.51618 22.6674H0Z" fill="white"></path> <path d="M83.6417 4.51618H74.6094V0H83.6417V4.51618L88.1422 4.17781e-06L97.1745 0V4.51618H88.1422V22.6592H83.6417V4.51618Z" fill="white"></path> <path d="M111.006 22.6273H104.007L98.2188 16.7337L98.2188 5.89362L104.007 0H120.004L115.426 4.52546H120.004V22.6273H115.426V18.1545L111.006 22.6273ZM102.797 14.7743V18.1545H115.426V14.7743V7.89737V4.52546H102.797V7.89737V14.7743Z" fill="white"></path> <path d="M36.7206 22.6273H29.722L23.9336 16.7337L23.9336 5.89362L29.722 0H35.7208L41.1409 4.52546H45.7189V22.6273H41.1409V18.1545L36.7206 22.6273ZM28.5117 14.7743V18.1545H41.1409V14.7743V7.89737V4.52546H28.5117V7.89737V14.7743Z" fill="white"></path> </svg>"""
+    return f"""<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FastAir — {spec.title} · поставщики и клиенты</title>
+<style>
+@font-face {{
+  font-family:'Steppe';
+  src:url('https://static.tildacdn.com/tild6439-3762-4236-b234-356238663331/AnyConvcom__Steppe-R.woff') format('woff');
+  font-weight:400; font-style:normal;
+}}
+@font-face {{
+  font-family:'Steppe';
+  src:url('https://static.tildacdn.com/tild6439-3762-4236-b234-356238663331/AnyConvcom__Steppe-R.woff') format('woff');
+  font-weight:500 800; font-style:normal;
+}}
+:root {{
+  --brand:#022f40;
+  --brand-deep:#011f2b;
+  --accent:#fe621d;
+  --ink:#202020;
+  --muted:#4c4c4c;
+  --line:#c4c4c4;
+  --soft:#e7ecef;
+  --soft-2:#f4f6f7;
+  --zebra:#f0f3f5;
+  --drop:#5a3a18; --drop-bg:#f3e8d8; --drop-border:#d2a66a;
+  --leaf:#2f3d24; --leaf-bg:#eef0e2; --leaf-border:#b7c08a;
+  --section-bg:#e7ecef;
+  --warranty:#6b2430; --warranty-bg:#f7e8eb; --warranty-border:#c98a96;
+}}
+* {{ box-sizing:border-box; }}
+body {{
+  margin:0;
+  font-family:'Steppe', Arial, Helvetica, sans-serif;
+  font-weight:500;
+  font-size:15px;
+  font-synthesis:weight;
+  -webkit-font-smoothing:antialiased;
+  background:linear-gradient(180deg, var(--soft) 0%, #f7f9fa 45%, #fff 100%);
+  color:var(--ink);
+}}
+.wrap {{ max-width:1180px; margin:0 auto; padding:28px 20px 64px; }}
+.hero {{
+  background:linear-gradient(135deg, var(--brand-deep) 0%, var(--brand) 55%, #03485c 100%);
+  padding:26px 26px 22px; margin-bottom:16px; border-radius:0;
+  position:relative; overflow:hidden;
+}}
+.hero::after {{
+  content:""; position:absolute; right:-40px; top:-40px; width:220px; height:220px;
+  background:radial-gradient(circle, rgba(254,98,29,.35) 0%, transparent 70%);
+  pointer-events:none;
+}}
+.brand-row {{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+  position:relative; z-index:1;
+}}
+.brand-logo {{ height:22px; width:auto; display:block; }}
+.eyebrow {{
+  display:inline-block; border:1px solid rgba(255,255,255,.35); color:#d5fbff;
+  padding:6px 10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  font-size:11px; position:relative; z-index:1;
+}}
+h1 {{
+  color:#fff; font-size:28px; margin:0 0 8px; font-weight:700; letter-spacing:.01em;
+  position:relative; z-index:1;
+}}
+.sub {{ color:#d5fbff; margin:0; font-size:14px; font-weight:500; position:relative; z-index:1; }}
+.accent-bar {{
+  height:3px; width:72px; background:var(--accent); margin:14px 0 0; position:relative; z-index:1;
+}}
+.rules {{
+  background:#fff; border-left:3px solid var(--accent); border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  padding:14px 16px; margin-bottom:16px; font-size:13px; font-weight:500; color:var(--brand); line-height:1.5;
+}}
+details.period {{
+  border:1px solid var(--line); margin:0 0 14px; background:#fff; overflow:hidden;
+}}
+details.period > summary {{
+  cursor:pointer; padding:14px 16px; list-style:none; background:var(--soft-2);
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+  border-bottom:1px solid transparent;
+}}
+details.period[open] > summary {{ border-bottom-color:var(--line); }}
+details.period > summary::-webkit-details-marker {{ display:none; }}
+.period-title {{ font-size:17px; font-weight:700; color:var(--brand); }}
+.period-meta {{ font-size:13px; color:var(--muted); font-weight:500; }}
+.period-body {{ padding:12px 16px 16px; }}
+
+details.section {{
+  border:1px solid var(--line); margin:14px 0; background:#fff;
+}}
+details.section > summary {{
+  cursor:pointer; padding:12px 14px; list-style:none; background:var(--section-bg);
+  font-weight:700; color:var(--brand); font-size:15px;
+}}
+details.warranty-section {{ border-color: var(--warranty-border); }}
+details.warranty-section > summary {{ background: var(--warranty-bg); color: var(--warranty); }}
+.warranty-note {{ color: var(--warranty); }}
+.warranty-kpis > div {{ background:#fdf6f7; border-color: var(--warranty-border); }}
+.warranty-kpis > div.highlight {{ background: var(--warranty-bg); border-color: var(--warranty-border); }}
+.warranty-kpis .value {{ color: var(--warranty); }}
+
+details.drop {{
+  border:1px solid var(--drop-border); margin:10px 0; background:#fff;
+}}
+details.drop > summary {{
+  cursor:pointer; padding:11px 12px; font-weight:700; color:var(--drop);
+  list-style:none; background:var(--drop-bg);
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+}}
+details.leaf {{
+  border:1px solid var(--leaf-border); margin:8px 0; background:#fff;
+}}
+details.leaf > summary {{
+  cursor:pointer; padding:10px 12px; font-weight:700; color:var(--leaf);
+  list-style:none; background:var(--leaf-bg);
+  display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline;
+}}
+details.section > summary::-webkit-details-marker,
+details.drop > summary::-webkit-details-marker,
+details.leaf > summary::-webkit-details-marker {{ display:none; }}
+details.section > summary::before,
+details.drop > summary::before,
+details.leaf > summary::before {{ content:"▸ "; opacity:.7; }}
+details.section[open] > summary::before,
+details.drop[open] > summary::before,
+details.leaf[open] > summary::before {{ content:"▾ "; }}
+
+.block-body {{ padding:12px; background:#fff; }}
+.ent-name {{ font-weight:700; }}
+.ent-meta {{ font-size:12px; color:#5c5348; font-weight:600; }}
+details.leaf .ent-meta {{ color:#4a5240; }}
+.section-h {{ margin:16px 0 8px; font-size:14px; color:var(--brand); font-weight:700; }}
+.leaf-h {{ margin:8px 0; font-size:13px; color:var(--muted); font-weight:700; }}
+.section-note {{ margin:0 0 12px; color:var(--muted); font-size:13px; font-weight:500; }}
+.kpis {{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
+}}
+.kpis > div {{ background:var(--soft-2); border:1px solid var(--line); padding:12px 14px; }}
+.kpis > div.highlight {{ background:var(--soft); border-color:#b7c4ca; }}
+.kpis > div.wide {{ grid-column:1 / -1; }}
+.label {{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#757575; font-weight:700; }}
+.value {{ font-size:22px; font-weight:700; margin-top:4px; color:var(--brand); font-variant-numeric:tabular-nums; }}
+.value.transport {{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:baseline; font-size:18px; }}
+.value.transport .op {{ color:var(--muted); font-weight:700; }}
+.bad {{ color:#9b2c2c; font-weight:700; }}
+.ok {{ color:#0a5c4c; font-weight:700; }}
+.muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
+.table-scroll {{ overflow-x:auto; }}
+table {{
+  width:100%; border-collapse:collapse; font-size:13px; font-weight:500; border:1px solid var(--line);
+}}
+th, td {{
+  border:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:middle;
+}}
+th {{
+  font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#fff;
+  background:var(--brand); cursor:pointer; user-select:none; white-space:nowrap; text-align:center;
+  font-weight:700;
+}}
+th.label-col {{ text-align:left; }}
+th:hover {{ background:#03485c; }}
+th .arrow {{ opacity:.45; margin-left:6px; font-size:11px; }}
+td.num, th.num {{ text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }}
+td.empty, .empty {{ color:#999; text-align:center; }}
+tbody tr:nth-child(even) {{ background:var(--zebra); }}
+tbody tr:hover {{ background:#e7ecef; }}
+.hint {{ margin-top:12px; color:var(--muted); font-size:12px; }}
+.site-ref {{ color:var(--accent); text-decoration:none; font-weight:600; }}
+@media (max-width:900px) {{
+  .kpis {{ grid-template-columns:1fr 1fr; }}
+  h1 {{ font-size:22px; }}
+}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="brand-row">
+      {logo_svg}
+      <span class="eyebrow">Internal report</span>
+    </div>
+    <h1>{spec.title} · поставщики и клиенты</h1>
+    <div class="sub">Срез ТАЗ {html_escape(as_of.strftime('%d.%m.%Y'))} · {html_escape(source_name)} · только {spec.short}</div>
+    <div class="accent-bar"></div>
+  </div>
+  <div class="rules">
+    <strong>Срез:</strong> только <strong>{spec.title}</strong> ({spec.include_note}), все клиенты.
+    FEET / пустой Category → «Прочее», в эти отчёты не входят.
+    <br/>
+    <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST;
+    без типа поставки «Гарантийная поставка» (замена/возврат из ремонта).
+    Статус <strong>WARRANTY</strong> на обычной продаже входит в выполнение и дублируется в разделе 3 — без повторного сложения выручки.
+    FINISHED не фильтруем.
+    <br/>
+    <strong>Структура периода:</strong>
+    1) по поставщикам → клиенты ·
+    2) по клиентам → поставщики ·
+    3) WARRANTY → те же кейсы отдельно (если есть).
+    <br/>
+    <strong>Метрики:</strong> заказы, позиции, выручка, маржа, срок STK (W−Q), Δ транспорта.
+    Из сроков исключаем битые даты заказа Q (год &lt; 2020, напр. 1970-01-01).
+  </div>
+  {sections}
+  <p class="hint">Дизайн в тонах <a class="site-ref" href="https://fastair.ru" target="_blank" rel="noopener">fastair.ru</a>. Выпадающие списки песочный/оливковый — для иерархии внутри отчёта.</p>
+</div>
+<script>
+document.querySelectorAll('table[data-sortable]').forEach((table) => {{
+  const headers = table.querySelectorAll('th');
+  headers.forEach((th, idx) => {{
+    th.addEventListener('click', () => {{
+      const tbody = table.tBodies[0];
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const asc = th.dataset.asc !== '1';
+      headers.forEach(h => {{ h.classList.remove('sorted'); h.dataset.asc = ''; }});
+      th.classList.add('sorted');
+      th.dataset.asc = asc ? '1' : '0';
+      const parse = (td) => {{
+        const t = (td?.textContent || '').trim().replace(/\\s/g, '').replace('%','').replace('$','');
+        const n = Number(t.replace(',', '.'));
+        return Number.isFinite(n) && t !== '' && t !== '—' ? n : t;
+      }};
+      rows.sort((a, b) => {{
+        const av = parse(a.children[idx]);
+        const bv = parse(b.children[idx]);
+        if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
+        return asc ? String(av).localeCompare(String(bv), 'ru') : String(bv).localeCompare(String(av), 'ru');
+      }});
+      rows.forEach(r => tbody.appendChild(r));
+    }});
+  }});
+}});
+</script>
+</body>
+</html>
+"""
+
+
+
+def generate(
+    taz: Path,
+    out_dir: Path,
+    bucket: str,
+    stem: str | None = None,
+    *,
+    month_end: bool = False,
+    as_of: date | None = None,
+) -> Path:
+    if bucket not in BUCKETS:
+        raise SystemExit(f"Unknown bucket {bucket!r}; choose from {sorted(BUCKETS)}")
+    spec = BUCKETS[bucket]
+    cut = as_of or infer_taz_end(taz)
+    if month_end:
+        cut = as_of_month_end(cut)
+    print(f"as_of={cut.isoformat()} (month_end={month_end})")
+    df = filter_bucket(prepare(load_taz(taz)), bucket)
+    base = build_periods(df, cut)
+    periods = [build_period_view(df, p.title, p.start, p.end) for p in base]
+
+    for p in periods:
+        print(
+            f"{p.title}: {p.start}..{p.end} orders={p.total.orders} lines={p.total.lines} "
+            f"rev={p.total.revenue:.0f} margin={p.total.margin:.0f} "
+            f"suppliers={len(p.suppliers)} clients={len(p.clients)} "
+            f"warranty={p.warranty_total.orders}/{p.warranty_total.lines} "
+            f"w_rev={p.warranty_total.revenue:.0f}"
+        )
+
+    html = render_html(periods, taz.name, cut, spec)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{stem or spec.stem}.html"
+    out.write_text(html, encoding="utf-8")
+    print(f"wrote {out}")
+    return out
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--bucket",
+        choices=sorted(BUCKETS),
+        default=CAT_EXPENDABLE,
+        help="Категория: EXPENDABLE (consumable) или ROTABLE (GSE/TOOL/KIT)",
+    )
+    parser.add_argument(
+        "--taz",
+        type=Path,
+        default=Path("/tmp/taz_history/ТАЗ 30.10.2026.xlsx"),
+    )
+    parser.add_argument("--out-dir", type=Path, default=Path("output"))
+    parser.add_argument("--stem", default=None, help="Имя файла без .html")
+    parser.add_argument(
+        "--month-end",
+        action="store_true",
+        help="Считать дату среза концом месяца (полный текущий месяц в разделах)",
+    )
+    args = parser.parse_args()
+    generate(
+        args.taz,
+        args.out_dir,
+        args.bucket,
+        args.stem,
+        month_end=args.month_end,
+    )
+
+
+if __name__ == "__main__":
+    main()
