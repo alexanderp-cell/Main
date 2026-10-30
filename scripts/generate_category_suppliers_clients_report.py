@@ -31,6 +31,7 @@ from generate_completed_orders_report import (
     fmt_money,
     fmt_transport_delta_html,
     html_escape,
+    as_of_month_end,
     infer_taz_end,
     lead_mask,
     line_from_row,
@@ -62,8 +63,8 @@ BUCKETS: dict[str, BucketSpec] = {
     CAT_ROTABLE: BucketSpec(
         key=CAT_ROTABLE,
         title="ROTABLE",
-        short="ротейблы (вкл. GSE/TOOL)",
-        include_note="GSE/TOOL сюда же",
+        short="ротейблы (вкл. GSE/TOOL и KIT)",
+        include_note="GSE/TOOL и KIT сюда же",
         stem="rotables_suppliers_clients",
     ),
 }
@@ -381,20 +382,42 @@ def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: boo
         render_client_dropdown(c, f"p{idx}-cli-{i}", spec)
         for i, c in enumerate(period.clients)
     ) or "<p class='empty'>Нет клиентов</p>"
-    w_sup_html = "\n".join(
-        render_supplier_dropdown(s, f"p{idx}-wsup-{i}", spec)
-        for i, s in enumerate(period.warranty_suppliers)
-    ) or "<p class='empty'>Нет warranty-кейсов у поставщиков</p>"
-    w_cli_html = "\n".join(
-        render_client_dropdown(c, f"p{idx}-wcli-{i}", spec)
-        for i, c in enumerate(period.warranty_clients)
-    ) or "<p class='empty'>Нет warranty-кейсов у клиентов</p>"
     w_meta = (
         f" · warranty {fmt_int(period.warranty_total.orders)} зак. / "
         f"${fmt_money(period.warranty_total.revenue)}"
         if period.warranty_total.lines
         else ""
     )
+    warranty_block = ""
+    if period.warranty_total.lines:
+        w_sup_html = "\n".join(
+            render_supplier_dropdown(s, f"p{idx}-wsup-{i}", spec)
+            for i, s in enumerate(period.warranty_suppliers)
+        ) or "<p class='empty'>Нет warranty-кейсов у поставщиков</p>"
+        w_cli_html = "\n".join(
+            render_client_dropdown(c, f"p{idx}-wcli-{i}", spec)
+            for i, c in enumerate(period.warranty_clients)
+        ) or "<p class='empty'>Нет warranty-кейсов у клиентов</p>"
+        warranty_block = f"""
+    <details class="section warranty-section" open>
+      <summary>3. WARRANTY ({fmt_int(period.warranty_total.orders)} зак. · {fmt_int(period.warranty_total.lines)} поз. · ${fmt_money(period.warranty_total.revenue)})</summary>
+      <div class="block-body">
+        <p class="section-note warranty-note">
+          Те же позиции, что уже учтены выше как выполненные (есть W).
+          Здесь — отдельный срез по статусу warranty: сумма оригинала <strong>не</strong> прибавляется к выручке периода повторно.
+        </p>
+        {render_warranty_header_kpis(period.warranty_total, spec)}
+        <details class="section" open>
+          <summary>3.1. Warranty · по поставщикам ({fmt_int(len(period.warranty_suppliers))})</summary>
+          <div class="block-body">{w_sup_html}</div>
+        </details>
+        <details class="section" open>
+          <summary>3.2. Warranty · по клиентам ({fmt_int(len(period.warranty_clients))})</summary>
+          <div class="block-body">{w_cli_html}</div>
+        </details>
+      </div>
+    </details>
+"""
     return f"""
 <details class="period"{open_attr}>
   <summary>
@@ -420,25 +443,7 @@ def render_period(period: PeriodView, idx: int, spec: BucketSpec, *, opened: boo
         {clients_html}
       </div>
     </details>
-
-    <details class="section warranty-section"{" open" if period.warranty_total.lines else ""}>
-      <summary>3. WARRANTY ({fmt_int(period.warranty_total.orders)} зак. · {fmt_int(period.warranty_total.lines)} поз. · ${fmt_money(period.warranty_total.revenue)})</summary>
-      <div class="block-body">
-        <p class="section-note warranty-note">
-          Те же позиции, что уже учтены выше как выполненные (есть W).
-          Здесь — отдельный срез по статусу WARRANTY: сумма оригинала <strong>не</strong> прибавляется к выручке периода повторно.
-        </p>
-        {render_warranty_header_kpis(period.warranty_total, spec)}
-        <details class="section" open>
-          <summary>3.1. Warranty · по поставщикам ({fmt_int(len(period.warranty_suppliers))})</summary>
-          <div class="block-body">{w_sup_html}</div>
-        </details>
-        <details class="section" open>
-          <summary>3.2. Warranty · по клиентам ({fmt_int(len(period.warranty_clients))})</summary>
-          <div class="block-body">{w_cli_html}</div>
-        </details>
-      </div>
-    </details>
+{warranty_block}
   </div>
 </details>
 """
@@ -603,7 +608,7 @@ tbody tr:hover {{ background:#eef7f9; }}
   </div>
   <div class="rules">
     <strong>Срез:</strong> только <strong>{spec.title}</strong> ({spec.include_note}), все клиенты.
-    KIT / FEET / пустой Category в эти отчёты не входят (бакет «Прочее»).
+    FEET / пустой Category → «Прочее», в эти отчёты не входят.
     <br/>
     <strong>Попадание:</strong> заполненная W; без CANCELLED / REFUND / SCRAPPED / LOST;
     без типа поставки «Гарантийная поставка» (замена/возврат из ремонта).
@@ -659,25 +664,31 @@ def generate(
     out_dir: Path,
     bucket: str,
     stem: str | None = None,
+    *,
+    month_end: bool = False,
+    as_of: date | None = None,
 ) -> Path:
     if bucket not in BUCKETS:
         raise SystemExit(f"Unknown bucket {bucket!r}; choose from {sorted(BUCKETS)}")
     spec = BUCKETS[bucket]
-    as_of = infer_taz_end(taz)
+    cut = as_of or infer_taz_end(taz)
+    if month_end:
+        cut = as_of_month_end(cut)
+    print(f"as_of={cut.isoformat()} (month_end={month_end})")
     df = filter_bucket(prepare(load_taz(taz)), bucket)
-    base = build_periods(df, as_of)
+    base = build_periods(df, cut)
     periods = [build_period_view(df, p.title, p.start, p.end) for p in base]
 
     for p in periods:
         print(
-            f"{p.title}: orders={p.total.orders} lines={p.total.lines} "
+            f"{p.title}: {p.start}..{p.end} orders={p.total.orders} lines={p.total.lines} "
             f"rev={p.total.revenue:.0f} margin={p.total.margin:.0f} "
             f"suppliers={len(p.suppliers)} clients={len(p.clients)} "
             f"warranty={p.warranty_total.orders}/{p.warranty_total.lines} "
             f"w_rev={p.warranty_total.revenue:.0f}"
         )
 
-    html = render_html(periods, taz.name, as_of, spec)
+    html = render_html(periods, taz.name, cut, spec)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{stem or spec.stem}.html"
     out.write_text(html, encoding="utf-8")
@@ -691,17 +702,28 @@ def main() -> None:
         "--bucket",
         choices=sorted(BUCKETS),
         default=CAT_EXPENDABLE,
-        help="Категория: EXPENDABLE (consumable) или ROTABLE (GSE/TOOL)",
+        help="Категория: EXPENDABLE (consumable) или ROTABLE (GSE/TOOL/KIT)",
     )
     parser.add_argument(
         "--taz",
         type=Path,
-        default=Path("/tmp/taz_history/ТАЗ 23.10.2026.xlsx"),
+        default=Path("/tmp/taz_history/ТАЗ 30.10.2026.xlsx"),
     )
     parser.add_argument("--out-dir", type=Path, default=Path("output"))
     parser.add_argument("--stem", default=None, help="Имя файла без .html")
+    parser.add_argument(
+        "--month-end",
+        action="store_true",
+        help="Считать дату среза концом месяца (полный текущий месяц в разделах)",
+    )
     args = parser.parse_args()
-    generate(args.taz, args.out_dir, args.bucket, args.stem)
+    generate(
+        args.taz,
+        args.out_dir,
+        args.bucket,
+        args.stem,
+        month_end=args.month_end,
+    )
 
 
 if __name__ == "__main__":

@@ -76,7 +76,7 @@ CAT_EXPENDABLE = "EXPENDABLE"
 # Группы в выпадающих списках клиентов/поставщиков.
 # GSE → ROTABLE; consumable → EXPENDABLE.
 CAT_BUCKETS = (
-    (CAT_ROTABLE, ("ROTABLE", "GSE")),
+    (CAT_ROTABLE, ("ROTABLE", "GSE", "KIT")),
     (CAT_EXPENDABLE, ("EXPENDABLE", "CONSUMABLE")),
 )
 MONTHS_RU = {
@@ -330,11 +330,27 @@ def infer_taz_end(path: Path) -> date:
 
 
 def last_complete_month(as_of: date) -> tuple[date, date, str]:
+    """Прошедший полный месяц.
+
+    Если as_of — последний день своего месяца (срез «концом месяца»),
+    берём этот месяц целиком; иначе — предыдущий календарный.
+    """
+    last_day = calendar.monthrange(as_of.year, as_of.month)[1]
+    if as_of.day == last_day:
+        start = date(as_of.year, as_of.month, 1)
+        title = f"{MONTHS_RU[as_of.month].capitalize()} {as_of.year}"
+        return start, as_of, title
     first_this = as_of.replace(day=1)
     last_prev = first_this - timedelta(days=1)
     first_prev = last_prev.replace(day=1)
     title = f"{MONTHS_RU[first_prev.month].capitalize()} {first_prev.year}"
     return first_prev, last_prev, title
+
+
+def as_of_month_end(d: date) -> date:
+    """Сдвиг даты на последний день её месяца (для среза «конец месяца»)."""
+    last_day = calendar.monthrange(d.year, d.month)[1]
+    return date(d.year, d.month, last_day)
 
 
 def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
@@ -355,7 +371,7 @@ def last_complete_quarter(as_of: date) -> tuple[date, date, str]:
 
 
 def category_bucket(cat) -> str:
-    """ROTABLE (+GSE), EXPENDABLE (+consumable); остальное → Прочее."""
+    """ROTABLE (+GSE, KIT), EXPENDABLE (+consumable); остальное → Прочее."""
     if cat is None or (isinstance(cat, float) and pd.isna(cat)):
         return "Прочее"
     text = str(cat).strip().upper()
