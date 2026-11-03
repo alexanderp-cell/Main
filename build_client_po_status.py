@@ -731,7 +731,9 @@ def load_source(path: Path) -> list[SourceRow]:
         if section == "PRE TRANSIT" and blank:
             section = "ARCHIVE"
             continue
-        if section == "PRE TRANSIT" and kind in ARCHIVE_FLIP_KINDS:
+        # Пустая гарантийная пометка без номера заказа не закрывает PRE TRANSIT:
+        # ниже неё ещё идут живые оплаченные строки.
+        if section == "PRE TRANSIT" and invoice and kind in ARCHIVE_FLIP_KINDS:
             section = "ARCHIVE"
         if str(comment or "").strip().upper() == "SAMPLE":
             continue

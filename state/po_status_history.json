@@ -1,8 +1,8 @@
 {
-  "file_date": "2026-10-28",
-  "source": "UT_PO_STATUS_28.10.2026_55e9.xlsx",
+  "file_date": "2026-11-03",
+  "source": "UT_PO_STATUS_03.11.2026_bf0e.xlsx",
   "rows": {
-    "23102611345|D22698500-7|1": {
+    "3112611085|727-0854-02|5": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
@@ -10,7 +10,7 @@
       "last_planned_change": "",
       "dates_locked": false
     },
-    "23102611345|D22703500-3|1": {
+    "30102614105|65-44561-15|3": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
@@ -18,31 +18,7 @@
       "last_planned_change": "",
       "dates_locked": false
     },
-    "26102612515|137-00-870-13GK|1": {
-      "section": "Ожидает аванса",
-      "planned": "",
-      "comment_kind": "",
-      "point_date_changes": 0,
-      "last_planned_change": "",
-      "dates_locked": false
-    },
-    "20102615255|335-265-150-0|1": {
-      "section": "Ожидает аванса",
-      "planned": "",
-      "comment_kind": "",
-      "point_date_changes": 0,
-      "last_planned_change": "",
-      "dates_locked": false
-    },
-    "20102615255|649-433-083-0|1": {
-      "section": "Ожидает аванса",
-      "planned": "",
-      "comment_kind": "",
-      "point_date_changes": 0,
-      "last_planned_change": "",
-      "dates_locked": false
-    },
-    "20102615255|649-434-250-0|1": {
+    "16092613402|2028M21P02|2": {
       "section": "Ожидает аванса",
       "planned": "",
       "comment_kind": "",
@@ -82,22 +58,6 @@
       "last_planned_change": "2026-10-13",
       "dates_locked": true
     },
-    "11092613005|3604524-54|3": {
-      "section": "Требует внимания",
-      "planned": "N/A",
-      "comment_kind": "",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-13",
-      "dates_locked": true
-    },
-    "16102616305|2612412-1A|1": {
-      "section": "Требует внимания",
-      "planned": "N/A",
-      "comment_kind": "",
-      "point_date_changes": 0,
-      "last_planned_change": "",
-      "dates_locked": false
-    },
     "16102613015|40678-2|2": {
       "section": "Требует внимания",
       "planned": "N/A",
@@ -106,7 +66,7 @@
       "last_planned_change": "2026-10-28",
       "dates_locked": false
     },
-    "21102611265|69-73100-1|1": {
+    "20102615255|649-434-250-0|1": {
       "section": "Требует внимания",
       "planned": "N/A",
       "comment_kind": "",
@@ -146,9 +106,97 @@
       "last_planned_change": "",
       "dates_locked": false
     },
+    "23102611345|D22698500-7|1": {
+      "section": "Принят в работу",
+      "planned": "07.12.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "23102611345|D22703500-3|1": {
+      "section": "Принят в работу",
+      "planned": "07.12.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "20102615255|335-265-150-0|1": {
+      "section": "Принят в работу",
+      "planned": "19.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "20102615255|649-433-083-0|1": {
+      "section": "Принят в работу",
+      "planned": "19.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "11092613005|3604524-54|3": {
+      "section": "Принят в работу",
+      "planned": "10.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "2026-10-13",
+      "dates_locked": true
+    },
+    "21102611265|69-73100-1|1": {
+      "section": "Принят в работу",
+      "planned": "20.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "15102615245|A8171-1|4": {
+      "section": "Принят в работу",
+      "planned": "09.11.2026",
+      "comment_kind": "whs",
+      "point_date_changes": 0,
+      "last_planned_change": "2026-10-28",
+      "dates_locked": false
+    },
+    "30102616365|91318-275|6": {
+      "section": "Принят в работу",
+      "planned": "29.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "2112609205|12D1010|1": {
+      "section": "Принят в работу",
+      "planned": "02.12.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "2112609115|15800-358|1": {
+      "section": "Принят в работу",
+      "planned": "02.12.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "2112615555|5065-08|100": {
+      "section": "Принят в работу",
+      "planned": "05.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
     "9092611085|CGAB1400-00|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "04.11.2026",
+      "planned": "10.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-13",
@@ -156,7 +204,7 @@
     },
     "10082615365|137-00-870-14GK|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "04.11.2026",
+      "planned": "10.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-19",
@@ -164,7 +212,7 @@
     },
     "24082615515|T30L9M4|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "04.11.2026",
+      "planned": "10.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
@@ -180,23 +228,23 @@
     },
     "15102615245|151890|20": {
       "section": "Отгрузка от поставщика",
-      "planned": "09.11.2026",
+      "planned": "23.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "15102615245|35303-10|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "09.11.2026",
+      "planned": "23.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
-      "last_planned_change": "",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "7092610195|E-329E|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "04.11.2026",
+      "planned": "10.11.2026",
       "comment_kind": "",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-13",
@@ -204,7 +252,7 @@
     },
     "16092612555|901950-02|1": {
       "section": "Отгрузка от поставщика",
-      "planned": "04.11.2026",
+      "planned": "10.11.2026",
       "comment_kind": "delay",
       "point_date_changes": 2,
       "last_planned_change": "2026-10-19",
@@ -218,90 +266,98 @@
       "last_planned_change": "",
       "dates_locked": false
     },
+    "26102612515|137-00-870-13GK|1": {
+      "section": "Отгрузка от поставщика",
+      "planned": "25.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "16102616305|2612412-1A|1": {
+      "section": "Отгрузка от поставщика",
+      "planned": "24.11.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": false
+    },
+    "21102614425|55-0165-3|1": {
+      "section": "Отгрузка от поставщика",
+      "planned": "20.11.2026",
+      "comment_kind": "whs",
+      "point_date_changes": 0,
+      "last_planned_change": "2026-10-28",
+      "dates_locked": false
+    },
     "20052610552|BACR13CD2|1": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "delay",
       "point_date_changes": 2,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "28092614585|RDAA8046-01|1": {
       "section": "В транзите",
-      "planned": "31.10.2026",
-      "comment_kind": "point",
-      "point_date_changes": 1,
-      "last_planned_change": "2026-10-28",
-      "dates_locked": true
-    },
-    "24092613345|398908-5|1": {
-      "section": "В транзите",
-      "planned": "07.11.2026",
-      "comment_kind": "enroute",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "planned": "06.11.2026",
+      "comment_kind": "delay",
+      "point_date_changes": 2,
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "2062611445|002A0096-1|1": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "10092610465|301-2640|1": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "5102611505|46-3145-1|1": {
       "section": "В транзите",
-      "planned": "04.11.2026",
+      "planned": "14.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-13",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
-    },
-    "22072613105|3291214-2|1": {
-      "section": "В транзите",
-      "planned": "07.11.2026",
-      "comment_kind": "enroute",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
-      "dates_locked": true
     },
     "27072611475|2313M-348-4|1": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "5102612415|40574-4|1": {
       "section": "В транзите",
       "planned": "04.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "",
       "dates_locked": false
     },
     "2309268425|3-906S383-70|200": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "8102612465|KT-1257|144": {
       "section": "В транзите",
       "planned": "07.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -309,7 +365,7 @@
     "8102612465|KT9109M73P04|144": {
       "section": "В транзите",
       "planned": "07.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -317,7 +373,7 @@
     "8102612465|KT9186M37P08|56": {
       "section": "В транзите",
       "planned": "07.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -325,7 +381,7 @@
     "8102612465|KT1713M41P09|80": {
       "section": "В транзите",
       "planned": "07.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -333,7 +389,7 @@
     "8102612465|KT9318M85P04|60": {
       "section": "В транзите",
       "planned": "07.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -341,7 +397,7 @@
     "7102610555|JA9211M39G02|76": {
       "section": "В транзите",
       "planned": "06.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
@@ -349,25 +405,25 @@
     "7102610555|JA1292M81P01|1": {
       "section": "В транзите",
       "planned": "06.11.2026",
-      "comment_kind": "enroute",
+      "comment_kind": "point",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-28",
       "dates_locked": false
     },
     "21012612372|5100S151|3": {
       "section": "В транзите",
-      "planned": "31.10.2026",
+      "planned": "06.11.2026",
       "comment_kind": "point",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "point_date_changes": 1,
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "29092616005|BUL216|20": {
       "section": "В транзите",
-      "planned": "08.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "12102617405|335-266-400-0|1": {
@@ -378,76 +434,60 @@
       "last_planned_change": "2026-10-28",
       "dates_locked": false
     },
-    "15102615245|A8171-1|4": {
-      "section": "В транзите",
-      "planned": "09.11.2026",
-      "comment_kind": "whs",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
-      "dates_locked": false
-    },
     "27082616305|82425-00-0060|1": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": true
     },
     "16092613402|BACR13CF2AB|2": {
       "section": "В транзите",
-      "planned": "07.11.2026",
+      "planned": "13.11.2026",
       "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "6102613485|BACC63BN14-4S|1": {
       "section": "В транзите",
-      "planned": "05.11.2026",
+      "planned": "15.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "6102615305|NAS1102-3-12|250": {
       "section": "В транзите",
-      "planned": "05.11.2026",
+      "planned": "15.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "6102615305|BACB30NT3K6|50": {
       "section": "В транзите",
-      "planned": "05.11.2026",
+      "planned": "15.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "9102611215|WL6839|300": {
       "section": "В транзите",
-      "planned": "08.11.2026",
+      "planned": "18.11.2026",
       "comment_kind": "whs",
       "point_date_changes": 0,
-      "last_planned_change": "",
-      "dates_locked": false
-    },
-    "21102614425|55-0165-3|1": {
-      "section": "В транзите",
-      "planned": "20.11.2026",
-      "comment_kind": "whs",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "1102611065|314U2200-31|1": {
       "section": "В транзите",
-      "planned": "31.10.2026",
-      "comment_kind": "point",
+      "planned": "13.11.2026",
+      "comment_kind": "enroute",
       "point_date_changes": 0,
-      "last_planned_change": "2026-10-28",
+      "last_planned_change": "2026-11-03",
       "dates_locked": false
     },
     "26082610155|MS27502B19C|2": {
@@ -474,12 +514,12 @@
       "last_planned_change": "2026-10-13",
       "dates_locked": true
     },
-    "16092613402|BACR15FT6AD12C|250": {
+    "16092613402|BACR15FT6AD12C|249": {
       "section": "Отгружен",
       "planned": "29.10.2026",
       "comment_kind": "manual",
-      "point_date_changes": 2,
-      "last_planned_change": "2026-10-19",
+      "point_date_changes": 0,
+      "last_planned_change": "",
       "dates_locked": true
     },
     "17092612085|ST3086-013WE|30": {
@@ -514,14 +554,6 @@
       "last_planned_change": "2026-10-19",
       "dates_locked": true
     },
-    "25092613455|121282-25|1": {
-      "section": "Отгружен",
-      "planned": "22.10.2026",
-      "comment_kind": "manual",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-13",
-      "dates_locked": true
-    },
     "29092616005|154MKP275KE|20": {
       "section": "Отгружен",
       "planned": "04.11.2026",
@@ -544,14 +576,6 @@
       "comment_kind": "manual",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-13",
-      "dates_locked": true
-    },
-    "11092612015|0851CM-2|1": {
-      "section": "Отгружен",
-      "planned": "23.10.2026",
-      "comment_kind": "manual",
-      "point_date_changes": 0,
-      "last_planned_change": "2026-10-19",
       "dates_locked": true
     },
     "30092609185|S152-0020-00|1": {
@@ -592,6 +616,22 @@
       "comment_kind": "manual",
       "point_date_changes": 0,
       "last_planned_change": "2026-10-19",
+      "dates_locked": true
+    },
+    "24092613345|398908-5|1": {
+      "section": "Отгружен",
+      "planned": "07.11.2026",
+      "comment_kind": "manual",
+      "point_date_changes": 0,
+      "last_planned_change": "2026-10-28",
+      "dates_locked": true
+    },
+    "22072613105|3291214-2|1": {
+      "section": "Отгружен",
+      "planned": "07.11.2026",
+      "comment_kind": "manual",
+      "point_date_changes": 0,
+      "last_planned_change": "2026-10-28",
       "dates_locked": true
     },
     "9092611202|123423-3-1|34": {
@@ -3501,6 +3541,22 @@
     "1109269415|1002992-309|2": {
       "section": "Завершен",
       "planned": "29.10.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": true
+    },
+    "25092613455|121282-25|1": {
+      "section": "Завершен",
+      "planned": "22.10.2026",
+      "comment_kind": "",
+      "point_date_changes": 0,
+      "last_planned_change": "",
+      "dates_locked": true
+    },
+    "11092612015|0851CM-2|1": {
+      "section": "Завершен",
+      "planned": "23.10.2026",
       "comment_kind": "",
       "point_date_changes": 0,
       "last_planned_change": "",
