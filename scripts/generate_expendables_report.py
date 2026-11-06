@@ -17,10 +17,10 @@ def main() -> None:
     parser.add_argument(
         "--taz",
         type=Path,
-        default=Path("/tmp/taz_history/ТАЗ 30.10.2026.xlsx"),
+        default=Path("/tmp/taz_history/ТАЗ 06.11.2026.xlsx"),
     )
     parser.add_argument("--out-dir", type=Path, default=Path("output"))
-    parser.add_argument("--stem", default="expendables_suppliers_clients_3010")
+    parser.add_argument("--stem", default="expendables_suppliers_clients_0611")
     parser.add_argument(
         "--month-end",
         action="store_true",

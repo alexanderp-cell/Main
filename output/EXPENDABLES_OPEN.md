@@ -1,14 +1,14 @@
 # FASTAIR — EXPENDABLE · поставщики и клиенты
 
-**Срез:** ТАЗ 30.10.2026 · as_of 31.10.2026 (конец октября)  
+**Срез:** ТАЗ 06.11.2026  
 Только EXPENDABLE (вкл. consumable)
 
-**Открыть HTML:** https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/category-reports-3110-3296/output/expendables_suppliers_clients_3010.html
+**Открыть HTML:** https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/category-reports-0611-3296/output/expendables_suppliers_clients_0611.html
 
 ### Периоды
-1. Неделя 25–31.10  
+1. Неделя 31.10–06.11  
 2. **Октябрь 2026** (полный месяц)  
 3. **Прошедшие 3 месяца (август-сентябрь-октябрь)**  
-4. YTD → 31.10  
+4. YTD → 06.11  
 
-Блок WARRANTY показывается только если в периоде есть кейсы.
+Блок WARRANTY — только если в периоде есть кейсы.
