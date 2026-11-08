@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Utair · ЮЛ М · объём 2025 и 2026</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1c2430; margin: 32px auto; max-width: 1100px; line-height: 1.45; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  h2 { font-size: 20px; margin-top: 32px; }
+  p, li { font-size: 15px; }
+  .muted { color: #5c6b7a; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 8px; font-size: 14px; }
+  th, td { border-bottom: 1px solid #d5dde6; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #1f3864; color: white; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.total { font-weight: 700; }
+  tr:nth-child(even) td { background: #f6f8fb; }
+  .note { background: #f4f7fb; border: 1px solid #d5dde6; padding: 12px 14px; }
+</style>
+</head>
+<body>
+<h1>Utair · ЮЛ М · объём работ</h1>
+<p class="muted">2025 год целиком и 2026 год по срез ТАЗ 06.11.2026. Суммы в USD, столбец «Продажная, итого» позднего файла.</p>
+
+<div class="note">
+  <strong>Как попала строка.</strong> Invoicer = М. Клиент только Utair. Тип поставки только «Продажа от поставщика» или «Продажа со склада». Статусы cancel, refund и warranty не входят. Год строки — «ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА».
+  Валовая маржа здесь = продажа − закупка, без транспорта и transaction fee.
+</div>
+
+<h2>Итог</h2>
+<table>
+  <thead>
+    <tr><th></th><th class="num">2025</th><th class="num">2026, по 6 ноября</th><th class="num">Вместе</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Позиции</td><td class='num'>368</td><td class='num'>348</td><td class='num total'>716</td></tr>
+    <tr><td>Счета</td><td class='num'>255</td><td class='num'>274</td><td class='num total'>528</td></tr>
+    <tr><td>Продажа, USD</td><td class='num'>5 190 112,16</td><td class='num'>8 179 550,01</td><td class='num total'>13 369 662,17</td></tr>
+    <tr><td>Закупка, USD</td><td class='num'>4 207 406,21</td><td class='num'>5 836 060,18</td><td class='num total'>10 043 466,39</td></tr>
+    <tr><td>Валовая маржа, USD</td><td class='num'>982 705,95</td><td class='num'>2 343 489,83</td><td class='num total'>3 326 195,78</td></tr>
+  </tbody>
+</table>
+<p class="muted">
+  2025: с 2025-02-17 по 2025-12-29.
+  Января 2025 в ТАЗ по Utair и ЮЛ М нет.
+  2026: с 2026-01-02 по 2026-11-06, это не полный год.
+   Номер счёта 291225090012 есть и в 2025, и в 2026: это разные строки с разными датами взятия в работу, каждая в своём году. В общем числе счетов такой номер посчитан один раз. В 2025 есть 1 строка без номера счёта (в ТАЗ стоит «-»): 2025-03-06 · 622-6263-003 · 2 500,00 USD · 2 PAID. Она входит в позиции и в продажу, в число счетов не входит.
+</p>
+
+<h2>По месяцу взятия в работу</h2>
+<p class="muted">Число счетов в месяце — сколько номеров имеют хотя бы одну строку в этом месяце. Сумма по месяцам больше годового числа счетов, если один счёт растянут на несколько месяцев.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Год</th><th>Месяц</th>
+      <th class="num">Позиции</th><th class="num">Счета</th>
+      <th class="num">Продажа, USD</th><th class="num">Закупка, USD</th><th class="num">Валовая маржа, USD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>2025</td><td>январь</td><td class='num'>0</td><td class='num'>0</td><td class='num'>0,00</td><td class='num'>0,00</td><td class='num'>0,00</td></tr><tr><td>2025</td><td>февраль</td><td class='num'>25</td><td class='num'>17</td><td class='num'>69 215,70</td><td class='num'>48 628,46</td><td class='num'>20 587,24</td></tr><tr><td>2025</td><td>март</td><td class='num'>44</td><td class='num'>32</td><td class='num'>267 485,20</td><td class='num'>197 150,00</td><td class='num'>70 335,20</td></tr><tr><td>2025</td><td>апрель</td><td class='num'>42</td><td class='num'>36</td><td class='num'>1 149 748,80</td><td class='num'>957 828,68</td><td class='num'>191 920,12</td></tr><tr><td>2025</td><td>май</td><td class='num'>27</td><td class='num'>24</td><td class='num'>57 723,80</td><td class='num'>37 795,72</td><td class='num'>19 928,08</td></tr><tr><td>2025</td><td>июнь</td><td class='num'>49</td><td class='num'>37</td><td class='num'>283 077,81</td><td class='num'>193 843,10</td><td class='num'>89 234,71</td></tr><tr><td>2025</td><td>июль</td><td class='num'>18</td><td class='num'>15</td><td class='num'>2 614 414,00</td><td class='num'>2 297 751,00</td><td class='num'>316 663,00</td></tr><tr><td>2025</td><td>август</td><td class='num'>35</td><td class='num'>13</td><td class='num'>45 777,65</td><td class='num'>25 297,10</td><td class='num'>20 480,55</td></tr><tr><td>2025</td><td>сентябрь</td><td class='num'>31</td><td class='num'>23</td><td class='num'>199 478,60</td><td class='num'>153 557,00</td><td class='num'>45 921,60</td></tr><tr><td>2025</td><td>октябрь</td><td class='num'>28</td><td class='num'>16</td><td class='num'>182 258,60</td><td class='num'>109 588,95</td><td class='num'>72 669,65</td></tr><tr><td>2025</td><td>ноябрь</td><td class='num'>23</td><td class='num'>18</td><td class='num'>54 822,00</td><td class='num'>33 621,50</td><td class='num'>21 200,50</td></tr><tr><td>2025</td><td>декабрь</td><td class='num'>46</td><td class='num'>25</td><td class='num'>266 110,00</td><td class='num'>152 344,70</td><td class='num'>113 765,30</td></tr><tr><td>2026</td><td>январь</td><td class='num'>37</td><td class='num'>23</td><td class='num'>229 904,00</td><td class='num'>150 072,90</td><td class='num'>79 831,10</td></tr><tr><td>2026</td><td>февраль</td><td class='num'>31</td><td class='num'>25</td><td class='num'>1 289 858,80</td><td class='num'>949 193,60</td><td class='num'>340 665,20</td></tr><tr><td>2026</td><td>март</td><td class='num'>36</td><td class='num'>28</td><td class='num'>489 745,00</td><td class='num'>285 403,98</td><td class='num'>204 341,02</td></tr><tr><td>2026</td><td>апрель</td><td class='num'>26</td><td class='num'>23</td><td class='num'>3 307 612,50</td><td class='num'>2 635 123,20</td><td class='num'>672 489,30</td></tr><tr><td>2026</td><td>май</td><td class='num'>43</td><td class='num'>34</td><td class='num'>295 974,85</td><td class='num'>179 188,61</td><td class='num'>116 786,24</td></tr><tr><td>2026</td><td>июнь</td><td class='num'>49</td><td class='num'>37</td><td class='num'>384 343,95</td><td class='num'>259 455,19</td><td class='num'>124 888,76</td></tr><tr><td>2026</td><td>июль</td><td class='num'>31</td><td class='num'>31</td><td class='num'>180 001,00</td><td class='num'>126 996,79</td><td class='num'>53 004,21</td></tr><tr><td>2026</td><td>август</td><td class='num'>17</td><td class='num'>16</td><td class='num'>112 165,00</td><td class='num'>93 058,43</td><td class='num'>19 106,57</td></tr><tr><td>2026</td><td>сентябрь</td><td class='num'>30</td><td class='num'>24</td><td class='num'>146 471,90</td><td class='num'>93 934,48</td><td class='num'>52 537,42</td></tr><tr><td>2026</td><td>октябрь</td><td class='num'>40</td><td class='num'>26</td><td class='num'>1 684 533,01</td><td class='num'>1 023 620,20</td><td class='num'>660 912,81</td></tr><tr><td>2026</td><td>ноябрь</td><td class='num'>8</td><td class='num'>8</td><td class='num'>58 940,00</td><td class='num'>40 012,80</td><td class='num'>18 927,20</td></tr>
+  </tbody>
+</table>
+
+<h2>Тип поставки</h2>
+<table>
+  <thead><tr><th>Год</th><th>Тип поставки</th><th class="num">Позиции</th><th class="num">Продажа, USD</th></tr></thead>
+  <tbody><tr><td>2025</td><td>Продажа от поставщика</td><td class='num'>359</td><td class='num'>5 164 312,16</td></tr>
+<tr><td>2025</td><td>Продажа со склада</td><td class='num'>9</td><td class='num'>25 800,00</td></tr>
+<tr><td>2026</td><td>Продажа от поставщика</td><td class='num'>334</td><td class='num'>8 156 880,01</td></tr>
+<tr><td>2026</td><td>Продажа со склада</td><td class='num'>14</td><td class='num'>22 670,00</td></tr></tbody>
+</table>
+
+<h2>Статус на срезе 06.11.2026</h2>
+<table>
+  <thead><tr><th>Год</th><th>Статус</th><th class="num">Позиции</th><th class="num">Продажа, USD</th></tr></thead>
+  <tbody><tr><td>2025</td><td>4 FINISHED</td><td class='num'>367</td><td class='num'>5 187 612,16</td></tr>
+<tr><td>2025</td><td>2 PAID</td><td class='num'>1</td><td class='num'>2 500,00</td></tr>
+<tr><td>2026</td><td>4 FINISHED</td><td class='num'>281</td><td class='num'>6 329 517,00</td></tr>
+<tr><td>2026</td><td>1 NOT PAID</td><td class='num'>29</td><td class='num'>1 526 728,00</td></tr>
+<tr><td>2026</td><td>2 PAID</td><td class='num'>29</td><td class='num'>230 915,01</td></tr>
+<tr><td>2026</td><td>3 SHIPPED</td><td class='num'>4</td><td class='num'>58 290,00</td></tr>
+<tr><td>2026</td><td>6 TROUBLE</td><td class='num'>4</td><td class='num'>17 600,00</td></tr>
+<tr><td>2026</td><td>13 BIS</td><td class='num'>1</td><td class='num'>16 500,00</td></tr></tbody>
+</table>
+
+<h2>Крупнейшие счета</h2>
+<p class="muted">Пять счетов с наибольшей продажей внутри года. Доля — от продажи этого года.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Год</th><th>Счёт</th><th class="num">Продажа, USD</th><th class="num">Доля</th>
+      <th>P/N</th><th>Описание</th><th>Поставщик</th><th>Статус</th>
+    </tr>
+  </thead>
+  <tbody><tr><td>2025</td><td>19062511405</td><td class='num'>2 480 000,00</td><td class='num'>47.8%</td><td>2100M96P05</td><td>BLADE</td><td>LUFTHANSA</td><td>4 FINISHED</td></tr><tr><td>2025</td><td>24032510445</td><td class='num'>791 000,00</td><td class='num'>15.2%</td><td>442653</td><td>Unit - Hydromechaical</td><td>IBERIA</td><td>4 FINISHED</td></tr><tr><td>2025</td><td>9092515002</td><td class='num'>146 000,00</td><td class='num'>2.8%</td><td>28B545-9</td><td>GENERATOR ASSY</td><td>IBERIA</td><td>4 FINISHED</td></tr><tr><td>2025</td><td>24042508502</td><td class='num'>128 200,00</td><td class='num'>2.5%</td><td>82165-22</td><td>MULTI CONTROL DISPLAY UNIT</td><td>IBERIA</td><td>4 FINISHED</td></tr><tr><td>2025</td><td>4032513002</td><td class='num'>111 550,00</td><td class='num'>2.1%</td><td>822-2532-100</td><td>RECEIVER - ILS/GPS MULTI-MODE</td><td>IBERIA</td><td>4 FINISHED</td></tr><tr><td>2026</td><td>30032612565</td><td class='num'>2 784 000,00</td><td class='num'>34.0%</td><td>2100M96P05</td><td>BLADE</td><td>LUFTHANSA</td><td>4 FINISHED</td></tr><tr><td>2026</td><td>23102611345</td><td class='num'>1 257 000,00</td><td class='num'>15.4%</td><td>D22698500-7</td><td>NLG LEG ASSEMBLY</td><td>IBERIA</td><td>1 NOT PAID</td></tr><tr><td>2026</td><td>10022616045</td><td class='num'>883 500,00</td><td class='num'>10.8%</td><td>2410M50P02</td><td>522 HPT FRONT AIR SEAL</td><td>LUFTHANSA</td><td>4 FINISHED</td></tr><tr><td>2026</td><td>17032614455</td><td class='num'>316 800,00</td><td class='num'>3.9%</td><td>2084M33P02</td><td>BLADE</td><td>JET TECHNIC</td><td>4 FINISHED</td></tr><tr><td>2026</td><td>16042615005</td><td class='num'>262 000,00</td><td class='num'>3.2%</td><td>761574B</td><td>GENERATOR ASSY - INTEGRATED DRIVE</td><td>LUFTHANSA</td><td>4 FINISHED</td></tr></tbody>
+</table>
+
+<h2>Почему 2025 и 2026 не сложились дважды</h2>
+<p>
+  Файл «TA3 2025» и файл «ТАЗ 06.11.2026» описывают одну и ту же книгу заказов на разные даты.
+  После фильтров в файле 2025 остаётся 285 строк 2025 года на 4 845 617,54 USD.
+  Общих номеров счетов с поздним файлом: 189.
+  Если прибавить эти строки к срезу 06.11.2026, продажа 2025 задвоится на 4 699 031,94 USD.
+</p>
+<p>
+  Каждая отфильтрованная строка файла 2025 нашлась в файле 2026 (по UNIQUE UNIT CODE, а если его нет — по номеру счёта и P/N).
+  Ненайденных строк: 0.
+  Из найденных 19 строк на 157 828,77 USD к 6 ноября 2026 уже не проходят фильтр: статус стал cancel, refund или warranty, либо сменились клиент и тип поставки.
+  Строк с датой 2026 в файле 2025 нет (0).
+  Поэтому объём выше взят только из ТАЗ 06.11.2026 и разрезан по дате взятия в работу.
+  Суммы в позднем срезе — актуальные: часть строк за год поменяла цену, часть разбита на несколько строк, часть закрыта.
+</p>
+
+<h2>Что рядом с Utair и ЮЛ М, но не вошло</h2>
+<p class="muted">Те же клиент и Invoicer, дата взятия в работу в 2025 или 2026, но статус cancel / refund / warranty либо тип поставки не из двух разрешённых.</p>
+<table>
+  <thead><tr><th>Год</th><th>Причина</th><th class="num">Позиции</th><th class="num">Продажа, USD</th></tr></thead>
+  <tbody><tr><td>2025</td><td>7 REFUND</td><td class='num'>27</td><td class='num'>191 249,00</td></tr><tr><td>2025</td><td>5 CANCELLED</td><td class='num'>27</td><td class='num'>189 635,30</td></tr><tr><td>2025</td><td>8 WARRANTY</td><td class='num'>4</td><td class='num'>46 982,00</td></tr><tr><td>2025</td><td>Продажа со склада СИРИУС</td><td class='num'>1</td><td class='num'>540,00</td></tr><tr><td>2026</td><td>8 WARRANTY</td><td class='num'>2</td><td class='num'>1 171 500,00</td></tr><tr><td>2026</td><td>5 CANCELLED</td><td class='num'>27</td><td class='num'>341 456,44</td></tr><tr><td>2026</td><td>7 REFUND</td><td class='num'>8</td><td class='num'>59 290,00</td></tr><tr><td>2026</td><td>Продажа со склада СИРИУС</td><td class='num'>1</td><td class='num'>2 960,00</td></tr></tbody>
+</table>
+</body>
+</html>
