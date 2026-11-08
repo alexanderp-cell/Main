@@ -25,6 +25,8 @@ import pandas as pd
 BAD_STATUS = ("CANCEL", "REFUND", "WARRANTY")
 KEEP_TYPES = {"продажа от поставщика", "продажа со склада"}
 ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
+# Счёт ещё не согласован с клиентом, в объём не входит.
+HOLD_INVOICES = {"23102611345"}
 MONTHS = {
     1: "январь",
     2: "февраль",
@@ -366,6 +368,7 @@ def render_html(result: pd.DataFrame, audit: dict, excluded: pd.DataFrame) -> st
 <div class="note">
   <strong>Как попала строка.</strong> Invoicer = М. Клиент только Utair. Тип поставки только «Продажа от поставщика» или «Продажа со склада». Статусы cancel, refund и warranty не входят. Год строки — «ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА».
   Валовая маржа здесь = продажа − закупка, без транспорта и transaction fee.
+  Счёт 23102611345 снят с отчёта: он ещё окончательно не согласован.
 </div>
 
 <h2>Итог</h2>
@@ -444,7 +447,7 @@ def render_html(result: pd.DataFrame, audit: dict, excluded: pd.DataFrame) -> st
 </p>
 
 <h2>Что рядом с Utair и ЮЛ М, но не вошло</h2>
-<p class="muted">Те же клиент и Invoicer, дата взятия в работу в 2025 или 2026, но статус cancel / refund / warranty либо тип поставки не из двух разрешённых.</p>
+<p class="muted">Те же клиент и Invoicer, дата взятия в работу в 2025 или 2026. Сюда же входит счёт 23102611345: он проходит фильтр, но ещё не согласован.</p>
 <table>
   <thead><tr><th>Год</th><th>Причина</th><th class="num">Позиции</th><th class="num">Продажа, USD</th></tr></thead>
   <tbody>{"".join(excluded_rows)}</tbody>
@@ -496,6 +499,7 @@ def write_xlsx(path: Path, result: pd.DataFrame, audit: dict, excluded: pd.DataF
             ["Клиент", "Utair", "", ""],
             ["Тип поставки", "Продажа от поставщика; Продажа со склада", "", ""],
             ["Исключённые статусы", "cancel, refund, warranty", "", ""],
+            ["Снят вручную, ещё не согласован", "23102611345", "", ""],
             ["Источник сумм", "ТАЗ 06.11.2026, без повторного сложения файла 2025", "", ""],
             ["Строк 2025 в файле 2025 после фильтра", audit["early_lines"], "", ""],
             ["Общих счетов, которые нельзя сложить дважды", audit["shared_invoices"], "", ""],
@@ -577,8 +581,11 @@ def main() -> None:
     if audit["later_2026_in_early_file"]:
         raise SystemExit("В файле 2025 есть строки 2026 года: их нужно разбирать отдельно, чтобы не задвоить")
 
-    result = later[later["kept"] & later["year"].isin([2025, 2026])].copy()
-    excluded = exclusion_frame(later)
+    pool = later[later["kept"] & later["year"].isin([2025, 2026])].copy()
+    held = pool[pool["invoice"].isin(HOLD_INVOICES)].copy()
+    held["reason"] = "счёт ещё не согласован"
+    result = pool[~pool["invoice"].isin(HOLD_INVOICES)].copy()
+    excluded = pd.concat([exclusion_frame(later), held], ignore_index=True)
     args.html.parent.mkdir(parents=True, exist_ok=True)
     args.html.write_text(render_html(result, audit, excluded), encoding="utf-8")
     write_xlsx(args.xlsx, result, audit, excluded)
