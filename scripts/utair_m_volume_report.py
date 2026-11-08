@@ -27,6 +27,8 @@ KEEP_TYPES = {"продажа от поставщика", "продажа со �
 ORDER_DATE = "ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА"
 # Счёт ещё не согласован с клиентом, в объём не входит.
 HOLD_INVOICES = {"23102611345"}
+# Заказ клиента в комментарии. Статус в ТАЗ — warranty, в 2026 объём он входит отдельно.
+INCLUDE_CLIENT_ORDERS = {"P19807126"}
 MONTHS = {
     1: "январь",
     2: "февраль",
@@ -92,6 +94,12 @@ def prepare(frame: pd.DataFrame, source: str) -> pd.DataFrame:
         sale_col = "Продажная, итого"
     else:
         sale_col = "Продажная, итого (без НДС)"
+    if "Комментарии" in frame.columns:
+        comment_col = "Комментарии"
+    elif "Комментарий" in frame.columns:
+        comment_col = "Комментарий"
+    else:
+        comment_col = None
     out = pd.DataFrame(
         {
             "source": source,
@@ -99,6 +107,7 @@ def prepare(frame: pd.DataFrame, source: str) -> pd.DataFrame:
             "invoicer": frame["Invoicer"].map(norm_spaces),
             "client": frame[client_col].map(norm_spaces),
             "status": frame["Status"].map(lambda v: norm_spaces(v).upper()),
+            "comment": frame[comment_col].map(norm_spaces) if comment_col else "",
             "delivery_type": frame["Тип поставки"].map(norm_spaces),
             "pn": frame[pn_col].map(lambda v: norm_spaces(v).upper()),
             "description": frame["DESCRIPTION"].map(norm_spaces),
@@ -113,18 +122,31 @@ def prepare(frame: pd.DataFrame, source: str) -> pd.DataFrame:
     )
     out["delivery_key"] = out["delivery_type"].map(norm_type)
     out["bad_status"] = out["status"].map(lambda s: any(token in s for token in BAD_STATUS))
-    out["kept"] = (
+    base_ok = (
         out["invoicer"].eq("М")
         & out["client"].str.casefold().eq("utair")
-        & ~out["bad_status"]
         & out["delivery_key"].isin(KEEP_TYPES)
         & out["order_date"].notna()
     )
+    forced = out["comment"].map(comment_has_order) & base_ok
+    out["kept"] = (base_ok & ~out["bad_status"]) | forced
+    out["client_order"] = out["comment"].map(client_order_label)
     out["year"] = out["order_date"].dt.year
     out["month"] = out["order_date"].dt.month
     out["margin"] = out["sale"] - out["purchase"]
     out["real_invoice"] = ~out["invoice"].isin({"", "-", "—"})
     return out
+
+
+def comment_has_order(value: str) -> bool:
+    tokens = set(re.findall(r"[A-Za-z0-9]+", norm_spaces(value).upper()))
+    return bool(tokens & INCLUDE_CLIENT_ORDERS)
+
+
+def client_order_label(value: str) -> str:
+    tokens = re.findall(r"[A-Za-z0-9]+", norm_spaces(value).upper())
+    found = [token for token in tokens if token in INCLUDE_CLIENT_ORDERS]
+    return found[0] if found else ""
 
 
 def usable_uuc(value: str) -> str:
@@ -369,6 +391,7 @@ def render_html(result: pd.DataFrame, audit: dict, excluded: pd.DataFrame) -> st
   <strong>Как попала строка.</strong> Invoicer = М. Клиент только Utair. Тип поставки только «Продажа от поставщика» или «Продажа со склада». Статусы cancel, refund и warranty не входят. Год строки — «ЗАКАЗ ВЗЯТ В РАБОТУ (ДАТА) ОТ КЛИЕНТА».
   Валовая маржа здесь = продажа − закупка, без транспорта и transaction fee.
   Счёт 23102611345 снят с отчёта: он ещё окончательно не согласован.
+  Заказ клиента P19807126 добавлен в 2026, хотя в ТАЗ у строки статус warranty. Это счёт 14052610285, HMU 442653, продажа 1 145 000 USD, дата взятия в работу 14 мая 2026.
 </div>
 
 <h2>Итог</h2>
@@ -500,6 +523,7 @@ def write_xlsx(path: Path, result: pd.DataFrame, audit: dict, excluded: pd.DataF
             ["Тип поставки", "Продажа от поставщика; Продажа со склада", "", ""],
             ["Исключённые статусы", "cancel, refund, warranty", "", ""],
             ["Снят вручную, ещё не согласован", "23102611345", "", ""],
+            ["Добавлен вручную, заказ клиента", "P19807126 (счёт 14052610285, статус warranty)", "", ""],
             ["Источник сумм", "ТАЗ 06.11.2026, без повторного сложения файла 2025", "", ""],
             ["Строк 2025 в файле 2025 после фильтра", audit["early_lines"], "", ""],
             ["Общих счетов, которые нельзя сложить дважды", audit["shared_invoices"], "", ""],
@@ -526,6 +550,7 @@ def write_xlsx(path: Path, result: pd.DataFrame, audit: dict, excluded: pd.DataF
             "purchase",
             "margin",
             "uuc",
+            "client_order",
         ]
     ]
     detail.columns = [
@@ -543,6 +568,7 @@ def write_xlsx(path: Path, result: pd.DataFrame, audit: dict, excluded: pd.DataF
         "Закупка, USD",
         "Валовая маржа, USD",
         "UNIQUE UNIT CODE",
+        "Заказ клиента",
     ]
     excluded_out = excluded.sort_values(["year", "reason", "invoice"]).copy()
     excluded_out["order_date"] = excluded_out["order_date"].dt.date
