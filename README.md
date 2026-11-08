@@ -8,7 +8,35 @@
 pip install -r requirements.txt
 ```
 
-## Запуск
+## Еженедельная рутина (Utair + Белавиа)
+
+Один запуск собирает оба клиентских статуса и отчёт «без движения / ожидают оплаты»:
+
+```bash
+python3 generate_weekly.py \
+  --taz "/path/to/ТАЗ 06.11.2026.xlsx" \
+  --date 06.11.2026 \
+  --previous-date 30.10.2026 \
+  --output-dir output
+```
+
+В `output/` появятся:
+- `Utair статус ДД.ММ.ГГГГ.xlsx`
+- `Белавиа статус ДД.ММ.ГГГГ.xlsx` (с Invoicer ФЭ)
+- `stale_orders_ДД.ММ.ГГГГ.xlsx` — вкладки **ожидают оплаты** (только FINISHED) и **без движения** (углублённая проверка полей исполнения)
+
+Предыдущий статусный Excel для «Сводки за неделю» подхватывается из `output/` автоматически.
+
+Отдельно только «без движения»:
+
+```bash
+python3 generate_stale_orders_report.py \
+  --taz "/path/to/ТАЗ 06.11.2026.xlsx" \
+  --output-dir output \
+  --date 06.11.2026
+```
+
+## Запуск одного клиента
 
 ```bash
 python3 generate_report.py \

@@ -140,15 +140,8 @@ HEADERS_STALE = [
     "Дата взятия в работу",
     "Без движения с",
     "Дней без движения",
-    "Срез",
     "Поставщик",
-    "Оплата поставщику",
-    "Дата начала движения",
-    "AWB",
-    "Ожидаемая дата прихода",
-    "Факт. дата поставки",
     "Вывод",
-    "Комментарий",
 ]
 
 
@@ -361,49 +354,136 @@ def earliest_same_movement(
     return earliest, source, changed_before
 
 
-def _fmt_supplier_pay(row: pd.Series) -> str:
-    d = norm_date(row.get(COL_SUP_PAY_DATE))
-    amt = norm_num(row.get(COL_SUP_PAY_AMT))
-    if not d and not amt:
+def _format_awb(value: Any) -> str:
+    """AWB is usually text; Excel sometimes stores a date there."""
+    if _is_empty(value):
         return ""
-    parts: list[str] = []
-    if d:
-        parts.append(date.fromisoformat(d).strftime("%d.%m.%Y"))
-    if amt:
-        parts.append(f"${amt}")
-    return " / ".join(parts)
+    if isinstance(value, datetime):
+        return value.strftime("%d.%m.%Y")
+    if isinstance(value, date):
+        return value.strftime("%d.%m.%Y")
+    text = norm_text(value)
+    if re.match(r"^\d{4}-\d{2}-\d{2}", text):
+        try:
+            return date.fromisoformat(text[:10]).strftime("%d.%m.%Y")
+        except ValueError:
+            return text
+    return text
 
 
-def interpret_row(row: pd.Series) -> str:
-    """Short human conclusion from current fulfilment fields."""
-    notes: list[str] = []
-    fact = parse_date(row.get(COL_DELIVERY_ACTUAL))
-    if fact is not None:
-        notes.append(f"факт. отгрузка {fact.strftime('%d.%m.%Y')}")
-    awb = norm_text(row.get(COL_AWB))
-    if awb:
-        notes.append(f"AWB {awb}")
-    move = norm_date(row.get(COL_MOVE_START))
-    if move:
-        notes.append(f"движение с {date.fromisoformat(move).strftime('%d.%m.%Y')}")
-    exp = parse_date(row.get(COL_EXPECTED_ARRIVAL))
-    if exp is not None:
-        notes.append(f"ETA {exp.strftime('%d.%m.%Y')}")
-    sup = norm_text(row.get(COL_SUPPLIER)) or norm_text(row.get(COL_ROOT_SUPPLIER))
-    if sup:
-        notes.append(f"поставщик: {sup[:40]}")
+def diagnose_pause(row: pd.Series, report_date: date, days_frozen: int) -> str:
+    """Human-readable reason why fulfilment looks stuck."""
+    status = norm_text(row.get(COL_STATUS)) or "?"
+    order_date = parse_date(row.get(COL_ORDER_DATE))
+    days_open = (report_date - order_date).days if order_date else None
+
+    supplier = norm_text(row.get(COL_SUPPLIER)) or norm_text(row.get(COL_ROOT_SUPPLIER))
     pay_date = norm_date(row.get(COL_SUP_PAY_DATE))
     pay_amt = norm_num(row.get(COL_SUP_PAY_AMT))
-    if pay_date or pay_amt:
-        bit = "оплата пост."
+    pay_bal = parse_numeric(row.get(COL_SUP_PAY_BAL))
+    has_pay = bool(pay_date or pay_amt)
+
+    move = norm_date(row.get(COL_MOVE_START))
+    awb = _format_awb(row.get(COL_AWB))
+    eta = parse_date(row.get(COL_EXPECTED_ARRIVAL))
+    fact = parse_date(row.get(COL_DELIVERY_ACTUAL))
+    comment = norm_text(row.get(COL_COMMENT))
+    awb_u = awb.upper()
+    age = days_open if days_open is not None else days_frozen
+    has_logistics = bool(move or awb or eta is not None)
+
+    def _pay_label() -> str:
+        bits: list[str] = []
         if pay_date:
-            bit += f" {date.fromisoformat(pay_date).strftime('%d.%m.%Y')}"
+            bits.append(date.fromisoformat(pay_date).strftime("%d.%m.%Y"))
         if pay_amt:
-            bit += f" ${pay_amt}"
-        notes.append(bit)
-    if not notes:
-        return "нет признаков исполнения (пусто: поставщик/оплата/логистика)"
-    return "; ".join(notes)
+            bits.append(f"${pay_amt}")
+        return ", ".join(bits) if bits else "да"
+
+    def _logistics_bits() -> str:
+        parts: list[str] = []
+        if move:
+            parts.append(f"движение с {date.fromisoformat(move).strftime('%d.%m.%Y')}")
+        if awb:
+            parts.append(f"AWB {awb}")
+        if eta is not None:
+            parts.append(f"ETA {eta.strftime('%d.%m.%Y')}")
+        return "; ".join(parts)
+
+    # 1) Fact delivery present → we already shipped the part
+    if fact is not None:
+        return (
+            f"Факт. дата поставки {fact.strftime('%d.%m.%Y')} уже стоит, "
+            f"но статус всё ещё «{status}» — отгрузили, а карточку не закрыли "
+            f"(не FINISHED / хвосты). Поля без обновлений {days_frozen} дн."
+        )
+
+    # 2) No supplier assigned
+    if not supplier:
+        age_bit = f" В работе уже {days_open} дн." if days_open is not None else ""
+        return (
+            f"Поставщик не выбран — закупка не стартовала, пауза на этапе назначения.{age_bit}"
+        )
+
+    unpaid_note = ""
+    if not has_pay and age >= 7:
+        unpaid_note = f" Оплаты поставщику нет уже при {age} дн. в работе."
+
+    # 3) Logistics signals — diagnose route/ETA even if supplier unpaid
+    if has_logistics:
+        if awb and any(
+            k in awb_u for k in ("HOLD", "UNCONFIRMED", "PENDING", "TBA", "WAIT", "UNSOLVED")
+        ):
+            pay_bit = f"Оплата поставщику есть ({_pay_label()}). " if has_pay else "Оплаты поставщику нет. "
+            return (
+                f"{pay_bit}Логистика зависла: AWB «{awb}». Без обновлений {days_frozen} дн."
+            )
+        if eta is not None and eta < report_date:
+            return (
+                f"ETA {eta.strftime('%d.%m.%Y')} уже прошла, факт. поставки нет"
+                f" ({_logistics_bits()}). Логистика просрочена / груз не доехал. "
+                f"Пауза {days_frozen} дн.{unpaid_note}"
+            )
+        pay_bit = (
+            f"Поставщику оплатили ({_pay_label()}), "
+            if has_pay
+            else "Оплаты поставщику в ТАЗ нет, "
+        )
+        return (
+            f"{pay_bit}груз в логистике ({_logistics_bits()}), "
+            f"но апдейтов нет {days_frozen} дн. — логистика без движения.{unpaid_note}"
+        )
+
+    # 4) Supplier known, but we are not paying them (and no logistics yet)
+    if not has_pay:
+        if age >= 14:
+            return (
+                f"Поставщик есть ({supplier[:40]}), оплаты поставщику нет, "
+                f"хотя заказ в работе {age} дн. — пауза из‑за неоплаты поставщику."
+            )
+        if age >= 7:
+            return (
+                f"Поставщик ({supplier[:40]}) назначен, оплаты поставщику ещё нет "
+                f"({age} дн. в работе) — ждём или держим оплату поставщику."
+            )
+        return (
+            f"Поставщик ({supplier[:40]}) есть, оплаты поставщику пока нет "
+            f"(ранняя стадия, {age} дн. в работе)."
+        )
+
+    # 5) Partial supplier payment left hanging
+    if pay_bal is not None and pay_bal > 1:
+        return (
+            f"Поставщику платили ({_pay_label()}), но остаток поставщику "
+            f"${pay_bal:,.0f} всё ещё висит — недоплата/хвост по поставщику, "
+            f"без движения {days_frozen} дн."
+        )
+
+    # 6) Paid supplier, logistics never started
+    return (
+        f"Поставщику оплатили ({_pay_label()}), но логистика пустая "
+        f"(нет даты начала движения, AWB и ETA) — пауза на отгрузке/логистике."
+    )
 
 
 def current_open_rows(taz: pd.DataFrame, client: str) -> pd.DataFrame:
@@ -487,16 +567,9 @@ def build_tables(
                     "Дата взятия в работу": parse_date(row.get(COL_ORDER_DATE)),
                     "Без движения с": since,
                     "Дней без движения": days,
-                    "Срез": source,
                     "Поставщик": norm_text(row.get(COL_SUPPLIER))
                     or norm_text(row.get(COL_ROOT_SUPPLIER)),
-                    "Оплата поставщику": _fmt_supplier_pay(row),
-                    "Дата начала движения": parse_date(row.get(COL_MOVE_START)),
-                    "AWB": norm_text(row.get(COL_AWB)),
-                    "Ожидаемая дата прихода": parse_date(row.get(COL_EXPECTED_ARRIVAL)),
-                    "Факт. дата поставки": parse_date(row.get(COL_DELIVERY_ACTUAL)),
-                    "Вывод": interpret_row(row),
-                    "Комментарий": row.get(COL_COMMENT, ""),
+                    "Вывод": diagnose_pause(row, report_date, days),
                     "_days": days,
                 }
             )
@@ -569,6 +642,10 @@ def _write_sheet(
                 cell.number_format = "DD.MM.YYYY"
             if name == days_col:
                 cell.alignment = Alignment(horizontal="right")
+            if name == "Вывод":
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
+        if "Вывод" in headers:
+            ws.row_dimensions[r_idx].height = 48
 
     # widths
     default_w = {
@@ -580,12 +657,16 @@ def _write_sheet(
         "QTY": 6,
         "Сумма, USD": 12,
         "Остаток к оплате, USD": 14,
+        "Дата взятия в работу": 14,
+        "Без движения с": 14,
+        "Дней без движения": 12,
+        "FINISHED с": 12,
+        "Дней в FINISHED": 12,
         "Комментарий": 36,
-        "Вывод": 42,
+        "Вывод": 62,
         "Срез": 32,
-        "Поставщик": 18,
-        "Оплата поставщику": 18,
-        "AWB": 14,
+        "Поставщик": 20,
+        "Факт. дата поставки": 14,
     }
     for idx, name in enumerate(headers, start=1):
         from openpyxl.utils import get_column_letter
@@ -696,6 +777,37 @@ def write_excel(
     wb.save(out_path)
 
 
+def generate_stale_report(
+    taz_path: Path,
+    output_dir: Path,
+    report_date: date,
+    stale_days: int = STALE_DAYS,
+    stem: str | None = None,
+) -> Path:
+    """Build stale/awaiting workbook into output_dir; return path written."""
+    taz = load_taz(taz_path, excluded_invoicers=set())  # include ФЭ for Belavia
+    history = collect_history(output_dir)
+    print(f"history snapshots: {len(history)}")
+    for d, c, df in history:
+        print(f"  {c} {d.isoformat()} n={len(df)}")
+
+    awaiting, stale = build_tables(taz, history, report_date, stale_days=stale_days)
+    out_stem = stem or f"stale_orders_{report_date.strftime('%d.%m.%Y')}"
+    out = output_dir / f"{out_stem}.xlsx"
+    write_excel(awaiting, stale, out, report_date, stale_days)
+
+    print(f"awaiting payment: {len(awaiting)}")
+    if not awaiting.empty:
+        print(awaiting.groupby("Клиент").size().to_string())
+    print(f"no movement: {len(stale)}")
+    if not stale.empty:
+        print(stale.groupby("Клиент").size().to_string())
+        print(stale.groupby("Status").size().to_string())
+        print("top days:", int(stale["Дней без движения"].max()))
+    print(f"wrote {out}")
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--taz", type=Path, required=True)
@@ -715,26 +827,13 @@ def main() -> None:
         d, mo, y = map(int, m.groups())
         report_date = date(y, mo, d)
 
-    taz = load_taz(args.taz, excluded_invoicers=set())  # include ФЭ for Belavia
-    history = collect_history(args.output_dir)
-    print(f"history snapshots: {len(history)}")
-    for d, c, df in history:
-        print(f"  {c} {d.isoformat()} n={len(df)}")
-
-    awaiting, stale = build_tables(taz, history, report_date, stale_days=args.stale_days)
-    stem = args.stem or f"stale_orders_{report_date.strftime('%d.%m.%Y')}"
-    out = args.output_dir / f"{stem}.xlsx"
-    write_excel(awaiting, stale, out, report_date, args.stale_days)
-
-    print(f"awaiting payment: {len(awaiting)}")
-    if not awaiting.empty:
-        print(awaiting.groupby("Клиент").size().to_string())
-    print(f"no movement: {len(stale)}")
-    if not stale.empty:
-        print(stale.groupby("Клиент").size().to_string())
-        print(stale.groupby("Status").size().to_string())
-        print("top days:", int(stale["Дней без движения"].max()))
-    print(f"wrote {out}")
+    generate_stale_report(
+        args.taz,
+        args.output_dir,
+        report_date,
+        stale_days=args.stale_days,
+        stem=args.stem,
+    )
 
 
 if __name__ == "__main__":
