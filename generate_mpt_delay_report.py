@@ -660,12 +660,9 @@ def render_table(rows: list[MptRow]) -> str:
             pn_cell += f'<div class="muted">ALT: {esc(row.alt_pn)}</div>'
 
         if row.list_hit:
-            status_up = stage_label(row.list_hit.stage).upper()
-            list_cell = (
-                f'<div><b>{esc(status_up)}</b></div>'
-                f'<div class="muted">{esc(row.list_hit.status_raw)}'
-                f'{(" · " + esc(row.list_hit.batch)) if row.list_hit.batch else ""}</div>'
-            )
+            status_up = (row.list_hit.status_raw or stage_label(row.list_hit.stage)).upper()
+            batch = f" · {esc(row.list_hit.batch)}" if row.list_hit.batch else ""
+            list_cell = f'<div><b>{esc(status_up)}</b>{batch}</div>'
         else:
             list_cell = '<span class="bad">НЕТ ЗАЯВКИ</span>'
 
