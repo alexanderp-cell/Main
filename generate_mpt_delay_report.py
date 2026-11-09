@@ -239,6 +239,31 @@ def ac_tokens(value: str) -> set[str]:
     ):
         extra.update({"E170", "E175", "170", "175", "EMBRAER", "ERJ170", "ERJ175"})
 
+    # Embraer 145/135 ↔ Legacy (Legacy 600/650 family)
+    if (
+        any(x in extra for x in ("E145", "E135", "ERJ145", "ERJ135", "LEGACY", "LEGACY600", "LEGACY650"))
+        or "E145" in joined
+        or "E135" in joined
+        or "ERJ145" in joined
+        or "ERJ135" in joined
+        or "LEGACY" in joined
+        or ("EMBRAER" in joined and ("145" in joined or "135" in joined))
+    ):
+        extra.update(
+            {
+                "E145",
+                "E135",
+                "ERJ145",
+                "ERJ135",
+                "145",
+                "135",
+                "EMBRAER",
+                "LEGACY",
+                "LEGACY600",
+                "LEGACY650",
+            }
+        )
+
     # Bombardier CL-600-2B19 ↔ CRJ200 / CH850 / Challenger 850
     if (
         "CL6002B19" in joined
