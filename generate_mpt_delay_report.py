@@ -159,6 +159,23 @@ def utair_no_mpt_needed(comment: Any) -> bool:
     return "DAT MOW" in s or "DAT TEHRAN" in s
 
 
+DAP_MOW_CLIENTS = {"ак сибирь", "сибирь", "s7 engineering"}
+
+
+def comment_has_dap_mow(comment: Any) -> bool:
+    """DAP MOW / DAP Москва — МПТ не требуется."""
+    s = re.sub(r"\s+", " ", norm_text(comment).upper().replace("Ё", "Е"))
+    return "DAP MOW" in s or "DAP МОСКВА" in s
+
+
+def no_mpt_needed(client: str, comment: Any) -> bool:
+    if client == "Utair" and utair_no_mpt_needed(comment):
+        return True
+    if client.casefold() in DAP_MOW_CLIENTS and comment_has_dap_mow(comment):
+        return True
+    return False
+
+
 def ac_tokens(value: str) -> set[str]:
     """Aircraft-type tokens with common TAZ ↔ Перечень aliases."""
     s = norm_text(value).upper()
@@ -568,7 +585,7 @@ def build_rows(
             continue
 
         client = norm_client(r.get(COL_CUSTOMER))
-        if client == "Utair" and utair_no_mpt_needed(r.get(COL_COMMENT)):
+        if no_mpt_needed(client, r.get(COL_COMMENT)):
             continue
 
         pn = norm_pn(r.get(COL_PN))
@@ -858,7 +875,7 @@ tr.wh {{ background:#f0fafc; }}
   <div class="sub">
     Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
     одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
-    Utair DAT MOW / DAT TEHRAN исключены (МПТ не нужен)
+    Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
   </div>
 
   <section class="card">
