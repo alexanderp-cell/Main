@@ -554,7 +554,7 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
         tabs.append(f'<a href="#{anchor}">{esc(client)} ({len(items_sorted)})</a>')
         client_blocks.append(
             f"""
-<details class="group" open id="{anchor}">
+<details class="group" id="{anchor}">
   <summary>
     <span class="group-name">{esc(client)}{wh}</span>
     <span class="pill">{len(items_sorted)} поз.</span>
