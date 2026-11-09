@@ -660,13 +660,14 @@ def render_table(rows: list[MptRow]) -> str:
             pn_cell += f'<div class="muted">ALT: {esc(row.alt_pn)}</div>'
 
         if row.list_hit:
+            status_up = stage_label(row.list_hit.stage).upper()
             list_cell = (
-                f'<div><b>{esc(stage_label(row.list_hit.stage))}</b></div>'
+                f'<div><b>{esc(status_up)}</b></div>'
                 f'<div class="muted">{esc(row.list_hit.status_raw)}'
                 f'{(" · " + esc(row.list_hit.batch)) if row.list_hit.batch else ""}</div>'
             )
         else:
-            list_cell = '<span class="bad">нет заявки</span>'
+            list_cell = '<span class="bad">НЕТ ЗАЯВКИ</span>'
 
         if row.perm_hit:
             ac_type_perm = row.perm_hit.ac_type or "—"
