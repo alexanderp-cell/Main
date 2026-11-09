@@ -6,14 +6,16 @@
   · Брокерские → только вкладка «Списки на МПТ»
   · Перечни зап. частей 0% НДС → только листы *2025-2026 (ФЭИ/ЛР/МЕТЕОР)
 
-Тревоги:
-  1 — нет заявки в Списках (ожидалась день-в-день с датой заказа Q)
-  2 — статус вырезки всё ещё «запрошена», возраст >7 дн.
-  3 — нет строки МПТ в Перечне (по Invoicer + P/N[/ALT]), возраст >14 дн.
-  4 — МПТ есть в Перечне, но в ТАЗ ещё не «Есть МПТ» (ТАЗ не обновлён)
+Одна тревога на заказ (приоритет):
+  ipc — Нет IPC / IPC не будет получен
+  4 — МПТ есть в Перечне, но в ТАЗ ещё не «Есть МПТ»
+  1 — нет заявки в Списках
+  2 — вырезка всё ещё «запрошена», возраст >7 дн.
+  3 — нет МПТ в Перечне, возраст >14 дн.
 
-Исключение: есть МПТ в Перечне И в ТАЗ «Есть МПТ» → не кладём.
-IPC-кейсы — отдельная секция. «Закупка на склад» — в общем отчёте с пометкой.
+Разделы отчёта — по клиентам; внутри клиента заказы от ранних к свежим.
+Исключение: МПТ в Перечне И в ТАЗ «Есть МПТ» → не кладём.
+«Закупка на склад» — в общем отчёте с пометкой.
 """
 
 from __future__ import annotations
@@ -22,7 +24,7 @@ import argparse
 import html
 import re
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -225,11 +227,40 @@ class MptRow:
     warehouse: bool
     list_hit: ListHit | None
     perm_hit: PermHit | None
-    alerts: list[str] = field(default_factory=list)
-    ipc: bool = False
+    alert: str = ""  # ipc|1|2|3|4
 
     def row_key(self) -> str:
         return f"{self.client}|{self.invoice}|{self.pn}"
+
+
+ALERT_LABELS = {
+    "1": "нет заявки",
+    "2": "нет вырезки >7д",
+    "3": "нет МПТ >14д",
+    "4": "ТАЗ не обновлён",
+    "ipc": "IPC",
+}
+
+
+def pick_alert(
+    *,
+    ipc: bool,
+    has_perm: bool,
+    list_hit: ListHit | None,
+    age: int,
+) -> str | None:
+    """Exactly one alert per order, pipeline priority."""
+    if ipc:
+        return "ipc"
+    if has_perm:
+        return "4"
+    if list_hit is None:
+        return "1"
+    if list_hit.stage == STAGE_REQUESTED and age > 7:
+        return "2"
+    if age > 14:
+        return "3"
+    return None
 
 
 def load_lists(path: Path) -> pd.DataFrame:
@@ -386,24 +417,8 @@ def build_rows(
             continue  # OK — skip
 
         ipc = action.casefold() in {"нет ipc от клиента", "ipc не будет получен"}
-
-        alerts: list[str] = []
-        if has_perm:
-            # МПТ уже в Перечне, а в ТАЗ ещё не «Есть МПТ» → только «ТАЗ не обновлён»
-            alerts.append("4")
-        else:
-            # 1 — no application in lists
-            if list_hit is None:
-                alerts.append("1")
-            # 2 — still requested extract >7d
-            if list_hit is not None and list_hit.stage == STAGE_REQUESTED and age > 7:
-                alerts.append("2")
-            # 3 — no MPT in permissions >14d
-            if age > 14:
-                alerts.append("3")
-
-        if not alerts and not ipc:
-            # no alert and not IPC → skip (e.g. age 8-14 with list present and no MPT yet — OK window)
+        alert = pick_alert(ipc=ipc, has_perm=has_perm, list_hit=list_hit, age=age)
+        if alert is None:
             continue
 
         rows.append(
@@ -423,12 +438,23 @@ def build_rows(
                 warehouse=is_warehouse(client),
                 list_hit=list_hit,
                 perm_hit=perm_hit,
-                alerts=alerts,
-                ipc=ipc,
+                alert=alert,
             )
         )
 
-    rows.sort(key=lambda x: (-x.age_days, x.client, x.invoice, x.pn))
+    from collections import Counter
+
+    # global order used only as fallback; HTML re-groups by client anyway
+    client_n = Counter(r.client for r in rows)
+    rows.sort(
+        key=lambda x: (
+            -client_n[x.client],
+            x.client.casefold(),
+            x.order_date or date.max,
+            x.invoice,
+            x.pn,
+        )
+    )
     return rows
 
 
@@ -438,8 +464,8 @@ def render_table(rows: list[MptRow]) -> str:
     head = """
 <table>
 <thead><tr>
-<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
-<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+<th>Тревога</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th>
+<th>Заказ</th><th>Дней</th><th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
 </tr></thead><tbody>
 """
     body: list[str] = []
@@ -478,8 +504,13 @@ def render_table(rows: list[MptRow]) -> str:
             sheet = INVOICER_TO_SHEET.get(row.invoicer, "—")
             perm_cell = f'<span class="bad">нет в {esc(sheet)}</span>'
 
+        alert_cell = (
+            f'<span class="tag a{esc(row.alert)}">{esc(ALERT_LABELS.get(row.alert, row.alert))}</span>'
+        )
+
         body.append(
             f"<tr{tr_cls}>"
+            f"<td>{alert_cell}</td>"
             f"<td>{esc(row.invoice)}</td>"
             f"<td>{pn_cell}</td>"
             f"<td>{esc(row.description)}</td>"
@@ -494,58 +525,47 @@ def render_table(rows: list[MptRow]) -> str:
     return head + "\n".join(body) + "\n</tbody></table>"
 
 
-def render_client_groups(rows: list[MptRow]) -> str:
-    if not rows:
-        return '<p class="muted">Нет позиций.</p>'
+def render_html(rows: list[MptRow], report_date: date) -> str:
+    from collections import Counter
+
+    counts = Counter(r.alert for r in rows)
+    wh_n = sum(1 for r in rows if r.warehouse)
     by_client: dict[str, list[MptRow]] = {}
     for row in rows:
         by_client.setdefault(row.client, []).append(row)
-    # clients with more rows first, then name
-    ordered = sorted(by_client.items(), key=lambda kv: (-len(kv[1]), kv[0].casefold()))
-    chunks: list[str] = []
-    for client, items in ordered:
-        items_sorted = sorted(items, key=lambda r: (-r.age_days, r.invoice, r.pn))
+    ordered_clients = sorted(
+        by_client.items(), key=lambda kv: (-len(kv[1]), kv[0].casefold())
+    )
+
+    client_blocks: list[str] = []
+    tabs: list[str] = []
+    for idx, (client, items) in enumerate(ordered_clients):
+        # earliest → newest
+        items_sorted = sorted(
+            items,
+            key=lambda r: (r.order_date or date.max, r.invoice, r.pn),
+        )
+        anchor = f"c{idx}"
         wh = ' <span class="tag wh">на склад</span>' if any(i.warehouse for i in items_sorted) else ""
-        chunks.append(
+        alert_pills = "".join(
+            f'<span class="tag a{a}">{esc(ALERT_LABELS[a])} · {n}</span>'
+            for a, n in sorted(Counter(r.alert for r in items_sorted).items(), key=lambda x: x[0])
+        )
+        tabs.append(f'<a href="#{anchor}">{esc(client)} ({len(items_sorted)})</a>')
+        client_blocks.append(
             f"""
-<details class="client" open>
+<details class="group" open id="{anchor}">
   <summary>
-    <span class="client-name">{esc(client)}{wh}</span>
+    <span class="group-name">{esc(client)}{wh}</span>
     <span class="pill">{len(items_sorted)} поз.</span>
+    {alert_pills}
   </summary>
-  <div class="client-body">
+  <div class="group-body">
     {render_table(items_sorted)}
   </div>
 </details>
 """
         )
-    return "\n".join(chunks)
-
-
-def render_html(rows: list[MptRow], report_date: date) -> str:
-    a1 = [r for r in rows if "1" in r.alerts and not r.ipc]
-    a2 = [r for r in rows if "2" in r.alerts and not r.ipc]
-    a3 = [r for r in rows if "3" in r.alerts and not r.ipc]
-    a4 = [r for r in rows if "4" in r.alerts and not r.ipc]
-    ipc = [r for r in rows if r.ipc]
-    wh = [r for r in rows if r.warehouse]
-
-    def section(anchor: str, title: str, note: str, data: list[MptRow], open_: bool = True) -> str:
-        opened = " open" if open_ and data else ""
-        n_clients = len({r.client for r in data})
-        return f"""
-<details class="group"{opened} id="{anchor}">
-  <summary>
-    <span class="group-name">{esc(title)}</span>
-    <span class="pill">{len(data)} поз.</span>
-    <span class="pill">{n_clients} кл.</span>
-  </summary>
-  <div class="group-body">
-    <p class="muted">{esc(note)}</p>
-    {render_client_groups(data)}
-  </div>
-</details>
-"""
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -584,7 +604,7 @@ h2 {{ font-size:20px; margin:28px 0 12px; color:var(--navy); }}
   padding:18px 18px 8px;
 }}
 .kpi-grid {{
-  display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
+  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
 }}
 .kpi {{
   background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px;
@@ -612,17 +632,7 @@ details.group summary::-webkit-details-marker {{ display:none; }}
   font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
   border-radius:4px; padding:4px 10px; font-weight:700;
 }}
-.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); }}
-details.client {{
-  background:#f9fbfc; border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; overflow:hidden;
-}}
-details.client summary {{
-  cursor:pointer; list-style:none; padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-  background:#ffffff;
-}}
-details.client summary::-webkit-details-marker {{ display:none; }}
-.client-name {{ font-weight:700; font-size:14px; margin-right:auto; color:var(--navy); }}
-.client-body {{ padding:0 10px 12px; border-top:1px solid #e4ecef; overflow-x:auto; }}
+.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow-x:auto; }}
 table {{ width:100%; border-collapse:collapse; font-size:12.5px; }}
 th, td {{ border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }}
 th {{ font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }}
@@ -636,6 +646,11 @@ tr.wh {{ background:#f0fafc; }}
 .tag.wh {{ background:#d5fbff; border-color:#b6e8ef; }}
 .tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
 .tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
+.tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
+.tag.a2 {{ background:#fff3cd; border-color:#e6d89c; }}
+.tag.a3 {{ background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }}
+.tag.a4 {{ background:#e8f0fe; border-color:#b6c9f0; }}
+.tag.aipc {{ background:#efe8f8; border-color:#c9b6e0; }}
 .footer {{ margin-top:28px; color:#4c4c4c; font-size:12px; }}
 @media (max-width:900px) {{
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
@@ -651,46 +666,33 @@ tr.wh {{ background:#f0fafc; }}
   <h1>Задержки получения МПТ</h1>
   <div class="sub">
     Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-    Перечни только 2025–2026 · Брокерские только «Списки на МПТ»
+    одна тревога на заказ · разделы по клиентам · внутри — от ранних заказов к свежим
   </div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка тревог</h2>
+    <h2 style="margin-top:0">Сводка</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">{len(a1)}</div></div>
-      <div class="kpi"><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">{len(a2)}</div></div>
-      <div class="kpi"><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">{len(a3)}</div></div>
-      <div class="kpi"><div class="label">4 · МПТ есть, ТАЗ «получаем»</div><div class="value">{len(a4)}</div></div>
-      <div class="kpi"><div class="label">IPC отдельно</div><div class="value">{len(ipc)}</div>
-        <div class="muted">склад: {len(wh)}</div></div>
+      <div class="kpi"><div class="label">Всего</div><div class="value">{len(rows)}</div>
+        <div class="muted">{len(by_client)} клиентов · склад {wh_n}</div></div>
+      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">{counts.get('1', 0)}</div></div>
+      <div class="kpi"><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">{counts.get('2', 0)}</div></div>
+      <div class="kpi"><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">{counts.get('3', 0)}</div></div>
+      <div class="kpi"><div class="label">4 · ТАЗ не обновлён</div><div class="value">{counts.get('4', 0)}</div></div>
+      <div class="kpi"><div class="label">IPC</div><div class="value">{counts.get('ipc', 0)}</div></div>
     </div>
     <p class="muted">
-      Внутри каждого раздела — плитки по клиентам. Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Если МПТ уже в Перечне — позиция только в блоке 4 (ТАЗ не обновлён).
-      Совпадение типа ВС (J ↔ Перечень) — пробное; расхождения тегом «тип ВС ≠».
-      Голубая подсветка строки — «Закупка на склад».
+      Приоритет одной тревоги: IPC → ТАЗ не обновлён (есть в Перечне) → нет заявки → нет вырезки → нет МПТ &gt;14д.
+      Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
+      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Голубая строка — «на склад».
     </p>
   </section>
 
   <div class="tabs">
-    <a href="#a1">1 · Нет заявки</a>
-    <a href="#a2">2 · Нет вырезки</a>
-    <a href="#a3">3 · Нет МПТ</a>
-    <a href="#a4">4 · ТАЗ не обновлён</a>
-    <a href="#ipc">IPC</a>
+    {''.join(tabs)}
   </div>
 
-  <h2>Тревоги</h2>
-  {section("a1", "1 · Нет заявки на МПТ в «Списки на МПТ»",
-           "Ожидалась заявка день-в-день с датой заказа (столбец Q). В Списках нет строки по P/N (или ALT).", a1)}
-  {section("a2", "2 · Нет вырезки более недели",
-           "В Списках статус нормализован как «вырезка запрошена», а заказ старше 7 дней.", a2)}
-  {section("a3", "3 · Нет МПТ более 2 недель",
-           "В Перечне (вкладка по Invoicer: ФЭ→ФЭИ, М→МЕТЕОР, ЛР→ЛР) нет строки по P/N/ALT, возраст >14 дн.", a3)}
-  {section("a4", "4 · ТАЗ не обновлён",
-           "МПТ уже есть в Перечнях 2025–2026, но в ТАЗ ещё не стоит «Есть МПТ» (в т.ч. пусто / Получаем МПТ).", a4)}
-  {section("ipc", "IPC — отдельно",
-           "Действия по МПТ = «Нет IPC от клиента» или «IPC не будет получен».", ipc, open_=False)}
+  <h2>По клиентам</h2>
+  {''.join(client_blocks)}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
@@ -752,13 +754,9 @@ def main() -> None:
     )
     from collections import Counter
 
-    c = Counter()
-    for r in rows:
-        for a in r.alerts:
-            c[a] += 1
-        if r.ipc:
-            c["ipc"] += 1
+    c = Counter(r.alert for r in rows)
     print(f"rows in report: {len(rows)}")
+    print(f"clients: {len({r.client for r in rows})}")
     print(f"alerts: {dict(c)}")
     print(f"wrote {html_path}")
     print(f"wrote {zip_path}")
