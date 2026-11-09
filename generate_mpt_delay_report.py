@@ -32,6 +32,7 @@ from typing import Any
 import pandas as pd
 
 from generate_report import (
+    COL_COMMENT,
     COL_CUSTOMER,
     COL_DESC,
     COL_INVOICE,
@@ -150,8 +151,14 @@ def is_warehouse(customer: str) -> bool:
     return customer.casefold() in WAREHOUSE_MARKERS or "склад" in customer.casefold()
 
 
+def utair_no_mpt_needed(comment: Any) -> bool:
+    """Utair DAT MOW / DAT TEHRAN — МПТ не требуется."""
+    s = re.sub(r"\s+", " ", norm_text(comment).upper())
+    return "DAT MOW" in s or "DAT TEHRAN" in s
+
+
 def ac_tokens(value: str) -> set[str]:
-    """Rough tokens for aircraft-type soft match (first trial)."""
+    """Aircraft-type tokens with common TAZ ↔ Перечень aliases."""
     s = norm_text(value).upper()
     if not s:
         return set()
@@ -159,18 +166,68 @@ def ac_tokens(value: str) -> set[str]:
     s = s.replace("САМОЛЕТЫ ТИПОВ", " ").replace("САМОЛЕТОВ ТИПА", " ")
     s = re.sub(r"[^A-Z0-9]+", " ", s)
     parts = [p for p in s.split() if len(p) >= 2]
-    extra: set[str] = set()
+    extra: set[str] = set(parts)
     joined = "".join(parts)
-    for p in parts:
-        extra.add(p)
+
+    for p in list(parts):
         if p.startswith("B") and p[1:].isdigit():
             extra.add(p[1:])  # B737 → 737
-        if p.isdigit() and len(p) == 3:
+        if p.isdigit() and len(p) in {3, 4}:
             extra.add("B" + p)
-    if "A32S" in parts or "A320" in parts or "A321" in parts or "A319" in parts:
-        extra.update({"A320", "A321", "A319", "A318", "A32S"})
-    if "737" in joined:
-        extra.update({"737", "B737", "B738", "B737CL", "737CL"})
+
+    # Airbus family
+    if any(x in extra or x in joined for x in ("A32S", "A320", "A321", "A319", "A318")):
+        extra.update({"A320", "A321", "A319", "A318", "A32S", "320", "321", "319", "318"})
+
+    # Boeing 737 family: B737 / B738 (=737-800) / B735·B7385 (=737-500) / CL
+    if any(
+        x in extra or x in joined
+        for x in ("737", "B737", "B738", "738", "B735", "735", "B7385", "7385", "737CL", "B737CL", "737800", "737500")
+    ):
+        extra.update(
+            {
+                "737",
+                "B737",
+                "B738",
+                "738",
+                "B735",
+                "735",
+                "B7385",
+                "7385",
+                "B737CL",
+                "737CL",
+                "737800",
+                "B737800",
+                "737500",
+                "B737500",
+            }
+        )
+
+    # Boeing 767 family: B762 (=767-200), B763 (=767-300), …
+    if any(x in extra or x in joined for x in ("767", "B767", "B762", "762", "B763", "763", "767200", "767300")):
+        extra.update(
+            {
+                "767",
+                "B767",
+                "B762",
+                "762",
+                "B763",
+                "763",
+                "767200",
+                "B767200",
+                "767300",
+                "B767300",
+            }
+        )
+
+    # Boeing 777
+    if any(x in extra or x in joined for x in ("777", "B777")):
+        extra.update({"777", "B777"})
+
+    # Boeing 757
+    if any(x in extra or x in joined for x in ("757", "B757")):
+        extra.update({"757", "B757"})
+
     return {p for p in extra if p}
 
 
@@ -401,6 +458,9 @@ def build_rows(
             continue
 
         client = norm_client(r.get(COL_CUSTOMER))
+        if client == "Utair" and utair_no_mpt_needed(r.get(COL_COMMENT)):
+            continue
+
         pn = norm_pn(r.get(COL_PN))
         alt = norm_pn(r.get(COL_ALT_PN))
         action = norm_text(r.get(COL_MPT_ACTION))
@@ -666,7 +726,8 @@ tr.wh {{ background:#f0fafc; }}
   <h1>Задержки получения МПТ</h1>
   <div class="sub">
     Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-    одна тревога на заказ · разделы по клиентам · внутри — от ранних заказов к свежим
+    одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
+    Utair DAT MOW / DAT TEHRAN исключены (МПТ не нужен)
   </div>
 
   <section class="card">
