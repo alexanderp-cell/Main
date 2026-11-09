@@ -22,11 +22,13 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import re
 import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +47,17 @@ from generate_report import (
     normalize_invoice,
     parse_date,
 )
+
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+
+
+@lru_cache(maxsize=32)
+def data_uri(name: str) -> str:
+    """Embed local PNG as data URI so HTML stays self-contained."""
+    path = ASSETS_DIR / name
+    raw = path.read_bytes()
+    mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
+    return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
 
 COL_CATEGORY = "Category"
 COL_MPT = "МПТ"
@@ -831,6 +844,14 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 """
         )
 
+    img_banner = data_uri("tamagotchi-banner-wide.png")
+    img_device = data_uri("tamagotchi-device-small.png")
+    img_pattern = data_uri("tamagotchi-pattern.png")
+    img_hungry = data_uri("tamagotchi-pet-hungry.png")
+    img_sick = data_uri("tamagotchi-pet-sick.png")
+    img_happy = data_uri("tamagotchi-pet-happy.png")
+    img_ok = data_uri("tamagotchi-pet-ok.png")
+
     return f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -839,131 +860,204 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 <title>Задержки МПТ — {report_date.strftime('%d.%m.%Y')}</title>
 <style>
 :root {{
-  --bg:#e7ecef; --card:#ffffff; --ink:#202020; --muted:#4c4c4c;
-  --navy:#022f40; --cyan:#d5fbff; --orange:#fe621d; --line:#c4c4c4;
-  --red:#c0392b; --green:#1e7a46;
+  --shell:#ff9ebb;
+  --shell-deep:#e8628c;
+  --shell-light:#ffe3ee;
+  --lcd:#aac678;
+  --lcd-deep:#284020;
+  --lcd-lit:#c8dca0;
+  --btn:#fff078;
+  --teal:#5cc8c4;
+  --ink:#284020;
+  --muted:#5a6b4a;
+  --card:#fff7fb;
+  --line:#e8628c;
+  --red:#c0392b;
+  --orange:#d35400;
+  --green:#1e7a46;
+  --pixel: 4px;
 }}
 * {{ box-sizing:border-box; }}
 body {{
   margin:0;
-  font-family: Arial, Calibri, Helvetica, sans-serif;
+  font-family: "Courier New", Courier, ui-monospace, monospace;
   color:var(--ink);
-  background: linear-gradient(180deg, #022f40 0 160px, var(--bg) 160px);
+  background-color: var(--shell-light);
+  background-image:
+    linear-gradient(180deg, rgba(255,158,187,.55) 0%, rgba(255,247,251,.92) 220px),
+    url('{img_pattern}');
+  background-size: auto, 128px 128px;
+  background-attachment: fixed;
   line-height:1.45;
+  image-rendering: pixelated;
 }}
-.wrap {{ max-width:1400px; margin:0 auto; padding:28px 16px 64px; }}
-.brand {{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  color:#ffffff; margin-bottom:18px;
+.wrap {{ max-width:1400px; margin:0 auto; padding:24px 16px 64px; }}
+.hero {{
+  display:grid; grid-template-columns: 1.4fr .7fr; gap:16px; align-items:stretch;
+  margin-bottom:18px;
 }}
+.hero-banner {{
+  border:4px solid var(--shell-deep);
+  box-shadow: 6px 6px 0 #28402033;
+  background:#fff;
+  overflow:hidden;
+  position:relative;
+}}
+.hero-banner img {{
+  display:block; width:100%; height:180px; object-fit:cover; object-position:center;
+  image-rendering: pixelated;
+}}
+.hero-device {{
+  border:4px solid var(--shell-deep);
+  background: linear-gradient(160deg, var(--shell) 0%, #ffd6e4 55%, var(--teal) 160%);
+  box-shadow: 6px 6px 0 #28402033;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:12px; text-align:center; gap:8px;
+}}
+.hero-device img {{ width:110px; height:auto; image-rendering:pixelated; }}
 .brand-mark {{
-  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
-  background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700;
+  font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+  background:var(--btn); color:var(--lcd-deep); padding:6px 10px; font-weight:800;
+  border:3px solid var(--lcd-deep);
 }}
-h1 {{ font-size:28px; margin:0 0 6px; color:#ffffff; font-weight:700; }}
-.sub {{ color:#d5fbff; margin-bottom:18px; font-size:14px; }}
-h2 {{ font-size:20px; margin:28px 0 12px; color:var(--navy); }}
+.lcd-title {{
+  background:var(--lcd); color:var(--lcd-deep); border:4px solid var(--lcd-deep);
+  padding:14px 16px; margin:0 0 10px;
+  box-shadow: inset 0 0 0 2px var(--lcd-lit);
+}}
+.lcd-title h1 {{
+  font-size:26px; margin:0 0 6px; font-weight:800; letter-spacing:.04em;
+  text-transform:uppercase;
+}}
+.sub {{ color:var(--muted); font-size:13px; }}
+.blink {{ animation: blink 1.4s steps(2, jump-none) infinite; }}
+@keyframes blink {{ 50% {{ opacity:.35; }} }}
+h2 {{
+  font-size:18px; margin:24px 0 12px; color:var(--lcd-deep);
+  letter-spacing:.08em; text-transform:uppercase;
+}}
 .card {{
-  background:var(--card); border:1px solid var(--line); border-radius:8px;
-  padding:18px 18px 8px;
+  background:var(--card); border:4px solid var(--shell-deep);
+  padding:16px 16px 8px; box-shadow: 5px 5px 0 #28402022;
 }}
 .kpi-grid {{
-  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
+  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin:12px 0 14px;
 }}
 .kpi {{
-  background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px;
+  background:var(--lcd); border:3px solid var(--lcd-deep); padding:10px 10px 12px;
+  box-shadow: inset 0 0 0 2px var(--lcd-lit);
+  display:flex; flex-direction:column; gap:4px; min-height:110px;
 }}
-.label {{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }}
-.value {{ font-size:22px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; color:var(--navy); }}
-.muted {{ color:#757575; font-size:12px; margin-top:4px; }}
+.kpi img {{ width:42px; height:42px; image-rendering:pixelated; align-self:flex-start; }}
+.label {{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--lcd-deep); font-weight:800; }}
+.value {{ font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--lcd-deep); }}
+.muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
 .tabs {{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }}
 .tabs a {{
-  text-decoration:none; color:var(--navy); background:#ffffff; border:1px solid var(--line);
-  padding:8px 12px; border-radius:6px; font-size:13px; font-weight:700;
+  text-decoration:none; color:var(--lcd-deep); background:var(--btn);
+  border:3px solid var(--lcd-deep); padding:7px 10px; font-size:12px; font-weight:800;
 }}
-.tabs a:hover {{ background:var(--cyan); }}
+.tabs a:hover {{ background:var(--teal); }}
 details.group {{
-  background:var(--card); border:1px solid var(--line); border-radius:8px;
-  margin:10px 0; overflow:visible;
+  background:var(--card); border:4px solid var(--shell-deep);
+  margin:12px 0; overflow:visible; box-shadow: 4px 4px 0 #28402022;
 }}
 details.group summary {{
-  cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-  background:linear-gradient(90deg, #022f40 0%, #022f40 12px, #ffffff 12px);
-  border-radius:8px 8px 0 0;
+  cursor:pointer; list-style:none; padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background: linear-gradient(90deg, var(--shell) 0 14px, var(--lcd) 14px 18px, #fff7fb 18px);
 }}
 details.group summary::-webkit-details-marker {{ display:none; }}
-.group-name {{ font-weight:700; font-size:16px; margin-right:auto; color:var(--navy); padding-left:8px; }}
+.group-name {{ font-weight:800; font-size:15px; margin-right:auto; color:var(--lcd-deep); padding-left:6px; letter-spacing:.03em; }}
 .pill {{
-  font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
-  border-radius:4px; padding:4px 10px; font-weight:700;
+  font-size:11px; background:var(--btn); border:2px solid var(--lcd-deep); color:var(--lcd-deep);
+  padding:3px 8px; font-weight:800;
 }}
-.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; }}
-table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid #c4c4c4; table-layout:fixed; }}
+.group-body {{ padding:0 12px 14px; border-top:3px solid var(--shell-deep); overflow:visible; background:#f7fbe8; }}
+table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; border:3px solid var(--lcd-deep); table-layout:fixed; background:var(--lcd); }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
 th, td {{
-  border-bottom:1px solid #d9d9d9; border-right:1px solid #d0d0d0;
-  padding:8px 8px; vertical-align:top; text-align:left;
-  word-wrap:break-word; overflow-wrap:anywhere;
+  border-bottom:1px solid #7a9a58; border-right:1px solid #7a9a58;
+  padding:8px 7px; vertical-align:top; text-align:left;
+  word-wrap:break-word; overflow-wrap:anywhere; color:var(--lcd-deep);
 }}
 th:last-child, td:last-child {{ border-right:none; }}
 th {{
   position:sticky; top:0; z-index:5;
-  font-size:13px; font-weight:800; letter-spacing:.02em; text-transform:none;
-  color:#022f40; background:#d5fbff;
-  border-bottom:2px solid #022f40;
-  box-shadow:0 2px 0 rgba(2,47,64,.12);
+  font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  color:var(--lcd-deep); background:#9cb86a;
+  border-bottom:3px solid var(--lcd-deep);
 }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.wh {{ background:#f0fafc; }}
+tr.wh {{ background:#c5dc98; }}
+tbody tr:hover {{ background:#b9d486; }}
 .tag {{
-  display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
-  padding:2px 7px; margin:1px 2px; border:1px solid #d0d0d0; background:#f3f3f3; color:var(--navy);
+  display:inline-block; font-size:10px; font-weight:800; border-radius:0;
+  padding:2px 6px; margin:1px 2px; border:2px solid var(--lcd-deep); background:var(--lcd-lit); color:var(--lcd-deep);
 }}
-.tag.alt {{ background:#fff3cd; border-color:#e6d89c; }}
-.tag.wh {{ background:#d5fbff; border-color:#b6e8ef; }}
-.tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
-.tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
-.tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
-.tag.a2 {{ background:#fff3cd; border-color:#e6d89c; }}
-.tag.a3 {{ background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }}
-.tag.a4 {{ background:#e8f0fe; border-color:#b6c9f0; }}
-.tag.aipc {{ background:#efe8f8; border-color:#c9b6e0; }}
-.footer {{ margin-top:28px; color:#4c4c4c; font-size:12px; }}
+.tag.alt {{ background:#fff3cd; border-color:#a08020; }}
+.tag.wh {{ background:var(--teal); border-color:var(--lcd-deep); }}
+.tag.ok {{ background:#d6f5de; border-color:var(--green); color:var(--green); }}
+.tag.bad, .bad {{ background:#ffd0d0; border-color:var(--red); color:var(--red); }}
+.tag.a1 {{ background:#ffd0d0; border-color:var(--red); color:var(--red); }}
+.tag.a2 {{ background:#fff3cd; border-color:#a08020; }}
+.tag.a3 {{ background:#ffd8b8; border-color:var(--orange); color:var(--orange); }}
+.tag.a4 {{ background:#d7ecff; border-color:#3a6ea5; }}
+.tag.aipc {{ background:#e8d8ff; border-color:#6b4ea0; }}
+.footer {{
+  margin-top:28px; color:var(--muted); font-size:12px;
+  border-top:3px dashed var(--shell-deep); padding-top:12px;
+}}
+.pixel-row {{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:6px; }}
+.pixel-row img {{ width:36px; height:36px; image-rendering:pixelated; border:2px solid var(--lcd-deep); background:var(--lcd); }}
 @media (max-width:900px) {{
+  .hero {{ grid-template-columns:1fr; }}
+  .hero-banner img {{ height:140px; }}
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <div class="brand-mark">FASTAIR</div>
-    <div style="font-size:13px;opacity:.9">MPT delay report · ROTABLE</div>
+  <div class="hero">
+    <div class="hero-banner">
+      <img src="{img_banner}" alt="Tamagotchi MPT Delay banner"/>
+    </div>
+    <div class="hero-device">
+      <div class="brand-mark">FASTAIR</div>
+      <img src="{img_device}" alt="Tamagotchi device"/>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">CARE · MPT · PET</div>
+    </div>
   </div>
-  <h1>Задержки получения МПТ</h1>
-  <div class="sub">
-    Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-    одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
-    Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+
+  <div class="lcd-title">
+    <h1><span class="blink">▶</span> Задержки получения МПТ</h1>
+    <div class="sub">
+      Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
+      одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
+      Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+    </div>
+    <div class="pixel-row" aria-hidden="true">
+      <img src="{img_hungry}" alt=""/><img src="{img_sick}" alt=""/><img src="{img_ok}" alt=""/><img src="{img_happy}" alt=""/>
+    </div>
   </div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка</h2>
+    <h2 style="margin-top:0">Сводка · status screen</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">Всего</div><div class="value">{len(rows)}</div>
+      <div class="kpi"><img src="{img_ok}" alt=""/><div class="label">Всего</div><div class="value">{len(rows)}</div>
         <div class="muted">{len(by_client)} клиентов · склад {wh_n}</div></div>
-      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">{counts.get('1', 0)}</div></div>
-      <div class="kpi"><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">{counts.get('2', 0)}</div></div>
-      <div class="kpi"><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">{counts.get('3', 0)}</div></div>
-      <div class="kpi"><div class="label">4 · ТАЗ не обновлён</div><div class="value">{counts.get('4', 0)}</div></div>
-      <div class="kpi"><div class="label">IPC</div><div class="value">{counts.get('ipc', 0)}</div></div>
+      <div class="kpi"><img src="{img_hungry}" alt=""/><div class="label">1 · Нет заявки</div><div class="value">{counts.get('1', 0)}</div></div>
+      <div class="kpi"><img src="{img_sick}" alt=""/><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">{counts.get('2', 0)}</div></div>
+      <div class="kpi"><img src="{img_hungry}" alt=""/><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">{counts.get('3', 0)}</div></div>
+      <div class="kpi"><img src="{img_ok}" alt=""/><div class="label">4 · ТАЗ не обновлён</div><div class="value">{counts.get('4', 0)}</div></div>
+      <div class="kpi"><img src="{img_sick}" alt=""/><div class="label">IPC</div><div class="value">{counts.get('ipc', 0)}</div></div>
     </div>
     <p class="muted">
       Приоритет одной тревоги: IPC → ТАЗ не обновлён (действующее МПТ в Перечне, ≤1 год) → нет заявки → нет вырезки → нет МПТ &gt;14д.
       В «Списки по МПТ» при действующем МПТ пишем «ЕСТЬ МПТ» — наличие заявки не важно.
       Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Голубая строка — «на склад».
+      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Зелёная строка — «на склад».
     </p>
   </section>
 
@@ -971,12 +1065,12 @@ tr.wh {{ background:#f0fafc; }}
     {''.join(tabs)}
   </div>
 
-  <h2>По клиентам</h2>
+  <h2>По клиентам · pets</h2>
   {''.join(client_blocks)}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
-    Self-contained HTML — открывается локально без интернета.
+    Self-contained HTML — Tamagotchi skin · открывается локально без интернета.
   </div>
 </div>
 </body>

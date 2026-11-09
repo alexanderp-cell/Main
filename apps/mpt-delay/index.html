@@ -6,131 +6,204 @@
 <title>Задержки МПТ — 06.11.2026</title>
 <style>
 :root {
-  --bg:#e7ecef; --card:#ffffff; --ink:#202020; --muted:#4c4c4c;
-  --navy:#022f40; --cyan:#d5fbff; --orange:#fe621d; --line:#c4c4c4;
-  --red:#c0392b; --green:#1e7a46;
+  --shell:#ff9ebb;
+  --shell-deep:#e8628c;
+  --shell-light:#ffe3ee;
+  --lcd:#aac678;
+  --lcd-deep:#284020;
+  --lcd-lit:#c8dca0;
+  --btn:#fff078;
+  --teal:#5cc8c4;
+  --ink:#284020;
+  --muted:#5a6b4a;
+  --card:#fff7fb;
+  --line:#e8628c;
+  --red:#c0392b;
+  --orange:#d35400;
+  --green:#1e7a46;
+  --pixel: 4px;
 }
 * { box-sizing:border-box; }
 body {
   margin:0;
-  font-family: Arial, Calibri, Helvetica, sans-serif;
+  font-family: "Courier New", Courier, ui-monospace, monospace;
   color:var(--ink);
-  background: linear-gradient(180deg, #022f40 0 160px, var(--bg) 160px);
+  background-color: var(--shell-light);
+  background-image:
+    linear-gradient(180deg, rgba(255,158,187,.55) 0%, rgba(255,247,251,.92) 220px),
+    url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAByUlEQVR4nO3bMUoDURRAUUeyB7dg7X7cQMosxNINuJ/UbsHOyjbpwhT5MmDkZphzKpHwCFzeBBLedPr+eaDzWL+BrRMgJkBst+RFX4f3q/9/etvf5E1seb4NiAkQEyA2/AyYP9dGz7IlrzH/99fYgJgAMQFi0/y7oNEz6/XzePn74/nl6qC/PBO3PN8GxASICRBb9F3Q6Ll2K1uebwNiAsQEiE2j34TX8l3K2ufbgJgAMQFiw8+AuXv+TXXt821ATICYALFFnwH8HxsQEyAmQEyAmAAxAWICxNwHxPNtQEyAmAAx9wHxfBsQEyAmQMx9QDzfBsQEiAkQcx8Qz7cBMQFiAsTcB8TzbUBMgJgAMfcB8XwbEBMgJkDMfUDMBsQEiAkQEyAmQEyAmAAx9wHxfBsQEyAmQMx9QDzfBsQEiAkQcx8Qz7cBMQFiAsTcB8TzbUBMgJgAMfcB8XwbEBMgJkDMfUA83wbEBIgJEHMfELMBMQFiAsQEiAkQEyAmQMx9QDzfBsQEiAkQcx8Qz7cBMQFiAsTcB8TzbUBMgJgAMfcB8XwbEBMgJkDMfUA83wbEBIgJEHMfEM+3ATEBYgLE3AfEbEBMgJgAsTOG8PIcq9xzqQAAAABJRU5ErkJggg==');
+  background-size: auto, 128px 128px;
+  background-attachment: fixed;
   line-height:1.45;
+  image-rendering: pixelated;
 }
-.wrap { max-width:1400px; margin:0 auto; padding:28px 16px 64px; }
-.brand {
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  color:#ffffff; margin-bottom:18px;
+.wrap { max-width:1400px; margin:0 auto; padding:24px 16px 64px; }
+.hero {
+  display:grid; grid-template-columns: 1.4fr .7fr; gap:16px; align-items:stretch;
+  margin-bottom:18px;
 }
+.hero-banner {
+  border:4px solid var(--shell-deep);
+  box-shadow: 6px 6px 0 #28402033;
+  background:#fff;
+  overflow:hidden;
+  position:relative;
+}
+.hero-banner img {
+  display:block; width:100%; height:180px; object-fit:cover; object-position:center;
+  image-rendering: pixelated;
+}
+.hero-device {
+  border:4px solid var(--shell-deep);
+  background: linear-gradient(160deg, var(--shell) 0%, #ffd6e4 55%, var(--teal) 160%);
+  box-shadow: 6px 6px 0 #28402033;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:12px; text-align:center; gap:8px;
+}
+.hero-device img { width:110px; height:auto; image-rendering:pixelated; }
 .brand-mark {
-  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
-  background:var(--cyan); color:var(--navy); padding:6px 10px; font-weight:700;
+  font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+  background:var(--btn); color:var(--lcd-deep); padding:6px 10px; font-weight:800;
+  border:3px solid var(--lcd-deep);
 }
-h1 { font-size:28px; margin:0 0 6px; color:#ffffff; font-weight:700; }
-.sub { color:#d5fbff; margin-bottom:18px; font-size:14px; }
-h2 { font-size:20px; margin:28px 0 12px; color:var(--navy); }
+.lcd-title {
+  background:var(--lcd); color:var(--lcd-deep); border:4px solid var(--lcd-deep);
+  padding:14px 16px; margin:0 0 10px;
+  box-shadow: inset 0 0 0 2px var(--lcd-lit);
+}
+.lcd-title h1 {
+  font-size:26px; margin:0 0 6px; font-weight:800; letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.sub { color:var(--muted); font-size:13px; }
+.blink { animation: blink 1.4s steps(2, jump-none) infinite; }
+@keyframes blink { 50% { opacity:.35; } }
+h2 {
+  font-size:18px; margin:24px 0 12px; color:var(--lcd-deep);
+  letter-spacing:.08em; text-transform:uppercase;
+}
 .card {
-  background:var(--card); border:1px solid var(--line); border-radius:8px;
-  padding:18px 18px 8px;
+  background:var(--card); border:4px solid var(--shell-deep);
+  padding:16px 16px 8px; box-shadow: 5px 5px 0 #28402022;
 }
 .kpi-grid {
-  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin:12px 0 18px;
+  display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin:12px 0 14px;
 }
 .kpi {
-  background:#f7fbfc; border:1px solid #d7e2e6; border-radius:8px; padding:12px 14px;
+  background:var(--lcd); border:3px solid var(--lcd-deep); padding:10px 10px 12px;
+  box-shadow: inset 0 0 0 2px var(--lcd-lit);
+  display:flex; flex-direction:column; gap:4px; min-height:110px;
 }
-.label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#757575; }
-.value { font-size:22px; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; color:var(--navy); }
-.muted { color:#757575; font-size:12px; margin-top:4px; }
+.kpi img { width:42px; height:42px; image-rendering:pixelated; align-self:flex-start; }
+.label { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--lcd-deep); font-weight:800; }
+.value { font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--lcd-deep); }
+.muted { color:var(--muted); font-size:12px; margin-top:4px; }
 .tabs { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }
 .tabs a {
-  text-decoration:none; color:var(--navy); background:#ffffff; border:1px solid var(--line);
-  padding:8px 12px; border-radius:6px; font-size:13px; font-weight:700;
+  text-decoration:none; color:var(--lcd-deep); background:var(--btn);
+  border:3px solid var(--lcd-deep); padding:7px 10px; font-size:12px; font-weight:800;
 }
-.tabs a:hover { background:var(--cyan); }
+.tabs a:hover { background:var(--teal); }
 details.group {
-  background:var(--card); border:1px solid var(--line); border-radius:8px;
-  margin:10px 0; overflow:visible;
+  background:var(--card); border:4px solid var(--shell-deep);
+  margin:12px 0; overflow:visible; box-shadow: 4px 4px 0 #28402022;
 }
 details.group summary {
-  cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-  background:linear-gradient(90deg, #022f40 0%, #022f40 12px, #ffffff 12px);
-  border-radius:8px 8px 0 0;
+  cursor:pointer; list-style:none; padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background: linear-gradient(90deg, var(--shell) 0 14px, var(--lcd) 14px 18px, #fff7fb 18px);
 }
 details.group summary::-webkit-details-marker { display:none; }
-.group-name { font-weight:700; font-size:16px; margin-right:auto; color:var(--navy); padding-left:8px; }
+.group-name { font-weight:800; font-size:15px; margin-right:auto; color:var(--lcd-deep); padding-left:6px; letter-spacing:.03em; }
 .pill {
-  font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
-  border-radius:4px; padding:4px 10px; font-weight:700;
+  font-size:11px; background:var(--btn); border:2px solid var(--lcd-deep); color:var(--lcd-deep);
+  padding:3px 8px; font-weight:800;
 }
-.group-body { padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; }
-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid #c4c4c4; table-layout:fixed; }
+.group-body { padding:0 12px 14px; border-top:3px solid var(--shell-deep); overflow:visible; background:#f7fbe8; }
+table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; border:3px solid var(--lcd-deep); table-layout:fixed; background:var(--lcd); }
 col.pn { width:9%; }
 col.desc { width:14%; }
 th, td {
-  border-bottom:1px solid #d9d9d9; border-right:1px solid #d0d0d0;
-  padding:8px 8px; vertical-align:top; text-align:left;
-  word-wrap:break-word; overflow-wrap:anywhere;
+  border-bottom:1px solid #7a9a58; border-right:1px solid #7a9a58;
+  padding:8px 7px; vertical-align:top; text-align:left;
+  word-wrap:break-word; overflow-wrap:anywhere; color:var(--lcd-deep);
 }
 th:last-child, td:last-child { border-right:none; }
 th {
   position:sticky; top:0; z-index:5;
-  font-size:13px; font-weight:800; letter-spacing:.02em; text-transform:none;
-  color:#022f40; background:#d5fbff;
-  border-bottom:2px solid #022f40;
-  box-shadow:0 2px 0 rgba(2,47,64,.12);
+  font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  color:var(--lcd-deep); background:#9cb86a;
+  border-bottom:3px solid var(--lcd-deep);
 }
 td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-tr.wh { background:#f0fafc; }
+tr.wh { background:#c5dc98; }
+tbody tr:hover { background:#b9d486; }
 .tag {
-  display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
-  padding:2px 7px; margin:1px 2px; border:1px solid #d0d0d0; background:#f3f3f3; color:var(--navy);
+  display:inline-block; font-size:10px; font-weight:800; border-radius:0;
+  padding:2px 6px; margin:1px 2px; border:2px solid var(--lcd-deep); background:var(--lcd-lit); color:var(--lcd-deep);
 }
-.tag.alt { background:#fff3cd; border-color:#e6d89c; }
-.tag.wh { background:#d5fbff; border-color:#b6e8ef; }
-.tag.ok { background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }
-.tag.bad, .bad { background:#fde8e6; border-color:#f0b8b2; color:var(--red); }
-.tag.a1 { background:#fde8e6; border-color:#f0b8b2; color:var(--red); }
-.tag.a2 { background:#fff3cd; border-color:#e6d89c; }
-.tag.a3 { background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }
-.tag.a4 { background:#e8f0fe; border-color:#b6c9f0; }
-.tag.aipc { background:#efe8f8; border-color:#c9b6e0; }
-.footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
+.tag.alt { background:#fff3cd; border-color:#a08020; }
+.tag.wh { background:var(--teal); border-color:var(--lcd-deep); }
+.tag.ok { background:#d6f5de; border-color:var(--green); color:var(--green); }
+.tag.bad, .bad { background:#ffd0d0; border-color:var(--red); color:var(--red); }
+.tag.a1 { background:#ffd0d0; border-color:var(--red); color:var(--red); }
+.tag.a2 { background:#fff3cd; border-color:#a08020; }
+.tag.a3 { background:#ffd8b8; border-color:var(--orange); color:var(--orange); }
+.tag.a4 { background:#d7ecff; border-color:#3a6ea5; }
+.tag.aipc { background:#e8d8ff; border-color:#6b4ea0; }
+.footer {
+  margin-top:28px; color:var(--muted); font-size:12px;
+  border-top:3px dashed var(--shell-deep); padding-top:12px;
+}
+.pixel-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+.pixel-row img { width:36px; height:36px; image-rendering:pixelated; border:2px solid var(--lcd-deep); background:var(--lcd); }
 @media (max-width:900px) {
+  .hero { grid-template-columns:1fr; }
+  .hero-banner img { height:140px; }
   .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <div class="brand-mark">FASTAIR</div>
-    <div style="font-size:13px;opacity:.9">MPT delay report · ROTABLE</div>
+  <div class="hero">
+    <div class="hero-banner">
+      <img src="data:image/png;base64,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" alt="Tamagotchi MPT Delay banner"/>
+    </div>
+    <div class="hero-device">
+      <div class="brand-mark">FASTAIR</div>
+      <img src="data:image/png;base64,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" alt="Tamagotchi device"/>
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">CARE · MPT · PET</div>
+    </div>
   </div>
-  <h1>Задержки получения МПТ</h1>
-  <div class="sub">
-    Срез 06.11.2026 · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-    одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
-    Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+
+  <div class="lcd-title">
+    <h1><span class="blink">▶</span> Задержки получения МПТ</h1>
+    <div class="sub">
+      Срез 06.11.2026 · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
+      одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
+      Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+    </div>
+    <div class="pixel-row" aria-hidden="true">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABM0lEQVR4nO3cTWrCUBSA0VpcZJciHThw4FpKF9J1uQCR7xFefiznzE3k48IlMeb0+3f54LXPvb/A0QkUBAoCBYHCecuTXb9/phzndv+acpwRJigIFAQKAgWBwmm9a7FZO2vEenvNBAWBgkBBoCBQmLbFttxZI2btNRMUBAoCBYGCQGHTO4rPm2Vk9y371CwmKAgUBAoCBYHCG/wutu9VngkKAgWBgkBBoCBQECgIFAQKAgWBws53FJdxR/FABAoCBYGCQGHh0x1He5ZjxLIdaoKCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAr+9RxMUBAoCBQECgIFb6AKJigIFAQKAgWBwopb7Jm3Af9DAgWBgkBBoLDpFntHJigIFAQKAgWBwgOpNzFBSYfMEAAAAABJRU5ErkJggg==" alt=""/><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABOUlEQVR4nO3cQUoDQRBAUSMe0qOICxcucpbgQTyXBxjkN0N3J8p762QSPgVFT8Jcvr7fnvjd872/wKMTKAgUBAoChZedH/bxfptync/r65TrjDBBQaAgUBAoCBQu685is3bWiHV7zQQFgYJAQaAgUJh2FjvurONmGXnNziuPMEFBoCBQECgIFBbeUTy3fY7OvWsWExQECgIFgYJAYeEWu+9ZbBYTFAQKAgWBgkBh2u9iO89HI9xR3ESgIFAQKAgUBAoCBYGCQEGgIFA4eRZ7tJPXiHOnMxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFDwH8VggoJAQaAgUBAoeAJVMEFBoCBQECgIFBZusSNPA/6HBAoCBYGCQGHrFvuLTFAQKAgUBAoChR/ChUGhDGqXpAAAAABJRU5ErkJggg==" alt=""/><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABO0lEQVR4nO3cy2kDMRRA0TikyJQSvMgiC9diUkjqcgFDuMMgyR/OKWBsLg8eRvKcfv++3vjf+72/wKMTKAgUBAoChY+VH/Z9vg55zs/lc8hz9jBBQaAgUBAoCBRO836LjdpZe8zbayYoCBQECgIFgcKw32LbnbVns+zZdMeeM2qvmaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAw8XbHqHOxledrWyYoCBQECgIFgcLSO4pbo87O5jFBQaAgUBAoCBQO3lG872Y55th9DxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAY9u6ORzsp86/nRQQKAgWBgkDBG6iCCQoCBYGCQEGgMHGLbXkb8AsSKAgUBAoChaVb7BmZoCBQECgIFAQKN984L1rUHrEUAAAAAElFTkSuQmCC" alt=""/><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABO0lEQVR4nO3cQWrCUBRA0VpcpEspHXTQgWsRF+K6uoAg9yM/iSnnzI1yefCIP3q6P74+eO5z7w/w7gQKAgWBgkDhvOWb/Xzfplzn93qZcp0RJigIFAQKAgWBwmm9e7FZO2vEenvNBAWBgkBBoCBQmLbFttxZI2btNRMUBAoCBYGCQGHTbxSXm2Vk9732qllMUBAoCBQECgKFA5yL7XuXZ4KCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYHCi0937HueNet8bYQJCgIFgYJAQaCw4rnYcrPMem7Q0x1vRKAgUBAoCBQO8HTHvkxQECgIFAQKAgWBgkBBoCBQECgIFPzqOZigIFAQKAgUBAr+gSqYoCBQECgIFAQKK26xJf8G/A8JFAQKAgWBwqZb7IhMUBAoCBQECgKFP9HcOoMXCMr0AAAAAElFTkSuQmCC" alt=""/>
+    </div>
   </div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка</h2>
+    <h2 style="margin-top:0">Сводка · status screen</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">Всего</div><div class="value">83</div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABO0lEQVR4nO3cy2kDMRRA0TikyJQSvMgiC9diUkjqcgFDuMMgyR/OKWBsLg8eRvKcfv++3vjf+72/wKMTKAgUBAoChY+VH/Z9vg55zs/lc8hz9jBBQaAgUBAoCBRO836LjdpZe8zbayYoCBQECgIFgcKw32LbnbVns+zZdMeeM2qvmaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAw8XbHqHOxledrWyYoCBQECgIFgcLSO4pbo87O5jFBQaAgUBAoCBQO3lG872Y55th9DxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAY9u6ORzsp86/nRQQKAgWBgkDBG6iCCQoCBYGCQEGgMHGLbXkb8AsSKAgUBAoChaVb7BmZoCBQECgIFAQKN984L1rUHrEUAAAAAElFTkSuQmCC" alt=""/><div class="label">Всего</div><div class="value">83</div>
         <div class="muted">31 клиентов · склад 4</div></div>
-      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">9</div></div>
-      <div class="kpi"><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">4</div></div>
-      <div class="kpi"><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">5</div></div>
-      <div class="kpi"><div class="label">4 · ТАЗ не обновлён</div><div class="value">62</div></div>
-      <div class="kpi"><div class="label">IPC</div><div class="value">3</div></div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABM0lEQVR4nO3cTWrCUBSA0VpcZJciHThw4FpKF9J1uQCR7xFefiznzE3k48IlMeb0+3f54LXPvb/A0QkUBAoCBYHCecuTXb9/phzndv+acpwRJigIFAQKAgWBwmm9a7FZO2vEenvNBAWBgkBBoCBQmLbFttxZI2btNRMUBAoCBYGCQGHTO4rPm2Vk9y371CwmKAgUBAoCBYHCG/wutu9VngkKAgWBgkBBoCBQECgIFAQKAgWBws53FJdxR/FABAoCBYGCQGHh0x1He5ZjxLIdaoKCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAr+9RxMUBAoCBQECgIFb6AKJigIFAQKAgWBwopb7Jm3Af9DAgWBgkBBoLDpFntHJigIFAQKAgWBwgOpNzFBSYfMEAAAAABJRU5ErkJggg==" alt=""/><div class="label">1 · Нет заявки</div><div class="value">9</div></div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABOUlEQVR4nO3cQUoDQRBAUSMe0qOICxcucpbgQTyXBxjkN0N3J8p762QSPgVFT8Jcvr7fnvjd872/wKMTKAgUBAoChZedH/bxfptync/r65TrjDBBQaAgUBAoCBQu685is3bWiHV7zQQFgYJAQaAgUJh2FjvurONmGXnNziuPMEFBoCBQECgIFBbeUTy3fY7OvWsWExQECgIFgYJAYeEWu+9ZbBYTFAQKAgWBgkBh2u9iO89HI9xR3ESgIFAQKAgUBAoCBYGCQEGgIFA4eRZ7tJPXiHOnMxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFDwH8VggoJAQaAgUBAoeAJVMEFBoCBQECgIFBZusSNPA/6HBAoCBYGCQGHrFvuLTFAQKAgUBAoChR/ChUGhDGqXpAAAAABJRU5ErkJggg==" alt=""/><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">4</div></div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABM0lEQVR4nO3cTWrCUBSA0VpcZJciHThw4FpKF9J1uQCR7xFefiznzE3k48IlMeb0+3f54LXPvb/A0QkUBAoCBYHCecuTXb9/phzndv+acpwRJigIFAQKAgWBwmm9a7FZO2vEenvNBAWBgkBBoCBQmLbFttxZI2btNRMUBAoCBYGCQGHTO4rPm2Vk9y371CwmKAgUBAoCBYHCG/wutu9VngkKAgWBgkBBoCBQECgIFAQKAgWBws53FJdxR/FABAoCBYGCQGHh0x1He5ZjxLIdaoKCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAr+9RxMUBAoCBQECgIFb6AKJigIFAQKAgWBwopb7Jm3Af9DAgWBgkBBoLDpFntHJigIFAQKAgWBwgOpNzFBSYfMEAAAAABJRU5ErkJggg==" alt=""/><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">5</div></div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABO0lEQVR4nO3cy2kDMRRA0TikyJQSvMgiC9diUkjqcgFDuMMgyR/OKWBsLg8eRvKcfv++3vjf+72/wKMTKAgUBAoChY+VH/Z9vg55zs/lc8hz9jBBQaAgUBAoCBRO836LjdpZe8zbayYoCBQECgIFgcKw32LbnbVns+zZdMeeM2qvmaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAw8XbHqHOxledrWyYoCBQECgIFgcLSO4pbo87O5jFBQaAgUBAoCBQO3lG872Y55th9DxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAY9u6ORzsp86/nRQQKAgWBgkDBG6iCCQoCBYGCQEGgMHGLbXkb8AsSKAgUBAoChaVb7BmZoCBQECgIFAQKN984L1rUHrEUAAAAAElFTkSuQmCC" alt=""/><div class="label">4 · ТАЗ не обновлён</div><div class="value">62</div></div>
+      <div class="kpi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAABOUlEQVR4nO3cQUoDQRBAUSMe0qOICxcucpbgQTyXBxjkN0N3J8p762QSPgVFT8Jcvr7fnvjd872/wKMTKAgUBAoChZedH/bxfptync/r65TrjDBBQaAgUBAoCBQu685is3bWiHV7zQQFgYJAQaAgUJh2FjvurONmGXnNziuPMEFBoCBQECgIFBbeUTy3fY7OvWsWExQECgIFgYJAYeEWu+9ZbBYTFAQKAgWBgkBh2u9iO89HI9xR3ESgIFAQKAgUBAoCBYGCQEGgIFA4eRZ7tJPXiHOnMxMUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFAQKAgUBAoCBYGCQEGgIFDwH8VggoJAQaAgUBAoeAJVMEFBoCBQECgIFBZusSNPA/6HBAoCBYGCQGHrFvuLTFAQKAgUBAoChR/ChUGhDGqXpAAAAABJRU5ErkJggg==" alt=""/><div class="label">IPC</div><div class="value">3</div></div>
     </div>
     <p class="muted">
       Приоритет одной тревоги: IPC → ТАЗ не обновлён (действующее МПТ в Перечне, ≤1 год) → нет заявки → нет вырезки → нет МПТ &gt;14д.
       В «Списки по МПТ» при действующем МПТ пишем «ЕСТЬ МПТ» — наличие заявки не важно.
       Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Голубая строка — «на склад».
+      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Зелёная строка — «на склад».
     </p>
   </section>
 
@@ -138,7 +211,7 @@ tr.wh { background:#f0fafc; }
     <a href="#c0">Аэрофлот (12)</a><a href="#c1">Utair (11)</a><a href="#c2">АК Сибирь (8)</a><a href="#c3">ЮВТ (6)</a><a href="#c4">Закупка на склад (4)</a><a href="#c5">Дримджет (3)</a><a href="#c6">Русджет (3)</a><a href="#c7">Скайпро Техникс (3)</a><a href="#c8">ТАРП Авиэйшн (3)</a><a href="#c9">Уральские Авиалинии (3)</a><a href="#c10">CFT Aviation (2)</a><a href="#c11">Well Known aviation technology (2)</a><a href="#c12">АТРАН (2)</a><a href="#c13">Глобал Скай (2)</a><a href="#c14">Красавиа (2)</a><a href="#c15">Смартавиа (2)</a><a href="#c16">FLAGAVIA (1)</a><a href="#c17">Nordwind (1)</a><a href="#c18">S7 Engineering (1)</a><a href="#c19">Авексима Лимитед (1)</a><a href="#c20">Авиа Менеджмент Груп (1)</a><a href="#c21">Авиасервис (1)</a><a href="#c22">Альянс Джет (1)</a><a href="#c23">АЭМЗ (1)</a><a href="#c24">Джет Техник (1)</a><a href="#c25">ИКАР (Nordwind) (1)</a><a href="#c26">Руслайн (1)</a><a href="#c27">Северсталь (1)</a><a href="#c28">Тулпар Техник (1)</a><a href="#c29">Якутия (1)</a><a href="#c30">Ямал (1)</a>
   </div>
 
-  <h2>По клиентам</h2>
+  <h2>По клиентам · pets</h2>
   
 <details class="group" id="c0">
   <summary>
@@ -881,7 +954,7 @@ NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td class="num">22</td><td>—</
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
-    Self-contained HTML — открывается локально без интернета.
+    Self-contained HTML — Tamagotchi skin · открывается локально без интернета.
   </div>
 </div>
 </body>
