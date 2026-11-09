@@ -27,6 +27,17 @@ python3 generate_weekly.py \
 
 Предыдущий статусный Excel для «Сводки за неделю» подхватывается из `output/` автоматически.
 
+### Задержки МПТ (ROTABLE, все клиенты кроме Белавиа)
+
+```bash
+python3 generate_mpt_delay_report.py \
+  --taz "/path/ТАЗ ДД.ММ.ГГГГ.xlsx" \
+  --broker "/path/Брокерские заявки 2026.xlsx" \
+  --permissions "/path/Перечни зап. частей 0% НДС (ФЭИ, ЛР, МЕТЕОР) .xlsx" \
+  --output output/mpt_delay_ДД.ММ.ГГГГ.html \
+  --date ДД.ММ.ГГГГ
+```
+
 Отдельно только «без движения»:
 
 ```bash
