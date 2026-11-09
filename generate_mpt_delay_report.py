@@ -523,6 +523,9 @@ def render_table(rows: list[MptRow]) -> str:
         return '<p class="muted">Нет позиций.</p>'
     head = """
 <table>
+<colgroup>
+  <col/><col/><col class="pn"/><col class="desc"/><col/><col/><col/><col/><col/>
+</colgroup>
 <thead><tr>
 <th>Статус</th><th>№ счета</th><th>P/N</th><th>Description</th>
 <th>Дней с даты заказа</th><th>Действия по МПТ</th><th>Списки по МПТ</th>
@@ -551,15 +554,16 @@ def render_table(rows: list[MptRow]) -> str:
             list_cell = '<span class="bad">нет заявки</span>'
 
         if row.perm_hit:
+            ac_type_perm = row.perm_hit.ac_type or "—"
             ac_tag = {
-                "match": '<span class="tag ok">тип ВС ≈</span>',
-                "mismatch": '<span class="tag bad">тип ВС ≠</span>',
-                "unknown": '<span class="tag">тип ВС ?</span>',
+                "match": '<span class="tag ok">совпадает</span>',
+                "mismatch": '<span class="tag bad">не совпадает</span>',
+                "unknown": '<span class="tag">примерно</span>',
             }[row.perm_hit.ac_match]
             perm_cell = (
-                f'<div><b>есть</b> · {esc(row.perm_hit.sheet)} {ac_tag}</div>'
-                f'<div class="muted">{esc(row.perm_hit.doc)}</div>'
-                f'<div class="muted">тип ВС в перечне: {esc(row.perm_hit.ac_type)}</div>'
+                f'<div><b>ЕСТЬ МПТ на</b> «{esc(ac_type_perm)}» {ac_tag}</div>'
+                f'<div class="muted">{esc(row.perm_hit.sheet)}'
+                f'{(" · " + esc(row.perm_hit.doc)) if row.perm_hit.doc else ""}</div>'
             )
         else:
             sheet = INVOICER_TO_SHEET.get(row.invoicer, "—")
@@ -693,10 +697,13 @@ details.group summary::-webkit-details-marker {{ display:none; }}
   border-radius:4px; padding:4px 10px; font-weight:700;
 }}
 .group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow-x:auto; }}
-table {{ width:100%; border-collapse:collapse; font-size:12.5px; border:1px solid #c4c4c4; }}
+table {{ width:100%; border-collapse:collapse; font-size:12.5px; border:1px solid #c4c4c4; table-layout:fixed; }}
+col.pn {{ width:9%; }}
+col.desc {{ width:14%; }}
 th, td {{
   border-bottom:1px solid #d9d9d9; border-right:1px solid #d0d0d0;
   padding:8px 8px; vertical-align:top; text-align:left;
+  word-wrap:break-word; overflow-wrap:anywhere;
 }}
 th:last-child, td:last-child {{ border-right:none; }}
 th {{
