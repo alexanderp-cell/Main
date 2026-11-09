@@ -14,7 +14,8 @@
   3 — нет МПТ в Перечне, возраст >14 дн.
 
 Разделы отчёта — по клиентам; внутри клиента заказы от ранних к свежим.
-Исключение: МПТ в Перечне И в ТАЗ «Есть МПТ» → не кладём.
+Исключение: действующее МПТ в Перечне (≤1 год от даты получения) И в ТАЗ «Есть МПТ» → не кладём.
+Действующее МПТ в столбце «Списки по МПТ» показывается как «ЕСТЬ МПТ» (заявка не важна).
 «Закупка на склад» — в общем отчёте с пометкой.
 """
 
@@ -377,6 +378,49 @@ class PermHit:
     doc: str
     matched_via: str  # pn|alt
     ac_match: str  # match|mismatch|unknown
+    doc_date: date | None = None
+    valid_until: date | None = None
+    active: bool = True
+
+
+DOC_DATE_RE = re.compile(r"от\s*(\d{1,2})[./](\d{1,2})[./](\d{2,4})", re.I)
+
+
+def parse_mpt_doc_date(doc: str) -> date | None:
+    """Extract receipt date from «№ и дата документа Минпромторга»."""
+    s = norm_text(doc).replace("\xa0", " ")
+    m = DOC_DATE_RE.search(s)
+    if not m:
+        return None
+    day, month, year = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if year < 100:
+        year += 2000
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def add_one_year(d: date) -> date:
+    try:
+        return d.replace(year=d.year + 1)
+    except ValueError:
+        return d.replace(year=d.year + 1, day=28)
+
+
+def enrich_perm_validity(hit: PermHit, report_date: date) -> PermHit:
+    """МПТ действует 1 год от даты получения (даты документа)."""
+    doc_date = parse_mpt_doc_date(hit.doc)
+    if doc_date is None:
+        hit.doc_date = None
+        hit.valid_until = None
+        hit.active = True  # в актуальном перечне без даты — считаем действующим
+        return hit
+    valid_until = add_one_year(doc_date)
+    hit.doc_date = doc_date
+    hit.valid_until = valid_until
+    hit.active = report_date <= valid_until
+    return hit
 
 
 @dataclass
@@ -504,6 +548,7 @@ def find_perm_hit(
     pn: str,
     alt: str,
     taz_ac: str,
+    report_date: date,
 ) -> PermHit | None:
     sheet = INVOICER_TO_SHEET.get(invoicer.upper() if invoicer.isascii() else invoicer, None)
     # Cyrillic keys
@@ -522,15 +567,13 @@ def find_perm_hit(
             hits = df[df["_pn"] == code]
             if hits.empty:
                 continue
-            # prefer AC match
+            # prefer AC match, then still-active MPT
             best = None
             best_rank = 99
             for _, row in hits.iterrows():
                 ac_m = ac_types_compatible(taz_ac, row["_ac"])
-                rank = {"match": 0, "unknown": 1, "mismatch": 2}[ac_m]
-                if rank < best_rank:
-                    best_rank = rank
-                    best = PermHit(
+                cand = enrich_perm_validity(
+                    PermHit(
                         sheet=sh,
                         pn=row["_pn"],
                         description=row["_desc"],
@@ -538,7 +581,15 @@ def find_perm_hit(
                         doc=row["_doc"],
                         matched_via=via,
                         ac_match=ac_m,
-                    )
+                    ),
+                    report_date,
+                )
+                rank = {"match": 0, "unknown": 1, "mismatch": 2}[ac_m]
+                # prefer active over expired at same AC rank
+                rank = rank * 2 + (0 if cand.active else 1)
+                if rank < best_rank:
+                    best_rank = rank
+                    best = cand
             if best is not None:
                 return best
         return None
@@ -601,15 +652,15 @@ def build_rows(
         mpt_col = norm_text(r.get(COL_MPT))
 
         list_hit = find_list_hit(lists, client, pn, alt)
-        perm_hit = find_perm_hit(perms, invoicer, pn, alt, ac_type)
+        perm_hit = find_perm_hit(perms, invoicer, pn, alt, ac_type, report_date)
 
-        has_perm = perm_hit is not None
+        has_active_perm = perm_hit is not None and perm_hit.active
         taz_has = action.casefold() == "есть мпт"
-        if has_perm and taz_has:
+        if has_active_perm and taz_has:
             continue  # OK — skip
 
         ipc = action.casefold() in {"нет ipc от клиента", "ipc не будет получен"}
-        alert = pick_alert(ipc=ipc, has_perm=has_perm, list_hit=list_hit, age=age)
+        alert = pick_alert(ipc=ipc, has_perm=has_active_perm, list_hit=list_hit, age=age)
         if alert is None:
             continue
 
@@ -676,7 +727,15 @@ def render_table(rows: list[MptRow]) -> str:
         if row.alt_pn:
             pn_cell += f'<div class="muted">ALT: {esc(row.alt_pn)}</div>'
 
-        if row.list_hit:
+        # Если есть действующее МПТ (≤1 год от даты получения) — заявка в списках не важна
+        if row.perm_hit and row.perm_hit.active:
+            until = (
+                f" · до {row.perm_hit.valid_until.strftime('%d.%m.%Y')}"
+                if row.perm_hit.valid_until
+                else ""
+            )
+            list_cell = f"<div><b>ЕСТЬ МПТ</b>{esc(until)}</div>"
+        elif row.list_hit:
             status_up = (row.list_hit.status_raw or stage_label(row.list_hit.stage)).upper()
             batch = f" · {esc(row.list_hit.batch)}" if row.list_hit.batch else ""
             list_cell = f'<div><b>{esc(status_up)}</b>{batch}</div>'
@@ -690,8 +749,19 @@ def render_table(rows: list[MptRow]) -> str:
                 "mismatch": '<span class="tag bad">не совпадает</span>',
                 "unknown": '<span class="tag">примерно</span>',
             }[row.perm_hit.ac_match]
+            active_note = ""
+            if not row.perm_hit.active and row.perm_hit.valid_until:
+                active_note = (
+                    f' <span class="tag bad">истекло '
+                    f'{row.perm_hit.valid_until.strftime("%d.%m.%Y")}</span>'
+                )
+            elif row.perm_hit.valid_until:
+                active_note = (
+                    f' <span class="tag ok">до '
+                    f'{row.perm_hit.valid_until.strftime("%d.%m.%Y")}</span>'
+                )
             perm_cell = (
-                f'<div><b>ЕСТЬ МПТ на</b> «{esc(ac_type_perm)}» {ac_tag}</div>'
+                f'<div><b>ЕСТЬ МПТ на</b> «{esc(ac_type_perm)}» {ac_tag}{active_note}</div>'
                 f'<div class="muted">{esc(row.perm_hit.sheet)}'
                 f'{(" · " + esc(row.perm_hit.doc)) if row.perm_hit.doc else ""}</div>'
             )
@@ -890,7 +960,8 @@ tr.wh {{ background:#f0fafc; }}
       <div class="kpi"><div class="label">IPC</div><div class="value">{counts.get('ipc', 0)}</div></div>
     </div>
     <p class="muted">
-      Приоритет одной тревоги: IPC → ТАЗ не обновлён (есть в Перечне) → нет заявки → нет вырезки → нет МПТ &gt;14д.
+      Приоритет одной тревоги: IPC → ТАЗ не обновлён (действующее МПТ в Перечне, ≤1 год) → нет заявки → нет вырезки → нет МПТ &gt;14д.
+      В «Списки по МПТ» при действующем МПТ пишем «ЕСТЬ МПТ» — наличие заявки не важно.
       Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
       Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Голубая строка — «на склад».
     </p>
