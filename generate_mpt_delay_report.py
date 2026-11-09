@@ -524,8 +524,9 @@ def render_table(rows: list[MptRow]) -> str:
     head = """
 <table>
 <thead><tr>
-<th>Тревога</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th>
-<th>Заказ</th><th>Дней</th><th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+<th>Статус</th><th>№ счета</th><th>P/N</th><th>Description</th>
+<th>Дней с даты заказа</th><th>Действия по МПТ</th><th>Списки по МПТ</th>
+<th>Полученные МПТ</th><th>ТИП ВС в ТАЗ</th>
 </tr></thead><tbody>
 """
     body: list[str] = []
@@ -558,7 +559,7 @@ def render_table(rows: list[MptRow]) -> str:
             perm_cell = (
                 f'<div><b>есть</b> · {esc(row.perm_hit.sheet)} {ac_tag}</div>'
                 f'<div class="muted">{esc(row.perm_hit.doc)}</div>'
-                f'<div class="muted">{esc(row.perm_hit.ac_type)}</div>'
+                f'<div class="muted">тип ВС в перечне: {esc(row.perm_hit.ac_type)}</div>'
             )
         else:
             sheet = INVOICER_TO_SHEET.get(row.invoicer, "—")
@@ -574,12 +575,11 @@ def render_table(rows: list[MptRow]) -> str:
             f"<td>{esc(row.invoice)}</td>"
             f"<td>{pn_cell}</td>"
             f"<td>{esc(row.description)}</td>"
-            f"<td>{esc(row.ac_type)}</td>"
-            f"<td>{row.order_date.strftime('%d.%m.%Y') if row.order_date else '—'}</td>"
             f'<td class="num">{row.age_days}</td>'
             f"<td>{esc(row.mpt_action)}</td>"
             f"<td>{list_cell}</td>"
             f"<td>{perm_cell}</td>"
+            f"<td>{esc(row.ac_type) or '—'}</td>"
             f"</tr>"
         )
     return head + "\n".join(body) + "\n</tbody></table>"
@@ -693,9 +693,16 @@ details.group summary::-webkit-details-marker {{ display:none; }}
   border-radius:4px; padding:4px 10px; font-weight:700;
 }}
 .group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow-x:auto; }}
-table {{ width:100%; border-collapse:collapse; font-size:12.5px; }}
-th, td {{ border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }}
-th {{ font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }}
+table {{ width:100%; border-collapse:collapse; font-size:12.5px; border:1px solid #c4c4c4; }}
+th, td {{
+  border-bottom:1px solid #d9d9d9; border-right:1px solid #d0d0d0;
+  padding:8px 8px; vertical-align:top; text-align:left;
+}}
+th:last-child, td:last-child {{ border-right:none; }}
+th {{
+  font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c;
+  background:#f3f7f8; border-bottom:1px solid #b8b8b8;
+}}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
 tr.wh {{ background:#f0fafc; }}
 .tag {{
