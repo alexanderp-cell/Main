@@ -10,7 +10,7 @@
   1 — нет заявки в Списках (ожидалась день-в-день с датой заказа Q)
   2 — статус вырезки всё ещё «запрошена», возраст >7 дн.
   3 — нет строки МПТ в Перечне (по Invoicer + P/N[/ALT]), возраст >14 дн.
-  4 — МПТ есть в Перечне, но в ТАЗ «Действия по МПТ» = Получаем МПТ
+  4 — МПТ есть в Перечне, но в ТАЗ ещё не «Есть МПТ» (ТАЗ не обновлён)
 
 Исключение: есть МПТ в Перечне И в ТАЗ «Есть МПТ» → не кладём.
 IPC-кейсы — отдельная секция. «Закупка на склад» — в общем отчёте с пометкой.
@@ -388,18 +388,19 @@ def build_rows(
         ipc = action.casefold() in {"нет ipc от клиента", "ipc не будет получен"}
 
         alerts: list[str] = []
-        # 1 — no application in lists
-        if list_hit is None:
-            alerts.append("1")
-        # 2 — still requested extract >7d
-        if list_hit is not None and list_hit.stage == STAGE_REQUESTED and age > 7:
-            alerts.append("2")
-        # 3 — no MPT in permissions >14d
-        if not has_perm and age > 14:
-            alerts.append("3")
-        # 4 — permissions yes, TAZ still receiving
-        if has_perm and action.casefold() == "получаем мпт":
+        if has_perm:
+            # МПТ уже в Перечне, а в ТАЗ ещё не «Есть МПТ» → только «ТАЗ не обновлён»
             alerts.append("4")
+        else:
+            # 1 — no application in lists
+            if list_hit is None:
+                alerts.append("1")
+            # 2 — still requested extract >7d
+            if list_hit is not None and list_hit.stage == STAGE_REQUESTED and age > 7:
+                alerts.append("2")
+            # 3 — no MPT in permissions >14d
+            if age > 14:
+                alerts.append("3")
 
         if not alerts and not ipc:
             # no alert and not IPC → skip (e.g. age 8-14 with list present and no MPT yet — OK window)
@@ -431,27 +432,19 @@ def build_rows(
     return rows
 
 
-def render_table(rows: list[MptRow], *, show_alerts: bool = True) -> str:
+def render_table(rows: list[MptRow]) -> str:
     if not rows:
         return '<p class="muted">Нет позиций.</p>'
     head = """
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
 """
-    if show_alerts:
-        head += "<th>Тревоги</th>"
-    head += "</tr></thead><tbody>\n"
     body: list[str] = []
     for row in rows:
-        cls = []
-        if "3" in row.alerts or "4" in row.alerts:
-            cls.append("flagged")
-        if row.warehouse:
-            cls.append("wh")
-        tr_cls = f' class="{" ".join(cls)}"' if cls else ""
+        tr_cls = ' class="wh"' if row.warehouse else ""
 
         pn_cell = esc(row.pn)
         if row.list_hit and row.list_hit.matched_via == "alt":
@@ -460,10 +453,6 @@ def render_table(rows: list[MptRow], *, show_alerts: bool = True) -> str:
             pn_cell += ' <span class="tag alt">матч ALT в перечне</span>'
         if row.alt_pn:
             pn_cell += f'<div class="muted">ALT: {esc(row.alt_pn)}</div>'
-
-        client_cell = esc(row.client)
-        if row.warehouse:
-            client_cell += ' <span class="tag wh">на склад</span>'
 
         if row.list_hit:
             list_cell = (
@@ -489,34 +478,48 @@ def render_table(rows: list[MptRow], *, show_alerts: bool = True) -> str:
             sheet = INVOICER_TO_SHEET.get(row.invoicer, "—")
             perm_cell = f'<span class="bad">нет в {esc(sheet)}</span>'
 
-        alert_map = {
-            "1": "нет заявки",
-            "2": "нет вырезки >7д",
-            "3": "нет МПТ >14д",
-            "4": "МПТ в перечне, в ТАЗ ещё получаем",
-        }
-        alerts_cell = " ".join(
-            f'<span class="tag a{a}">{esc(alert_map[a])}</span>' for a in row.alerts
-        )
-
         body.append(
             f"<tr{tr_cls}>"
-            f"<td>{client_cell}</td>"
             f"<td>{esc(row.invoice)}</td>"
             f"<td>{pn_cell}</td>"
             f"<td>{esc(row.description)}</td>"
-            f"<td>{esc(row.status)}</td>"
-            f"<td>{esc(row.invoicer)}</td>"
             f"<td>{esc(row.ac_type)}</td>"
             f"<td>{row.order_date.strftime('%d.%m.%Y') if row.order_date else '—'}</td>"
             f'<td class="num">{row.age_days}</td>'
             f"<td>{esc(row.mpt_action)}</td>"
             f"<td>{list_cell}</td>"
             f"<td>{perm_cell}</td>"
-            + (f"<td>{alerts_cell}</td>" if show_alerts else "")
-            + "</tr>"
+            f"</tr>"
         )
     return head + "\n".join(body) + "\n</tbody></table>"
+
+
+def render_client_groups(rows: list[MptRow]) -> str:
+    if not rows:
+        return '<p class="muted">Нет позиций.</p>'
+    by_client: dict[str, list[MptRow]] = {}
+    for row in rows:
+        by_client.setdefault(row.client, []).append(row)
+    # clients with more rows first, then name
+    ordered = sorted(by_client.items(), key=lambda kv: (-len(kv[1]), kv[0].casefold()))
+    chunks: list[str] = []
+    for client, items in ordered:
+        items_sorted = sorted(items, key=lambda r: (-r.age_days, r.invoice, r.pn))
+        wh = ' <span class="tag wh">на склад</span>' if any(i.warehouse for i in items_sorted) else ""
+        chunks.append(
+            f"""
+<details class="client" open>
+  <summary>
+    <span class="client-name">{esc(client)}{wh}</span>
+    <span class="pill">{len(items_sorted)} поз.</span>
+  </summary>
+  <div class="client-body">
+    {render_table(items_sorted)}
+  </div>
+</details>
+"""
+        )
+    return "\n".join(chunks)
 
 
 def render_html(rows: list[MptRow], report_date: date) -> str:
@@ -529,15 +532,17 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 
     def section(anchor: str, title: str, note: str, data: list[MptRow], open_: bool = True) -> str:
         opened = " open" if open_ and data else ""
+        n_clients = len({r.client for r in data})
         return f"""
 <details class="group"{opened} id="{anchor}">
   <summary>
     <span class="group-name">{esc(title)}</span>
     <span class="pill">{len(data)} поз.</span>
+    <span class="pill">{n_clients} кл.</span>
   </summary>
   <div class="group-body">
     <p class="muted">{esc(note)}</p>
-    {render_table(data)}
+    {render_client_groups(data)}
   </div>
 </details>
 """
@@ -607,13 +612,22 @@ details.group summary::-webkit-details-marker {{ display:none; }}
   font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
   border-radius:4px; padding:4px 10px; font-weight:700;
 }}
-.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow-x:auto; }}
+.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); }}
+details.client {{
+  background:#f9fbfc; border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; overflow:hidden;
+}}
+details.client summary {{
+  cursor:pointer; list-style:none; padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:#ffffff;
+}}
+details.client summary::-webkit-details-marker {{ display:none; }}
+.client-name {{ font-weight:700; font-size:14px; margin-right:auto; color:var(--navy); }}
+.client-body {{ padding:0 10px 12px; border-top:1px solid #e4ecef; overflow-x:auto; }}
 table {{ width:100%; border-collapse:collapse; font-size:12.5px; }}
 th, td {{ border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }}
-th {{ font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; position:sticky; top:0; }}
+th {{ font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.flagged {{ background:#fff4ec; }}
-tr.wh {{ background:#f7fbff; }}
+tr.wh {{ background:#f0fafc; }}
 .tag {{
   display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
   padding:2px 7px; margin:1px 2px; border:1px solid #d0d0d0; background:#f3f3f3; color:var(--navy);
@@ -622,10 +636,6 @@ tr.wh {{ background:#f7fbff; }}
 .tag.wh {{ background:#d5fbff; border-color:#b6e8ef; }}
 .tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
 .tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
-.tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
-.tag.a2 {{ background:#fff3cd; border-color:#e6d89c; }}
-.tag.a3 {{ background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }}
-.tag.a4 {{ background:#e8f0fe; border-color:#b6c9f0; }}
 .footer {{ margin-top:28px; color:#4c4c4c; font-size:12px; }}
 @media (max-width:900px) {{
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
@@ -655,8 +665,10 @@ tr.wh {{ background:#f7fbff; }}
         <div class="muted">склад: {len(wh)}</div></div>
     </div>
     <p class="muted">
-      Строка может попасть в несколько блоков. Исключены позиции, где МПТ уже есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Совпадение типа ВС (J ↔ Перечень) — пробное; расхождения подсвечены тегом «тип ВС ≠».
+      Внутри каждого раздела — плитки по клиентам. Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
+      Если МПТ уже в Перечне — позиция только в блоке 4 (ТАЗ не обновлён).
+      Совпадение типа ВС (J ↔ Перечень) — пробное; расхождения тегом «тип ВС ≠».
+      Голубая подсветка строки — «Закупка на склад».
     </p>
   </section>
 
@@ -675,8 +687,8 @@ tr.wh {{ background:#f7fbff; }}
            "В Списках статус нормализован как «вырезка запрошена», а заказ старше 7 дней.", a2)}
   {section("a3", "3 · Нет МПТ более 2 недель",
            "В Перечне (вкладка по Invoicer: ФЭ→ФЭИ, М→МЕТЕОР, ЛР→ЛР) нет строки по P/N/ALT, возраст >14 дн.", a3)}
-  {section("a4", "4 · МПТ есть в Перечне, в ТАЗ ещё «Получаем МПТ»",
-           "Разрешение уже в Перечнях 2025–2026, но «Действия по МПТ» не переведены на «Есть МПТ».", a4)}
+  {section("a4", "4 · ТАЗ не обновлён",
+           "МПТ уже есть в Перечнях 2025–2026, но в ТАЗ ещё не стоит «Есть МПТ» (в т.ч. пусто / Получаем МПТ).", a4)}
   {section("ipc", "IPC — отдельно",
            "Действия по МПТ = «Нет IPC от клиента» или «IPC не будет получен».", ipc, open_=False)}
 

@@ -63,13 +63,22 @@ details.group summary::-webkit-details-marker { display:none; }
   font-size:12px; background:var(--cyan); border:1px solid #b6e8ef; color:var(--navy);
   border-radius:4px; padding:4px 10px; font-weight:700;
 }
-.group-body { padding:0 14px 16px; border-top:1px solid var(--line); overflow-x:auto; }
+.group-body { padding:0 14px 16px; border-top:1px solid var(--line); }
+details.client {
+  background:#f9fbfc; border:1px solid #d7e2e6; border-radius:8px; margin:10px 0; overflow:hidden;
+}
+details.client summary {
+  cursor:pointer; list-style:none; padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:#ffffff;
+}
+details.client summary::-webkit-details-marker { display:none; }
+.client-name { font-weight:700; font-size:14px; margin-right:auto; color:var(--navy); }
+.client-body { padding:0 10px 12px; border-top:1px solid #e4ecef; overflow-x:auto; }
 table { width:100%; border-collapse:collapse; font-size:12.5px; }
 th, td { border-bottom:1px solid #e8e8e8; padding:8px 6px; vertical-align:top; text-align:left; }
-th { font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; position:sticky; top:0; }
+th { font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:#4c4c4c; background:#f3f7f8; }
 td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-tr.flagged { background:#fff4ec; }
-tr.wh { background:#f7fbff; }
+tr.wh { background:#f0fafc; }
 .tag {
   display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
   padding:2px 7px; margin:1px 2px; border:1px solid #d0d0d0; background:#f3f3f3; color:var(--navy);
@@ -78,10 +87,6 @@ tr.wh { background:#f7fbff; }
 .tag.wh { background:#d5fbff; border-color:#b6e8ef; }
 .tag.ok { background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }
 .tag.bad, .bad { background:#fde8e6; border-color:#f0b8b2; color:var(--red); }
-.tag.a1 { background:#fde8e6; border-color:#f0b8b2; color:var(--red); }
-.tag.a2 { background:#fff3cd; border-color:#e6d89c; }
-.tag.a3 { background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }
-.tag.a4 { background:#e8f0fe; border-color:#b6c9f0; }
 .footer { margin-top:28px; color:#4c4c4c; font-size:12px; }
 @media (max-width:900px) {
   .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -103,16 +108,18 @@ tr.wh { background:#f7fbff; }
   <section class="card">
     <h2 style="margin-top:0">Сводка тревог</h2>
     <div class="kpi-grid">
-      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">51</div></div>
+      <div class="kpi"><div class="label">1 · Нет заявки</div><div class="value">19</div></div>
       <div class="kpi"><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">4</div></div>
       <div class="kpi"><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">24</div></div>
-      <div class="kpi"><div class="label">4 · МПТ есть, ТАЗ «получаем»</div><div class="value">32</div></div>
+      <div class="kpi"><div class="label">4 · МПТ есть, ТАЗ «получаем»</div><div class="value">64</div></div>
       <div class="kpi"><div class="label">IPC отдельно</div><div class="value">3</div>
         <div class="muted">склад: 4</div></div>
     </div>
     <p class="muted">
-      Строка может попасть в несколько блоков. Исключены позиции, где МПТ уже есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Совпадение типа ВС (J ↔ Перечень) — пробное; расхождения подсвечены тегом «тип ВС ≠».
+      Внутри каждого раздела — плитки по клиентам. Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
+      Если МПТ уже в Перечне — позиция только в блоке 4 (ТАЗ не обновлён).
+      Совпадение типа ВС (J ↔ Перечень) — пробное; расхождения тегом «тип ВС ≠».
+      Голубая подсветка строки — «Закупка на склад».
     </p>
   </section>
 
@@ -129,73 +136,166 @@ tr.wh { background:#f7fbff; }
 <details class="group" open id="a1">
   <summary>
     <span class="group-name">1 · Нет заявки на МПТ в «Списки на МПТ»</span>
-    <span class="pill">51 поз.</span>
+    <span class="pill">19 поз.</span>
+    <span class="pill">8 кл.</span>
   </summary>
   <div class="group-body">
     <p class="muted">Ожидалась заявка день-в-день с датой заказа (столбец Q). В Списках нет строки по P/N (или ALT).</p>
     
+<details class="client" open>
+  <summary>
+    <span class="client-name">Utair</span>
+    <span class="pill">8 поз.</span>
+  </summary>
+  <div class="client-body">
+    
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
-<th>Тревоги</th></tr></thead><tbody>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td>ded</td><td>622-5132-633</td><td>RECEIVER TRANSMITTER WRT-701</td><td>2 PAID</td><td>ФЭ</td><td></td><td>15.07.2024</td><td class="num">844</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Дримджет</td><td>9122421394</td><td>NP139322-14<div class="muted">ALT: 601R33033-30</div></td><td>WINDOW, SIDE (RH)</td><td>1 NOT PAID</td><td>ФЭ</td><td>CH-850</td><td>12.12.2024</td><td class="num">694</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">7614/18 от 29.01.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>-</td><td>622-6263-003</td><td>INTERROGATOR DME 1</td><td>2 PAID</td><td>М</td><td>ATR72</td><td>06.03.2025</td><td class="num">610</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Авексима Лимитед</td><td>13032513164</td><td>GC331-0001-15</td><td>WINDSHIELD (LH)</td><td>1 NOT PAID</td><td>ФЭ</td><td>Global</td><td>11.03.2025</td><td class="num">605</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Русджет</td><td>2072516454</td><td>09-130021-102</td><td>STERILIZER NPS-A6</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>31.10.2025</td><td class="num">371</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">№91537/18 от 12.08.2026</div><div class="muted">Самолеты типов Airbus A318/A319/A320/A321</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td></td><td>170-69967-405</td><td>VENT FLAP ASSY</td><td>2 PAID</td><td>ФЭ</td><td>Е170</td><td>19.12.2025</td><td class="num">322</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">1231/18 от 14.01.2026</div><div class="muted">Самолеты типа Embraer 170/175</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td></td><td>154DB3</td><td>PROBE-PT2/TT2</td><td>2 PAID</td><td>ФЭ</td><td>boeing</td><td>26.12.2025</td><td class="num">315</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Руслайн</td><td>3004261606-1</td><td>242113-2</td><td>VALVE, FUEL CROSSFLOW SHUTOFF</td><td>2 PAID</td><td>ФЭ</td><td></td><td>05.05.2026</td><td class="num">185</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>FLAGAVIA</td><td>21052616426</td><td>AYLF50425</td><td>COCKPIT DUCT TEMPERATURE SENSOR</td><td>2 PAID</td><td>ФЭ</td><td>F900ExEasy</td><td>21.05.2026</td><td class="num">169</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Falcon 900EX EASy</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>ЮВТ</td><td>210526150012</td><td>ATS-3XPK</td><td>ATS PRO RIVET GUN KIT</td><td>2 PAID</td><td>ФЭ</td><td></td><td>26.05.2026</td><td class="num">164</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>27052615344</td><td>4313100-01-6600</td><td>OVEN DF3000</td><td>2 PAID</td><td>ФЭ</td><td>B777</td><td>27.05.2026</td><td class="num">163</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">62645/18 от 05.06.2026</div><div class="muted">Самолеты типа Boeing 777</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Глобал Скай</td><td>19062616406</td><td>50-384040-5</td><td>TUBE ASSY ELECTRICALLY HEATED RH</td><td>2 PAID</td><td>ФЭ</td><td>B300/PT6A-60A</td><td>19.06.2026</td><td class="num">140</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">79480/18 от 15.07.2026</div><div class="muted">Самолеты типа Beechcraft В300, В300С</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Смартавиа</td><td>2072615243</td><td>452-0133</td><td>FIXED ELT BATTERY</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>02.07.2026</td><td class="num">127</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">146152/18 от 24.12.2025</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>ЮВТ</td><td>300626103012</td><td>822-0044-001</td><td>PANEL,FLIGHT CONTROL</td><td>1 NOT PAID</td><td>ФЭ</td><td>CRJ200</td><td>13.07.2026</td><td class="num">116</td><td>Есть МПТ</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Уральские Авиалинии</td><td>23062615103</td><td>4205603</td><td>PUMP-ELECTRIC</td><td>6 TROUBLE</td><td>ФЭ</td><td>A32S</td><td>29.07.2026</td><td class="num">100</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">75387/18 от 06.07.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Well Known aviation technology</td><td>JTI300726-9</td><td>319AFL05SA00-109</td><td>DIVIDER TROLLEY</td><td>2 PAID</td><td>Др</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Well Known aviation technology</td><td>JTI300726-9</td><td>580001337301134</td><td>KEYBOARD ASSY,LH (WITH COLOUR H134)</td><td>2 PAID</td><td>Др</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Красавиа</td><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Красавиа</td><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td>6 TROUBLE</td><td>ФЭ</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr><td>Скайпро Техникс</td><td>11082613526-1</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK</td><td>2 PAID</td><td>ФЭ</td><td></td><td>13.08.2026</td><td class="num">85</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>АТРАН</td><td>21082615361</td><td>4221T100-1</td><td>FLAP ALTERNATE DRIVE UNIT</td><td>6 TROUBLE</td><td>ФЭ</td><td></td><td>21.08.2026</td><td class="num">77</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">105158/18 от 14.09.2026</div><div class="muted">Самолеты типов Boeing 737</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Аэрофлот</td><td>24082610024</td><td>0859BH03</td><td>PROBE - MULTIFUNCTION</td><td>1 NOT PAID</td><td>ФЭ</td><td>A350</td><td>24.08.2026</td><td class="num">74</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A350</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>ЮВТ</td><td>130826105012</td><td>2100-4043-00</td><td>FDR</td><td>2 PAID</td><td>ФЭ</td><td>CRJ-200</td><td>28.08.2026</td><td class="num">70</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Тулпар Техник</td><td>4092616236</td><td>81141A020303</td><td>SAFETY VALVE FILTER</td><td>2 PAID</td><td>ФЭ</td><td>Challenger 350</td><td>03.09.2026</td><td class="num">64</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Bombardier BD-100-1A10</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Джет Техник</td><td>11092610224</td><td>100-1084-02</td><td>BATTERY CHARGER</td><td>2 PAID</td><td>ФЭ</td><td></td><td>11.09.2026</td><td class="num">56</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>ЮВТ</td><td>25082613312</td><td>0871BN8</td><td>ice detector</td><td>2 PAID</td><td>ФЭ</td><td>CRJ-200</td><td>11.09.2026</td><td class="num">56</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>16092610575</td><td>65C27506-3</td><td>TRANSMISSION ASSY, RH, #6</td><td>6 TROUBLE</td><td>М</td><td>737CL</td><td>16.09.2026</td><td class="num">51</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Авиа Менеджмент Груп</td><td>21092614274</td><td>15782-101</td><td>PRES.SWITCH ACCM</td><td>2 PAID</td><td>ФЭ</td><td></td><td>23.09.2026</td><td class="num">44</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Русджет</td><td>1510261941</td><td>382K02-1</td><td>Main Tyre</td><td>2 PAID</td><td>ФЭ</td><td>GLOBAL XRS</td><td>01.10.2026</td><td class="num">36</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>13102610296</td><td>325-014-802-0</td><td>HARNESS-WIRING CJ11L</td><td>2 PAID</td><td>ФЭ</td><td></td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Дримджет</td><td>1310261204</td><td>304K63-2</td><td>TIRE, MAIN WHEEL</td><td>1 NOT PAID</td><td>ФЭ</td><td>legacy</td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>CFT Aviation</td><td>15102610546</td><td>NP139322-13<div class="muted">ALT: NP139322-11
-NP139322-9
-NP139322-5
-
-NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td>2 PAID</td><td>ФЭ</td><td>Challenger 850</td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Скайпро Техникс</td><td>14102611346</td><td>4848DZ-0100N<div class="muted">ALT: 4848DZ100N</div></td><td>HYDRAULIC ACTUATOR</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>16102613015</td><td>40678-2<div class="muted">ALT: 4078-2</div></td><td>MAIN BATTERY</td><td>1 NOT PAID</td><td>М</td><td>ALL</td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Якутия</td><td>91026193012</td><td>4101054</td><td>FAN ASSY</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>19102611286</td><td>113A2100-53</td><td>TRAILING EDGE MAIN FLAP_LH INBD</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>ЮВТ</td><td>290726154012</td><td>SM20ACD300A21</td><td>CONTACTOR</td><td>2 PAID</td><td>ФЭ</td><td>Bell 407</td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">100085/18 от 01.09.2026</div><div class="muted">Вертолеты типов BELL 407/429</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>S7 Engineering</td><td>20102615136</td><td>64236-3</td><td>RESERVOIR, CARBON</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A319/A320/A321</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>335-265-150-0</td><td>HOSE</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>649-433-083-0</td><td>HOSE</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>649-434-250-0</td><td>HOSE</td><td>6 TROUBLE</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>21102611265</td><td>69-73100-1</td><td>TRACK</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Аэрофлот</td><td>21102613474</td><td>1982660116</td><td>DMC-DISPLAY MANAGEMENT COMPUTER</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320F</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A320</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>АК Сибирь</td><td>22102611456</td><td>1982660116</td><td>DMC-DISPLAY MANAGEMENT COMPUTER</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A320</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged"><td>АЭМЗ</td><td>14102611354</td><td>31406-003</td><td>BATTERY</td><td>1 NOT PAID</td><td>ФЭ</td><td>Pilatus</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Смартавиа</td><td>30062612283</td><td>285A1010-9</td><td>MODULE</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>23.10.2026</td><td class="num">14</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">85814/18 от 29.07.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Utair</td><td>27102613205</td><td>162500-100</td><td>COMPUTER, ELEVATOR FEEL</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>27.10.2026</td><td class="num">10</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>Глобал Скай</td><td>26102615286</td><td>GW415-7125-9</td><td>Brake Control Unit</td><td>1 NOT PAID</td><td>ФЭ</td><td>BD-700-1A10</td><td>28.10.2026</td><td class="num">9</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr><td>CFT Aviation</td><td>23102614216</td><td>822-0101-002</td><td>RECEIVER / TRANSMITTER - HF-9031A</td><td>1 NOT PAID</td><td>ФЭ</td><td>Challenger 850</td><td>29.10.2026</td><td class="num">8</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span></td></tr>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td></td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Ямал</td><td>19062610563</td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
+</tr></thead><tbody>
+<tr><td>-</td><td>622-6263-003</td><td>INTERROGATOR DME 1</td><td>ATR72</td><td>06.03.2025</td><td class="num">610</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>16092610575</td><td>65C27506-3</td><td>TRANSMISSION ASSY, RH, #6</td><td>737CL</td><td>16.09.2026</td><td class="num">51</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>16102613015</td><td>40678-2<div class="muted">ALT: 4078-2</div></td><td>MAIN BATTERY</td><td>ALL</td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>335-265-150-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>649-433-083-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>649-434-250-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>21102611265</td><td>69-73100-1</td><td>TRACK</td><td>B737CL</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>27102613205</td><td>162500-100</td><td>COMPUTER, ELEVATOR FEEL</td><td>B737CL</td><td>27.10.2026</td><td class="num">10</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
 </tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Well Known aviation technology</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>JTI300726-9</td><td>319AFL05SA00-109</td><td>DIVIDER TROLLEY</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td></tr>
+<tr><td>JTI300726-9</td><td>580001337301134</td><td>KEYBOARD ASSY,LH (WITH COLOUR H134)</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АК Сибирь</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>13102610296</td><td>325-014-802-0</td><td>HARNESS-WIRING CJ11L</td><td></td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>19102611286</td><td>113A2100-53</td><td>TRAILING EDGE MAIN FLAP_LH INBD</td><td></td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Закупка на склад <span class="tag wh">на склад</span></span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr class="wh"><td>ded</td><td>622-5132-633</td><td>RECEIVER TRANSMITTER WRT-701</td><td></td><td>15.07.2024</td><td class="num">844</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr class="wh"><td></td><td>154DB3</td><td>PROBE-PT2/TT2</td><td>boeing</td><td>26.12.2025</td><td class="num">315</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ЮВТ</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>210526150012</td><td>ATS-3XPK</td><td>ATS PRO RIVET GUN KIT</td><td></td><td>26.05.2026</td><td class="num">164</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>300626103012</td><td>822-0044-001</td><td>PANEL,FLIGHT CONTROL</td><td>CRJ200</td><td>13.07.2026</td><td class="num">116</td><td>Есть МПТ</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">CFT Aviation</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>23102614216</td><td>822-0101-002</td><td>RECEIVER / TRANSMITTER - HF-9031A</td><td>Challenger 850</td><td>29.10.2026</td><td class="num">8</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Авексима Лимитед</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>13032513164</td><td>GC331-0001-15</td><td>WINDSHIELD (LH)</td><td>Global</td><td>11.03.2025</td><td class="num">605</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АЭМЗ</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>14102611354</td><td>31406-003</td><td>BATTERY</td><td>Pilatus</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
   </div>
 </details>
 
@@ -204,21 +304,65 @@ NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td>2 PAID</td><td>ФЭ</td><td>
   <summary>
     <span class="group-name">2 · Нет вырезки более недели</span>
     <span class="pill">4 поз.</span>
+    <span class="pill">3 кл.</span>
   </summary>
   <div class="group-body">
     <p class="muted">В Списках статус нормализован как «вырезка запрошена», а заказ старше 7 дней.</p>
     
+<details class="client" open>
+  <summary>
+    <span class="client-name">Utair</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
-<th>Тревоги</th></tr></thead><tbody>
-<tr class="flagged"><td>АК Сибирь</td><td>18092616496</td><td>19000-030</td><td>CHECK VALVE , WASTE SYS</td><td>2 PAID</td><td>ФЭ</td><td></td><td>18.09.2026</td><td class="num">49</td><td>—</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Сентябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>ТАРП Авиэйшн</td><td>5102612226</td><td>BA203712</td><td>BELLOWS, FLEXIBLE</td><td>2 PAID</td><td>ФЭ</td><td>G5000</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · октябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr><td>Utair</td><td>23102611345</td><td>D22698500-7</td><td>NLG LEG ASSEMBLY</td><td>1 NOT PAID</td><td>М</td><td>ATR72</td><td>23.10.2026</td><td class="num">14</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">вырезку запросили · октябрь 4 часть</div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span></td></tr>
-<tr><td>Utair</td><td>23102611345</td><td>D22703500-3</td><td>NLG DRAG BRACE ASSEMBLY</td><td>1 NOT PAID</td><td>М</td><td>ATR72</td><td>23.10.2026</td><td class="num">14</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">вырезку запросили · октябрь 4 часть</div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span></td></tr>
+</tr></thead><tbody>
+<tr><td>23102611345</td><td>D22698500-7</td><td>NLG LEG ASSEMBLY</td><td>ATR72</td><td>23.10.2026</td><td class="num">14</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">вырезку запросили · октябрь 4 часть</div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>23102611345</td><td>D22703500-3</td><td>NLG DRAG BRACE ASSEMBLY</td><td>ATR72</td><td>23.10.2026</td><td class="num">14</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">вырезку запросили · октябрь 4 часть</div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
 </tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АК Сибирь</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>18092616496</td><td>19000-030</td><td>CHECK VALVE , WASTE SYS</td><td></td><td>18.09.2026</td><td class="num">49</td><td>—</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Сентябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ТАРП Авиэйшн</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>5102612226</td><td>BA203712</td><td>BELLOWS, FLEXIBLE</td><td>G5000</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · октябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
   </div>
 </details>
 
@@ -227,92 +371,760 @@ NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td>2 PAID</td><td>ФЭ</td><td>
   <summary>
     <span class="group-name">3 · Нет МПТ более 2 недель</span>
     <span class="pill">24 поз.</span>
+    <span class="pill">12 кл.</span>
   </summary>
   <div class="group-body">
     <p class="muted">В Перечне (вкладка по Invoicer: ФЭ→ФЭИ, М→МЕТЕОР, ЛР→ЛР) нет строки по P/N/ALT, возраст &gt;14 дн.</p>
     
+<details class="client" open>
+  <summary>
+    <span class="client-name">Utair</span>
+    <span class="pill">8 поз.</span>
+  </summary>
+  <div class="client-body">
+    
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
-<th>Тревоги</th></tr></thead><tbody>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td>ded</td><td>622-5132-633</td><td>RECEIVER TRANSMITTER WRT-701</td><td>2 PAID</td><td>ФЭ</td><td></td><td>15.07.2024</td><td class="num">844</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Дримджет</td><td>9122421394</td><td>NP139321-17<div class="muted">ALT: 601R33033-27</div></td><td>LH WINDSHIELD</td><td>2 PAID</td><td>ФЭ</td><td>CH-850</td><td>25.12.2024</td><td class="num">681</td><td>Есть МПТ</td><td><div><b>прочее</b></div><div class="muted">ожидаем мпт после 12.11</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Русджет</td><td>7032515154</td><td>8ES007046-22</td><td>Power Supply</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>02.02.2025</td><td class="num">642</td><td>—</td><td><div><b>вырезку получили</b></div><div class="muted">вырезка в РТО</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>-</td><td>622-6263-003</td><td>INTERROGATOR DME 1</td><td>2 PAID</td><td>М</td><td>ATR72</td><td>06.03.2025</td><td class="num">610</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Авексима Лимитед</td><td>13032513164</td><td>GC331-0001-15</td><td>WINDSHIELD (LH)</td><td>1 NOT PAID</td><td>ФЭ</td><td>Global</td><td>11.03.2025</td><td class="num">605</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td></td><td>154DB3</td><td>PROBE-PT2/TT2</td><td>2 PAID</td><td>ФЭ</td><td>boeing</td><td>26.12.2025</td><td class="num">315</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>ЮВТ</td><td>210526150012</td><td>ATS-3XPK</td><td>ATS PRO RIVET GUN KIT</td><td>2 PAID</td><td>ФЭ</td><td></td><td>26.05.2026</td><td class="num">164</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>ЮВТ</td><td>300626103012</td><td>822-0044-001</td><td>PANEL,FLIGHT CONTROL</td><td>1 NOT PAID</td><td>ФЭ</td><td>CRJ200</td><td>13.07.2026</td><td class="num">116</td><td>Есть МПТ</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Well Known aviation technology</td><td>JTI300726-9</td><td>319AFL05SA00-109</td><td>DIVIDER TROLLEY</td><td>2 PAID</td><td>Др</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Well Known aviation technology</td><td>JTI300726-9</td><td>580001337301134</td><td>KEYBOARD ASSY,LH (WITH COLOUR H134)</td><td>2 PAID</td><td>Др</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>16092610575</td><td>65C27506-3</td><td>TRANSMISSION ASSY, RH, #6</td><td>6 TROUBLE</td><td>М</td><td>737CL</td><td>16.09.2026</td><td class="num">51</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>18092616496</td><td>19000-030</td><td>CHECK VALVE , WASTE SYS</td><td>2 PAID</td><td>ФЭ</td><td></td><td>18.09.2026</td><td class="num">49</td><td>—</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Сентябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>1102611065</td><td>314U2200-31</td><td>PLUG ASSY</td><td>2 PAID</td><td>М</td><td>B762</td><td>01.10.2026</td><td class="num">36</td><td>Получаем МПТ</td><td><div><b>—</b></div><div class="muted"></div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>ТАРП Авиэйшн</td><td>5102612226</td><td>BA203712</td><td>BELLOWS, FLEXIBLE</td><td>2 PAID</td><td>ФЭ</td><td>G5000</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · октябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>13102610296</td><td>325-014-802-0</td><td>HARNESS-WIRING CJ11L</td><td>2 PAID</td><td>ФЭ</td><td></td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>16102613015</td><td>40678-2<div class="muted">ALT: 4078-2</div></td><td>MAIN BATTERY</td><td>1 NOT PAID</td><td>М</td><td>ALL</td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Северсталь</td><td>23092613303</td><td>NP139321-17</td><td>LH WINDSHIELD</td><td>2 PAID</td><td>ФЭ</td><td>CRJ200</td><td>16.10.2026</td><td class="num">21</td><td>Получаем МПТ</td><td><div><b>прочее</b></div><div class="muted">ожидаем мпт после 12.11</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>19102611286</td><td>113A2100-53</td><td>TRAILING EDGE MAIN FLAP_LH INBD</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>335-265-150-0</td><td>HOSE</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>649-433-083-0</td><td>HOSE</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>20102615255</td><td>649-434-250-0</td><td>HOSE</td><td>6 TROUBLE</td><td>М</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>21102611265</td><td>69-73100-1</td><td>TRACK</td><td>1 NOT PAID</td><td>М</td><td>B737CL</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>АЭМЗ</td><td>14102611354</td><td>31406-003</td><td>BATTERY</td><td>1 NOT PAID</td><td>ФЭ</td><td>Pilatus</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Авиасервис</td><td>22102613256</td><td>20-035008-067</td><td>CONTROL UNIT, BLEED AIR LEAK</td><td>1 NOT PAID</td><td>ФЭ</td><td>CL605</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><div><b>вырезку получили</b></div><div class="muted">вырезку получили · ноябрь 1 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a3">нет МПТ &gt;14д</span></td></tr>
+</tr></thead><tbody>
+<tr><td>-</td><td>622-6263-003</td><td>INTERROGATOR DME 1</td><td>ATR72</td><td>06.03.2025</td><td class="num">610</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>16092610575</td><td>65C27506-3</td><td>TRANSMISSION ASSY, RH, #6</td><td>737CL</td><td>16.09.2026</td><td class="num">51</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>1102611065</td><td>314U2200-31</td><td>PLUG ASSY</td><td>B762</td><td>01.10.2026</td><td class="num">36</td><td>Получаем МПТ</td><td><div><b>—</b></div><div class="muted"></div></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>16102613015</td><td>40678-2<div class="muted">ALT: 4078-2</div></td><td>MAIN BATTERY</td><td>ALL</td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>335-265-150-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>649-433-083-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>20102615255</td><td>649-434-250-0</td><td>HOSE</td><td>B737CL</td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
+<tr><td>21102611265</td><td>69-73100-1</td><td>TRACK</td><td>B737CL</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в МЕТЕОР 2025-2026</span></td></tr>
 </tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АК Сибирь</span>
+    <span class="pill">3 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>18092616496</td><td>19000-030</td><td>CHECK VALVE , WASTE SYS</td><td></td><td>18.09.2026</td><td class="num">49</td><td>—</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Сентябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>13102610296</td><td>325-014-802-0</td><td>HARNESS-WIRING CJ11L</td><td></td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>19102611286</td><td>113A2100-53</td><td>TRAILING EDGE MAIN FLAP_LH INBD</td><td></td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Well Known aviation technology</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>JTI300726-9</td><td>319AFL05SA00-109</td><td>DIVIDER TROLLEY</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td></tr>
+<tr><td>JTI300726-9</td><td>580001337301134</td><td>KEYBOARD ASSY,LH (WITH COLOUR H134)</td><td></td><td>30.07.2026</td><td class="num">99</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в —</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Закупка на склад <span class="tag wh">на склад</span></span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr class="wh"><td>ded</td><td>622-5132-633</td><td>RECEIVER TRANSMITTER WRT-701</td><td></td><td>15.07.2024</td><td class="num">844</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr class="wh"><td></td><td>154DB3</td><td>PROBE-PT2/TT2</td><td>boeing</td><td>26.12.2025</td><td class="num">315</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ЮВТ</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>210526150012</td><td>ATS-3XPK</td><td>ATS PRO RIVET GUN KIT</td><td></td><td>26.05.2026</td><td class="num">164</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>300626103012</td><td>822-0044-001</td><td>PANEL,FLIGHT CONTROL</td><td>CRJ200</td><td>13.07.2026</td><td class="num">116</td><td>Есть МПТ</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Авексима Лимитед</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>13032513164</td><td>GC331-0001-15</td><td>WINDSHIELD (LH)</td><td>Global</td><td>11.03.2025</td><td class="num">605</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Авиасервис</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>22102613256</td><td>20-035008-067</td><td>CONTROL UNIT, BLEED AIR LEAK</td><td>CL605</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><div><b>вырезку получили</b></div><div class="muted">вырезку получили · ноябрь 1 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АЭМЗ</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>14102611354</td><td>31406-003</td><td>BATTERY</td><td>Pilatus</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Дримджет</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>9122421394</td><td>NP139321-17<div class="muted">ALT: 601R33033-27</div></td><td>LH WINDSHIELD</td><td>CH-850</td><td>25.12.2024</td><td class="num">681</td><td>Есть МПТ</td><td><div><b>прочее</b></div><div class="muted">ожидаем мпт после 12.11</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Русджет</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>7032515154</td><td>8ES007046-22</td><td>Power Supply</td><td></td><td>02.02.2025</td><td class="num">642</td><td>—</td><td><div><b>вырезку получили</b></div><div class="muted">вырезка в РТО</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Северсталь</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>23092613303</td><td>NP139321-17</td><td>LH WINDSHIELD</td><td>CRJ200</td><td>16.10.2026</td><td class="num">21</td><td>Получаем МПТ</td><td><div><b>прочее</b></div><div class="muted">ожидаем мпт после 12.11</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ТАРП Авиэйшн</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>5102612226</td><td>BA203712</td><td>BELLOWS, FLEXIBLE</td><td>G5000</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · октябрь 3 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
   </div>
 </details>
 
   
 <details class="group" open id="a4">
   <summary>
-    <span class="group-name">4 · МПТ есть в Перечне, в ТАЗ ещё «Получаем МПТ»</span>
-    <span class="pill">32 поз.</span>
+    <span class="group-name">4 · ТАЗ не обновлён</span>
+    <span class="pill">64 поз.</span>
+    <span class="pill">26 кл.</span>
   </summary>
   <div class="group-body">
-    <p class="muted">Разрешение уже в Перечнях 2025–2026, но «Действия по МПТ» не переведены на «Есть МПТ».</p>
+    <p class="muted">МПТ уже есть в Перечнях 2025–2026, но в ТАЗ ещё не стоит «Есть МПТ» (в т.ч. пусто / Получаем МПТ).</p>
+    
+<details class="client" open>
+  <summary>
+    <span class="client-name">Аэрофлот</span>
+    <span class="pill">10 поз.</span>
+  </summary>
+  <div class="client-body">
     
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
-<th>Тревоги</th></tr></thead><tbody>
-<tr class="flagged"><td>Дримджет</td><td>9122421394</td><td>NP139322-14<div class="muted">ALT: 601R33033-30</div></td><td>WINDOW, SIDE (RH)</td><td>1 NOT PAID</td><td>ФЭ</td><td>CH-850</td><td>12.12.2024</td><td class="num">694</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">7614/18 от 29.01.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>27052615344</td><td>4313100-01-6600</td><td>OVEN DF3000</td><td>2 PAID</td><td>ФЭ</td><td>B777</td><td>27.05.2026</td><td class="num">163</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">62645/18 от 05.06.2026</div><div class="muted">Самолеты типа Boeing 777</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Глобал Скай</td><td>19062616406</td><td>50-384040-5</td><td>TUBE ASSY ELECTRICALLY HEATED RH</td><td>2 PAID</td><td>ФЭ</td><td>B300/PT6A-60A</td><td>19.06.2026</td><td class="num">140</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">79480/18 от 15.07.2026</div><div class="muted">Самолеты типа Beechcraft В300, В300С</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Смартавиа</td><td>2072615243</td><td>452-0133</td><td>FIXED ELT BATTERY</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>02.07.2026</td><td class="num">127</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">146152/18 от 24.12.2025</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Уральские Авиалинии</td><td>23062615103</td><td>4205603</td><td>PUMP-ELECTRIC</td><td>6 TROUBLE</td><td>ФЭ</td><td>A32S</td><td>29.07.2026</td><td class="num">100</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">75387/18 от 06.07.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Красавиа</td><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td>1 NOT PAID</td><td>ФЭ</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Красавиа</td><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td>6 TROUBLE</td><td>ФЭ</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>27082616305</td><td>82425-00-0060</td><td>NAVIGATION PROCESSOR UNIT</td><td>2 PAID</td><td>М</td><td>ATR72</td><td>27.08.2026</td><td class="num">71</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа ATR 72</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>4092612345</td><td>RD-AX7308-01 <span class="tag alt">матч ALT в списках</span><div class="muted">ALT: RDAX7308-01</div></td><td>REPRODUCER</td><td>6 TROUBLE</td><td>М</td><td>737ALL</td><td>04.09.2026</td><td class="num">63</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>7092610195</td><td>E-329E<div class="muted">ALT: E329E</div></td><td>RELAY</td><td>1 NOT PAID</td><td>М</td><td>737CL</td><td>07.09.2026</td><td class="num">60</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>9092616154</td><td>F5757411604200</td><td>FAIRING N 4 LH MOVABLE</td><td>1 NOT PAID</td><td>ФЭ</td><td>A330</td><td>08.09.2026</td><td class="num">59</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">112946/18 от 01.10.2026</div><div class="muted">Самолеты типа Airbus A330</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>9092611085</td><td>CGAB1400-00<div class="muted">ALT: CGAB1400-01</div></td><td>SMOKE DETECTOR</td><td>1 NOT PAID</td><td>М</td><td>737ALL</td><td>09.09.2026</td><td class="num">58</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>21092614525</td><td>1150002-1</td><td>SENSOR</td><td>6 TROUBLE</td><td>М</td><td>737ALL</td><td>21.09.2026</td><td class="num">46</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>24092615556</td><td>4313101-01-6600</td><td>OVEN</td><td>6 TROUBLE</td><td>ФЭ</td><td></td><td>24.09.2026</td><td class="num">43</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>28092614585</td><td>RDAA8046-01</td><td>CMT (TERMINAL ASSY-CAB. MANAGEMENT)</td><td>2 PAID</td><td>М</td><td>B762</td><td>28.09.2026</td><td class="num">39</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 767</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>28092615406</td><td>170-00679-405</td><td>MODULE ASSY YAW/PITCH TRIM</td><td>2 PAID</td><td>ФЭ</td><td>E170</td><td>28.09.2026</td><td class="num">39</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 1 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Embraer ERJ 170/175</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>29092614446</td><td>745-1101-505</td><td>NOZZLE ASSY- COMMON</td><td>1 NOT PAID</td><td>ФЭ</td><td>А320</td><td>29.09.2026</td><td class="num">38</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Nordwind</td><td>30092619123</td><td>417A6110-102</td><td>AFT ATTENDANT PANEL ASSY</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>30.09.2026</td><td class="num">37</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 1 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>ИКАР (Nordwind)</td><td>2102616043</td><td>3301-31<div class="muted">ALT: AD-3301-31</div></td><td>BATTERY NICD</td><td>1 NOT PAID</td><td>ФЭ</td><td>E190</td><td>02.10.2026</td><td class="num">35</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">40200/18 от 16.04.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>5102612415</td><td>40574-4</td><td>ACTUATOR - CROSSFEED VALVE ASSY</td><td>2 PAID</td><td>М</td><td>737CL</td><td>05.10.2026</td><td class="num">32</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>12102617506</td><td>107492-6</td><td>REGULATOR-BLEED AIR</td><td>6 TROUBLE</td><td>ФЭ</td><td>B737</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>13102616554</td><td>4063-16082-3</td><td>VALVE ASSY-ISOLATION</td><td>2 PAID</td><td>ФЭ</td><td>A320F</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>13102616554</td><td>4063-16082-3</td><td>VALVE ASSY-ISOLATION</td><td>2 PAID</td><td>ФЭ</td><td>A320F</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>13102617004</td><td>398908-6</td><td>VALVE ASSY - TEMP CONT</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>13102617354</td><td>140301-3</td><td>DOOR ASSY</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Уральские Авиалинии</td><td>14102619513</td><td>3876255-2</td><td>SENSOR-PRESSURE</td><td>1 NOT PAID</td><td>ФЭ</td><td>A32S</td><td>14.10.2026</td><td class="num">23</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Utair</td><td>16102616305</td><td>2612412-1A</td><td>CARBON BRAKE</td><td>1 NOT PAID</td><td>М</td><td>B762</td><td>16.10.2026</td><td class="num">21</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127410/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 767</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>АК Сибирь</td><td>19102611196</td><td>C16786HA02</td><td>INDICATOR-INTEGRATED STBY FLIGHT DIS</td><td>2 PAID</td><td>ФЭ</td><td>B737</td><td>19.10.2026</td><td class="num">18</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Уральские Авиалинии</td><td>22102613523</td><td>740-0220-201</td><td>SHIELD-HEAT, AFT</td><td>1 NOT PAID</td><td>ФЭ</td><td>A32S</td><td>22.10.2026</td><td class="num">15</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 4 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus А318/A319/A320/A321</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>29102611374</td><td>398908-6</td><td>VALVE ASSY - TEMP CONT</td><td>1 NOT PAID</td><td>ФЭ</td><td>B737NG</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td><td><span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged wh"><td>Закупка на склад <span class="tag wh">на склад</span></td><td></td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
-<tr class="flagged"><td>Ямал</td><td>19062610563</td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>1 NOT PAID</td><td>ФЭ</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td><td><span class="tag a1">нет заявки</span> <span class="tag a4">МПТ в перечне, в ТАЗ ещё получаем</span></td></tr>
+</tr></thead><tbody>
+<tr><td>27052615344</td><td>4313100-01-6600</td><td>OVEN DF3000</td><td>B777</td><td>27.05.2026</td><td class="num">163</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">62645/18 от 05.06.2026</div><div class="muted">Самолеты типа Boeing 777</div></td></tr>
+<tr><td>24082610024</td><td>0859BH03</td><td>PROBE - MULTIFUNCTION</td><td>A350</td><td>24.08.2026</td><td class="num">74</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A350</div></td></tr>
+<tr><td>9092616154</td><td>F5757411604200</td><td>FAIRING N 4 LH MOVABLE</td><td>A330</td><td>08.09.2026</td><td class="num">59</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">112946/18 от 01.10.2026</div><div class="muted">Самолеты типа Airbus A330</div></td></tr>
+<tr><td>11092613404</td><td>C19266AA01</td><td>MCDU-MULTIPURPOSE CONT AND DISP UNIT</td><td>A320F</td><td>11.09.2026</td><td class="num">56</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">112946/18 от 01.10.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>13102616554</td><td>4063-16082-3</td><td>VALVE ASSY-ISOLATION</td><td>A320F</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>13102616554</td><td>4063-16082-3</td><td>VALVE ASSY-ISOLATION</td><td>A320F</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>13102617004</td><td>398908-6</td><td>VALVE ASSY - TEMP CONT</td><td>B737</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>13102617354</td><td>140301-3</td><td>DOOR ASSY</td><td>B737</td><td>13.10.2026</td><td class="num">24</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>21102613474</td><td>1982660116</td><td>DMC-DISPLAY MANAGEMENT COMPUTER</td><td>A320F</td><td>21.10.2026</td><td class="num">16</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A320</div></td></tr>
+<tr><td>29102611374</td><td>398908-6</td><td>VALVE ASSY - TEMP CONT</td><td>B737NG</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
 </tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АК Сибирь</span>
+    <span class="pill">9 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>10092610326</td><td>9171A0037-02</td><td>DOWNLOCK HARNESS</td><td>E170</td><td>10.09.2026</td><td class="num">57</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">112946/18 от 01.10.2026</div><div class="muted">Самолеты типа Embraer 170/175</div></td></tr>
+<tr><td>24092615556</td><td>4313101-01-6600</td><td>OVEN</td><td></td><td>24.09.2026</td><td class="num">43</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>28092615406</td><td>170-00679-405</td><td>MODULE ASSY YAW/PITCH TRIM</td><td>E170</td><td>28.09.2026</td><td class="num">39</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 1 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Embraer ERJ 170/175</div></td></tr>
+<tr><td>29092614446</td><td>745-1101-505</td><td>NOZZLE ASSY- COMMON</td><td>А320</td><td>29.09.2026</td><td class="num">38</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>12102617506</td><td>107492-6</td><td>REGULATOR-BLEED AIR</td><td>B737</td><td>12.10.2026</td><td class="num">25</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>15102611206</td><td>355A5340-8</td><td>PANEL ASSY-(FIRE PROTECTION ONLY)</td><td></td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>19102611196</td><td>C16786HA02</td><td>INDICATOR-INTEGRATED STBY FLIGHT DIS</td><td>B737</td><td>19.10.2026</td><td class="num">18</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>19102611266</td><td>645405-2</td><td>FAN-CABIN AIR RECIRCULATION</td><td></td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>22102611456</td><td>1982660116</td><td>DMC-DISPLAY MANAGEMENT COMPUTER</td><td>A320</td><td>22.10.2026</td><td class="num">15</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A320</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Utair</span>
+    <span class="pill">8 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>27082616305</td><td>82425-00-0060</td><td>NAVIGATION PROCESSOR UNIT</td><td>ATR72</td><td>27.08.2026</td><td class="num">71</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа ATR 72</div></td></tr>
+<tr><td>4092612345</td><td>RD-AX7308-01 <span class="tag alt">матч ALT в списках</span><div class="muted">ALT: RDAX7308-01</div></td><td>REPRODUCER</td><td>737ALL</td><td>04.09.2026</td><td class="num">63</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>7092610195</td><td>E-329E<div class="muted">ALT: E329E</div></td><td>RELAY</td><td>737CL</td><td>07.09.2026</td><td class="num">60</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>9092611085</td><td>CGAB1400-00<div class="muted">ALT: CGAB1400-01</div></td><td>SMOKE DETECTOR</td><td>737ALL</td><td>09.09.2026</td><td class="num">58</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>21092614525</td><td>1150002-1</td><td>SENSOR</td><td>737ALL</td><td>21.09.2026</td><td class="num">46</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>28092614585</td><td>RDAA8046-01</td><td>CMT (TERMINAL ASSY-CAB. MANAGEMENT)</td><td>B762</td><td>28.09.2026</td><td class="num">39</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 767</div></td></tr>
+<tr><td>5102612415</td><td>40574-4</td><td>ACTUATOR - CROSSFEED VALVE ASSY</td><td>737CL</td><td>05.10.2026</td><td class="num">32</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 2 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118638/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>16102616305</td><td>2612412-1A</td><td>CARBON BRAKE</td><td>B762</td><td>16.10.2026</td><td class="num">21</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · МЕТЕОР 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">127410/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 767</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Скайпро Техникс</span>
+    <span class="pill">3 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>11082613526-1</td><td>AE713800-1</td><td>HOSE ASSY WITH QUICK</td><td></td><td>13.08.2026</td><td class="num">85</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td></tr>
+<tr><td>14102611346</td><td>120-32763-001</td><td>ROD ASSY</td><td></td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Embraer 135/145</div></td></tr>
+<tr><td>14102611346</td><td>4848DZ-0100N<div class="muted">ALT: 4848DZ100N</div></td><td>HYDRAULIC ACTUATOR</td><td></td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Уральские Авиалинии</span>
+    <span class="pill">3 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>23062615103</td><td>4205603</td><td>PUMP-ELECTRIC</td><td>A32S</td><td>29.07.2026</td><td class="num">100</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">75387/18 от 06.07.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td></tr>
+<tr><td>14102619513</td><td>3876255-2</td><td>SENSOR-PRESSURE</td><td>A32S</td><td>14.10.2026</td><td class="num">23</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>22102613523</td><td>740-0220-201</td><td>SHIELD-HEAT, AFT</td><td>A32S</td><td>22.10.2026</td><td class="num">15</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 4 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Airbus А318/A319/A320/A321</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ЮВТ</span>
+    <span class="pill">3 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>130826105012</td><td>2100-4043-00</td><td>FDR</td><td>CRJ-200</td><td>28.08.2026</td><td class="num">70</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+<tr><td>25082613312</td><td>0871BN8</td><td>ice detector</td><td>CRJ-200</td><td>11.09.2026</td><td class="num">56</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+<tr><td>290726154012</td><td>SM20ACD300A21</td><td>CONTACTOR</td><td>Bell 407</td><td>19.10.2026</td><td class="num">18</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">100085/18 от 01.09.2026</div><div class="muted">Вертолеты типов BELL 407/429</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">АТРАН</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>21082615361</td><td>4221T100-1</td><td>FLAP ALTERNATE DRIVE UNIT</td><td></td><td>21.08.2026</td><td class="num">77</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">105158/18 от 14.09.2026</div><div class="muted">Самолеты типов Boeing 737</div></td></tr>
+<tr><td>21082615361</td><td>4221T100-3</td><td>FLAP ALTERNATE DRIVE UNIT</td><td></td><td>21.08.2026</td><td class="num">77</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">127863/18 от 05.11.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Глобал Скай</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>19062616406</td><td>50-384040-5</td><td>TUBE ASSY ELECTRICALLY HEATED RH</td><td>B300/PT6A-60A</td><td>19.06.2026</td><td class="num">140</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">79480/18 от 15.07.2026</div><div class="muted">Самолеты типа Beechcraft В300, В300С</div></td></tr>
+<tr><td>26102615286</td><td>GW415-7125-9</td><td>Brake Control Unit</td><td>BD-700-1A10</td><td>28.10.2026</td><td class="num">9</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Дримджет</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>9122421394</td><td>NP139322-14<div class="muted">ALT: 601R33033-30</div></td><td>WINDOW, SIDE (RH)</td><td>CH-850</td><td>12.12.2024</td><td class="num">694</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">7614/18 от 29.01.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+<tr><td>1310261204</td><td>304K63-2</td><td>TIRE, MAIN WHEEL</td><td>legacy</td><td>13.10.2026</td><td class="num">24</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Закупка на склад <span class="tag wh">на склад</span></span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr class="wh"><td></td><td>170-69967-405</td><td>VENT FLAP ASSY</td><td>Е170</td><td>19.12.2025</td><td class="num">322</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">1231/18 от 14.01.2026</div><div class="muted">Самолеты типа Embraer 170/175</div></td></tr>
+<tr class="wh"><td></td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Красавиа</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td></tr>
+<tr><td>290726173012</td><td>3127458-01</td><td>Fuel nozzle</td><td></td><td>13.08.2026</td><td class="num">85</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">95283/18 от 20.08.2026</div><div class="muted">Самолеты типов ATR72</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Русджет</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>2072516454</td><td>09-130021-102</td><td>STERILIZER NPS-A6</td><td></td><td>31.10.2025</td><td class="num">371</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">№91537/18 от 12.08.2026</div><div class="muted">Самолеты типов Airbus A318/A319/A320/A321</div></td></tr>
+<tr><td>1510261941</td><td>382K02-1</td><td>Main Tyre</td><td>GLOBAL XRS</td><td>01.10.2026</td><td class="num">36</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Смартавиа</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>2072615243</td><td>452-0133</td><td>FIXED ELT BATTERY</td><td>B737</td><td>02.07.2026</td><td class="num">127</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">146152/18 от 24.12.2025</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+<tr><td>30062612283</td><td>285A1010-9</td><td>MODULE</td><td></td><td>23.10.2026</td><td class="num">14</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">85814/18 от 29.07.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ТАРП Авиэйшн</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>3092615466</td><td>822-0182-101</td><td>PANEL, FLIGHT C</td><td>CL650</td><td>08.09.2026</td><td class="num">59</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">112946/18 от 01.10.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B16</div></td></tr>
+<tr><td>17092611586</td><td>500-32-2Y-H<div class="muted">ALT: 500-12Y</div></td><td>PORTABLE ELT</td><td>G6000</td><td>01.10.2026</td><td class="num">36</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 1 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">CFT Aviation</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>15102610546</td><td>NP139322-13<div class="muted">ALT: NP139322-11
+NP139322-9
+NP139322-5
+
+NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td>Challenger 850</td><td>15.10.2026</td><td class="num">22</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">22085/18 от 05.03.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">FLAGAVIA</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>21052616426</td><td>AYLF50425</td><td>COCKPIT DUCT TEMPERATURE SENSOR</td><td>F900ExEasy</td><td>21.05.2026</td><td class="num">169</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Falcon 900EX EASy</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Nordwind</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>30092619123</td><td>417A6110-102</td><td>AFT ATTENDANT PANEL ASSY</td><td>B737</td><td>30.09.2026</td><td class="num">37</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 1 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">118664/18 от 14.10.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">S7 Engineering</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>20102615136</td><td>64236-3</td><td>RESERVOIR, CARBON</td><td></td><td>20.10.2026</td><td class="num">17</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">98312/18 от 28.08.2026</div><div class="muted">Самолеты типов Airbus A319/A320/A321</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Авиа Менеджмент Груп</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>21092614274</td><td>15782-101</td><td>PRES.SWITCH ACCM</td><td></td><td>23.09.2026</td><td class="num">44</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">35251/18 от 06.04.2026</div><div class="muted">Самолеты типа Embraer 145/135</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Альянс Джет</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>4092614324</td><td>100362-2<div class="muted">ALT: GS100362-2</div></td><td>Gas Spring</td><td>legacy 650</td><td>04.09.2026</td><td class="num">63</td><td>—</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · Сентябрь 2 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">141277/18 от 12.12.2025</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Джет Техник</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>11092610224</td><td>100-1084-02</td><td>BATTERY CHARGER</td><td></td><td>11.09.2026</td><td class="num">56</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ИКАР (Nordwind)</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>2102616043</td><td>3301-31<div class="muted">ALT: AD-3301-31</div></td><td>BATTERY NICD</td><td>E190</td><td>02.10.2026</td><td class="num">35</td><td>Получаем МПТ</td><td><div><b>мпт получен</b></div><div class="muted">мпт получен · октябрь 3 часть</div></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">40200/18 от 16.04.2026</div><div class="muted">Самолеты типа Bombardier BD-700-1A10/1A11</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Руслайн</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>3004261606-1</td><td>242113-2</td><td>VALVE, FUEL CROSSFLOW SHUTOFF</td><td></td><td>05.05.2026</td><td class="num">185</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">19152/18 от 26.02.2026</div><div class="muted">Самолеты типа Bombardier CL-600-2B19</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Тулпар Техник</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>4092616236</td><td>81141A020303</td><td>SAFETY VALVE FILTER</td><td>Challenger 350</td><td>03.09.2026</td><td class="num">64</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag bad">тип ВС ≠</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Bombardier BD-100-1A10</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Якутия</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>91026193012</td><td>4101054</td><td>FAN ASSY</td><td></td><td>16.10.2026</td><td class="num">21</td><td>—</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag">тип ВС ?</span></div><div class="muted">57799/18 от 28.05.2026</div><div class="muted">Самолеты типа Boeing 737</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">Ямал</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>19062610563</td><td>3530-0121-01</td><td>BOARD PRINTED CIRCUIT</td><td>A320</td><td>29.10.2026</td><td class="num">8</td><td>Получаем МПТ</td><td><span class="bad">нет заявки</span></td><td><div><b>есть</b> · ФЭИ 2025-2026 <span class="tag ok">тип ВС ≈</span></div><div class="muted">69980/18 от 24.06.2026</div><div class="muted">Самолеты типа Airbus A318/A319/А320/A321</div></td></tr>
+</tbody></table>
+  </div>
+</details>
+
   </div>
 </details>
 
@@ -321,20 +1133,47 @@ NP-139322-1</div></td><td>WINDOW, SIDE (LH)</td><td>2 PAID</td><td>ФЭ</td><td>
   <summary>
     <span class="group-name">IPC — отдельно</span>
     <span class="pill">3 поз.</span>
+    <span class="pill">2 кл.</span>
   </summary>
   <div class="group-body">
     <p class="muted">Действия по МПТ = «Нет IPC от клиента» или «IPC не будет получен».</p>
     
+<details class="client" open>
+  <summary>
+    <span class="client-name">Аэрофлот</span>
+    <span class="pill">2 поз.</span>
+  </summary>
+  <div class="client-body">
+    
 <table>
 <thead><tr>
-<th>Клиент</th><th>Счёт</th><th>P/N</th><th>Описание</th><th>Status</th>
-<th>Invoicer</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
 <th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
-<th>Тревоги</th></tr></thead><tbody>
-<tr class="flagged"><td>ЮВТ</td><td>28042611443</td><td>CDKJ07-7</td><td>Stowage Bin Assy-SB Kit</td><td>2 PAID</td><td>ФЭ</td><td>CRJ-200</td><td>14.05.2026</td><td class="num">176</td><td>IPC не будет получен</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a1">нет заявки</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>16072616044</td><td>4383500-01-6600</td><td>OVEN CONTROL MODULE (OCM)</td><td>2 PAID</td><td>ФЭ</td><td>A350</td><td>14.07.2026</td><td class="num">115</td><td>Нет IPC от клиента</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Июль 4 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
-<tr class="flagged"><td>Аэрофлот</td><td>24072617434</td><td>4383500-01-6600</td><td>OVEN CONTROL MODULE (OCM)</td><td>2 PAID</td><td>ФЭ</td><td>A350</td><td>24.07.2026</td><td class="num">105</td><td>Нет IPC от клиента</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Июль 4 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td><td><span class="tag a2">нет вырезки &gt;7д</span> <span class="tag a3">нет МПТ &gt;14д</span></td></tr>
+</tr></thead><tbody>
+<tr><td>16072616044</td><td>4383500-01-6600</td><td>OVEN CONTROL MODULE (OCM)</td><td>A350</td><td>14.07.2026</td><td class="num">115</td><td>Нет IPC от клиента</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Июль 4 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+<tr><td>24072617434</td><td>4383500-01-6600</td><td>OVEN CONTROL MODULE (OCM)</td><td>A350</td><td>24.07.2026</td><td class="num">105</td><td>Нет IPC от клиента</td><td><div><b>вырезка запрошена</b></div><div class="muted">Вырезку запросили · Июль 4 часть</div></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
 </tbody></table>
+  </div>
+</details>
+
+
+<details class="client" open>
+  <summary>
+    <span class="client-name">ЮВТ</span>
+    <span class="pill">1 поз.</span>
+  </summary>
+  <div class="client-body">
+    
+<table>
+<thead><tr>
+<th>Счёт</th><th>P/N</th><th>Описание</th><th>Тип ВС</th><th>Заказ</th><th>Дней</th>
+<th>Действия по МПТ</th><th>Списки на МПТ</th><th>Перечень</th>
+</tr></thead><tbody>
+<tr><td>28042611443</td><td>CDKJ07-7</td><td>Stowage Bin Assy-SB Kit</td><td>CRJ-200</td><td>14.05.2026</td><td class="num">176</td><td>IPC не будет получен</td><td><span class="bad">нет заявки</span></td><td><span class="bad">нет в ФЭИ 2025-2026</span></td></tr>
+</tbody></table>
+  </div>
+</details>
+
   </div>
 </details>
 
