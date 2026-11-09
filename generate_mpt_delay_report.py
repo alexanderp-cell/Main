@@ -231,15 +231,16 @@ def ac_tokens(value: str) -> set[str]:
         extra.update({"757", "B757"})
 
     # Embraer 170/175: E170 / E175 ↔ Embraer 170/175
+    # (не кладём голый EMBRAER — иначе склеится с семейством 145/Legacy)
     if (
         any(x in extra for x in ("E170", "E175", "ERJ170", "ERJ175"))
         or "E170" in joined
         or "E175" in joined
         or ("EMBRAER" in joined and ("170" in joined or "175" in joined))
     ):
-        extra.update({"E170", "E175", "170", "175", "EMBRAER", "ERJ170", "ERJ175"})
+        extra.update({"E170", "E175", "ERJ170", "ERJ175", "EMB170", "EMB175"})
 
-    # Embraer 145/135 ↔ Legacy (Legacy 600/650 family)
+    # Embraer 145/135 ↔ Legacy (Legacy 600/650)
     if (
         any(x in extra for x in ("E145", "E135", "ERJ145", "ERJ135", "LEGACY", "LEGACY600", "LEGACY650"))
         or "E145" in joined
@@ -255,9 +256,8 @@ def ac_tokens(value: str) -> set[str]:
                 "E135",
                 "ERJ145",
                 "ERJ135",
-                "145",
-                "135",
-                "EMBRAER",
+                "EMB145",
+                "EMB135",
                 "LEGACY",
                 "LEGACY600",
                 "LEGACY650",
