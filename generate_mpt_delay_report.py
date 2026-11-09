@@ -52,8 +52,10 @@ COL_AC_TYPE = "ТИП ВС (Продажи)"
 COL_ALT_PN = "ALT P/N"
 
 OPEN_STATUSES = {"1 NOT PAID", "2 PAID", "6 TROUBLE"}
+CLOSED_STATUSES = {"5 CANCELLED", "7 REFUND"}
 EXCLUDED_CUSTOMERS = {"Белавиа"}
 WAREHOUSE_MARKERS = {"закупка на склад"}
+EMPTY_INVOICES = {"", "-", "—", "–", "nan", "none"}
 
 INVOICER_TO_SHEET = {
     "ФЭ": "ФЭИ 2025-2026",
@@ -446,6 +448,20 @@ def find_perm_hit(
     return lookup(alt, "alt")
 
 
+def _closed_client_pns(taz: pd.DataFrame) -> set[tuple[str, str]]:
+    """(client, pn) pairs that have CANCELLED / REFUND rows in TAZ."""
+    out: set[tuple[str, str]] = set()
+    for _, r in taz.iterrows():
+        st = norm_text(r.get(COL_STATUS))
+        if st not in CLOSED_STATUSES and "CANCEL" not in st.upper() and "REFUND" not in st.upper():
+            continue
+        client = norm_client(r.get(COL_CUSTOMER))
+        pn = norm_pn(r.get(COL_PN))
+        if client and pn:
+            out.add((client, pn))
+    return out
+
+
 def build_rows(
     taz: pd.DataFrame,
     lists: pd.DataFrame,
@@ -456,6 +472,7 @@ def build_rows(
     df = df[df[COL_CATEGORY].astype(str).str.strip().str.upper() == "ROTABLE"]
     df = df[df[COL_STATUS].isin(OPEN_STATUSES)]
     df = df[~df[COL_CUSTOMER].astype(str).str.strip().isin(EXCLUDED_CUSTOMERS)]
+    closed_pairs = _closed_client_pns(taz)
 
     rows: list[MptRow] = []
     for _, r in df.iterrows():
@@ -471,6 +488,11 @@ def build_rows(
             continue
 
         pn = norm_pn(r.get(COL_PN))
+        invoice = normalize_invoice(r.get(COL_INVOICE))
+        # Хвост после отмены/refund: открытый статус, но № счета пустой/«-»
+        if invoice.casefold() in EMPTY_INVOICES and (client, pn) in closed_pairs:
+            continue
+
         alt = norm_pn(r.get(COL_ALT_PN))
         action = norm_text(r.get(COL_MPT_ACTION))
         invoicer = norm_text(r.get(COL_INVOICER))
