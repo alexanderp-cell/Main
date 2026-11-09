@@ -239,6 +239,41 @@ def ac_tokens(value: str) -> set[str]:
     ):
         extra.update({"E170", "E175", "170", "175", "EMBRAER", "ERJ170", "ERJ175"})
 
+    # Bombardier BD-700-1A10/1A11 ↔ Global Express / Global 5000–6500 family
+    global_tokens = {
+        "BD700",
+        "BD7001A10",
+        "BD7001A11",
+        "1A10",
+        "1A11",
+        "GLOBAL",
+        "GLOBALEXPRESS",
+        "GLOBALEXPRESSXRS",
+        "XRS",
+        "GLOBAL6000",
+        "GLOBAL6500",
+        "GLOBAL5000",
+        "GLOBAL5000GVFD",
+        "GVFD",
+        "GLOBAL5500",
+        "G6000",
+        "G6500",
+        "G5000",
+        "G5500",
+    }
+    if (
+        "BD700" in joined
+        or "BD-700" in norm_text(value).upper()
+        or "1A10" in joined
+        or "1A11" in joined
+        or any(t in joined for t in ("GLOBALEXPRESS", "GLOBAL6000", "GLOBAL6500", "GLOBAL5000", "GLOBAL5500"))
+        or any(t in extra for t in ("G6000", "G6500", "G5000", "G5500", "GLOBAL", "XRS", "GVFD"))
+        or ("GLOBAL" in joined and any(n in joined for n in ("5000", "5500", "6000", "6500", "EXPRESS")))
+    ):
+        extra.update(global_tokens)
+        # also keep spaced-style tokens from parts
+        extra.update({"BD700", "GLOBAL", "EXPRESS", "6000", "6500", "5000", "5500"})
+
     return {p for p in extra if p}
 
 
