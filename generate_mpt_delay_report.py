@@ -228,6 +228,15 @@ def ac_tokens(value: str) -> set[str]:
     if any(x in extra or x in joined for x in ("757", "B757")):
         extra.update({"757", "B757"})
 
+    # Embraer 170/175: E170 / E175 ↔ Embraer 170/175
+    if (
+        any(x in extra for x in ("E170", "E175", "ERJ170", "ERJ175"))
+        or "E170" in joined
+        or "E175" in joined
+        or ("EMBRAER" in joined and ("170" in joined or "175" in joined))
+    ):
+        extra.update({"E170", "E175", "170", "175", "EMBRAER", "ERJ170", "ERJ175"})
+
     return {p for p in extra if p}
 
 
