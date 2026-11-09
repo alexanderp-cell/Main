@@ -467,6 +467,16 @@ ALERT_LABELS = {
     "ipc": "IPC",
 }
 
+# Порядок разделов «по статусам» и кликабельных KPI
+ALERT_SECTION_ORDER = ("1", "2", "3", "4", "ipc")
+ALERT_SECTION_TITLES = {
+    "1": "1 · Нет заявки",
+    "2": "2 · Нет вырезки >7д",
+    "3": "3 · Нет МПТ >14д",
+    "4": "4 · ТАЗ не обновлён",
+    "ipc": "IPC",
+}
+
 
 def pick_alert(
     *,
@@ -828,7 +838,10 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
             f'<span class="tag a{a}">{esc(ALERT_LABELS[a])} · {n}</span>'
             for a, n in sorted(Counter(r.alert for r in items_sorted).items(), key=lambda x: x[0])
         )
-        tabs.append(f'<a href="#{anchor}">{esc(client)} ({len(items_sorted)})</a>')
+        tabs.append(
+            f'<a class="jump" href="#{anchor}" data-target="{anchor}">'
+            f"{esc(client)} ({len(items_sorted)})</a>"
+        )
         client_blocks.append(
             f"""
 <details class="group" id="{anchor}">
@@ -844,6 +857,53 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 """
         )
 
+    by_alert: dict[str, list[MptRow]] = {}
+    for row in rows:
+        by_alert.setdefault(row.alert, []).append(row)
+
+    status_blocks: list[str] = []
+    status_tabs: list[str] = []
+    pet_by_alert = {
+        "1": "tamagotchi-pet-hungry.png",
+        "2": "tamagotchi-pet-sick.png",
+        "3": "tamagotchi-pet-hungry.png",
+        "4": "tamagotchi-pet-ok.png",
+        "ipc": "tamagotchi-pet-sick.png",
+    }
+    for alert_key in ALERT_SECTION_ORDER:
+        items = by_alert.get(alert_key, [])
+        if not items:
+            continue
+        items_sorted = sorted(
+            items,
+            key=lambda r: (
+                r.client.casefold(),
+                r.order_date or date.max,
+                r.invoice,
+                r.pn,
+            ),
+        )
+        anchor = f"s{alert_key}"
+        title = ALERT_SECTION_TITLES[alert_key]
+        clients_n = len({r.client for r in items_sorted})
+        status_tabs.append(
+            f'<a class="jump" href="#{anchor}" data-target="{anchor}">'
+            f"{esc(title)} ({len(items_sorted)})</a>"
+        )
+        status_blocks.append(
+            f"""
+<details class="group status-group" id="{anchor}">
+  <summary>
+    <span class="group-name"><span class="tag a{esc(alert_key)}">{esc(ALERT_LABELS[alert_key])}</span> {esc(title)}</span>
+    <span class="pill">{len(items_sorted)} поз. · {clients_n} кл.</span>
+  </summary>
+  <div class="group-body">
+    {render_table(items_sorted)}
+  </div>
+</details>
+"""
+        )
+
     img_banner = data_uri("tamagotchi-banner-wide.png")
     img_device = data_uri("tamagotchi-device-small.png")
     img_pattern = data_uri("tamagotchi-pattern.png")
@@ -851,6 +911,7 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
     img_sick = data_uri("tamagotchi-pet-sick.png")
     img_happy = data_uri("tamagotchi-pet-happy.png")
     img_ok = data_uri("tamagotchi-pet-ok.png")
+    img_by_alert = {k: data_uri(v) for k, v in pet_by_alert.items()}
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -947,7 +1008,12 @@ h2 {{
   background:var(--lcd); border:3px solid var(--lcd-deep); padding:10px 10px 12px;
   box-shadow: inset 0 0 0 2px var(--lcd-lit);
   display:flex; flex-direction:column; gap:4px; min-height:110px;
+  text-decoration:none; color:inherit;
 }}
+a.kpi {{ cursor:pointer; transition: transform .08s steps(2), background .08s steps(2); }}
+a.kpi:hover {{ background:var(--lcd-lit); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--lcd-deep); }}
+a.kpi:focus-visible {{ outline:3px solid var(--shell-deep); outline-offset:2px; }}
+a.kpi.kpi-empty {{ opacity:.55; cursor:default; pointer-events:none; }}
 .kpi img {{ width:42px; height:42px; image-rendering:pixelated; align-self:flex-start; }}
 .label {{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--lcd-deep); font-weight:800; }}
 .value {{ font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--lcd-deep); }}
@@ -961,6 +1027,10 @@ h2 {{
 details.group {{
   background:var(--card); border:4px solid var(--shell-deep);
   margin:12px 0; overflow:visible; box-shadow: 4px 4px 0 #28402022;
+  scroll-margin-top: 16px;
+}}
+details.group.status-group summary {{
+  background: linear-gradient(90deg, var(--teal) 0 14px, var(--lcd) 14px 18px, #fff7fb 18px);
 }}
 details.group summary {{
   cursor:pointer; list-style:none; padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
@@ -973,6 +1043,7 @@ details.group summary::-webkit-details-marker {{ display:none; }}
   padding:3px 8px; font-weight:800;
 }}
 .group-body {{ padding:0 12px 14px; border-top:3px solid var(--shell-deep); overflow:visible; background:#f7fbe8; }}
+#by-status {{ scroll-margin-top: 12px; }}
 table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; border:3px solid var(--lcd-deep); table-layout:fixed; background:var(--lcd); }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
@@ -1045,15 +1116,38 @@ tbody tr:hover {{ background:#b9d486; }}
   <section class="card">
     <h2 style="margin-top:0">Сводка · status screen</h2>
     <div class="kpi-grid">
-      <div class="kpi"><img src="{img_ok}" alt=""/><div class="label">Всего</div><div class="value">{len(rows)}</div>
-        <div class="muted">{len(by_client)} клиентов · склад {wh_n}</div></div>
-      <div class="kpi"><img src="{img_hungry}" alt=""/><div class="label">1 · Нет заявки</div><div class="value">{counts.get('1', 0)}</div></div>
-      <div class="kpi"><img src="{img_sick}" alt=""/><div class="label">2 · Нет вырезки &gt;7д</div><div class="value">{counts.get('2', 0)}</div></div>
-      <div class="kpi"><img src="{img_hungry}" alt=""/><div class="label">3 · Нет МПТ &gt;14д</div><div class="value">{counts.get('3', 0)}</div></div>
-      <div class="kpi"><img src="{img_ok}" alt=""/><div class="label">4 · ТАЗ не обновлён</div><div class="value">{counts.get('4', 0)}</div></div>
-      <div class="kpi"><img src="{img_sick}" alt=""/><div class="label">IPC</div><div class="value">{counts.get('ipc', 0)}</div></div>
+      <a class="kpi jump" href="#by-clients" data-target="by-clients">
+        <img src="{img_ok}" alt=""/><div class="label">Всего</div><div class="value">{len(rows)}</div>
+        <div class="muted">{len(by_client)} клиентов · склад {wh_n}</div>
+      </a>
+      <a class="kpi jump{' kpi-empty' if counts.get('1', 0) == 0 else ''}" href="#s1" data-target="s1">
+        <img src="{img_by_alert['1']}" alt=""/><div class="label">1 · Нет заявки</div>
+        <div class="value">{counts.get('1', 0)}</div>
+        <div class="muted">открыть раздел ↓</div>
+      </a>
+      <a class="kpi jump{' kpi-empty' if counts.get('2', 0) == 0 else ''}" href="#s2" data-target="s2">
+        <img src="{img_by_alert['2']}" alt=""/><div class="label">2 · Нет вырезки &gt;7д</div>
+        <div class="value">{counts.get('2', 0)}</div>
+        <div class="muted">открыть раздел ↓</div>
+      </a>
+      <a class="kpi jump{' kpi-empty' if counts.get('3', 0) == 0 else ''}" href="#s3" data-target="s3">
+        <img src="{img_by_alert['3']}" alt=""/><div class="label">3 · Нет МПТ &gt;14д</div>
+        <div class="value">{counts.get('3', 0)}</div>
+        <div class="muted">открыть раздел ↓</div>
+      </a>
+      <a class="kpi jump{' kpi-empty' if counts.get('4', 0) == 0 else ''}" href="#s4" data-target="s4">
+        <img src="{img_by_alert['4']}" alt=""/><div class="label">4 · ТАЗ не обновлён</div>
+        <div class="value">{counts.get('4', 0)}</div>
+        <div class="muted">открыть раздел ↓</div>
+      </a>
+      <a class="kpi jump{' kpi-empty' if counts.get('ipc', 0) == 0 else ''}" href="#sipc" data-target="sipc">
+        <img src="{img_by_alert['ipc']}" alt=""/><div class="label">IPC</div>
+        <div class="value">{counts.get('ipc', 0)}</div>
+        <div class="muted">открыть раздел ↓</div>
+      </a>
     </div>
     <p class="muted">
+      Клик по статусу в сводке — переход к выпадающему разделу внизу (он раскроется).
       Приоритет одной тревоги: IPC → ТАЗ не обновлён (действующее МПТ в Перечне, ≤1 год) → нет заявки → нет вырезки → нет МПТ &gt;14д.
       В «Списки по МПТ» при действующем МПТ пишем «ЕСТЬ МПТ» — наличие заявки не важно.
       Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
@@ -1065,14 +1159,56 @@ tbody tr:hover {{ background:#b9d486; }}
     {''.join(tabs)}
   </div>
 
-  <h2>По клиентам · pets</h2>
+  <h2 id="by-clients">По клиентам · pets</h2>
   {''.join(client_blocks)}
+
+  <h2 id="by-status">По статусам · alerts</h2>
+  <div class="tabs">
+    {''.join(status_tabs)}
+  </div>
+  {''.join(status_blocks)}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
     Self-contained HTML — Tamagotchi skin · открывается локально без интернета.
   </div>
 </div>
+<script>
+(function () {{
+  function openTarget(id) {{
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'DETAILS') {{
+      el.open = true;
+      el.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      return;
+    }}
+    // heading anchors (by-clients / by-status): just scroll
+    el.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+  }}
+
+  function fromHash() {{
+    openTarget((location.hash || '').replace(/^#/, ''));
+  }}
+
+  document.addEventListener('click', function (e) {{
+    var a = e.target.closest('a.jump');
+    if (!a) return;
+    var id = a.getAttribute('data-target') || (a.getAttribute('href') || '').replace(/^#/, '');
+    if (!id) return;
+    // let hash update, then open
+    setTimeout(function () {{ openTarget(id); }}, 0);
+  }});
+
+  window.addEventListener('hashchange', fromHash);
+  if (document.readyState === 'loading') {{
+    document.addEventListener('DOMContentLoaded', fromHash);
+  }} else {{
+    fromHash();
+  }}
+}})();
+</script>
 </body>
 </html>
 """
