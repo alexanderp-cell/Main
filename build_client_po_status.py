@@ -538,14 +538,15 @@ def apply_transit_stability(computed: date, previous: date | None, same_section:
 
 
 def transit_base_kind(src: SourceRow, planned: date, file_date: date) -> str:
+    blob = normalize_location(pq_blob(src))
+    # Склад консолидации остаётся складом и внутри PRE TRANSIT. «On the way to WHS» — это ещё путь на склад.
+    whs = "ON THE WAY TO WHS" not in blob and (
+        any(token in blob for token in ("BOS WHS", "HA WHS", "НА WHS")) or re.search(r"\bWHS\b", blob)
+    )
+    if whs:
+        return "whs"
     if days_between(planned, file_date) < 5:
         return "point"
-    blob = normalize_location(pq_blob(src))
-    in_pretransit = src.section == "PRE TRANSIT"
-    whs = any(token in blob for token in ("BOS WHS", "HA WHS", "НА WHS")) or re.search(r"\bWHS\b", blob)
-    # «On the way» и UNSOLVED сюда не попадают: их разбирает классификатор BOS раньше.
-    if whs and not in_pretransit:
-        return "whs"
     return "enroute"
 
 
@@ -618,6 +619,9 @@ def header_columns(ws) -> dict[str, int]:
             if any(needle in header for needle in needles):
                 found[key] = col
                 break
+    # IMPORTRANGE иногда отдаёт пустую шапку первого столбца, хотя номера счетов в нём есть.
+    if "invoice" not in found and not str(ws.cell(1, 1).value or "").strip() and found.get("status") == 2:
+        found["invoice"] = 1
     required = ("invoice", "status", "comment", "pn", "qty", "start", "lead", "deadline", "price", "payment", "awb", "arrival")
     missing = [name for name in required if name not in found]
     if missing:
