@@ -1,6 +1,6 @@
 {
   "file_date": "2026-11-10",
-  "source": "UT_PO_STATUS_10.11.2026_3f0f.xlsx",
+  "source": "UT_PO_STATUS_10.11.2026_63e6.xlsx",
   "rows": {
     "16092613402|2028M21P02|2": {
       "section": "Ожидает аванса",
@@ -138,7 +138,7 @@
       "last_planned_change": "",
       "dates_locked": false
     },
-    "23102611345|D22698500-7|41": {
+    "23102611345|D22698500-7|1": {
       "section": "Принят в работу",
       "planned": "07.12.2026",
       "comment_kind": "",
