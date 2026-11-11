@@ -724,16 +724,18 @@ def build_rows(
     return rows
 
 
-def render_table(rows: list[MptRow]) -> str:
+def render_table(rows: list[MptRow], *, show_client: bool = False) -> str:
     if not rows:
         return '<p class="muted">Нет позиций.</p>'
-    head = """
+    client_col = "<col class=\"client\"/>" if show_client else ""
+    client_th = "<th>Клиент</th>" if show_client else ""
+    head = f"""
 <table>
 <colgroup>
-  <col/><col/><col class="pn"/><col class="desc"/><col/><col/><col/><col/><col/>
+  <col/>{client_col}<col/><col class="pn"/><col class="desc"/><col/><col/><col/><col/><col/>
 </colgroup>
 <thead><tr>
-<th>Статус</th><th>№ счета</th><th>P/N</th><th>Description</th>
+<th>Статус</th>{client_th}<th>№ счета</th><th>P/N</th><th>Description</th>
 <th>Дней с даты заказа</th><th>Действия по МПТ</th><th>Списки по МПТ</th>
 <th>Полученные МПТ</th><th>ТИП ВС в ТАЗ</th>
 </tr></thead><tbody>
@@ -795,10 +797,12 @@ def render_table(rows: list[MptRow]) -> str:
         alert_cell = (
             f'<span class="tag a{esc(row.alert)}">{esc(ALERT_LABELS.get(row.alert, row.alert))}</span>'
         )
+        client_td = f"<td><b>{esc(row.client)}</b></td>" if show_client else ""
 
         body.append(
             f"<tr{tr_cls}>"
             f"<td>{alert_cell}</td>"
+            f"{client_td}"
             f"<td>{esc(row.invoice)}</td>"
             f"<td>{pn_cell}</td>"
             f"<td>{esc(row.description)}</td>"
@@ -891,7 +895,7 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
     <span class="pill">{len(items_sorted)} поз. · {clients_n} кл.</span>
   </summary>
   <div class="group-body">
-    {render_table(items_sorted)}
+    {render_table(items_sorted, show_client=True)}
   </div>
 </details>
 """
@@ -1019,6 +1023,7 @@ details.group summary::-webkit-details-marker {{ display:none; }}
 .group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfcfe; }}
 #by-status {{ scroll-margin-top: 12px; }}
 table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--line); table-layout:fixed; background:#fff; border-radius:8px; overflow:hidden; }}
+col.client {{ width:11%; }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
 th, td {{
