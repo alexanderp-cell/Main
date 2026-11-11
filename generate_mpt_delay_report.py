@@ -863,13 +863,6 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 
     status_blocks: list[str] = []
     status_tabs: list[str] = []
-    pet_by_alert = {
-        "1": "tamagotchi-pet-hungry.png",
-        "2": "tamagotchi-pet-sick.png",
-        "3": "tamagotchi-pet-hungry.png",
-        "4": "tamagotchi-pet-ok.png",
-        "ipc": "tamagotchi-pet-sick.png",
-    }
     for alert_key in ALERT_SECTION_ORDER:
         items = by_alert.get(alert_key, [])
         if not items:
@@ -904,14 +897,7 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 """
         )
 
-    img_banner = data_uri("tamagotchi-banner-wide.png")
-    img_device = data_uri("tamagotchi-device-small.png")
-    img_pattern = data_uri("tamagotchi-pattern.png")
-    img_hungry = data_uri("tamagotchi-pet-hungry.png")
-    img_sick = data_uri("tamagotchi-pet-sick.png")
-    img_happy = data_uri("tamagotchi-pet-happy.png")
-    img_ok = data_uri("tamagotchi-pet-ok.png")
-    img_by_alert = {k: data_uri(v) for k, v in pet_by_alert.items()}
+    img_a350 = data_uri("aeroflot-a350.jpg")
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -921,169 +907,156 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 <title>Задержки МПТ — {report_date.strftime('%d.%m.%Y')}</title>
 <style>
 :root {{
-  --shell:#ff9ebb;
-  --shell-deep:#e8628c;
-  --shell-light:#ffe3ee;
-  --lcd:#aac678;
-  --lcd-deep:#284020;
-  --lcd-lit:#c8dca0;
-  --btn:#fff078;
-  --teal:#5cc8c4;
-  --ink:#284020;
-  --muted:#5a6b4a;
-  --card:#fff7fb;
-  --line:#e8628c;
+  --navy:#0b1f3a;
+  --navy-2:#16345c;
+  --orange:#e8572a;
+  --orange-soft:#ff7a4d;
+  --sky:#dce8f5;
+  --card:rgba(255,255,255,.94);
+  --ink:#142033;
+  --muted:#5b6b7c;
+  --line:#c9d6e5;
   --red:#c0392b;
-  --orange:#d35400;
   --green:#1e7a46;
-  --pixel: 4px;
 }}
 * {{ box-sizing:border-box; }}
 body {{
   margin:0;
-  font-family: "Courier New", Courier, ui-monospace, monospace;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color:var(--ink);
-  background-color: var(--shell-light);
+  min-height:100vh;
+  background-color: #0b1f3a;
   background-image:
-    linear-gradient(180deg, rgba(255,158,187,.55) 0%, rgba(255,247,251,.92) 220px),
-    url('{img_pattern}');
-  background-size: auto, 128px 128px;
+    linear-gradient(180deg, rgba(11,31,58,.72) 0%, rgba(11,31,58,.55) 180px, rgba(220,232,245,.92) 420px, rgba(220,232,245,.96) 100%),
+    url('{img_a350}');
+  background-size: cover;
+  background-position: center top;
   background-attachment: fixed;
   line-height:1.45;
-  image-rendering: pixelated;
 }}
 .wrap {{ max-width:1400px; margin:0 auto; padding:24px 16px 64px; }}
 .hero {{
-  display:grid; grid-template-columns: 1.4fr .7fr; gap:16px; align-items:stretch;
-  margin-bottom:18px;
-}}
-.hero-banner {{
-  border:4px solid var(--shell-deep);
-  box-shadow: 6px 6px 0 #28402033;
-  background:#fff;
-  overflow:hidden;
   position:relative;
+  border-radius:14px;
+  overflow:hidden;
+  margin-bottom:18px;
+  min-height:220px;
+  border:1px solid rgba(255,255,255,.25);
+  box-shadow: 0 18px 40px rgba(0,0,0,.28);
+  background:
+    linear-gradient(115deg, rgba(11,31,58,.88) 0%, rgba(11,31,58,.45) 48%, rgba(232,87,42,.25) 100%),
+    url('{img_a350}');
+  background-size: cover;
+  background-position: center 40%;
+  color:#fff;
+  display:flex; align-items:flex-end;
 }}
-.hero-banner img {{
-  display:block; width:100%; height:180px; object-fit:cover; object-position:center;
-  image-rendering: pixelated;
-}}
-.hero-device {{
-  border:4px solid var(--shell-deep);
-  background: linear-gradient(160deg, var(--shell) 0%, #ffd6e4 55%, var(--teal) 160%);
-  box-shadow: 6px 6px 0 #28402033;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:12px; text-align:center; gap:8px;
-}}
-.hero-device img {{ width:110px; height:auto; image-rendering:pixelated; }}
+.hero-inner {{ padding:28px 28px 24px; width:100%; }}
 .brand-mark {{
-  font-size:12px; letter-spacing:.18em; text-transform:uppercase;
-  background:var(--btn); color:var(--lcd-deep); padding:6px 10px; font-weight:800;
-  border:3px solid var(--lcd-deep);
+  display:inline-block;
+  font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+  background:var(--orange); color:#fff; padding:7px 12px; font-weight:800;
+  border-radius:4px; margin-bottom:14px;
 }}
-.lcd-title {{
-  background:var(--lcd); color:var(--lcd-deep); border:4px solid var(--lcd-deep);
-  padding:14px 16px; margin:0 0 10px;
-  box-shadow: inset 0 0 0 2px var(--lcd-lit);
+.hero h1 {{
+  font-size:34px; margin:0 0 8px; font-weight:800; letter-spacing:.01em;
+  text-shadow: 0 2px 18px rgba(0,0,0,.35);
 }}
-.lcd-title h1 {{
-  font-size:26px; margin:0 0 6px; font-weight:800; letter-spacing:.04em;
-  text-transform:uppercase;
-}}
-.sub {{ color:var(--muted); font-size:13px; }}
-.blink {{ animation: blink 1.4s steps(2, jump-none) infinite; }}
-@keyframes blink {{ 50% {{ opacity:.35; }} }}
+.sub {{ color:rgba(255,255,255,.88); font-size:14px; max-width:920px; }}
 h2 {{
-  font-size:18px; margin:24px 0 12px; color:var(--lcd-deep);
-  letter-spacing:.08em; text-transform:uppercase;
+  font-size:18px; margin:26px 0 12px; color:var(--navy);
+  letter-spacing:.04em; text-transform:uppercase;
 }}
 .card {{
-  background:var(--card); border:4px solid var(--shell-deep);
-  padding:16px 16px 8px; box-shadow: 5px 5px 0 #28402022;
+  background:var(--card); border:1px solid var(--line);
+  border-radius:12px; padding:18px 18px 10px;
+  box-shadow: 0 10px 28px rgba(11,31,58,.08);
+  backdrop-filter: blur(6px);
 }}
 .kpi-grid {{
   display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin:12px 0 14px;
 }}
 .kpi {{
-  background:var(--lcd); border:3px solid var(--lcd-deep); padding:10px 10px 12px;
-  box-shadow: inset 0 0 0 2px var(--lcd-lit);
-  display:flex; flex-direction:column; gap:4px; min-height:110px;
+  background:linear-gradient(180deg, #ffffff, #f3f7fb);
+  border:1px solid var(--line); border-radius:10px; padding:12px 12px 14px;
+  display:flex; flex-direction:column; gap:4px; min-height:96px;
   text-decoration:none; color:inherit;
 }}
-a.kpi {{ cursor:pointer; transition: transform .08s steps(2), background .08s steps(2); }}
-a.kpi:hover {{ background:var(--lcd-lit); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--lcd-deep); }}
-a.kpi:focus-visible {{ outline:3px solid var(--shell-deep); outline-offset:2px; }}
+a.kpi {{ cursor:pointer; transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }}
+a.kpi:hover {{ transform: translateY(-2px); border-color:var(--orange); box-shadow:0 8px 18px rgba(232,87,42,.18); }}
+a.kpi:focus-visible {{ outline:3px solid var(--orange); outline-offset:2px; }}
 a.kpi.kpi-empty {{ opacity:.55; cursor:default; pointer-events:none; }}
-.kpi img {{ width:42px; height:42px; image-rendering:pixelated; align-self:flex-start; }}
-.label {{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--lcd-deep); font-weight:800; }}
-.value {{ font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--lcd-deep); }}
+.label {{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
+.value {{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--navy); }}
 .muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
 .tabs {{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }}
 .tabs a {{
-  text-decoration:none; color:var(--lcd-deep); background:var(--btn);
-  border:3px solid var(--lcd-deep); padding:7px 10px; font-size:12px; font-weight:800;
+  text-decoration:none; color:var(--navy); background:rgba(255,255,255,.92);
+  border:1px solid var(--line); padding:8px 12px; font-size:13px; font-weight:700;
+  border-radius:8px;
 }}
-.tabs a:hover {{ background:var(--teal); }}
+.tabs a:hover {{ background:#fff; border-color:var(--orange); color:var(--orange); }}
 details.group {{
-  background:var(--card); border:4px solid var(--shell-deep);
-  margin:12px 0; overflow:visible; box-shadow: 4px 4px 0 #28402022;
+  background:var(--card); border:1px solid var(--line);
+  margin:12px 0; overflow:visible; border-radius:12px;
+  box-shadow: 0 8px 22px rgba(11,31,58,.07);
   scroll-margin-top: 16px;
 }}
 details.group.status-group summary {{
-  background: linear-gradient(90deg, var(--teal) 0 14px, var(--lcd) 14px 18px, #fff7fb 18px);
+  background: linear-gradient(90deg, var(--orange) 0 10px, #fff 10px);
 }}
 details.group summary {{
-  cursor:pointer; list-style:none; padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-  background: linear-gradient(90deg, var(--shell) 0 14px, var(--lcd) 14px 18px, #fff7fb 18px);
+  cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background: linear-gradient(90deg, var(--navy) 0 10px, #fff 10px);
+  border-radius:12px 12px 0 0;
 }}
 details.group summary::-webkit-details-marker {{ display:none; }}
-.group-name {{ font-weight:800; font-size:15px; margin-right:auto; color:var(--lcd-deep); padding-left:6px; letter-spacing:.03em; }}
+.group-name {{ font-weight:800; font-size:15px; margin-right:auto; color:var(--navy); padding-left:8px; }}
 .pill {{
-  font-size:11px; background:var(--btn); border:2px solid var(--lcd-deep); color:var(--lcd-deep);
-  padding:3px 8px; font-weight:800;
+  font-size:12px; background:#eef4fb; border:1px solid var(--line); color:var(--navy);
+  padding:4px 10px; font-weight:700; border-radius:999px;
 }}
-.group-body {{ padding:0 12px 14px; border-top:3px solid var(--shell-deep); overflow:visible; background:#f7fbe8; }}
+.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfcfe; }}
 #by-status {{ scroll-margin-top: 12px; }}
-table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; border:3px solid var(--lcd-deep); table-layout:fixed; background:var(--lcd); }}
+table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--line); table-layout:fixed; background:#fff; border-radius:8px; overflow:hidden; }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
 th, td {{
-  border-bottom:1px solid #7a9a58; border-right:1px solid #7a9a58;
-  padding:8px 7px; vertical-align:top; text-align:left;
-  word-wrap:break-word; overflow-wrap:anywhere; color:var(--lcd-deep);
+  border-bottom:1px solid #e4ebf3; border-right:1px solid #e4ebf3;
+  padding:8px 8px; vertical-align:top; text-align:left;
+  word-wrap:break-word; overflow-wrap:anywhere; color:var(--ink);
 }}
 th:last-child, td:last-child {{ border-right:none; }}
 th {{
   position:sticky; top:0; z-index:5;
-  font-size:12px; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
-  color:var(--lcd-deep); background:#9cb86a;
-  border-bottom:3px solid var(--lcd-deep);
+  font-size:12px; font-weight:800; letter-spacing:.02em; text-transform:uppercase;
+  color:#fff; background:var(--navy);
+  border-bottom:2px solid var(--orange);
 }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.wh {{ background:#c5dc98; }}
-tbody tr:hover {{ background:#b9d486; }}
+tr.wh {{ background:#eef6ff; }}
+tbody tr:hover {{ background:#f5f9fd; }}
 .tag {{
-  display:inline-block; font-size:10px; font-weight:800; border-radius:0;
-  padding:2px 6px; margin:1px 2px; border:2px solid var(--lcd-deep); background:var(--lcd-lit); color:var(--lcd-deep);
+  display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
+  padding:2px 7px; margin:1px 2px; border:1px solid var(--line); background:#f3f6fa; color:var(--navy);
 }}
-.tag.alt {{ background:#fff3cd; border-color:#a08020; }}
-.tag.wh {{ background:var(--teal); border-color:var(--lcd-deep); }}
-.tag.ok {{ background:#d6f5de; border-color:var(--green); color:var(--green); }}
-.tag.bad, .bad {{ background:#ffd0d0; border-color:var(--red); color:var(--red); }}
-.tag.a1 {{ background:#ffd0d0; border-color:var(--red); color:var(--red); }}
-.tag.a2 {{ background:#fff3cd; border-color:#a08020; }}
-.tag.a3 {{ background:#ffd8b8; border-color:var(--orange); color:var(--orange); }}
-.tag.a4 {{ background:#d7ecff; border-color:#3a6ea5; }}
-.tag.aipc {{ background:#e8d8ff; border-color:#6b4ea0; }}
+.tag.alt {{ background:#fff3cd; border-color:#e6d89c; }}
+.tag.wh {{ background:#dce8f5; border-color:#b7c9de; }}
+.tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
+.tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
+.tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
+.tag.a2 {{ background:#fff3cd; border-color:#e6d89c; }}
+.tag.a3 {{ background:#ffe0cc; border-color:#f0b48a; color:var(--orange); }}
+.tag.a4 {{ background:#e8f0fe; border-color:#b6c9f0; }}
+.tag.aipc {{ background:#efe8f8; border-color:#c9b6e0; }}
 .footer {{
   margin-top:28px; color:var(--muted); font-size:12px;
-  border-top:3px dashed var(--shell-deep); padding-top:12px;
+  border-top:1px solid var(--line); padding-top:14px;
+  background:rgba(255,255,255,.75); border-radius:8px; padding:14px;
 }}
-.pixel-row {{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:6px; }}
-.pixel-row img {{ width:36px; height:36px; image-rendering:pixelated; border:2px solid var(--lcd-deep); background:var(--lcd); }}
 @media (max-width:900px) {{
-  .hero {{ grid-template-columns:1fr; }}
-  .hero-banner img {{ height:140px; }}
+  .hero {{ min-height:180px; }}
+  .hero h1 {{ font-size:26px; }}
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
 </style>
@@ -1091,57 +1064,46 @@ tbody tr:hover {{ background:#b9d486; }}
 <body>
 <div class="wrap">
   <div class="hero">
-    <div class="hero-banner">
-      <img src="{img_banner}" alt="Tamagotchi MPT Delay banner"/>
-    </div>
-    <div class="hero-device">
-      <div class="brand-mark">FASTAIR</div>
-      <img src="{img_device}" alt="Tamagotchi device"/>
-      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">CARE · MPT · PET</div>
-    </div>
-  </div>
-
-  <div class="lcd-title">
-    <h1><span class="blink">▶</span> Задержки получения МПТ</h1>
-    <div class="sub">
-      Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-      одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
-      Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
-    </div>
-    <div class="pixel-row" aria-hidden="true">
-      <img src="{img_hungry}" alt=""/><img src="{img_sick}" alt=""/><img src="{img_ok}" alt=""/><img src="{img_happy}" alt=""/>
+    <div class="hero-inner">
+      <div class="brand-mark">FASTAIR · MPT</div>
+      <h1>Задержки получения МПТ</h1>
+      <div class="sub">
+        Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
+        одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
+        Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+      </div>
     </div>
   </div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка · status screen</h2>
+    <h2 style="margin-top:0">Сводка</h2>
     <div class="kpi-grid">
       <a class="kpi jump" href="#by-clients" data-target="by-clients">
-        <img src="{img_ok}" alt=""/><div class="label">Всего</div><div class="value">{len(rows)}</div>
+        <div class="label">Всего</div><div class="value">{len(rows)}</div>
         <div class="muted">{len(by_client)} клиентов · склад {wh_n}</div>
       </a>
       <a class="kpi jump{' kpi-empty' if counts.get('1', 0) == 0 else ''}" href="#s1" data-target="s1">
-        <img src="{img_by_alert['1']}" alt=""/><div class="label">1 · Нет заявки</div>
+        <div class="label">1 · Нет заявки</div>
         <div class="value">{counts.get('1', 0)}</div>
         <div class="muted">открыть раздел ↓</div>
       </a>
       <a class="kpi jump{' kpi-empty' if counts.get('2', 0) == 0 else ''}" href="#s2" data-target="s2">
-        <img src="{img_by_alert['2']}" alt=""/><div class="label">2 · Нет вырезки &gt;7д</div>
+        <div class="label">2 · Нет вырезки &gt;7д</div>
         <div class="value">{counts.get('2', 0)}</div>
         <div class="muted">открыть раздел ↓</div>
       </a>
       <a class="kpi jump{' kpi-empty' if counts.get('3', 0) == 0 else ''}" href="#s3" data-target="s3">
-        <img src="{img_by_alert['3']}" alt=""/><div class="label">3 · Нет МПТ &gt;14д</div>
+        <div class="label">3 · Нет МПТ &gt;14д</div>
         <div class="value">{counts.get('3', 0)}</div>
         <div class="muted">открыть раздел ↓</div>
       </a>
       <a class="kpi jump{' kpi-empty' if counts.get('4', 0) == 0 else ''}" href="#s4" data-target="s4">
-        <img src="{img_by_alert['4']}" alt=""/><div class="label">4 · ТАЗ не обновлён</div>
+        <div class="label">4 · ТАЗ не обновлён</div>
         <div class="value">{counts.get('4', 0)}</div>
         <div class="muted">открыть раздел ↓</div>
       </a>
       <a class="kpi jump{' kpi-empty' if counts.get('ipc', 0) == 0 else ''}" href="#sipc" data-target="sipc">
-        <img src="{img_by_alert['ipc']}" alt=""/><div class="label">IPC</div>
+        <div class="label">IPC</div>
         <div class="value">{counts.get('ipc', 0)}</div>
         <div class="muted">открыть раздел ↓</div>
       </a>
@@ -1151,7 +1113,7 @@ tbody tr:hover {{ background:#b9d486; }}
       Приоритет одной тревоги: IPC → ТАЗ не обновлён (действующее МПТ в Перечне, ≤1 год) → нет заявки → нет вырезки → нет МПТ &gt;14д.
       В «Списки по МПТ» при действующем МПТ пишем «ЕСТЬ МПТ» — наличие заявки не важно.
       Исключены позиции, где МПТ есть и в Перечне, и в ТАЗ («Есть МПТ»).
-      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Зелёная строка — «на склад».
+      Тип ВС сверяется мягко («тип ВС ≠» при расхождении). Голубая строка — «на склад».
     </p>
   </section>
 
@@ -1159,10 +1121,10 @@ tbody tr:hover {{ background:#b9d486; }}
     {''.join(tabs)}
   </div>
 
-  <h2 id="by-clients">По клиентам · pets</h2>
+  <h2 id="by-clients">По клиентам</h2>
   {''.join(client_blocks)}
 
-  <h2 id="by-status">По статусам · alerts</h2>
+  <h2 id="by-status">По статусам</h2>
   <div class="tabs">
     {''.join(status_tabs)}
   </div>
@@ -1170,7 +1132,7 @@ tbody tr:hover {{ background:#b9d486; }}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
-    Self-contained HTML — Tamagotchi skin · открывается локально без интернета.
+    Self-contained HTML · фон: Aeroflot A350 (VQ-BFY), CC BY-SA 2.0 · открывается локально без интернета.
   </div>
 </div>
 <script>
