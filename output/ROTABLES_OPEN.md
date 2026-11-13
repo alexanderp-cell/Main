@@ -2,11 +2,11 @@
 
 **Срез:** ТАЗ 13.11.2026 · только ROTABLE (вкл. GSE/TOOL и KIT)
 
-### Открыть
-- **Preview:** https://htmlpreview.github.io/?https://github.com/alexanderp-cell/Main/blob/cursor/category-reports-1311-3296/output/rotables_suppliers_clients_1311.html
-- **Скачать HTML:** https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/category-reports-1311-3296/output/rotables_suppliers_clients_1311.html  
-  (Save As → открыть файл локально в браузере)
-- **Зеркало:** https://filebin.net/Buv9x11yHrw/rotables_suppliers_clients_1311.html
+### Открыть (рендер в браузере)
+- **Индекс:** https://alternatively-rpm-proc-frank.trycloudflare.com/
+- **ROTABLE:** https://alternatively-rpm-proc-frank.trycloudflare.com/rotables.html
+
+Ссылка временная (туннель агента). Если протухла — напиши, подниму снова.
 
 ### Периоды
 1. Неделя 07–13.11  
