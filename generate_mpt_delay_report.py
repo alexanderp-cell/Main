@@ -901,7 +901,7 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 """
         )
 
-    img_a350 = data_uri("aeroflot-a350.jpg")
+    img_bg = data_uri("s7-a321neo.jpg")
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -911,16 +911,18 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
 <title>Задержки МПТ — {report_date.strftime('%d.%m.%Y')}</title>
 <style>
 :root {{
-  --navy:#0b1f3a;
-  --navy-2:#16345c;
-  --orange:#e8572a;
-  --orange-soft:#ff7a4d;
-  --sky:#dce8f5;
+  --navy:#0d2a1f;
+  --navy-2:#164433;
+  --accent:#8cc63f;
+  --accent-deep:#5f9a1f;
+  --lime:#c6e37a;
+  --sky:#e8f3df;
   --card:rgba(255,255,255,.94);
-  --ink:#142033;
-  --muted:#5b6b7c;
-  --line:#c9d6e5;
+  --ink:#14241a;
+  --muted:#5b6f60;
+  --line:#c9d9be;
   --red:#c0392b;
+  --orange:#d35400;
   --green:#1e7a46;
 }}
 * {{ box-sizing:border-box; }}
@@ -929,10 +931,10 @@ body {{
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color:var(--ink);
   min-height:100vh;
-  background-color: #0b1f3a;
+  background-color: #0d2a1f;
   background-image:
-    linear-gradient(180deg, rgba(11,31,58,.72) 0%, rgba(11,31,58,.55) 180px, rgba(220,232,245,.92) 420px, rgba(220,232,245,.96) 100%),
-    url('{img_a350}');
+    linear-gradient(180deg, rgba(13,42,31,.78) 0%, rgba(13,42,31,.58) 180px, rgba(232,243,223,.93) 420px, rgba(232,243,223,.97) 100%),
+    url('{img_bg}');
   background-size: cover;
   background-position: center top;
   background-attachment: fixed;
@@ -945,13 +947,13 @@ body {{
   overflow:hidden;
   margin-bottom:18px;
   min-height:220px;
-  border:1px solid rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.22);
   box-shadow: 0 18px 40px rgba(0,0,0,.28);
   background:
-    linear-gradient(115deg, rgba(11,31,58,.88) 0%, rgba(11,31,58,.45) 48%, rgba(232,87,42,.25) 100%),
-    url('{img_a350}');
+    linear-gradient(115deg, rgba(13,42,31,.90) 0%, rgba(13,42,31,.48) 50%, rgba(140,198,63,.28) 100%),
+    url('{img_bg}');
   background-size: cover;
-  background-position: center 40%;
+  background-position: center 42%;
   color:#fff;
   display:flex; align-items:flex-end;
 }}
@@ -959,7 +961,7 @@ body {{
 .brand-mark {{
   display:inline-block;
   font-size:12px; letter-spacing:.16em; text-transform:uppercase;
-  background:var(--orange); color:#fff; padding:7px 12px; font-weight:800;
+  background:var(--accent); color:#0d2a1f; padding:7px 12px; font-weight:800;
   border-radius:4px; margin-bottom:14px;
 }}
 .hero h1 {{
@@ -974,21 +976,21 @@ h2 {{
 .card {{
   background:var(--card); border:1px solid var(--line);
   border-radius:12px; padding:18px 18px 10px;
-  box-shadow: 0 10px 28px rgba(11,31,58,.08);
+  box-shadow: 0 10px 28px rgba(13,42,31,.08);
   backdrop-filter: blur(6px);
 }}
 .kpi-grid {{
   display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin:12px 0 14px;
 }}
 .kpi {{
-  background:linear-gradient(180deg, #ffffff, #f3f7fb);
+  background:linear-gradient(180deg, #ffffff, #f4f9ef);
   border:1px solid var(--line); border-radius:10px; padding:12px 12px 14px;
   display:flex; flex-direction:column; gap:4px; min-height:96px;
   text-decoration:none; color:inherit;
 }}
 a.kpi {{ cursor:pointer; transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }}
-a.kpi:hover {{ transform: translateY(-2px); border-color:var(--orange); box-shadow:0 8px 18px rgba(232,87,42,.18); }}
-a.kpi:focus-visible {{ outline:3px solid var(--orange); outline-offset:2px; }}
+a.kpi:hover {{ transform: translateY(-2px); border-color:var(--accent-deep); box-shadow:0 8px 18px rgba(140,198,63,.25); }}
+a.kpi:focus-visible {{ outline:3px solid var(--accent); outline-offset:2px; }}
 a.kpi.kpi-empty {{ opacity:.55; cursor:default; pointer-events:none; }}
 .label {{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
 .value {{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--navy); }}
@@ -999,15 +1001,15 @@ a.kpi.kpi-empty {{ opacity:.55; cursor:default; pointer-events:none; }}
   border:1px solid var(--line); padding:8px 12px; font-size:13px; font-weight:700;
   border-radius:8px;
 }}
-.tabs a:hover {{ background:#fff; border-color:var(--orange); color:var(--orange); }}
+.tabs a:hover {{ background:#fff; border-color:var(--accent-deep); color:var(--accent-deep); }}
 details.group {{
   background:var(--card); border:1px solid var(--line);
   margin:12px 0; overflow:visible; border-radius:12px;
-  box-shadow: 0 8px 22px rgba(11,31,58,.07);
+  box-shadow: 0 8px 22px rgba(13,42,31,.07);
   scroll-margin-top: 16px;
 }}
 details.group.status-group summary {{
-  background: linear-gradient(90deg, var(--orange) 0 10px, #fff 10px);
+  background: linear-gradient(90deg, var(--accent) 0 10px, #fff 10px);
 }}
 details.group summary {{
   cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
@@ -1017,17 +1019,17 @@ details.group summary {{
 details.group summary::-webkit-details-marker {{ display:none; }}
 .group-name {{ font-weight:800; font-size:15px; margin-right:auto; color:var(--navy); padding-left:8px; }}
 .pill {{
-  font-size:12px; background:#eef4fb; border:1px solid var(--line); color:var(--navy);
+  font-size:12px; background:#eef6e6; border:1px solid var(--line); color:var(--navy);
   padding:4px 10px; font-weight:700; border-radius:999px;
 }}
-.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfcfe; }}
+.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfdf8; }}
 #by-status {{ scroll-margin-top: 12px; }}
 table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--line); table-layout:fixed; background:#fff; border-radius:8px; overflow:hidden; }}
 col.client {{ width:11%; }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
 th, td {{
-  border-bottom:1px solid #e4ebf3; border-right:1px solid #e4ebf3;
+  border-bottom:1px solid #e4efe0; border-right:1px solid #e4efe0;
   padding:8px 8px; vertical-align:top; text-align:left;
   word-wrap:break-word; overflow-wrap:anywhere; color:var(--ink);
 }}
@@ -1036,17 +1038,17 @@ th {{
   position:sticky; top:0; z-index:5;
   font-size:12px; font-weight:800; letter-spacing:.02em; text-transform:uppercase;
   color:#fff; background:var(--navy);
-  border-bottom:2px solid var(--orange);
+  border-bottom:2px solid var(--accent);
 }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.wh {{ background:#eef6ff; }}
-tbody tr:hover {{ background:#f5f9fd; }}
+tr.wh {{ background:#eef8e6; }}
+tbody tr:hover {{ background:#f5faf0; }}
 .tag {{
   display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
-  padding:2px 7px; margin:1px 2px; border:1px solid var(--line); background:#f3f6fa; color:var(--navy);
+  padding:2px 7px; margin:1px 2px; border:1px solid var(--line); background:#f3f7ef; color:var(--navy);
 }}
 .tag.alt {{ background:#fff3cd; border-color:#e6d89c; }}
-.tag.wh {{ background:#dce8f5; border-color:#b7c9de; }}
+.tag.wh {{ background:#dff0c9; border-color:#b7d48e; }}
 .tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
 .tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
 .tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
@@ -1137,7 +1139,7 @@ tbody tr:hover {{ background:#f5f9fd; }}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
-    Self-contained HTML · фон: Aeroflot A350 (VQ-BFY), CC BY-SA 2.0 · открывается локально без интернета.
+    Self-contained HTML · фон: S7 Airlines A321neo (VQ-BDI), CC BY-SA 2.0 · открывается локально без интернета.
   </div>
 </div>
 <script>
