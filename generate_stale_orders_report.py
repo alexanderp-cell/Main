@@ -57,11 +57,25 @@ COL_SUP_PAY_DATE = "Дата оплаты поставщику"
 COL_SUP_PAY_AMT = "Сумма оплаты поставщику"
 COL_SUP_PAY_BAL = "Остаток к оплате поставщику"
 COL_MOVE_START = "Дата начала движения "
-COL_AWB = "НОМЕР AWB"
+COL_AWB = "НОМЕР AWB"  # BB — у LH/BOS часто статус проработки, не AWB
 COL_CUSTOMS_INV = "НОМЕР ИНВОЙСА ДЛЯ ТАМОЖНИ"
 COL_DAYS_TO_DELIVER = "Дней на поставку (ЧИСЛО)"
 COL_LEAD_TIME = "Lead time"
 COL_DEADLINE = "КРАЙНЯЯ ДАТА ПОСТАВКИ"
+
+# LUFTHANSA / BLUE OCEAN: BB–BC hold pipeline statuses (not real AWB/ETA).
+LH_BOS_MARKERS = ("lufthansa", "blue ocean")
+# Higher rank = further along. Regression to 1–2 = stuck again → keep in «без движения».
+PIPELINE_RANKS: list[tuple[str, int]] = [
+    ("ON THE WAY TO WHS", 5),
+    ("QUEUED FOR A PAYMENT", 3),
+    ("UNCONFIRMED YET", 1),
+    ("UNCONFIRMED", 1),
+    ("UNSOLVED", 2),
+    ("SHIPPED", 6),
+    ("PAID", 4),
+]
+PIPELINE_REGRESSION_RANKS = {1, 2}  # unconfirmed / unsolved
 
 # Weekly Excel may rename some headers
 SNAPSHOT_RENAME = {
@@ -371,6 +385,59 @@ def _format_awb(value: Any) -> str:
     return text
 
 
+def is_lh_bos_supplier(row: pd.Series) -> bool:
+    blob = (
+        f"{norm_text(row.get(COL_SUPPLIER))} {norm_text(row.get(COL_ROOT_SUPPLIER))}"
+    ).casefold()
+    return any(m in blob for m in LH_BOS_MARKERS)
+
+
+def pipeline_blob(row: pd.Series) -> str:
+    """BB + BC text for LH/BOS status detection."""
+    return "\n".join(
+        [
+            norm_text(row.get(COL_AWB)),
+            norm_text(row.get(COL_EXPECTED_ARRIVAL)),
+        ]
+    ).upper()
+
+
+def extract_pipeline_status(row: pd.Series) -> tuple[str, int] | None:
+    """Return (label, rank) for LH/BOS BB–BC pipeline status, if any."""
+    blob = pipeline_blob(row)
+    if not blob:
+        return None
+    for label, rank in PIPELINE_RANKS:
+        if label in blob:
+            return label, rank
+    return None
+
+
+def had_higher_pipeline(
+    key: str,
+    client: str,
+    history: list[tuple[date, str, pd.DataFrame]],
+    report_date: date,
+    current_rank: int,
+) -> tuple[bool, str]:
+    """True if any earlier weekly snap had a more advanced LH/BOS pipeline stage."""
+    best_label = ""
+    best_rank = current_rank
+    for snap_date, snap_client, df in history:
+        if snap_client != client or snap_date >= report_date:
+            continue
+        hit = df.loc[df["_key"] == key]
+        if hit.empty:
+            continue
+        prev = extract_pipeline_status(hit.iloc[0])
+        if prev and prev[1] > best_rank:
+            best_rank = prev[1]
+            best_label = prev[0]
+    if best_rank > current_rank:
+        return True, best_label
+    return False, ""
+
+
 def diagnose_pause(row: pd.Series, report_date: date, days_frozen: int) -> str:
     """Human-readable reason why fulfilment looks stuck."""
     status = norm_text(row.get(COL_STATUS)) or "?"
@@ -390,7 +457,10 @@ def diagnose_pause(row: pd.Series, report_date: date, days_frozen: int) -> str:
     comment = norm_text(row.get(COL_COMMENT))
     awb_u = awb.upper()
     age = days_open if days_open is not None else days_frozen
-    has_logistics = bool(move or awb or eta is not None)
+    lh_bos = is_lh_bos_supplier(row)
+    pipe = extract_pipeline_status(row) if lh_bos else None
+    # For LH/BOS, BB/BC statuses are not real logistics AWB/ETA.
+    has_logistics = bool(move or eta is not None or (awb and not pipe))
 
     def _pay_label() -> str:
         bits: list[str] = []
@@ -428,6 +498,14 @@ def diagnose_pause(row: pd.Series, report_date: date, days_frozen: int) -> str:
     unpaid_note = ""
     if not has_pay and age >= 7:
         unpaid_note = f" Оплаты поставщику нет уже при {age} дн. в работе."
+
+    # 2b) LUFTHANSA / BLUE OCEAN — BB–BC pipeline status
+    if lh_bos and pipe:
+        label, _rank = pipe
+        return (
+            f"LH/BOS статус в BB–BC: «{label}» без смены {days_frozen} дн. "
+            f"— этап не продвигается.{unpaid_note}"
+        )
 
     # 3) Logistics signals — diagnose route/ETA even if supplier unpaid
     if has_logistics:
@@ -551,9 +629,36 @@ def build_tables(
             since, source, _changed = earliest_same_movement(
                 key, row["_sig"], client, history, report_date
             )
-            if since is None or since > cutoff:
+
+            # LH/BOS: смена статуса BB–BC = движение (уже в signature).
+            # Исключение: откат на UNCONFIRMED / UNSOLVED после более позднего этапа
+            # → снова считаем «без движения», даже если откат свежий.
+            force_regression = False
+            regression_note = ""
+            if is_lh_bos_supplier(row):
+                pipe = extract_pipeline_status(row)
+                if pipe and pipe[1] in PIPELINE_REGRESSION_RANKS:
+                    higher, prev_label = had_higher_pipeline(
+                        key, client, history, report_date, pipe[1]
+                    )
+                    if higher:
+                        force_regression = True
+                        regression_note = (
+                            f"Откат LH/BOS по BB–BC: было «{prev_label}», "
+                            f"сейчас «{pipe[0]}» — вернулись на раннюю стадию. "
+                        )
+                        if since is None:
+                            since = report_date - timedelta(days=stale_days)
+                            source = f"откат LH/BOS {prev_label} → {pipe[0]}"
+
+            if not force_regression and (since is None or since > cutoff):
                 continue
-            days = (report_date - since).days
+            days = (report_date - since).days if since is not None else stale_days
+            if force_regression and days < stale_days:
+                days = stale_days
+            verdict = diagnose_pause(row, report_date, days)
+            if regression_note:
+                verdict = regression_note + verdict
             stale_rows.append(
                 {
                     "Клиент": client,
@@ -569,7 +674,7 @@ def build_tables(
                     "Дней без движения": days,
                     "Поставщик": norm_text(row.get(COL_SUPPLIER))
                     or norm_text(row.get(COL_ROOT_SUPPLIER)),
-                    "Вывод": diagnose_pause(row, report_date, days),
+                    "Вывод": verdict,
                     "_days": days,
                 }
             )
@@ -743,7 +848,9 @@ def write_excel(
         "не менялись Status, поставщик, оплата поставщику, BA–BD (движение/AWB/ETA/инвойс), "
         "факт. дата поставки, прогноз сроков, комментарий — ≥ "
         f"{stale_days} дн. Оплаты клиента игнорируются. "
-        "Появление факт. даты поставки = отгрузка (= движение).",
+        "Появление факт. даты поставки = отгрузка (= движение). "
+        "LUFTHANSA / BLUE OCEAN: смена статуса в BB–BC = движение; "
+        "откат в UNSOLVED / UNCONFIRMED после более позднего этапа снова = без движения.",
     )
     sum_ws.merge_cells(start_row=r + 4, start_column=1, end_row=r + 6, end_column=3)
     sum_ws.cell(r + 4, 1).alignment = Alignment(wrap_text=True, vertical="top")
