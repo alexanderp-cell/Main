@@ -1,12 +1,12 @@
 # FASTAIR — ROTABLE · поставщики и клиенты
 
-**Срез:** ТАЗ 13.11.2026 · только ROTABLE (вкл. GSE/TOOL и KIT)
+**Срез:** ТАЗ 13.11.2026 (обновлённый вечерний) · ROTABLE (GSE/TOOL + KIT)
 
-### Открыть (рендер в браузере)
-- **Индекс:** https://alternatively-rpm-proc-frank.trycloudflare.com/
-- **ROTABLE:** https://alternatively-rpm-proc-frank.trycloudflare.com/rotables.html
+### Открыть в браузере (постоянная ссылка)
+https://htmlpreview.github.io/?https://github.com/alexanderp-cell/Main/blob/cursor/category-reports-1311b-3296/output/open_rotables_1311.html
 
-Ссылка временная (туннель агента). Если протухла — напиши, подниму снова.
+Индекс обоих отчётов:  
+https://htmlpreview.github.io/?https://github.com/alexanderp-cell/Main/blob/cursor/category-reports-1311b-3296/output/open_reports_1311.html
 
 ### Периоды
 1. Неделя 07–13.11  

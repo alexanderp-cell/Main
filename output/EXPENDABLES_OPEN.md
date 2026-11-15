@@ -1,12 +1,12 @@
 # FASTAIR — EXPENDABLE · поставщики и клиенты
 
-**Срез:** ТАЗ 13.11.2026 · только EXPENDABLE (вкл. consumable)
+**Срез:** ТАЗ 13.11.2026 (обновлённый вечерний) · EXPENDABLE (consumable)
 
-### Открыть (рендер в браузере)
-- **Индекс:** https://alternatively-rpm-proc-frank.trycloudflare.com/
-- **EXPENDABLE:** https://alternatively-rpm-proc-frank.trycloudflare.com/expendables.html
+### Открыть в браузере (постоянная ссылка)
+https://htmlpreview.github.io/?https://github.com/alexanderp-cell/Main/blob/cursor/category-reports-1311b-3296/output/open_expendables_1311.html
 
-Ссылка временная (туннель агента). Если протухла — напиши, подниму снова.
+Индекс обоих отчётов:  
+https://htmlpreview.github.io/?https://github.com/alexanderp-cell/Main/blob/cursor/category-reports-1311b-3296/output/open_reports_1311.html
 
 ### Периоды
 1. Неделя 07–13.11  
