@@ -299,8 +299,9 @@ CSS = """
 }
 html { font-family: "Liberation Serif", serif; color: #1c2b39; font-size: 10.5pt; line-height: 1.35; }
 h1 { font-family: "Liberation Sans", sans-serif; font-size: 18pt; color: #16324f; margin: 0 0 6pt; bookmark-level: 1; bookmark-state: open; }
-h2 { font-family: "Liberation Sans", sans-serif; font-size: 15pt; color: #16324f; margin: 0 0 6pt; bookmark-level: 2; bookmark-state: open; break-before: page; }
-h2.first { break-before: auto; }
+h1.mark { font-size: 0; line-height: 0; margin: 0; color: transparent; }
+h2 { font-family: "Liberation Sans", sans-serif; font-size: 15pt; color: #16324f; margin: 0 0 6pt; bookmark-level: 2; bookmark-state: open; }
+section.family { break-before: page; }
 p { margin: 0 0 6pt; }
 .kicker { font-family: "Liberation Sans", sans-serif; letter-spacing: 0.04em; color: #5c6b7a; font-size: 9pt; margin: 0 0 4pt; }
 .cover { break-after: page; }
@@ -332,12 +333,10 @@ table.specs td:first-child, table.specs th:first-child { width: 32%; }
 
 def build():
     meta = json.loads((PHOTO / "credits.json").read_text(encoding="utf-8"))
-    blocks = []
-    for i, fam in enumerate(FAMILIES):
-        html = family_html(fam, meta)
-        if i == 0:
-            html = html.replace("<h2>", '<h2 class="first">', 1)
-        blocks.append(html)
+    blocks = [family_html(fam, meta) for fam in FAMILIES]
+    blocks[0] = blocks[0].replace(
+        "<h2>", '<h1 class="mark" id="boeing">Boeing</h1><h2>', 1
+    )
     doc = f"""<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="utf-8"><title>Справочник типов ВС. Boeing</title><style>{CSS}</style></head>
@@ -354,13 +353,13 @@ def build():
     <p>На листе размеры даны так, как их поставил автор. Где две величины, первая в футах и дюймах, после черты — сантиметры. Где величина одна, это сантиметры. В таблицах те же самолёты в метрах и тоннах.</p>
     <p>В каждой главе четыре таблицы: технические характеристики семейства, годы производства и размеры по моделям, варианты двигателей, варианты ВСУ. Год в колонке «Производство» — от первой поставки до последней. «выпускается» значит, что линия на 16 ноября 2026 ещё открыта. «не выпускался» значит, что серийной поставки в авиакомпанию ещё не было: конец интервала не выдуман.</p>
     <p>На эту дату MAX 7, MAX 10, 777-8 и 777-9 в регулярных перевозках не летают. У MAX 7 и MAX 10 уже есть сертификат FAA. У 777-9 сертификата типа ещё нет.</p>
+    <p>Каждое семейство начинается с нового листа.</p>
   </section>
   <section>
     <h1 id="toc">Содержание</h1>
     {toc()}
     <p class="sources">Опора: страницы Boeing по семействам, листы ACAP в части габаритов, сводки поставок и сертификационные данные EASA/FAA. Фотографии — Wikimedia Commons, автор и лицензия под каждым снимком.</p>
   </section>
-  <h1 class="first" id="boeing" style="break-before: page">Boeing</h1>
   {''.join(blocks)}
 </body>
 </html>"""
