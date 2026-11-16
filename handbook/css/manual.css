@@ -85,6 +85,11 @@ a { color: var(--navy-2); }
   font-size: 26px;
   margin: 26px 0 12px;
 }
+.chapter {
+  margin: -4px 0 14px;
+  max-width: 68ch;
+  color: var(--ink);
+}
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

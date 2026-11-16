@@ -1,9 +1,12 @@
 "use strict";
 
+const BOEING_ORDER = ["b737", "b757", "b767", "b787", "b777", "b747"];
+
 const state = {
   view: "catalog",
   id: null,
   q: "",
+  maker: new URLSearchParams(location.search).get("maker") === "all" ? "all" : "boeing",
   category: "all",
   status: "all",
   compare: [],
@@ -48,7 +51,12 @@ function syncNav() {
   });
 }
 
+function isBoeing(ac) {
+  return ac.manufacturer === "Boeing";
+}
+
 function matches(ac) {
+  if (state.maker === "boeing" && !isBoeing(ac)) return false;
   if (state.category !== "all" && ac.category !== state.category) return false;
   if (state.status !== "all" && ac.status !== state.status) return false;
   if (!state.q.trim()) return true;
@@ -75,13 +83,27 @@ function render() {
 }
 
 function renderCatalog() {
+  const boeing = BOEING_ORDER.map(byId).filter((ac) => ac && matches(ac));
   const groups = CATEGORIES.map((cat) => ({
     cat,
-    items: AIRCRAFT.filter((a) => a.category === cat.id && matches(a)),
+    items: AIRCRAFT.filter((a) => a.category === cat.id && !isBoeing(a) && matches(a)),
   })).filter((g) => g.items.length);
+  const boeingBlock = boeing.length ? `
+    <h2 class="group-title">Boeing</h2>
+    <p class="chapter">Справочник начинается с шести семейств Boeing, от самого массового узкофюзеляжного к двухпалубному: 737, 757, 767, 787, 777, 747.</p>
+    <div class="cards">${boeing.map(cardHtml).join("")}</div>
+  ` : "";
+  const rest = state.maker === "boeing" ? "" : groups.map(groupHtml).join("");
+  const empty = !boeingBlock && !rest
+    ? `<p>Ничего не найдено. ${state.maker === "boeing" ? "В разделе Boeing такого типа нет — переключите производителя на «Все»." : "Сбросьте фильтр или поищите по ICAO, например A320 или ПС-90."}</p>`
+    : "";
   app.innerHTML = `
     <p class="banner">${esc(HANDBOOK_NOTE)}</p>
     <div class="filters">
+      <select id="maker" aria-label="Производитель">
+        <option value="boeing" ${state.maker === "boeing" ? "selected" : ""}>Boeing</option>
+        <option value="all" ${state.maker === "all" ? "selected" : ""}>Все производители</option>
+      </select>
       <input id="q" type="search" placeholder="Тип, ICAO, двигатель, ВСУ" value="${esc(state.q)}" aria-label="Поиск">
       <select id="category" aria-label="Класс">
         <option value="all">Все классы</option>
@@ -92,7 +114,7 @@ function renderCatalog() {
         ${Object.entries(STATUSES).map(([id, label]) => `<option value="${id}" ${state.status === id ? "selected" : ""}>${esc(label)}</option>`).join("")}
       </select>
     </div>
-    ${groups.length ? groups.map(groupHtml).join("") : "<p>Ничего не найдено. Сбросьте фильтр или поищите по ICAO, например A320 или ПС-90.</p>"}
+    ${boeingBlock}${rest}${empty}
     ${compareBar()}
   `;
   document.getElementById("q").addEventListener("input", (e) => {
@@ -102,6 +124,14 @@ function renderCatalog() {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
   });
+  document.getElementById("maker").onchange = (e) => {
+    state.maker = e.target.value;
+    const url = new URL(location.href);
+    if (state.maker === "all") url.searchParams.set("maker", "all");
+    else url.searchParams.delete("maker");
+    history.replaceState(null, "", url);
+    render();
+  };
   document.getElementById("category").onchange = (e) => { state.category = e.target.value; render(); };
   document.getElementById("status").onchange = (e) => { state.status = e.target.value; render(); };
   app.querySelectorAll("[data-open]").forEach((btn) => {
@@ -230,7 +260,7 @@ function renderAbout() {
   app.innerHTML = `
     <article class="prose panel">
       <h2>Как читать</h2>
-      <p>Справочник собран для занятий и для полки инженерно-авиационной службы, не для расчёта рейса. В каждой карточке — одна представительная модификация и семейство вокруг неё. Тяга двигателя зависит от суффикса на табличке; здесь указан порядок величины.</p>
+      <p>Справочник собран для занятий и для полки инженерно-авиационной службы, не для расчёта рейса. Каталог открывается разделом Boeing: 737, 757, 767, 787, 777 и 747. Остальные производители включаются фильтром «Все производители», и Boeing в этом списке остаётся первым. В каждой карточке — одна представительная модификация и семейство вокруг неё. Тяга двигателя зависит от суффикса на табличке; здесь указан порядок величины.</p>
       <h3 class="subhead">Сечение</h3>
       <p>Рисунок — вид в хвост, на гермофюзеляж в миделе. Кресла показаны спереди, фигура стоит в проходе. Её рост 175 см — ориентир среднего взрослого, не сертификационный манекен и не 95-й перцентиль.</p>
       <p>Опубликованные размеры (диаметр по листу типа, ширина салона из буклета производителя) подписаны без оговорок. Если открытые источники не дают одной высоты прохода, размер помечен «схема». У C919 рекламные 3,9 м салона не сходятся с внешней шириной 3,96 м, поэтому на чертеже стоит помеченное допущение.</p>
