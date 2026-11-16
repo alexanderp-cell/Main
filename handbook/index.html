@@ -3,25 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Справочник типов ВС гражданской авиации</title>
+  <title>Справочник типов ВС. Boeing</title>
   <link rel="stylesheet" href="css/manual.css">
 </head>
 <body>
   <header class="top">
     <div class="top-inner">
-      <p class="kicker">Учебное пособие</p>
+      <p class="kicker">Учебное пособие · ноябрь 2026</p>
       <h1>Типы воздушных судов</h1>
-      <p class="lede">Справочник начинается с Boeing. Дальше тем же фильтром открываются остальные производители. У каждого типа — характеристики, годы выпуска, двигатели, ВСУ, шасси и поперечное сечение фюзеляжа. В салоне стоит взрослый ростом 175 см.</p>
-      <nav class="nav" aria-label="Разделы">
-        <button type="button" data-go="catalog">Каталог</button>
-        <button type="button" data-go="sections">Сечения в одном масштабе</button>
-        <button type="button" data-go="about">Как читать</button>
-      </nav>
+      <p class="lede">Этот том — только Boeing. Семь семейств, 47 моделей: характеристики, годы выпуска, двигатели, ВСУ, шасси и поперечное сечение фюзеляжа. В проходе на схемах стоит человек ростом 175 см.</p>
     </div>
   </header>
-  <main class="wrap" id="app"></main>
-  <script src="js/data.js"></script>
-  <script src="js/draw.js"></script>
-  <script src="js/app.js"></script>
+  <main class="wrap">
+    <p class="banner">Файл PDF. Оглавление в начале и закладки просмотрщика открывают главу: производитель, семейство или конкретная модель.</p>
+    <p><a class="download" href="boeing.pdf" download>Скачать справочник PDF</a></p>
+    <section class="panel">
+      <h2>Boeing</h2>
+      <ul class="list">
+        <li><strong>707 и 720.</strong> 707-120, 707-120B, 707-320, 707-420, 707-320B, 707-320C, 720, 720B.</li>
+        <li><strong>727.</strong> 727-100, 727-100C, 727-200, 727-200 Advanced.</li>
+        <li><strong>737.</strong> -100, -200, -300, -400, -500, -600, -700, -800, -900, -900ER, MAX 7, MAX 8, MAX 9, MAX 10.</li>
+        <li><strong>747.</strong> 747-100, 747-200B, 747SP, 747-300, 747-400, 747-400ER, 747-400F, 747-8, 747-8F.</li>
+        <li><strong>757.</strong> 757-200, 757-200PF, 757-300.</li>
+        <li><strong>767.</strong> 767-200, 767-200ER, 767-300, 767-300ER, 767-300F, 767-400ER.</li>
+        <li><strong>787.</strong> 787-8, 787-9, 787-10.</li>
+      </ul>
+      <p>Цифры — типовые опубликованные значения, не данные РЛЭ. 717 и 777 в этот том не входят. MAX 7 и MAX 10 сертифицированы FAA в 2026 году, в регулярные перевозки на ноябрь 2026 ещё не переданы.</p>
+    </section>
+  </main>
 </body>
 </html>
