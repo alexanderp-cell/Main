@@ -36,10 +36,6 @@ MODEL_HEAD = [
     "Дальность",
 ]
 
-BIZ = "#1d4e79"
-FIRST = "#10243f"
-PRE = "#4f86ab"
-ECO = "#9ec0db"
 
 # Масса пустого — опубликованная масса пустого снаряжённого. Топливо — масса
 # заправляемого топлива из листа Boeing. Прочерк — в открытом листе цифры нет.
@@ -50,8 +46,7 @@ FAMILIES = [
         "h": "737",
         "title": "Boeing 737",
         "photo": "737",
-        "photo_h": "64mm",
-        "plates": [("737.png", "145mm")],
+        "plates": [("737.png", "100mm")],
         "plate_note": "Размеры на этом чертеже даны в сантиметрах. Чертёж 737-800, Julien Scavini, CC BY-SA 3.0, файл «Boeing 737-800 v1.0.png».",
         "models": [
             ["737-100", "1967–1969", "28,7 м", "28,4 м", "11,3 м", "около 100", "28,1 т", "14,3 т", "49,9 т", "780 км/ч", "10 700 м", "2 850 км"],
@@ -80,20 +75,6 @@ FAMILIES = [
             ["737-300, 737-400, 737-500", "Honeywell GTCP85-129, Hamilton Sundstrand APS 2000, Honeywell GTCP36-280"],
             ["737-600, 737-700, 737-800, 737-900, 737-900ER, MAX", "Honeywell 131-9B"],
         ],
-        "lopa_h": 168,
-        "lopa": [
-            {
-                "y": 36, "h": 92, "x0": 28, "x1": 1012, "wing": True,
-                "sections": [
-                    ("galley", 32), ("lav", 16),
-                    ("seats", 2, (3, 3), BIZ),
-                    ("seats", 25, (3, 3), ECO),
-                    ("lav", 16), ("galley", 32),
-                ],
-                "doors": [(0.08, "door"), (0.44, "exit"), (0.52, "exit"), (0.93, "door")],
-            }
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 737-800, 162 места. Бизнес 12 мест, ряд 3+3. Эконом 150 мест, ряд 3+3.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "2 шт. по 2 колеса"],
@@ -104,8 +85,9 @@ FAMILIES = [
         "h": "747",
         "title": "Boeing 747",
         "photo": "747",
-        "photo_h": "30mm",
-        "plates": [("747.png", "198mm")],
+        "plates": [("747.png", "108mm")],
+        "lopa": "747-400d.png",
+        "lopa_note": "Компоновка салона 747-400D авиакомпании Japan Airlines, обе палубы. Goran tek-en, CC BY-SA 4.0, Wikimedia Commons, файл «Boeing 747-400D (Japan Airlines).svg».",
         "plate_note": "Размеры на чертеже: первая величина в футах и дюймах, после черты сантиметры. Лист семейства, Julien Scavini, CC BY-SA 3.0, файл «Boeing 747 family v1.0.png».",
         "models": [
             ["747-100", "1969–1976", "70,7 м", "59,6 м", "19,3 м", "около 360", "—", "—", "333 т", "900 км/ч", "10 700 м", "8 560 км"],
@@ -127,27 +109,6 @@ FAMILIES = [
             ["747-400, 747-400ER", "Pratt & Whitney Canada PW901A"],
             ["747-8", "Pratt & Whitney Canada PW901C"],
         ],
-        "lopa_h": 214,
-        "lopa": [
-            {
-                "y": 26, "h": 46, "x0": 168, "x1": 620, "nose": False, "tail": False,
-                "sections": [("seats", 7, (3, 3), BIZ)],
-                "doors": [(0.12, "door")],
-            },
-            {
-                "y": 112, "h": 70, "x0": 24, "x1": 1016, "wing": True,
-                "sections": [
-                    ("galley", 26),
-                    ("seats", 3, (2, 2, 2), FIRST),
-                    ("seats", 6, (2, 3, 2), BIZ),
-                    ("seats", 31, (3, 4, 3), ECO),
-                    ("seats", 1, (2, 2), ECO),
-                    ("galley", 26),
-                ],
-                "doors": [(0.06, "door"), (0.18, "door"), (0.34, "door"), (0.52, "door"), (0.70, "door"), (0.94, "door")],
-            },
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 747-400, 416 мест на двух палубах. Верхняя палуба — 42 места бизнеса, ряд 3+3. Главная палуба — 18 мест первого класса, ряд 2+2+2, 42 места бизнеса, ряд 2+3+2, и 314 мест эконома, ряд 3+4+3.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "4 шт. по 4 колеса"],
@@ -158,8 +119,7 @@ FAMILIES = [
         "h": "757",
         "title": "Boeing 757",
         "photo": "757",
-        "photo_h": "44mm",
-        "plates": [("757a.png", "74mm"), ("757b.png", "74mm")],
+        "plates": [("757a.png", "50mm"), ("757b.png", "50mm")],
         "plate_note": "Размеры на чертеже: первая величина в футах и дюймах, после черты сантиметры. Сверху 757-200, ниже 757-300. Julien Scavini, CC BY-SA 3.0, файл «Boeing 757 family v1.0.png». Лист разрезан по пустому полю.",
         "models": [
             ["757-200", "1982–2004", "47,3 м", "38,0 м", "13,6 м", "180–239", "62,1 т", "34,3 т", "115,7 т", "850 км/ч", "12 800 м", "7 220 км"],
@@ -172,20 +132,6 @@ FAMILIES = [
         "apu": [
             ["757-200, 757-300", "Honeywell GTCP331-200, Honeywell GTCP331-200ER"],
         ],
-        "lopa_h": 164,
-        "lopa": [
-            {
-                "y": 34, "h": 86, "x0": 28, "x1": 1012, "wing": True,
-                "sections": [
-                    ("galley", 30), ("lav", 16),
-                    ("seats", 3, (2, 2), BIZ),
-                    ("seats", 29, (3, 3), ECO),
-                    ("lav", 16), ("galley", 30),
-                ],
-                "doors": [(0.08, "door"), (0.28, "door"), (0.46, "exit"), (0.54, "exit"), (0.93, "door")],
-            }
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 757-200, 186 мест. Бизнес 12 мест, ряд 2+2. Эконом 174 места, ряд 3+3.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "2 шт. по 4 колеса"],
@@ -196,8 +142,7 @@ FAMILIES = [
         "h": "767",
         "title": "Boeing 767",
         "photo": "767",
-        "photo_h": "28mm",
-        "plates": [("767a.png", "162mm"), ("767b.png", "32mm")],
+        "plates": [("767a.png", "78mm"), ("767b.png", "22mm")],
         "plate_note": "Размеры на чертеже: первая величина в футах и дюймах, после черты сантиметры. Лист 767-200, 767-300 и 767-400. Julien Scavini, CC BY-SA 3.0, файл «Boeing 767 family v1.0.png». Лист разрезан по пустому полю.",
         "models": [
             ["767-200", "1982–1994", "48,5 м", "47,6 м", "15,8 м", "около 216", "80,1 т", "50,8 т", "142,9 т", "850 км/ч", "13 100 м", "7 220 км"],
@@ -215,20 +160,6 @@ FAMILIES = [
         "apu": [
             ["767-200, 767-200ER, 767-300, 767-300ER, 767-400ER", "Honeywell GTCP331-200, Honeywell GTCP331-200ER"],
         ],
-        "lopa_h": 176,
-        "lopa": [
-            {
-                "y": 36, "h": 96, "x0": 28, "x1": 1012, "wing": True,
-                "sections": [
-                    ("galley", 30), ("lav", 16),
-                    ("seats", 5, (2, 2, 2), BIZ),
-                    ("seats", 33, (2, 3, 2), ECO),
-                    ("lav", 16), ("galley", 30),
-                ],
-                "doors": [(0.08, "door"), (0.30, "door"), (0.50, "exit"), (0.93, "door")],
-            }
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 767-300ER, 261 место. Бизнес 30 мест, ряд 2+2+2. Эконом 231 место, ряд 2+3+2.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "2 шт. по 4 колеса"],
@@ -239,8 +170,7 @@ FAMILIES = [
         "h": "777",
         "title": "Boeing 777",
         "photo": "777",
-        "photo_h": "58mm",
-        "plates": [("777.png", "120mm")],
+        "plates": [("777.png", "100mm")],
         "plate_note": "Размеры на чертеже: первая величина в футах и дюймах, после черты сантиметры. Слева 777-200ER, справа 777-300ER. Julien Scavini, CC BY-SA 3.0, файл «Boeing 777 family v1.1.png».",
         "models": [
             ["777-200", "1995–2007", "63,7 м", "60,9 м", "18,4 м", "около 300", "—", "94,2 т", "247,2 т", "890 км/ч", "13 100 м", "9 700 км"],
@@ -262,20 +192,6 @@ FAMILIES = [
             ["777-200, 777-200ER, 777-200LR, 777-300, 777-300ER", "Honeywell 331-500"],
             ["777-9, 777-8", "Honeywell 331-500B2"],
         ],
-        "lopa_h": 186,
-        "lopa": [
-            {
-                "y": 38, "h": 108, "x0": 24, "x1": 1016, "wing": True,
-                "sections": [
-                    ("galley", 34), ("lav", 16),
-                    ("seats", 6, (2, 3, 2), BIZ),
-                    ("seats", 32, (3, 4, 3), ECO),
-                    ("lav", 16), ("galley", 34),
-                ],
-                "doors": [(0.07, "door"), (0.26, "door"), (0.50, "door"), (0.74, "door"), (0.94, "door")],
-            }
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 777-300ER, 362 места. Бизнес 42 места, ряд 2+3+2. Эконом 320 мест, ряд 3+4+3.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "2 шт. по 6 колёс"],
@@ -286,8 +202,7 @@ FAMILIES = [
         "h": "787",
         "title": "Boeing 787",
         "photo": "787",
-        "photo_h": "50mm",
-        "plates": [("787.png", "140mm")],
+        "plates": [("787.png", "88mm")],
         "plate_note": "Размеры на чертеже: первая величина в футах и дюймах, после черты сантиметры. На листе 787-8. Julien Scavini, CC BY-SA 3.0, файл «Boeing 787-800 Dreamliner v1.0.png».",
         "models": [
             ["787-8", "2011–выпускается", "56,7 м", "60,1 м", "16,9 м", "200–275", "—", "101,3 т", "227,9 т", "910 км/ч", "13 100 м", "14 820 км"],
@@ -300,21 +215,6 @@ FAMILIES = [
         "apu": [
             ["787-8, 787-9, 787-10", "Hamilton Sundstrand APS5000"],
         ],
-        "lopa_h": 180,
-        "lopa": [
-            {
-                "y": 36, "h": 104, "x0": 24, "x1": 1016, "wing": True,
-                "sections": [
-                    ("galley", 32), ("lav", 16),
-                    ("seats", 7, (1, 2, 1), BIZ),
-                    ("seats", 3, (2, 3, 2), PRE),
-                    ("seats", 28, (3, 3, 3), ECO),
-                    ("lav", 16), ("galley", 32),
-                ],
-                "doors": [(0.07, "door"), (0.28, "door"), (0.55, "door"), (0.80, "door"), (0.94, "door")],
-            }
-        ],
-        "lopa_note": "Компоновка салона, один вариант: 787-9, 301 место. Бизнес 28 мест, ряд 1+2+1. Премиум-эконом 21 место, ряд 2+3+2. Эконом 252 места, ряд 3+3+3.",
         "gear": [
             ["Носовая стойка", "2 колеса"],
             ["Основные стойки", "2 шт. по 4 колеса"],
@@ -323,75 +223,7 @@ FAMILIES = [
 ]
 
 
-def draw_seats(out, x, y, h, rows, groups, color, row_w):
-    seat_n = sum(groups)
-    aisles = len(groups) - 1
-    aisle = 4.2
-    max_h = h - 14
-    sh = min(7.4, (max_h - aisles * aisle) / seat_n)
-    sw = min(row_w - 1.1, 8.6)
-    used = seat_n * sh + aisles * aisle
-    y0 = y + (h - used) / 2
-    for r in range(rows):
-        sx = x + r * row_w + (row_w - sw) / 2
-        sy = y0
-        for i, n in enumerate(groups):
-            for _ in range(n):
-                out.append(
-                    f'<rect x="{sx:.1f}" y="{sy:.1f}" width="{sw:.1f}" height="{max(sh - 0.7, 1):.1f}" rx="0.7" fill="{color}"/>'
-                )
-                sy += sh
-            if i < aisles:
-                sy += aisle
-
-
-def lopa_svg(decks, height):
-    out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 {height}">']
-    for d in decks:
-        y, h, x0, x1 = d["y"], d["h"], d["x0"], d["x1"]
-        if d.get("wing"):
-            cx = x0 + (x1 - x0) * 0.46
-            out.append(
-                f'<polygon points="{cx - 6},{y + h - 1} {cx + 78},{y + h + 20} {cx + 124},{y + h + 20} {cx + 16},{y + h - 1}" fill="#d7e3ee"/>'
-            )
-            out.append(
-                f'<polygon points="{cx - 6},{y + 1} {cx + 78},{y - 20} {cx + 124},{y - 20} {cx + 16},{y + 1}" fill="#d7e3ee"/>'
-            )
-        nose = 24 if d.get("nose", True) else 10
-        tail = 18 if d.get("tail", True) else 10
-        out.append(
-            f'<path d="M{x0 + nose},{y} L{x1 - tail},{y} '
-            f'Q{x1 + 8},{y + h / 2:.1f} {x1 - tail},{y + h} '
-            f'L{x0 + nose},{y + h} Q{x0 - 16},{y + h / 2:.1f} {x0 + nose},{y} Z" '
-            f'fill="#f7fafc" stroke="#16324f" stroke-width="1.3"/>'
-        )
-        inner_x = x0 + nose + 4
-        inner_right = x1 - tail - 4
-        fixed = sum(sec[1] for sec in d["sections"] if sec[0] != "seats")
-        rows = sum(sec[1] for sec in d["sections"] if sec[0] == "seats")
-        row_w = (inner_right - inner_x - fixed) / rows
-        x = inner_x
-        for sec in d["sections"]:
-            if sec[0] == "seats":
-                w = row_w * sec[1]
-                draw_seats(out, x, y, h, sec[1], sec[2], sec[3], row_w)
-                x += w
-            else:
-                w = sec[1]
-                fill = "#efe2c4" if sec[0] == "galley" else "#d5dde6"
-                out.append(
-                    f'<rect x="{x + 1:.1f}" y="{y + 7}" width="{w - 2}" height="{h - 14}" rx="2" fill="{fill}"/>'
-                )
-                x += w
-        for frac, kind in d.get("doors", []):
-            dx = x0 + (x1 - x0) * frac
-            dw = 8 if kind == "door" else 4
-            dh = 5.5 if kind == "door" else 3.4
-            col = "#1e7a46" if kind == "door" else "#8fca7a"
-            out.append(f'<rect x="{dx:.1f}" y="{y - dh - 1:.1f}" width="{dw}" height="{dh}" fill="{col}"/>')
-            out.append(f'<rect x="{dx:.1f}" y="{y + h + 1:.1f}" width="{dw}" height="{dh}" fill="{col}"/>')
-    out.append("</svg>")
-    return "".join(out)
+LOPA = HERE / "lopa"
 
 
 def html_table(headers, rows, klass):
@@ -417,9 +249,16 @@ def family_html(fam, meta):
         plates.append(
             f'<figure class="plate" style="--plate:{height}"><img src="{src}" alt="{esc(fam["title"])}"></figure>'
         )
+    lopa = ""
+    if fam.get("lopa"):
+        src = (LOPA / fam["lopa"]).resolve().as_uri()
+        lopa = f"""
+      <p class="label">Компоновка салона</p>
+      <figure class="lopa"><img src="{src}" alt="Компоновка салона {esc(fam['title'])}"></figure>
+      <p class="platecap">{esc(fam['lopa_note'])}</p>"""
     return f"""
     <section class="family" id="{fam['id']}">
-      <div class="sheet" style="--photo:{fam['photo_h']}">
+      <div class="sheet">
         <h2>{esc(fam['title'])}</h2>
         <figure class="shot">
           <img src="{img}" alt="{esc(fam['title'])}">
@@ -428,9 +267,7 @@ def family_html(fam, meta):
         {''.join(plates)}
         <p class="platecap">{esc(fam['plate_note'])}</p>
       </div>
-      <p class="label">Компоновка салона</p>
-      <div class="lopa">{lopa_svg(fam['lopa'], fam['lopa_h'])}</div>
-      <p class="platecap">{esc(fam['lopa_note'])}</p>
+      {lopa}
       <p class="label">Технические характеристики</p>
       {html_table(MODEL_HEAD, fam["models"], "models")}
       <p class="label">Варианты двигателей</p>
@@ -475,11 +312,11 @@ ul.toc a::after { content: leader(".") target-counter(attr(href), page); }
 ul.toc li.sub { margin-left: 12pt; }
 figure { margin: 6pt 0 8pt; }
 figcaption { font-family: "Liberation Sans", sans-serif; font-size: 8pt; color: #5c6b7a; margin-top: 2pt; }
-.sheet .shot img { width: auto; max-width: 100%; max-height: var(--photo, 52mm); height: auto; display: block; margin: 0 auto; }
+.sheet .shot img { width: 100%; height: auto; display: block; }
 .sheet .plate { text-align: center; }
-.sheet .plate img { width: auto; max-width: 100%; max-height: var(--plate, 150mm); height: auto; }
-.lopa { break-inside: avoid; }
-.lopa svg { width: 100%; height: auto; display: block; }
+.sheet .plate img { width: auto; max-width: 100%; max-height: var(--plate, 100mm); height: auto; }
+.lopa { margin: 2pt 0; break-inside: avoid; }
+.lopa img { width: 100%; height: auto; display: block; }
 .platecap { font-family: "Liberation Sans", sans-serif; font-size: 8pt; color: #5c6b7a; margin: 0 0 4pt; }
 p.label { font-family: "Liberation Sans", sans-serif; font-weight: 600; font-size: 10pt; color: #16324f; margin: 8pt 0 2pt; break-after: avoid; }
 table { width: 100%; border-collapse: collapse; font-family: "Liberation Sans", sans-serif; margin: 0 0 4pt; }
@@ -506,15 +343,14 @@ def build():
   <section class="cover">
     <p class="kicker">Учебное пособие · ноябрь 2026</p>
     <h1>Типы воздушных судов</h1>
-    <p class="lede">Boeing. Шесть семейств: 737, 747, 757, 767, 777 и 787. На первом листе главы фотография целиком и чертёж. Дальше компоновка салона и таблицы.</p>
+    <p class="lede">Boeing. Шесть семейств: 737, 747, 757, 767, 777 и 787. На первом листе главы фотография на всю ширину и чертёж. Дальше таблицы.</p>
     <p>Цифры типовые, из открытых описаний производителя и сертификационных листов. Это не РЛЭ.</p>
   </section>
   <section>
     <h1 id="how">Как читать</h1>
     <p>Каждое семейство начинается с нового листа. На этом листе фотография самолёта целиком и чертёж с видами. Чертёж — рисунок автора листа, не заводской чертёж Boeing.</p>
     <p>Размеры на чертеже 737 даны в сантиметрах. На чертежах 747, 757, 767, 777 и 787 первая величина в футах и дюймах, после черты — сантиметры. В таблице длины, размах крыла и высота самолёта даны в метрах, массы в тоннах, скорость и дальность в километрах.</p>
-    <p>Компоновка салона — одна типовая схема на семейство. Тёмный блок — первый класс или бизнес, средний — премиум-эконом, светлый — эконом. Жёлтый блок — кухня, серый — туалет. Зелёная метка подлиннее — дверь, короткая — аварийный выход.</p>
-    <p>Одна таблица собирает годы производства и технические характеристики. Масса пустого — опубликованная масса пустого снаряжённого для базовой компоновки. Максимальная масса топлива — заправляемое топливо из листа Boeing. Дальность — опубликованная типовая дальность. Прочерк стоит там, где открытый лист эту массу не приводит. «выпускается» значит, что линия на 16 ноября 2026 ещё открыта. «не выпускался» значит, что серийной поставки в авиакомпанию ещё не было.</p>
+    <p>Одна таблица собирает годы производства и технические характеристики. Масса пустого — опубликованная масса пустого снаряжённого для базовой компоновки. Максимальная масса топлива — заправляемое топливо из листа Boeing. Дальность — опубликованная типовая дальность. Прочерк стоит там, где открытый лист эту массу не приводит. «выпускается» значит, что линия на 16 ноября 2026 ещё открыта. «не выпускался» значит, что серийной поставки в авиакомпанию ещё не было. У 747 перед таблицей стоит опубликованный чертёж компоновки салона.</p>
     <p>Дальше идут варианты двигателей, модели ВСУ и схема шасси. У двигателя и ВСУ указаны производитель и модель.</p>
   </section>
   <section>
