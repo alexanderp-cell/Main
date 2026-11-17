@@ -1,0 +1,27 @@
+{
+  "a220": {
+    "file": "SWISS Airbus A220-300 HB-JCI.jpg",
+    "artist": "Malokkii",
+    "license": "CC BY-SA 4.0"
+  },
+  "a320": {
+    "file": "Hannover Airport Lufthansa Airbus A320-214(WL) D-AIUF (DSC02876).jpg",
+    "artist": "MarcelX42",
+    "license": "CC BY-SA 4.0"
+  },
+  "a330": {
+    "file": "Aer Lingus Airbus A330-302 EI-EDY approaching EWR Airport.jpg",
+    "artist": "Adam Moreira (AEMoreira042281)",
+    "license": "CC BY-SA 4.0"
+  },
+  "a350": {
+    "file": "JA13XJ Japan Airlines Airbus A350-941 Haneda Airport - Terminal 1.jpg",
+    "artist": "Takeshi Osada",
+    "license": "CC BY 2.0"
+  },
+  "a380": {
+    "file": "Emirates Airbus A380-861 A6-EER MUC 2015 02.jpg",
+    "artist": "Julian Herzog",
+    "license": "CC BY 4.0"
+  }
+}
