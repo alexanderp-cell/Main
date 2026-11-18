@@ -55,6 +55,7 @@ FAMILIES = [
             ["A220-100", "75", "0"],
             ["A220-300", "480", "0"],
         ],
+        "fleet_total": [555, 0],
         "fleet_note": "Столбец In Fleet сводки Airbus Orders and Deliveries на 31 октября 2026. В РФ пассажирских A220 нет.",
         "engines": [
             ["A220-100, A220-300", "Pratt & Whitney PW1500G"],
@@ -93,9 +94,9 @@ FAMILIES = [
             ["A320neo", "2 486", "43"],
             ["A321", "1 654", "67"],
             ["A321neo", "2 300", "23"],
-            ["A321XLR", "в A321neo", "0"],
         ],
-        "fleet_note": "Мир и РФ — сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ сумма по эксплуатантам со страной Russian Federation. A321XLR Airbus считает внутри A321neo, отдельной цифры нет. В парк входят и борта, которые числятся за эксплуатантом, но стоят на хранении.",
+        "fleet_total": [11422, 275],
+        "fleet_note": "Мир и РФ — сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ сумма по эксплуатантам со страной Russian Federation. В парк входят и борта, которые числятся за эксплуатантом, но стоят на хранении.",
         "engines": [
             ["A318", "CFM International CFM56-5B или Pratt & Whitney PW6000"],
             ["A319, A320, A321", "CFM International CFM56-5B или IAE V2500"],
@@ -132,6 +133,7 @@ FAMILIES = [
             ["A330-800neo", "8", "0"],
             ["A330-900neo", "195", "0"],
         ],
+        "fleet_total": [1365, 23],
         "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. Грузовые A330-200F в эти строки не входят: их 38, все в парке. В РФ: A330-200 — 3 у iFly и 2 у Nordwind, A330-300 — 12 у «Аэрофлота», 3 у iFly и 3 у Nordwind.",
         "engines": [
             ["A330-200, A330-300", "General Electric CF6-80E1, Pratt & Whitney PW4000 или Rolls-Royce Trent 700"],
@@ -163,7 +165,8 @@ FAMILIES = [
             ["A340-200 и A340-300", "72", "0"],
             ["A340-500 и A340-600", "68", "0"],
         ],
-        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026 не делит A340-200 и A340-300, а также A340-500 и A340-600. В РФ пассажирских A340 нет.",
+        "fleet_total": [140, 0],
+        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ пассажирских A340 нет.",
         "engines": [
             ["A340-200, A340-300", "CFM International CFM56-5C"],
             ["A340-500", "Rolls-Royce Trent 553 или Trent 556"],
@@ -195,6 +198,7 @@ FAMILIES = [
             ["A350-900", "619", "7"],
             ["A350-1000", "123", "0"],
         ],
+        "fleet_total": [742, 7],
         "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. 7 бортов A350-900 в РФ — «Аэрофлот».",
         "engines": [
             ["A350-900", "Rolls-Royce Trent XWB-84"],
@@ -225,6 +229,7 @@ FAMILIES = [
         "fleet": [
             ["A380-800", "193", "0"],
         ],
+        "fleet_total": [193, 0],
         "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ пассажирских A380 нет.",
         "engines": [
             ["A380-800", "Rolls-Royce Trent 900 или Engine Alliance GP7200"],
@@ -249,6 +254,25 @@ def html_table(headers, rows, klass):
     for row in rows:
         body.append("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>")
     return f'<table class="{klass}"><thead><tr>{head}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+
+
+def fmt_fleet(n):
+    if n is None:
+        return "—"
+    return f"{n:,}".replace(",", " ")
+
+
+def fleet_table(fam):
+    world, rf = fam["fleet_total"]
+    head = (
+        "<tr><th>Модель</th><th>В мире</th><th>В РФ</th></tr>"
+        f'<tr class="total"><th>{esc(fam["h"])}, всего</th>'
+        f"<th>{esc(fmt_fleet(world))}</th><th>{esc(fmt_fleet(rf))}</th></tr>"
+    )
+    body = []
+    for row in fam["fleet"]:
+        body.append("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>")
+    return f'<table class="fleet"><thead>{head}</thead><tbody>{"".join(body)}</tbody></table>'
 
 
 def credit(meta, key):
@@ -284,7 +308,7 @@ def family_html(fam, meta):
       <p class="label">Технические характеристики</p>
       {html_table(MODEL_HEAD, fam["models"], "models")}
       <p class="label">Парк в эксплуатации</p>
-      {html_table(["Модель", "В мире", "В РФ"], fam["fleet"], "fleet")}
+      {fleet_table(fam)}
       <p class="platecap">{esc(fam["fleet_note"])}</p>
       <p class="label">Варианты двигателей</p>
       {html_table(["Модель", "Двигатели"], fam["engines"], "specs")}
@@ -344,6 +368,7 @@ table.specs td:first-child, table.specs th:first-child { width: 42%; }
 table.fleet { font-size: 8.5pt; }
 table.fleet td:nth-child(2), table.fleet td:nth-child(3),
 table.fleet th:nth-child(2), table.fleet th:nth-child(3) { text-align: right; width: 18%; }
+table.fleet tr.total th { background: #d5e2ef; }
 .sources { font-size: 9pt; color: #3d4d5c; }
 """
 
@@ -370,7 +395,7 @@ def build():
     <p>На чертежах A320, A330, A340 и A380 первая величина в метрах, после черты — футы и дюймы. Лист A340 разрезан по пустому полю: слева A340-200, справа A340-300. В таблице длины, размах крыла и высота самолёта даны в метрах, массы в тоннах, скорость и дальность в километрах.</p>
     <p>Одна таблица собирает годы производства и технические характеристики. Масса пустого — опубликованная масса пустого снаряжённого для базовой компоновки. Максимальная масса топлива указана только там, где открытое описание даёт массу, а не объём баков. Дальность — опубликованная типовая дальность. Прочерк стоит там, где открытое описание эту массу не приводит. «выпускается» значит, что линия на 17 ноября 2026 ещё открыта.</p>
     <p>Дальше идут варианты двигателей, модели ВСУ и схема шасси. У двигателя и ВСУ указаны производитель и модель. В колонке «Колёса» после числа колёс стоит размер шины. Отдельной строкой указан производитель стойки. У A340 три основные стойки. У A380 четыре основные стойки: две под крылом и две под фюзеляжем. У A350-1000 тележка основной стойки шестиколёсная, у A350-900 — четырёхколёсная.</p>
-    <p>Таблица «Парк в эксплуатации» даёт число бортов в мире и у эксплуатантов в РФ. Ноль значит, что пассажирских бортов в эксплуатации нет. Прочерк в этом томе для парка не используется: цифра есть по каждой строке. Дата среза — 31 октября 2026, сводка Airbus Orders and Deliveries, столбец In Fleet. В парк входят и борта на хранении. A321XLR сидит внутри строки A321neo. A340-200 с A340-300 и A340-500 с A340-600 даны парами, как в сводке.</p>
+    <p>Таблица «Парк в эксплуатации» даёт число бортов в мире и у эксплуатантов в РФ. Вторая строка шапки — сумма по этому типу. Ноль значит, что пассажирских бортов в эксплуатации нет. Дата среза — 31 октября 2026, сводка Airbus Orders and Deliveries, столбец In Fleet. В парк входят и борта на хранении.</p>
   </section>
   <section>
     <h1 id="toc">Содержание</h1>
