@@ -459,6 +459,17 @@ class MptRow:
         return f"{self.client}|{self.invoice}|{self.pn}"
 
 
+@dataclass
+class NewPermRow:
+    """Новое разрешение МПТ за отчётную неделю."""
+
+    pn: str
+    description: str
+    ac_type: str
+    client: str
+    doc_date: date | None = None
+
+
 ALERT_LABELS = {
     "1": "нет заявки",
     "2": "нет вырезки >7д",
@@ -533,6 +544,126 @@ def load_permissions(path: Path) -> dict[str, pd.DataFrame]:
         df = df[df["_pn"] != ""].copy()
         out[sheet] = df
     return out
+
+
+def _clients_for_pn(lists: pd.DataFrame, pn: str) -> list[str]:
+    """Клиенты из «Списки на МПТ» по p/n (предпочитаем «мпт получен»)."""
+    if not pn:
+        return []
+    hits = lists[(lists["_pn"] == pn) | (lists["_alt"] == pn)]
+    if hits.empty:
+        return []
+    preferred = hits[hits["_stage"] == STAGE_MPT_DONE]
+    pool = preferred if not preferred.empty else hits
+    clients: list[str] = []
+    seen: set[str] = set()
+    for c in pool["_client"].tolist():
+        name = norm_client(c)
+        if not name:
+            continue
+        key = name.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        clients.append(name)
+    return clients
+
+
+def build_new_permissions(
+    perms: dict[str, pd.DataFrame],
+    lists: pd.DataFrame,
+    report_date: date,
+    *,
+    days: int = 7,
+) -> list[NewPermRow]:
+    """Разрешения с датой документа Минпромторга за последние `days` дней.
+
+    Дедуп по p/n: описание / тип ВС / клиенты объединяются.
+    Клиент — из брокерских «Списки на МПТ» по совпадению p/n.
+    """
+    start = report_date - timedelta(days=max(days - 1, 0))
+    # pn -> accumulators
+    by_pn: dict[str, dict[str, Any]] = {}
+    for sheet, df in perms.items():
+        for _, row in df.iterrows():
+            doc = norm_text(row.get("_doc"))
+            doc_date = parse_mpt_doc_date(doc)
+            if doc_date is None or doc_date < start or doc_date > report_date:
+                continue
+            pn = norm_pn(row.get("_pn"))
+            if not pn:
+                continue
+            slot = by_pn.setdefault(
+                pn,
+                {
+                    "desc": "",
+                    "acs": [],
+                    "ac_seen": set(),
+                    "clients": [],
+                    "client_seen": set(),
+                    "doc_date": doc_date,
+                },
+            )
+            desc = norm_text(row.get("_desc"))
+            if desc and (not slot["desc"] or len(desc) > len(slot["desc"])):
+                slot["desc"] = desc
+            ac = norm_text(row.get("_ac"))
+            if ac:
+                ac_key = ac.casefold()
+                if ac_key not in slot["ac_seen"]:
+                    slot["ac_seen"].add(ac_key)
+                    slot["acs"].append(ac)
+            if slot["doc_date"] is None or (doc_date and doc_date > slot["doc_date"]):
+                slot["doc_date"] = doc_date
+
+    out: list[NewPermRow] = []
+    for pn, slot in by_pn.items():
+        clients = _clients_for_pn(lists, pn)
+        client_str = ", ".join(clients) if clients else "—"
+        out.append(
+            NewPermRow(
+                pn=pn,
+                description=slot["desc"] or "—",
+                ac_type="; ".join(slot["acs"]) if slot["acs"] else "—",
+                client=client_str,
+                doc_date=slot["doc_date"],
+            )
+        )
+    out.sort(key=lambda r: (r.client.casefold(), r.pn))
+    return out
+
+
+def render_new_perms_table(rows: list[NewPermRow]) -> str:
+    if not rows:
+        return '<p class="muted">За отчётную неделю новых разрешений МПТ нет.</p>'
+    body = []
+    for r in rows:
+        body.append(
+            "<tr>"
+            f"<td>{esc(r.pn)}</td>"
+            f"<td>{esc(r.description)}</td>"
+            f"<td>{esc(r.ac_type)}</td>"
+            f"<td>{esc(r.client)}</td>"
+            "</tr>"
+        )
+    return f"""
+<table>
+  <colgroup>
+    <col class="pn"/><col class="desc"/><col style="width:18%"/><col class="client"/>
+  </colgroup>
+  <thead>
+    <tr>
+      <th>p/n</th>
+      <th>описание</th>
+      <th>тип ВС</th>
+      <th>клиент под которого получили</th>
+    </tr>
+  </thead>
+  <tbody>
+    {''.join(body)}
+  </tbody>
+</table>
+"""
 
 
 def find_list_hit(lists: pd.DataFrame, client: str, pn: str, alt: str) -> ListHit | None:
@@ -816,9 +947,15 @@ def render_table(rows: list[MptRow], *, show_client: bool = False) -> str:
     return head + "\n".join(body) + "\n</tbody></table>"
 
 
-def render_html(rows: list[MptRow], report_date: date) -> str:
+def render_html(
+    rows: list[MptRow],
+    report_date: date,
+    new_perms: list[NewPermRow] | None = None,
+) -> str:
     from collections import Counter
 
+    if new_perms is None:
+        new_perms = []
     counts = Counter(r.alert for r in rows)
     wh_n = sum(1 for r in rows if r.warehouse)
     by_client: dict[str, list[MptRow]] = {}
@@ -902,6 +1039,22 @@ def render_html(rows: list[MptRow], report_date: date) -> str:
         )
 
     img_bg = data_uri("s7-a321neo.jpg")
+    new_perms_n = len(new_perms)
+    new_perms_block = f"""
+<details class="group new-perms-group" id="new-perms">
+  <summary>
+    <span class="group-name">3 · Новые разрешения МПТ</span>
+    <span class="pill">{new_perms_n} поз.</span>
+  </summary>
+  <div class="group-body">
+    <p class="muted" style="margin:10px 0 12px">
+      Документы Минпромторга с датой за 7 дней до среза ({(report_date - timedelta(days=6)).strftime('%d.%m.%Y')}–{report_date.strftime('%d.%m.%Y')}).
+      Клиент — из брокерских «Списки на МПТ» по p/n.
+    </p>
+    {render_new_perms_table(new_perms)}
+  </div>
+</details>
+"""
 
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -969,6 +1122,15 @@ body {{
   text-shadow: 0 2px 18px rgba(0,0,0,.35);
 }}
 .sub {{ color:rgba(255,255,255,.88); font-size:14px; max-width:920px; }}
+.hero-actions {{ margin-top:16px; display:flex; flex-wrap:wrap; gap:10px; }}
+.hero-btn {{
+  display:inline-block; text-decoration:none; color:#0d2a1f;
+  background:var(--accent); border:1px solid rgba(255,255,255,.35);
+  padding:10px 16px; font-size:13px; font-weight:800; border-radius:8px;
+  letter-spacing:.02em; box-shadow:0 6px 16px rgba(0,0,0,.22);
+}}
+.hero-btn:hover {{ background:var(--lime); }}
+.hero-btn:focus-visible {{ outline:3px solid #fff; outline-offset:2px; }}
 h2 {{
   font-size:18px; margin:26px 0 12px; color:var(--navy);
   letter-spacing:.04em; text-transform:uppercase;
@@ -1011,6 +1173,9 @@ details.group {{
 details.group.status-group summary {{
   background: linear-gradient(90deg, var(--accent) 0 10px, #fff 10px);
 }}
+details.group.new-perms-group summary {{
+  background: linear-gradient(90deg, var(--accent-deep) 0 10px, #fff 10px);
+}}
 details.group summary {{
   cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
   background: linear-gradient(90deg, var(--navy) 0 10px, #fff 10px);
@@ -1024,6 +1189,7 @@ details.group summary::-webkit-details-marker {{ display:none; }}
 }}
 .group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfdf8; }}
 #by-status {{ scroll-margin-top: 12px; }}
+#new-perms {{ scroll-margin-top: 16px; }}
 table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--line); table-layout:fixed; background:#fff; border-radius:8px; overflow:hidden; }}
 col.client {{ width:11%; }}
 col.pn {{ width:9%; }}
@@ -1078,6 +1244,11 @@ tbody tr:hover {{ background:#f5faf0; }}
         Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
         одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
         Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+      </div>
+      <div class="hero-actions">
+        <a class="hero-btn jump" href="#new-perms" data-target="new-perms">
+          Новые разрешения МПТ · {new_perms_n} ↓
+        </a>
       </div>
     </div>
   </div>
@@ -1136,6 +1307,9 @@ tbody tr:hover {{ background:#f5faf0; }}
     {''.join(status_tabs)}
   </div>
   {''.join(status_blocks)}
+
+  <h2 id="new-perms-heading">3 · Новые разрешения МПТ</h2>
+  {new_perms_block}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
@@ -1202,15 +1376,17 @@ def generate(
     lists = load_lists(broker_path)
     perms = load_permissions(permissions_path)
     rows = build_rows(taz, lists, perms, report_date)
+    new_perms = build_new_permissions(perms, lists, report_date)
 
     output_html.parent.mkdir(parents=True, exist_ok=True)
-    html_text = render_html(rows, report_date)
+    html_text = render_html(rows, report_date, new_perms=new_perms)
     output_html.write_text(html_text, encoding="utf-8")
 
     zip_path = output_html.with_suffix(".zip")
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(output_html.name, html_text.encode("utf-8"))
 
+    print(f"new MPT permissions (7d): {len(new_perms)}")
     return output_html, zip_path, rows
 
 
