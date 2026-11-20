@@ -1,0 +1,32 @@
+{
+  "737": {
+    "file": "Boeing 737-800 (36667177354).jpg",
+    "artist": "Hugh Llewelyn",
+    "license": "CC BY-SA 2.0"
+  },
+  "747": {
+    "file": "Air New Zealand 747-400 sideview.jpg",
+    "artist": "Adrian Pingstone",
+    "license": "Public domain"
+  },
+  "757": {
+    "file": "Delta N665DN Boeing 757-200 (9303188540).jpg",
+    "artist": "formulanone from Huntsville, United States",
+    "license": "CC BY-SA 2.0"
+  },
+  "767": {
+    "file": "Boeing 767-323ER - American Airlines (N379AA).jpg",
+    "artist": "Eluveitie",
+    "license": "CC BY-SA 3.0"
+  },
+  "777": {
+    "file": "Turkish Airlines Boeing 777-300ER (5746499029).jpg",
+    "artist": "Matt @ PEK from Taipei, Taiwan",
+    "license": "CC BY-SA 2.0"
+  },
+  "787": {
+    "file": "LATAM Chile Boeing 787-9 Dreamliner CC-BGB.jpg",
+    "artist": "Adam Moreira (AEMoreira042281)",
+    "license": "CC BY-SA 4.0"
+  }
+}

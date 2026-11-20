@@ -1,0 +1,32 @@
+{
+  "cl850": {
+    "file": "Canadair CL-600-2B19 Challenger 850 RA-67233 (15999475407).jpg",
+    "artist": "Markus Eigenheer",
+    "license": "CC BY-SA 2.0"
+  },
+  "crj": {
+    "file": "D-ACKJ CRJ900 Lufthansa CityLine SCQ.jpg",
+    "artist": "Bene Riobó",
+    "license": "CC BY-SA 4.0"
+  },
+  "q400": {
+    "file": "ANA Wings Q400 at ITM (28186002845).jpg",
+    "artist": "G B_NZ",
+    "license": "CC BY-SA 2.0"
+  },
+  "cl300": {
+    "file": "9H-VCB AIRCRAFT Bombardier Challenger 350 (1).jpg",
+    "artist": "Sg1959",
+    "license": "CC BY-SA 4.0"
+  },
+  "cl600": {
+    "file": "Bombardier CL-600-2B16 Challenger 650 (N258GC, cn 6076) (1-9-2023).jpg",
+    "artist": "ZLEA",
+    "license": "CC BY-SA 4.0"
+  },
+  "global": {
+    "file": "Bombardier BD-700-2A12 Global 7500 (9H-VIG, cn 70086) (1-19-2023).jpg",
+    "artist": "ZLEA",
+    "license": "CC BY-SA 4.0"
+  }
+}

@@ -1,0 +1,407 @@
+#!/usr/bin/env python3
+"""Собрать учебный PDF «Справочник типов ВС. Airbus»: глава на семейство."""
+
+import json
+from pathlib import Path
+
+from weasyprint import HTML
+
+ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent
+PHOTO = HERE / "photos" / "airbus"
+OUT = ROOT / "airbus.pdf"
+
+
+def esc(s):
+    return (
+        str(s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+MODEL_HEAD = [
+    "Модель",
+    "Производство",
+    "Длина",
+    "Размах крыла",
+    "Высота",
+    "Пассажировместимость",
+    "Масса пустого",
+    "Макс. масса топлива",
+    "Макс. взлётная",
+    "Крейсерская скорость",
+    "Крейсерская высота",
+    "Дальность",
+]
+
+
+# Масса пустого — опубликованная масса пустого снаряжённого. Топливо — только
+# там, где источник даёт массу, а не объём. Прочерк — цифры в открытом
+# описании нет. Скорость округлена до 10 км/ч из опубликованного числа Маха.
+FAMILIES = [
+    {
+        "id": "a220",
+        "h": "A220",
+        "title": "Airbus A220",
+        "lead": "Узкофюзеляжный самолёт на 100–160 мест, изначально программа Bombardier CSeries. Линия продолжается под маркой Airbus, пассажирских бортов в РФ нет.",
+        "photo": "a220",
+        "plates": [],
+        "models": [
+            ["A220-100", "2016–выпускается", "35,0 м", "35,1 м", "11,5 м", "100–135", "35,2 т", "17,6 т", "63,7 т", "830 км/ч", "12 500 м", "6 700 км"],
+            ["A220-300", "2016–выпускается", "38,7 м", "35,1 м", "11,5 м", "120–160", "37,1 т", "17,6 т", "70,9 т", "830 км/ч", "12 500 м", "6 300 км"],
+        ],
+        "fleet": [
+            ["A220-100", "75", "0"],
+            ["A220-300", "480", "0"],
+        ],
+        "fleet_total": [555, 0],
+        "fleet_note": "Столбец In Fleet сводки Airbus Orders and Deliveries на 31 октября 2026. В РФ пассажирских A220 нет.",
+        "engines": [
+            ["A220-100, A220-300", "Pratt & Whitney PW1500G"],
+        ],
+        "apu": [
+            ["A220-100, A220-300", "Honeywell GTCP131-9C"],
+        ],
+        "gear": [
+            ["Носовая стойка", "2 колеса, 27×8.5R12"],
+            ["Основные стойки", "2 шт. по 2 колеса, H42×15.0R21"],
+            ["Производитель стоек", "Liebherr-Aerospace"],
+        ],
+    },
+    {
+        "id": "a320",
+        "h": "A320",
+        "title": "Airbus A320",
+        "lead": "Узкофюзеляжный самолёт четырёх длин фюзеляжа, вместе с 737 основа мировых коротких и средних перевозок. Поколение neo выпускается, борта широко летают и в России.",
+        "photo": "a320",
+        "plates": [("a32x.png", "150mm")],
+        "plate_note": "Размеры на чертеже: первая величина в метрах, после черты футы и дюймы. Слева боковые виды A318, A319, A320 и A321, справа общий вид сверху, сечение и вид спереди. Julien Scavini, CC BY-SA 3.0, файл «Airbus A32X family v1.0.png».",
+        "models": [
+            ["A318", "2003–2013", "31,4 м", "34,1 м", "12,6 м", "110", "39,5 т", "19,4–20,7 т", "68,0 т", "830 км/ч", "11 900 м", "5 700 км"],
+            ["A319", "1996–2021", "33,8 м", "35,8 м", "11,8 м", "124–160", "40,8 т", "19,4–24,2 т", "75,5 т", "830 км/ч", "11 900 м", "6 940 км"],
+            ["A320", "1988–2021", "37,6 м", "35,8 м", "11,8 м", "150–180", "42,6 т", "19,4–21,8 т", "78,0 т", "830 км/ч", "11 900 м", "6 200 км"],
+            ["A321", "1994–2021", "44,5 м", "35,8 м", "11,8 м", "185–220", "48,5 т", "19,4–24,2 т", "93,5 т", "830 км/ч", "11 900 м", "5 900 км"],
+            ["A319neo", "2019–выпускается", "33,8 м", "35,8 м", "11,8 м", "140", "40,8 т", "19,4–24,2 т", "75,5 т", "830 км/ч", "11 900 м", "6 850 км"],
+            ["A320neo", "2016–выпускается", "37,6 м", "35,8 м", "11,8 м", "150–180", "42,6 т", "19,4–21,8 т", "79,0 т", "830 км/ч", "11 900 м", "6 300 км"],
+            ["A321neo", "2017–выпускается", "44,5 м", "35,8 м", "11,8 м", "180–220", "48,5 т", "19,4–24,2 т", "97,0 т", "830 км/ч", "11 900 м", "7 400 км"],
+            ["A321XLR", "2024–выпускается", "44,5 м", "35,8 м", "11,8 м", "180", "48,5 т", "32,0 т", "101 т", "830 км/ч", "11 900 м", "8 700 км"],
+        ],
+        "fleet": [
+            ["A318", "24", "1"],
+            ["A319", "1 014", "31"],
+            ["A319neo", "46", "0"],
+            ["A320", "3 898", "110"],
+            ["A320neo", "2 486", "43"],
+            ["A321", "1 654", "67"],
+            ["A321neo", "2 300", "23"],
+        ],
+        "fleet_total": [11422, 275],
+        "fleet_note": "Мир и РФ — сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ сумма по эксплуатантам со страной Russian Federation. В парк входят и борта, которые числятся за эксплуатантом, но стоят на хранении.",
+        "engines": [
+            ["A318", "CFM International CFM56-5B или Pratt & Whitney PW6000"],
+            ["A319, A320, A321", "CFM International CFM56-5B или IAE V2500"],
+            ["A319neo, A320neo, A321neo, A321XLR", "CFM International LEAP-1A или Pratt & Whitney PW1100G"],
+        ],
+        "apu": [
+            ["A318, A319, A320, A321", "Honeywell GTCP131-9A или Pratt & Whitney APS3200"],
+            ["A319neo, A320neo, A321neo, A321XLR", "Honeywell GTCP131-9A"],
+        ],
+        "gear": [
+            ["Носовая стойка", "2 колеса, 30×8.8R15"],
+            ["A318, A319, A320, A319neo, A320neo, основные стойки", "2 шт. по 2 колеса, 46×17.0R20"],
+            ["A321, A321neo, основные стойки", "2 шт. по 2 колеса, 1270×455R22"],
+            ["A321XLR, основные стойки", "2 шт. по 2 колеса"],
+            ["Производитель стоек", "Safran Landing Systems"],
+        ],
+    },
+    {
+        "id": "a330",
+        "h": "A330",
+        "title": "Airbus A330",
+        "lead": "Широкофюзеляжный двухдвигательный самолёт средней и большой дальности. Пассажирские ceo закрыты, neo выпускается, в РФ летают A330-200 и A330-300.",
+        "photo": "a330",
+        "plates": [("a330-pair.png", "80mm")],
+        "plate_note": "Размеры на чертеже: первая величина в метрах, после черты футы и дюймы. Слева A330-200, справа A330-300. Julien Scavini, CC BY-SA 3.0, файл «Airbus A330 family v1.1.png». Лист разрезан по пустому полю.",
+        "models": [
+            ["A330-200", "1998–2019", "58,8 м", "60,3 м", "17,4 м", "250", "120,6 т", "109,2 т", "242 т", "870 км/ч", "12 500 м", "13 450 км"],
+            ["A330-300", "1994–2020", "63,7 м", "60,3 м", "16,8 м", "300", "129,4 т", "109,2 т", "242 т", "870 км/ч", "12 500 м", "11 750 км"],
+            ["A330-800neo", "2020–выпускается", "58,8 м", "64,0 м", "17,4 м", "260", "132 т", "111 т", "251 т", "870 км/ч", "12 500 м", "15 000 км"],
+            ["A330-900neo", "2018–выпускается", "63,7 м", "64,0 м", "16,8 м", "290", "137 т", "111 т", "251 т", "870 км/ч", "12 500 м", "13 610 км"],
+        ],
+        "fleet": [
+            ["A330-200", "475", "5"],
+            ["A330-300", "687", "18"],
+            ["A330-800neo", "8", "0"],
+            ["A330-900neo", "195", "0"],
+        ],
+        "fleet_total": [1365, 23],
+        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. Грузовые A330-200F в эти строки не входят: их 38, все в парке. В РФ: A330-200 — 3 у iFly и 2 у Nordwind, A330-300 — 12 у «Аэрофлота», 3 у iFly и 3 у Nordwind.",
+        "engines": [
+            ["A330-200, A330-300", "General Electric CF6-80E1, Pratt & Whitney PW4000 или Rolls-Royce Trent 700"],
+            ["A330-800neo, A330-900neo", "Rolls-Royce Trent 7000"],
+        ],
+        "apu": [
+            ["A330-200, A330-300, A330-800neo, A330-900neo", "Honeywell GTCP331-350"],
+        ],
+        "gear": [
+            ["Носовая стойка", "2 колеса, 1050×395R16"],
+            ["Основные стойки", "2 шт. по 4 колеса, 1400×530R23"],
+            ["Производитель стоек", "Safran Landing Systems"],
+        ],
+    },
+    {
+        "id": "a340",
+        "h": "A340",
+        "title": "Airbus A340",
+        "lead": "Четырёхдвигательный широкофюзеляжный самолёт для дальних линий. Производство закрыто, пассажирский парк небольшой, в РФ таких бортов нет.",
+        "photo": "a340",
+        "plates": [("a340-pair.png", "95mm")],
+        "plate_note": "Размеры на чертеже: первая величина в метрах, после черты футы и дюймы. Слева A340-200, справа A340-300. Julien Scavini, CC BY-SA 3.0, файл «Airbus A340 family v1.1.png». Лист разрезан по пустому полю.",
+        "models": [
+            ["A340-200", "1993–1998", "59,4 м", "60,3 м", "17,0 м", "210–250", "118 т", "110,4 т", "275 т", "870 км/ч", "12 000 м", "13 500 км"],
+            ["A340-300", "1993–2008", "63,7 м", "60,3 м", "17,0 м", "250–290", "131 т", "110,4 т", "276,5 т", "870 км/ч", "12 000 м", "12 408 км"],
+            ["A340-500", "2003–2012", "67,9 м", "63,5 м", "17,5 м", "270–310", "168 т", "175,2 т", "380 т", "870 км/ч", "12 000 м", "16 670 км"],
+            ["A340-600", "2002–2010", "75,4 м", "63,5 м", "17,9 м", "320–370", "174 т", "155,5 т", "380 т", "870 км/ч", "12 000 м", "14 450 км"],
+        ],
+        "fleet": [
+            ["A340-200 и A340-300", "72", "0"],
+            ["A340-500 и A340-600", "68", "0"],
+        ],
+        "fleet_total": [140, 0],
+        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ пассажирских A340 нет.",
+        "engines": [
+            ["A340-200, A340-300", "CFM International CFM56-5C"],
+            ["A340-500", "Rolls-Royce Trent 553 или Trent 556"],
+            ["A340-600", "Rolls-Royce Trent 556 или Trent 560"],
+        ],
+        "apu": [
+            ["A340-200, A340-300", "Honeywell 331-350"],
+            ["A340-500, A340-600", "Honeywell 331-600"],
+        ],
+        "gear": [
+            ["A340-200, A340-300, носовая стойка", "2 колеса, 1050×395R16"],
+            ["A340-200, A340-300, основные стойки", "3 шт.: 2 по 4 колеса, 1400×530R23, и 1 по 2 колеса"],
+            ["A340-500, A340-600, носовая стойка", "2 колеса, 45×18.0R17"],
+            ["A340-500, A340-600, основные стойки", "3 шт. по 4 колеса, 1400×530R23"],
+            ["Производитель стоек", "Safran Landing Systems"],
+        ],
+    },
+    {
+        "id": "a350",
+        "h": "A350",
+        "title": "Airbus A350",
+        "lead": "Дальнемагистральный широкофюзеляжный самолёт с композитным фюзеляжем. Две длины, линия открыта, в РФ семь A350-900 «Аэрофлота».",
+        "photo": "a350",
+        "plates": [],
+        "models": [
+            ["A350-900", "2014–выпускается", "66,8 м", "64,8 м", "17,1 м", "325", "139,3 т", "108,3 т", "283 т", "900 км/ч", "12 500 м", "15 750 км"],
+            ["A350-1000", "2018–выпускается", "73,8 м", "64,8 м", "17,1 м", "350–410", "155 т", "127,6 т", "322 т", "900 км/ч", "12 500 м", "16 670 км"],
+        ],
+        "fleet": [
+            ["A350-900", "619", "7"],
+            ["A350-1000", "123", "0"],
+        ],
+        "fleet_total": [742, 7],
+        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. 7 бортов A350-900 в РФ — «Аэрофлот».",
+        "engines": [
+            ["A350-900", "Rolls-Royce Trent XWB-84"],
+            ["A350-1000", "Rolls-Royce Trent XWB-97"],
+        ],
+        "apu": [
+            ["A350-900, A350-1000", "Honeywell HGT1700"],
+        ],
+        "gear": [
+            ["Носовая стойка", "2 колеса, 1050×395R16"],
+            ["Производитель носовой стойки", "Liebherr-Aerospace"],
+            ["A350-900, основные стойки", "2 шт. по 4 колеса, 1400×530R23"],
+            ["A350-900, производитель основных", "Safran Landing Systems"],
+            ["A350-1000, основные стойки", "2 шт. по 6 колёс, 50×20.0R22"],
+            ["A350-1000, производитель основных", "Collins Aerospace"],
+        ],
+    },
+    {
+        "id": "a380",
+        "h": "A380",
+        "title": "Airbus A380",
+        "lead": "Самый вместительный пассажирский самолёт, две полноценные палубы. Линия закрыта в 2021 году, борта остаются у нескольких авиакомпаний, в РФ их нет.",
+        "photo": "a380",
+        "plates": [("a380.png", "140mm")],
+        "plate_note": "Размеры на чертеже: первая величина в метрах, после черты футы и дюймы. На листе A380-800. Julien Scavini, CC BY-SA 3.0, файл «Airbus A380-800 v1.0.png».",
+        "models": [
+            ["A380-800", "2007–2021", "72,7 м", "79,8 м", "24,1 м", "525", "285 т", "254,0 т", "575 т", "900 км/ч", "12 500 м", "14 800 км"],
+        ],
+        "fleet": [
+            ["A380-800", "193", "0"],
+        ],
+        "fleet_total": [193, 0],
+        "fleet_note": "Сводка Airbus Orders and Deliveries на 31 октября 2026, столбец In Fleet. В РФ пассажирских A380 нет.",
+        "engines": [
+            ["A380-800", "Rolls-Royce Trent 900 или Engine Alliance GP7200"],
+        ],
+        "apu": [
+            ["A380-800", "Pratt & Whitney Canada PW980"],
+        ],
+        "gear": [
+            ["Носовая стойка", "2 колеса, 1270×455R22"],
+            ["Производитель носовой стойки", "Safran Landing Systems"],
+            ["Основные стойки под крылом", "2 шт. по 4 колеса, 1400×530R23"],
+            ["Основные стойки под фюзеляжем", "2 шт. по 6 колёс, 1400×530R23"],
+            ["Производитель основных стоек", "Collins Aerospace"],
+        ],
+    },
+]
+
+
+def html_table(headers, rows, klass):
+    head = "".join(f"<th>{esc(h)}</th>" for h in headers)
+    body = []
+    for row in rows:
+        body.append("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>")
+    return f'<table class="{klass}"><thead><tr>{head}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+
+
+def fmt_fleet(n):
+    if n is None:
+        return "—"
+    return f"{n:,}".replace(",", " ")
+
+
+def fleet_table(fam):
+    world, rf = fam["fleet_total"]
+    head = (
+        "<tr><th>Модель</th><th>В мире</th><th>В РФ</th></tr>"
+        f'<tr class="total"><th>{esc(fam["h"])}, всего</th>'
+        f"<th>{esc(fmt_fleet(world))}</th><th>{esc(fmt_fleet(rf))}</th></tr>"
+    )
+    body = []
+    for row in fam["fleet"]:
+        body.append("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>")
+    return f'<table class="fleet"><thead>{head}</thead><tbody>{"".join(body)}</tbody></table>'
+
+
+def credit(meta, key):
+    item = meta[key]
+    artist = item.get("artist") or "автор не указан"
+    license_name = item.get("license") or "лицензия см. на странице файла"
+    return f"Фото: {artist}. {license_name}. Wikimedia Commons, файл «{item['file']}»."
+
+
+def family_html(fam, meta):
+    img = (PHOTO / f"{fam['photo']}.jpg").resolve().as_uri()
+    plates = []
+    for name, height in fam["plates"]:
+        src = (HERE / "plates" / name).resolve().as_uri()
+        plates.append(
+            f'<figure class="plate" style="--plate:{height}"><img src="{src}" alt="{esc(fam["title"])}"></figure>'
+        )
+    note = ""
+    if fam.get("plate_note"):
+        note = f'<p class="platecap">{esc(fam["plate_note"])}</p>'
+    sheet = "sheet" if plates else "sheet photo-only"
+    return f"""
+    <section class="family" id="{fam['id']}">
+      <div class="{sheet}">
+        <h2>{esc(fam['title'])}</h2>
+        <p class="familylead">{esc(fam['lead'])}</p>
+        <figure class="shot">
+          <img src="{img}" alt="{esc(fam['title'])}">
+          <figcaption>{esc(credit(meta, fam['photo']))}</figcaption>
+        </figure>
+        {''.join(plates)}
+        {note}
+      </div>
+      <p class="label">Технические характеристики</p>
+      {html_table(MODEL_HEAD, fam["models"], "models")}
+      <p class="label">Парк в эксплуатации</p>
+      {fleet_table(fam)}
+      <p class="platecap">{esc(fam["fleet_note"])}</p>
+      <p class="label">Варианты двигателей</p>
+      {html_table(["Модель", "Двигатели"], fam["engines"], "specs")}
+      <p class="label">Варианты ВСУ</p>
+      {html_table(["Серия", "Модель"], fam["apu"], "specs")}
+      <p class="label">Шасси</p>
+      {html_table(fam.get("gear_head") or ["Стойка", "Колёса"], fam["gear"], "specs")}
+    </section>
+    """
+
+
+def toc():
+    items = ['<li><a href="#airbus">Airbus</a></li>']
+    for fam in FAMILIES:
+        items.append(f'<li class="sub"><a href="#{fam["id"]}">{esc(fam["h"])}</a></li>')
+    return "<ul class=\"toc\">" + "".join(items) + "</ul>"
+
+
+CSS = """
+@page {
+  size: A4;
+  margin: 12mm 10mm 14mm 10mm;
+  @bottom-center { content: counter(page); font-family: "Liberation Sans", sans-serif; font-size: 9pt; color: #5c6b7a; }
+}
+html { font-family: "Liberation Serif", serif; color: #1c2b39; font-size: 10.5pt; line-height: 1.35; }
+h1 { font-family: "Liberation Sans", sans-serif; font-size: 18pt; color: #16324f; margin: 0 0 6pt; bookmark-level: 1; bookmark-state: open; }
+h1.mark { font-size: 0; line-height: 0; margin: 0; color: transparent; }
+h2 { font-family: "Liberation Sans", sans-serif; font-size: 15pt; color: #16324f; margin: 0 0 6pt; bookmark-level: 2; bookmark-state: open; }
+section.intro { break-after: page; }
+section.intro p { margin: 0 0 8pt; }
+section.family { break-before: page; }
+p.familylead { font-size: 10pt; line-height: 1.28; margin: 0 0 3pt; }
+.sheet { break-after: page; }
+.sheet.photo-only { break-after: auto; }
+.sheet h2 { margin-bottom: 2pt; }
+.sheet figure { margin: 1pt 0 2pt; }
+p { margin: 0 0 6pt; }
+.kicker { font-family: "Liberation Sans", sans-serif; letter-spacing: 0.04em; color: #5c6b7a; font-size: 9pt; margin: 0 0 4pt; }
+.cover { break-after: page; }
+.lede { font-size: 12pt; }
+ul.toc { list-style: none; padding: 0; margin: 8pt 0; }
+ul.toc li { margin: 2pt 0; }
+ul.toc a { color: #16324f; text-decoration: none; }
+ul.toc a::after { content: leader(".") target-counter(attr(href), page); }
+ul.toc li.sub { margin-left: 12pt; }
+figure { margin: 6pt 0 8pt; }
+figcaption { font-family: "Liberation Sans", sans-serif; font-size: 8pt; color: #5c6b7a; margin-top: 2pt; }
+.sheet .shot img { width: 100%; height: auto; display: block; }
+.sheet .plate { text-align: center; }
+.sheet .plate img { width: auto; max-width: 100%; max-height: var(--plate, 100mm); height: auto; }
+.platecap { font-family: "Liberation Sans", sans-serif; font-size: 8pt; color: #5c6b7a; margin: 0 0 4pt; }
+p.label { font-family: "Liberation Sans", sans-serif; font-weight: 600; font-size: 10pt; color: #16324f; margin: 8pt 0 2pt; break-after: avoid; }
+table { width: 100%; border-collapse: collapse; font-family: "Liberation Sans", sans-serif; margin: 0 0 4pt; }
+table th, table td { border: 0.4pt solid #c5d0db; padding: 1.6pt 1.6pt; vertical-align: top; text-align: left; }
+table th { background: #e7eef5; color: #16324f; font-weight: 600; }
+table.models { font-size: 5.7pt; }
+table.models th { font-size: 5.4pt; }
+table.specs { font-size: 8.5pt; break-inside: avoid; }
+table.specs td:first-child, table.specs th:first-child { width: 42%; }
+table.fleet { font-size: 8.5pt; }
+table.fleet td:nth-child(2), table.fleet td:nth-child(3),
+table.fleet th:nth-child(2), table.fleet th:nth-child(3) { text-align: right; width: 18%; }
+table.fleet tr.total th { background: #d5e2ef; }
+.sources { font-size: 9pt; color: #3d4d5c; }
+"""
+
+
+def build():
+    meta = json.loads((PHOTO / "credits.json").read_text(encoding="utf-8"))
+    blocks = [family_html(fam, meta) for fam in FAMILIES]
+    doc = f"""<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Справочник типов ВС. Airbus</title><style>{CSS}</style></head>
+<body>
+  <section class="intro">
+    <h1 id="airbus">Airbus</h1>
+    <p>Airbus собирает пассажирские самолёты с 1970-х, сначала в Европе, теперь на нескольких линиях по миру. В томе семейства, которые сейчас широко летают: A220, A320, A330, A340, A350 и A380. A300, A310 и Beluga сюда не входят.</p>
+    <p>A320 вместе с 737 занимает большую часть узкофюзеляжных перевозок. A220 пришёл из программы Bombardier CSeries и закрывает меньшую вместимость. A330 и A350 летают на средних и дальних линиях, A340 и A380 остаются в эксплуатации после закрытия производства.</p>
+    <p>Годы в таблицах идут от первой поставки до последней. Цифры типовые, из открытых описаний Airbus и сертификационных листов, это не руководство по лётной эксплуатации.</p>
+  </section>
+  {''.join(blocks)}
+</body>
+</html>"""
+    HTML(string=doc, base_url=str(HERE)).write_pdf(OUT)
+    print(OUT, OUT.stat().st_size)
+
+
+if __name__ == "__main__":
+    build()
