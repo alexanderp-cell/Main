@@ -783,7 +783,10 @@ def load_source(path: Path) -> list[SourceRow]:
             awb=awb,
             arrival=arrival,
             comment=str(comment or ""),
-            warranty=is_warranty_text(comment, invoice_raw, pn_text),
+            warranty=is_warranty_text(
+                comment, invoice_raw, pn_text, status,
+                cell(index, "alt"), cell(index, "desc"), awb, arrival, cell(index, "serial"),
+            ),
             on_hold=is_on_hold(awb, arrival, comment),
             row_color=cell_fill(ws.cell(index, cols["invoice"])),
             serial=display_code(cell(index, "serial")),
@@ -1385,6 +1388,22 @@ def match_sources(previous: list[PrevRow], source_rows: list[SourceRow]):
         best = max(candidates, key=lambda src: score(prev, src))
         used.add(id(best))
         matched[id(prev)] = best
+
+    # В таблице 1 основной и альтернативный P/N иногда меняют местами — это тот же заказ.
+    for prev in previous:
+        if matched[id(prev)] is not None:
+            continue
+        prev_alt = norm_pn(prev.values[6])
+        candidates = [
+            src for src in source_rows
+            if id(src) not in used
+            and src.invoice == prev.inv
+            and (norm_pn(src.alt) == prev.pn or (prev_alt and src.pn_key == prev_alt))
+        ]
+        if candidates:
+            best = max(candidates, key=lambda src: score(prev, src))
+            used.add(id(best))
+            matched[id(prev)] = best
     unmatched = [src for src in source_rows if id(src) not in used]
     return matched, unmatched
 
@@ -1703,7 +1722,7 @@ def self_check(ordered, output: Path, file_date: date):
         errors.append("ON HOLD попал в таблицу")
     for _section, rows in ordered:
         for item in rows:
-            if is_warranty_text(item.values[0], item.values[4], item.values[5]):
+            if is_warranty_text(*item.values[:20]):
                 errors.append(f"гарантия в выдаче: {item.values[3]} {item.values[5]}")
             if item.section == "Требует внимания" and item.values[1] != "N/A":
                 errors.append(f"у «требует внимания» план должен быть N/A: {item.values[5]} = {item.values[1]!r}")
