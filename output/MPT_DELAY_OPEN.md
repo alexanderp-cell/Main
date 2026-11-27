@@ -2,7 +2,9 @@
 
 Срез ТАЗ 27.11.2026 (обновлённые брокерские и перечни). Category ROTABLE · Status 1/2/6 · заказ >7 дн. · без Белавиа.
 
-**Открыть HTML:** https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/utair-excel-report-df20/output/mpt_delay_27.11.2026.html
+**Открыть HTML (без кэша htmlpreview — по коммиту):** https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/86ab327a1e832744550f583f4a1339fdd33c0649/output/mpt_delay_27.11.2026.html
+
+Ветка (может кэшироваться): https://htmlpreview.github.io/?https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/utair-excel-report-df20/output/mpt_delay_27.11.2026.html
 
 Запасной вариант: [zip](https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/utair-excel-report-df20/output/mpt_delay_27.11.2026.zip)
 
