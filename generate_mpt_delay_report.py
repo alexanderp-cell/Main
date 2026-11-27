@@ -1040,6 +1040,23 @@ def render_html(
 
     img_bg = data_uri("derevnya-banner-wide.jpg")
     img_pat = data_uri("derevnya-pattern.png")
+    heroes = [
+        ("derevnya-hero-durachok.png", "Дурачок", "Главный по МПТ — всё перепутал, но заявку подал"),
+        ("derevnya-hero-babka.png", "Бабка", "Строго по спискам: нет вырезки — нет разговора"),
+        ("derevnya-hero-predsedatel.png", "Председатель", "Утверждает разрешение и стучит печатью"),
+        ("derevnya-hero-petuh.png", "Петух", "Будит по статусам: IPC! ТАЗ! Нет МПТ!"),
+    ]
+    heroes_html = "".join(
+        f"""
+        <figure class="hero-card">
+          <img src="{data_uri(fname)}" alt="{esc(name)}" width="300" height="380"/>
+          <figcaption>
+            <strong>{esc(name)}</strong>
+            <span>{esc(blurb)}</span>
+          </figcaption>
+        </figure>"""
+        for fname, name, blurb in heroes
+    )
     new_perms_n = len(new_perms)
     new_perms_block = f"""
 <details class="group new-perms-group" id="new-perms">
@@ -1146,6 +1163,45 @@ body {{
 }}
 .hero-btn:hover {{ background:var(--lime); transform: rotate(-1deg) translateY(-2px); }}
 .hero-btn:focus-visible {{ outline:3px solid #fff; outline-offset:2px; }}
+.heroes {{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px;
+  margin:0 0 18px; padding:16px;
+  background: linear-gradient(180deg, rgba(255,248,230,.96), rgba(255,243,196,.92));
+  border:4px solid var(--wood); border-radius:18px;
+  box-shadow: 6px 8px 0 rgba(93,58,26,.18);
+}}
+.heroes-title {{
+  grid-column:1 / -1; margin:0 0 4px; text-align:center;
+  font-size:22px; font-weight:900; color:var(--accent-deep);
+  text-transform:uppercase; letter-spacing:.04em;
+  text-shadow: 2px 2px 0 #ffe566;
+}}
+.heroes-sub {{
+  grid-column:1 / -1; margin:0 0 8px; text-align:center;
+  color:var(--muted); font-size:13px; font-weight:700;
+}}
+.hero-card {{
+  margin:0; text-align:center;
+  transform: rotate(-1.5deg);
+  transition: transform .15s ease;
+}}
+.hero-card:nth-child(odd) {{ transform: rotate(1.5deg); }}
+.hero-card:hover {{ transform: rotate(0deg) translateY(-6px) scale(1.03); }}
+.hero-card img {{
+  width:100%; max-width:220px; height:auto;
+  border-radius:16px;
+  filter: drop-shadow(4px 6px 0 rgba(93,58,26,.25));
+}}
+.hero-card figcaption {{
+  margin-top:8px; padding:0 4px;
+  display:flex; flex-direction:column; gap:2px;
+}}
+.hero-card strong {{
+  font-size:16px; color:var(--navy); font-weight:900;
+}}
+.hero-card span {{
+  font-size:12px; color:var(--muted); font-weight:700; line-height:1.3;
+}}
 h2 {{
   font-size:20px; margin:26px 0 12px; color:var(--navy);
   letter-spacing:.03em; text-transform:uppercase;
@@ -1250,6 +1306,7 @@ tbody tr:hover {{ background:#fff3c4; }}
   .hero {{ min-height:200px; }}
   .hero h1 {{ font-size:26px; }}
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+  .heroes {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
 </style>
 </head>
@@ -1260,8 +1317,8 @@ tbody tr:hover {{ background:#fff3c4; }}
       <div class="brand-mark">FASTAIR · ДЕРЕВНЯ ДУРАКОВ</div>
       <h1>Задержки получения МПТ</h1>
       <div class="sub">
-        Срез {report_date.strftime('%d.%m.%Y')} · сюда привезли ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-        одна тревога на заказ · по избам (клиентам) · внутри — от ранних к свежим ·
+        Срез {report_date.strftime('%d.%m.%Y')} · телепередача «Деревня дураков» в гостях у ROTABLE ·
+        Status 1/2/6 · заказ &gt;7 дн. · без Белавиа · одна тревога на заказ · по избам (клиентам) ·
         Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW на завалинке не сидят (МПТ не нужен)
       </div>
       <div class="hero-actions">
@@ -1271,6 +1328,12 @@ tbody tr:hover {{ background:#fff3c4; }}
       </div>
     </div>
   </div>
+
+  <section class="heroes" aria-label="Герои деревни дураков">
+    <div class="heroes-title">Герои «Деревни дураков»</div>
+    <div class="heroes-sub">Дурачок, Бабка, Председатель и Петух следят за МПТ (стилизация, не кадры сериала)</div>
+    {heroes_html}
+  </section>
 
   <section class="card">
     <h2 style="margin-top:0">Сводка по деревне</h2>
