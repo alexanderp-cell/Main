@@ -1314,7 +1314,7 @@ tbody tr:hover {{ background:#fff3c4; }}
 <div class="wrap">
   <div class="hero">
     <div class="hero-inner">
-      <div class="brand-mark">FASTAIR · ДЕРЕВНЯ ДУРАКОВ</div>
+      <div class="brand-mark">FASTAIR featuring ДЕРЕВНЯ ДУРАКОВ</div>
       <h1>Задержки получения МПТ</h1>
       <div class="sub">
         Срез {report_date.strftime('%d.%m.%Y')} · телепередача «Деревня дураков» в гостях у ROTABLE ·
