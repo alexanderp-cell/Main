@@ -17,6 +17,6 @@ IPC — отдельный блок. «Закупка на склад» поме
 
 **Раздел 3 — Новые разрешения МПТ:** таблица внизу (p/n, описание, тип ВС, клиент). В шапке кнопка «Новые разрешения МПТ» — прыжок вниз и раскрытие таблицы. Документы Минпромторга за 7 дней до среза; клиент из брокерских «Списки на МПТ».
 
-Фон: S7 Airlines A321neo.
+Тема оформления: «Деревня дураков» (стилизация).
 
 [HTML на GitHub](https://github.com/alexanderp-cell/Main/blob/cursor/utair-excel-report-df20/output/mpt_delay_27.11.2026.html) · [zip](https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/utair-excel-report-df20/output/mpt_delay_27.11.2026.zip)

@@ -1038,7 +1038,8 @@ def render_html(
 """
         )
 
-    img_bg = data_uri("s7-a321neo.jpg")
+    img_bg = data_uri("derevnya-banner-wide.jpg")
+    img_pat = data_uri("derevnya-pattern.png")
     new_perms_n = len(new_perms)
     new_perms_block = f"""
 <details class="group new-perms-group" id="new-perms">
@@ -1061,160 +1062,177 @@ def render_html(
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Задержки МПТ — {report_date.strftime('%d.%m.%Y')}</title>
+<title>Деревня МПТ — {report_date.strftime('%d.%m.%Y')}</title>
 <style>
 :root {{
-  --navy:#0d2a1f;
-  --navy-2:#164433;
-  --accent:#8cc63f;
-  --accent-deep:#5f9a1f;
-  --lime:#c6e37a;
-  --sky:#e8f3df;
-  --card:rgba(255,255,255,.94);
-  --ink:#14241a;
-  --muted:#5b6f60;
-  --line:#c9d9be;
+  --navy:#5c2b0e;
+  --navy-2:#7a3d16;
+  --accent:#f1c40f;
+  --accent-deep:#c0392b;
+  --lime:#ffe566;
+  --sky:#6ec4f5;
+  --card:rgba(255,248,230,.96);
+  --ink:#3b2412;
+  --muted:#7a5a3a;
+  --line:#e0c49a;
   --red:#c0392b;
-  --orange:#d35400;
-  --green:#1e7a46;
+  --orange:#e67e22;
+  --green:#2e7d32;
+  --wood:#8b5a2b;
+  --grass:#5eaf4a;
 }}
 * {{ box-sizing:border-box; }}
 body {{
   margin:0;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Trebuchet MS", "Comic Sans MS", "Segoe Print", "Chalkboard SE", Georgia, cursive, sans-serif;
   color:var(--ink);
   min-height:100vh;
-  background-color: #0d2a1f;
+  background-color: #5eaf4a;
   background-image:
-    linear-gradient(180deg, rgba(13,42,31,.78) 0%, rgba(13,42,31,.58) 180px, rgba(232,243,223,.93) 420px, rgba(232,243,223,.97) 100%),
+    linear-gradient(180deg, rgba(110,196,245,.88) 0%, rgba(110,196,245,.55) 160px, rgba(255,246,224,.92) 380px, rgba(255,246,224,.96) 100%),
+    url('{img_pat}'),
     url('{img_bg}');
-  background-size: cover;
-  background-position: center top;
-  background-attachment: fixed;
+  background-size: auto, 128px 128px, cover;
+  background-position: center top, 0 0, center top;
+  background-attachment: fixed, fixed, fixed;
   line-height:1.45;
 }}
 .wrap {{ max-width:1400px; margin:0 auto; padding:24px 16px 64px; }}
 .hero {{
   position:relative;
-  border-radius:14px;
+  border-radius:18px;
   overflow:hidden;
   margin-bottom:18px;
-  min-height:220px;
-  border:1px solid rgba(255,255,255,.22);
-  box-shadow: 0 18px 40px rgba(0,0,0,.28);
+  min-height:240px;
+  border:4px solid #8b5a2b;
+  box-shadow: 0 14px 0 #5d3a1a, 0 22px 36px rgba(60,30,10,.28);
   background:
-    linear-gradient(115deg, rgba(13,42,31,.90) 0%, rgba(13,42,31,.48) 50%, rgba(140,198,63,.28) 100%),
+    linear-gradient(120deg, rgba(192,57,43,.82) 0%, rgba(92,43,14,.55) 42%, rgba(241,196,15,.35) 100%),
     url('{img_bg}');
   background-size: cover;
-  background-position: center 42%;
+  background-position: center 35%;
   color:#fff;
   display:flex; align-items:flex-end;
 }}
-.hero-inner {{ padding:28px 28px 24px; width:100%; }}
+.hero::after {{
+  content:"";
+  position:absolute; left:0; right:0; bottom:0; height:14px;
+  background: repeating-linear-gradient(90deg, #a67c52 0 14px, #8b5a2b 14px 28px);
+  opacity:.95;
+}}
+.hero-inner {{ padding:28px 28px 30px; width:100%; position:relative; z-index:1; }}
 .brand-mark {{
   display:inline-block;
-  font-size:12px; letter-spacing:.16em; text-transform:uppercase;
-  background:var(--accent); color:#0d2a1f; padding:7px 12px; font-weight:800;
-  border-radius:4px; margin-bottom:14px;
+  font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+  background:var(--accent); color:#5c2b0e; padding:8px 14px; font-weight:800;
+  border-radius:999px; margin-bottom:14px;
+  border:2px solid #fff;
+  box-shadow: 2px 3px 0 #5d3a1a;
+  transform: rotate(-2deg);
 }}
 .hero h1 {{
-  font-size:34px; margin:0 0 8px; font-weight:800; letter-spacing:.01em;
-  text-shadow: 0 2px 18px rgba(0,0,0,.35);
+  font-size:36px; margin:0 0 8px; font-weight:900; letter-spacing:.01em;
+  text-shadow: 3px 3px 0 #5d3a1a, 0 2px 18px rgba(0,0,0,.35);
+  transform: rotate(-1deg);
 }}
-.sub {{ color:rgba(255,255,255,.88); font-size:14px; max-width:920px; }}
+.sub {{ color:rgba(255,255,255,.95); font-size:14px; max-width:920px; text-shadow:0 1px 2px rgba(0,0,0,.35); }}
 .hero-actions {{ margin-top:16px; display:flex; flex-wrap:wrap; gap:10px; }}
 .hero-btn {{
-  display:inline-block; text-decoration:none; color:#0d2a1f;
-  background:var(--accent); border:1px solid rgba(255,255,255,.35);
-  padding:10px 16px; font-size:13px; font-weight:800; border-radius:8px;
-  letter-spacing:.02em; box-shadow:0 6px 16px rgba(0,0,0,.22);
+  display:inline-block; text-decoration:none; color:#5c2b0e;
+  background:var(--accent); border:3px solid #fff;
+  padding:10px 16px; font-size:14px; font-weight:800; border-radius:999px;
+  letter-spacing:.02em; box-shadow:3px 4px 0 #5d3a1a;
+  transform: rotate(1deg);
 }}
-.hero-btn:hover {{ background:var(--lime); }}
+.hero-btn:hover {{ background:var(--lime); transform: rotate(-1deg) translateY(-2px); }}
 .hero-btn:focus-visible {{ outline:3px solid #fff; outline-offset:2px; }}
 h2 {{
-  font-size:18px; margin:26px 0 12px; color:var(--navy);
-  letter-spacing:.04em; text-transform:uppercase;
+  font-size:20px; margin:26px 0 12px; color:var(--navy);
+  letter-spacing:.03em; text-transform:uppercase;
+  text-shadow: 1px 1px 0 #ffe566;
 }}
 .card {{
-  background:var(--card); border:1px solid var(--line);
-  border-radius:12px; padding:18px 18px 10px;
-  box-shadow: 0 10px 28px rgba(13,42,31,.08);
-  backdrop-filter: blur(6px);
+  background:var(--card); border:3px solid var(--wood);
+  border-radius:16px; padding:18px 18px 10px;
+  box-shadow: 6px 8px 0 rgba(93,58,26,.18);
+  backdrop-filter: blur(4px);
+  position:relative;
 }}
 .kpi-grid {{
   display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin:12px 0 14px;
 }}
 .kpi {{
-  background:linear-gradient(180deg, #ffffff, #f4f9ef);
-  border:1px solid var(--line); border-radius:10px; padding:12px 12px 14px;
+  background:linear-gradient(180deg, #fffdf5, #fff0c9);
+  border:2px solid var(--line); border-radius:14px; padding:12px 12px 14px;
   display:flex; flex-direction:column; gap:4px; min-height:96px;
   text-decoration:none; color:inherit;
+  box-shadow: 3px 3px 0 rgba(139,90,43,.15);
 }}
 a.kpi {{ cursor:pointer; transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }}
-a.kpi:hover {{ transform: translateY(-2px); border-color:var(--accent-deep); box-shadow:0 8px 18px rgba(140,198,63,.25); }}
+a.kpi:hover {{ transform: translateY(-3px) rotate(-1deg); border-color:var(--accent-deep); box-shadow:4px 6px 0 rgba(192,57,43,.25); }}
 a.kpi:focus-visible {{ outline:3px solid var(--accent); outline-offset:2px; }}
 a.kpi.kpi-empty {{ opacity:.55; cursor:default; pointer-events:none; }}
 .label {{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }}
-.value {{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--navy); }}
+.value {{ font-size:26px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--accent-deep); }}
 .muted {{ color:var(--muted); font-size:12px; margin-top:4px; }}
 .tabs {{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }}
 .tabs a {{
-  text-decoration:none; color:var(--navy); background:rgba(255,255,255,.92);
-  border:1px solid var(--line); padding:8px 12px; font-size:13px; font-weight:700;
-  border-radius:8px;
+  text-decoration:none; color:var(--navy); background:rgba(255,253,245,.96);
+  border:2px solid var(--wood); padding:8px 12px; font-size:13px; font-weight:800;
+  border-radius:999px; box-shadow:2px 2px 0 rgba(93,58,26,.15);
 }}
-.tabs a:hover {{ background:#fff; border-color:var(--accent-deep); color:var(--accent-deep); }}
+.tabs a:hover {{ background:var(--accent); border-color:var(--accent-deep); color:var(--navy); }}
 details.group {{
-  background:var(--card); border:1px solid var(--line);
-  margin:12px 0; overflow:visible; border-radius:12px;
-  box-shadow: 0 8px 22px rgba(13,42,31,.07);
+  background:var(--card); border:3px solid var(--wood);
+  margin:12px 0; overflow:visible; border-radius:16px;
+  box-shadow: 5px 7px 0 rgba(93,58,26,.14);
   scroll-margin-top: 16px;
 }}
 details.group.status-group summary {{
-  background: linear-gradient(90deg, var(--accent) 0 10px, #fff 10px);
+  background: linear-gradient(90deg, var(--accent) 0 12px, #fffdf5 12px);
 }}
 details.group.new-perms-group summary {{
-  background: linear-gradient(90deg, var(--accent-deep) 0 10px, #fff 10px);
+  background: linear-gradient(90deg, var(--accent-deep) 0 12px, #fffdf5 12px);
 }}
 details.group summary {{
   cursor:pointer; list-style:none; padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-  background: linear-gradient(90deg, var(--navy) 0 10px, #fff 10px);
-  border-radius:12px 12px 0 0;
+  background: linear-gradient(90deg, var(--wood) 0 12px, #fffdf5 12px);
+  border-radius:13px 13px 0 0;
 }}
 details.group summary::-webkit-details-marker {{ display:none; }}
-.group-name {{ font-weight:800; font-size:15px; margin-right:auto; color:var(--navy); padding-left:8px; }}
+.group-name {{ font-weight:900; font-size:15px; margin-right:auto; color:var(--navy); padding-left:8px; }}
 .pill {{
-  font-size:12px; background:#eef6e6; border:1px solid var(--line); color:var(--navy);
-  padding:4px 10px; font-weight:700; border-radius:999px;
+  font-size:12px; background:#ffe566; border:2px solid var(--wood); color:var(--navy);
+  padding:4px 10px; font-weight:800; border-radius:999px;
 }}
-.group-body {{ padding:0 14px 16px; border-top:1px solid var(--line); overflow:visible; background:#fbfdf8; }}
+.group-body {{ padding:0 14px 16px; border-top:2px dashed var(--line); overflow:visible; background:#fffaf0; }}
 #by-status {{ scroll-margin-top: 12px; }}
 #new-perms {{ scroll-margin-top: 16px; }}
-table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--line); table-layout:fixed; background:#fff; border-radius:8px; overflow:hidden; }}
+table {{ width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:2px solid var(--wood); table-layout:fixed; background:#fffdf8; border-radius:10px; overflow:hidden; }}
 col.client {{ width:11%; }}
 col.pn {{ width:9%; }}
 col.desc {{ width:14%; }}
 th, td {{
-  border-bottom:1px solid #e4efe0; border-right:1px solid #e4efe0;
+  border-bottom:1px solid #f0ddb8; border-right:1px solid #f0ddb8;
   padding:8px 8px; vertical-align:top; text-align:left;
   word-wrap:break-word; overflow-wrap:anywhere; color:var(--ink);
 }}
 th:last-child, td:last-child {{ border-right:none; }}
 th {{
   position:sticky; top:0; z-index:5;
-  font-size:12px; font-weight:800; letter-spacing:.02em; text-transform:uppercase;
-  color:#fff; background:var(--navy);
-  border-bottom:2px solid var(--accent);
+  font-size:12px; font-weight:900; letter-spacing:.02em; text-transform:uppercase;
+  color:#fff; background:var(--wood);
+  border-bottom:3px solid var(--accent);
 }}
 td.num {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
-tr.wh {{ background:#eef8e6; }}
-tbody tr:hover {{ background:#f5faf0; }}
+tr.wh {{ background:#e8f8d8; }}
+tbody tr:hover {{ background:#fff3c4; }}
 .tag {{
-  display:inline-block; font-size:11px; font-weight:700; border-radius:4px;
-  padding:2px 7px; margin:1px 2px; border:1px solid var(--line); background:#f3f7ef; color:var(--navy);
+  display:inline-block; font-size:11px; font-weight:800; border-radius:999px;
+  padding:2px 8px; margin:1px 2px; border:2px solid var(--line); background:#fff6e0; color:var(--navy);
 }}
 .tag.alt {{ background:#fff3cd; border-color:#e6d89c; }}
-.tag.wh {{ background:#dff0c9; border-color:#b7d48e; }}
+.tag.wh {{ background:#dff0c9; border-color:#7bc96a; }}
 .tag.ok {{ background:#e3f6ea; border-color:#b7e0c4; color:var(--green); }}
 .tag.bad, .bad {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
 .tag.a1 {{ background:#fde8e6; border-color:#f0b8b2; color:var(--red); }}
@@ -1224,11 +1242,12 @@ tbody tr:hover {{ background:#f5faf0; }}
 .tag.aipc {{ background:#efe8f8; border-color:#c9b6e0; }}
 .footer {{
   margin-top:28px; color:var(--muted); font-size:12px;
-  border-top:1px solid var(--line); padding-top:14px;
-  background:rgba(255,255,255,.75); border-radius:8px; padding:14px;
+  border-top:3px solid var(--wood); padding-top:14px;
+  background:rgba(255,248,230,.88); border-radius:12px; padding:14px;
+  border:3px solid var(--wood);
 }}
 @media (max-width:900px) {{
-  .hero {{ min-height:180px; }}
+  .hero {{ min-height:200px; }}
   .hero h1 {{ font-size:26px; }}
   .kpi-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
 }}
@@ -1238,12 +1257,12 @@ tbody tr:hover {{ background:#f5faf0; }}
 <div class="wrap">
   <div class="hero">
     <div class="hero-inner">
-      <div class="brand-mark">FASTAIR · MPT</div>
+      <div class="brand-mark">FASTAIR · ДЕРЕВНЯ ДУРАКОВ</div>
       <h1>Задержки получения МПТ</h1>
       <div class="sub">
-        Срез {report_date.strftime('%d.%m.%Y')} · Category ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
-        одна тревога на заказ · разделы по клиентам · внутри — от ранних к свежим ·
-        Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW исключены (МПТ не нужен)
+        Срез {report_date.strftime('%d.%m.%Y')} · сюда привезли ROTABLE · Status 1/2/6 · заказ &gt;7 дн. · без Белавиа ·
+        одна тревога на заказ · по избам (клиентам) · внутри — от ранних к свежим ·
+        Utair DAT MOW / DAT TEHRAN и АК Сибирь / S7 Engineering DAP MOW на завалинке не сидят (МПТ не нужен)
       </div>
       <div class="hero-actions">
         <a class="hero-btn jump" href="#new-perms" data-target="new-perms">
@@ -1254,7 +1273,7 @@ tbody tr:hover {{ background:#f5faf0; }}
   </div>
 
   <section class="card">
-    <h2 style="margin-top:0">Сводка</h2>
+    <h2 style="margin-top:0">Сводка по деревне</h2>
     <div class="kpi-grid">
       <a class="kpi jump" href="#by-clients" data-target="by-clients">
         <div class="label">Всего</div><div class="value">{len(rows)}</div>
@@ -1313,7 +1332,7 @@ tbody tr:hover {{ background:#f5faf0; }}
 
   <div class="footer">
     Источники: ТАЗ · Брокерские заявки (Списки на МПТ) · Перечни зап. частей 0% НДС (ФЭИ/ЛР/МЕТЕОР 2025–2026).
-    Self-contained HTML · фон: S7 Airlines A321neo (VQ-BDI), CC BY-SA 2.0 · открывается локально без интернета.
+    Self-contained HTML · тема: «Деревня дураков» (стилизация, оригинальный фон) · открывается локально без интернета.
   </div>
 </div>
 <script>
