@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EXPENDABLE — загрузка…</title>
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#022f40;color:#fff;
+       min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .box{max-width:440px;padding:28px;text-align:center}
+  .bar{height:3px;width:120px;background:#fe621d;margin:16px auto}
+  a{color:#fe621d}
+</style>
+</head>
+<body>
+<div class="box">
+  <div>FastAir</div>
+  <div class="bar"></div>
+  <p id="msg">Загружаю отчёт…</p>
+  <p style="opacity:.7;font-size:13px">Если долго —
+    <a href="https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/category-reports-2711-3296/output/expendables_suppliers_clients_2711.html">скачайте HTML</a> и откройте локально</p>
+</div>
+<script>
+const SRC = 'https://raw.githubusercontent.com/alexanderp-cell/Main/cursor/category-reports-2711-3296/output/expendables_suppliers_clients_2711.html';
+fetch(SRC, {cache: "no-store"})
+  .then((r) => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.text();
+  })
+  .then((html) => {
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch((e) => {
+    document.getElementById("msg").textContent =
+      "Не удалось встроить отчёт (" + e + "). Используйте ссылку скачивания ниже.";
+  });
+</script>
+</body>
+</html>
